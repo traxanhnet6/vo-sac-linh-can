@@ -70,6 +70,9 @@
           <b id="hud-silence">100 / 100</b>
         </div>
         <div id="hud-linh" class="hidden"><span class="linh-ico" aria-hidden="true"></span><span class="linh-label">Linh Thạch</span><b id="hud-linh-val">0</b></div>
+        <!-- Chỉ thị giờ thế giới (chu kỳ ngày đêm): biểu tượng mặt trời/mặt
+             trăng VẼ BẰNG MÃ trên canvas nhỏ trong mã engine, không emoji. -->
+        <div id="hud-clock" style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#e8dfc0;margin-top:3px;"><canvas id="clock-icon" width="16" height="16" style="flex:none;" aria-hidden="true"></canvas><b id="clock-text" style="font-weight:bold;color:#f0e8d2;">08:00</b><span id="clock-phase" style="color:#a8b8d8;font-size:10.5px;">Sáng</span></div>
       </div>
     </div>
 
@@ -124,6 +127,10 @@
         <label class="set-row"><span>Âm thanh chiêu thức / sự kiện</span><input id="set-sfx" type="checkbox"></label>
         <label class="set-row"><span>Lồng tiếng lời thoại</span><input id="set-voice" type="checkbox"></label>
         <label class="set-row"><span>Âm lượng giọng nói</span><input id="set-voicevol" type="range" min="0" max="100" step="5"></label>
+        <label class="set-row"><span>Nhạc nền</span><input id="set-music" type="checkbox"></label>
+        <label class="set-row"><span>Âm lượng nhạc nền</span><input id="set-musicvol" type="range" min="0" max="100" step="5"></label>
+        <label class="set-row"><span>Tiếng động môi trường</span><input id="set-ambience" type="checkbox"></label>
+        <label class="set-row"><span>Âm lượng môi trường</span><input id="set-ambiencevol" type="range" min="0" max="100" step="5"></label>
         <div class="set-sec">Hình ảnh</div>
         <label class="set-row"><span>Rung màn hình khi dùng Ngôn Linh</span><input id="set-shake" type="checkbox"></label>
         <label class="set-row"><span>Vòng sóng âm</span><input id="set-rings" type="checkbox"></label>
@@ -143,6 +150,15 @@
         <label class="set-row"><span>Tự động lưu</span><input id="set-autosave" type="checkbox"></label>
         <label class="set-row"><span>Khoảng tự động lưu</span><select id="set-autosave-sec"><option value="5">5 giây</option><option value="15">15 giây</option><option value="30">30 giây</option><option value="60">60 giây</option></select></label>
         <label class="set-row"><span>Xác nhận trước khi Thoát</span><input id="set-confirmlogout" type="checkbox"></label>
+        <div class="set-sec">Ngày đêm</div>
+        <label class="set-row"><span>Tốc độ ngày đêm</span><select id="set-dayspeed"><option value="slow">Chậm — 1 ngày game = 20 phút thật</option><option value="normal">Thường — 1 ngày game = 10 phút thật</option><option value="fast">Nhanh — 1 ngày game = 5 phút thật</option></select></label>
+        <label class="set-row"><span>Chế độ ngày đêm</span><select id="set-daymode"><option value="cycle">Theo chu kỳ</option><option value="day">Luôn ban ngày</option><option value="night">Luôn ban đêm</option></select></label>
+        <div class="set-sec">Phóng to / thu nhỏ bản đồ</div>
+        <label class="set-row"><span>Cho phép phóng to / thu nhỏ khung nhìn (chụm hai ngón trên cảm ứng, lăn chuột trên máy tính; chỉ khung thế giới đổi tỉ lệ, giao diện giữ nguyên)</span><input id="set-zoom" type="checkbox"></label>
+        <div class="set-row two-btns">
+          <button id="set-zoom-reset" class="btn wood" type="button">Đặt lại mức phóng (1,0×)</button>
+        </div>
+        <div id="set-zoom-msg" class="set-msg"></div>
         <div class="set-sec">Tài khoản và phiên chơi</div>
         <div class="set-row two-btns">
           <button id="set-save-btn" class="btn red" type="button">Lưu tiến trình</button>
@@ -221,6 +237,7 @@
 <script src="js/story.js"></script>
 <script src="js/voice-manifest.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/music.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

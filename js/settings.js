@@ -50,7 +50,20 @@
     /* Trò chơi */
     autoSave: true,       // tự động lưu
     autoSaveSec: 5,       // khoảng tự lưu (giây): 5 | 15 | 30 | 60
-    confirmLogout: true   // xác nhận trước khi Thoát về màn hình đăng nhập
+    confirmLogout: true,  // xác nhận trước khi Thoát về màn hình đăng nhập
+    /* Ngày đêm (đợt "Bản đồ mượt + Ngày đêm"): tốc độ + chế độ đồng hồ thế
+       giới; logic pha/tốc độ nằm ở js/logic.js (DAYNIGHT_MIN_PER_SEC). */
+    daySpeed: 'normal',   // tốc độ ngày đêm: 'slow' 20 phút | 'normal' 10 phút | 'fast' 5 phút thật mỗi ngày game
+    dayMode: 'cycle',     // chế độ ngày đêm: 'cycle' theo chu kỳ | 'day' luôn ban ngày | 'night' luôn ban đêm
+    /* Phóng to / thu nhỏ bản đồ (Luồng C): chỉ là công tắc bật/tắt tính
+       năng; MỨC phóng tự nó chỉ giữ trong phiên chơi, không lưu ở đây. */
+    zoomEnabled: true,    // cho phép chụm hai ngón / lăn chuột để phóng-thu khung nhìn thế giới
+    /* Nhạc nền + tiếng động môi trường: khóa theo hợp đồng trong
+       VSLC_MUSIC.SETTINGS_SPEC của module nhạc; nối dây ở tích hợp. */
+    musicOn: true,        // nhạc nền tổng hợp theo bản đồ + pha ngày đêm
+    musicVol: 0.7,        // âm lượng nhạc nền 0..1
+    ambienceOn: true,     // tiếng động môi trường (chim/dế/suối/gió/chợ)
+    ambienceVol: 0.6      // âm lượng môi trường 0..1
   };
 
   function clone(o) { var r = {}; for (var k in o) r[k] = o[k]; return r; }
@@ -87,6 +100,13 @@
     if (isBool(raw.autoSave)) s.autoSave = raw.autoSave;
     if (AUTOSAVE_SECS.indexOf(Number(raw.autoSaveSec)) >= 0) s.autoSaveSec = Number(raw.autoSaveSec);
     if (isBool(raw.confirmLogout)) s.confirmLogout = raw.confirmLogout;
+    s.daySpeed = pickEnum(raw.daySpeed, ['slow', 'normal', 'fast'], DEFAULTS.daySpeed);
+    s.dayMode = pickEnum(raw.dayMode, ['cycle', 'day', 'night'], DEFAULTS.dayMode);
+    if (isBool(raw.zoomEnabled)) s.zoomEnabled = raw.zoomEnabled;
+    if (isBool(raw.musicOn)) s.musicOn = raw.musicOn;
+    s.musicVol = clampNum(raw.musicVol, 0, 1, DEFAULTS.musicVol);
+    if (isBool(raw.ambienceOn)) s.ambienceOn = raw.ambienceOn;
+    s.ambienceVol = clampNum(raw.ambienceVol, 0, 1, DEFAULTS.ambienceVol);
     return s;
   }
 
@@ -270,6 +290,13 @@
     setVal('set-autosave', current.autoSave);
     var as = $('set-autosave-sec'); if (as) as.value = String(current.autoSaveSec);
     setVal('set-confirmlogout', current.confirmLogout);
+    var dsp = $('set-dayspeed'); if (dsp) dsp.value = current.daySpeed;
+    var dmo = $('set-daymode'); if (dmo) dmo.value = current.dayMode;
+    setVal('set-zoom', current.zoomEnabled);
+    setVal('set-music', current.musicOn);
+    var mv = $('set-musicvol'); if (mv) mv.value = String(Math.round(current.musicVol * 100));
+    setVal('set-ambience', current.ambienceOn);
+    var av2 = $('set-ambiencevol'); if (av2) av2.value = String(Math.round(current.ambienceVol * 100));
   }
   SET.syncControls = syncControls;
 
@@ -296,6 +323,20 @@
     bindCheck('set-autosave', 'autoSave');
     on('set-autosave-sec', 'change', function () { var el = $('set-autosave-sec'); update({ autoSaveSec: Number(el && el.value) || 5 }); });
     bindCheck('set-confirmlogout', 'confirmLogout');
+    on('set-dayspeed', 'change', function () { var el = $('set-dayspeed'); update({ daySpeed: el ? el.value : 'normal' }); });
+    on('set-daymode', 'change', function () { var el = $('set-daymode'); update({ dayMode: el ? el.value : 'cycle' }); });
+    bindCheck('set-zoom', 'zoomEnabled');
+    bindCheck('set-music', 'musicOn');
+    on('set-musicvol', 'input', function () { var el = $('set-musicvol'); update({ musicVol: (Number(el && el.value) || 0) / 100 }); });
+    bindCheck('set-ambience', 'ambienceOn');
+    on('set-ambiencevol', 'input', function () { var el = $('set-ambiencevol'); update({ ambienceVol: (Number(el && el.value) || 0) / 100 }); });
+    /* Đặt lại mức phóng: qua cầu VSLC_BRIDGE về đúng hàm của engine — nút
+       này LUÔN hoạt động, kể cả khi công tắc phóng/thu đang tắt (đưa hệ số
+       hiển thị về 1,0× ngay, không qua nội suy). */
+    on('set-zoom-reset', 'click', function () {
+      var B = global.VSLC_BRIDGE;
+      if (B && B.resetZoom) { B.resetZoom(); flashMsg('set-zoom-msg', 'Đã đặt lại mức phóng về 1,0×.'); }
+    });
 
     on('set-close', 'click', closePanel);
     on('set-min', 'click', minPanel);
@@ -305,7 +346,12 @@
     /* Phiên chơi: CÙNG hàm với nút Lưu/Thoát ở hàng chức năng (qua cầu VSLC_BRIDGE). */
     on('set-save-btn', 'click', function () {
       var B = global.VSLC_BRIDGE;
-      if (B && B.saveNow) { B.saveNow(); flashMsg('set-save-msg', 'Đã lưu tiến trình.'); }
+      if (B && B.saveNow) {
+        // saveNow trả false khi phiên này đã cũ so với một phiên khác —
+        // báo thật cho người chơi thay vì khẳng định đã lưu như trước.
+        if (B.saveNow()) flashMsg('set-save-msg', 'Đã lưu tiến trình.');
+        else flashMsg('set-save-msg', 'Chưa lưu được: tiến trình mới hơn đang ở một phiên chơi khác — hãy tải lại trang.');
+      }
     });
     on('set-logout-btn', 'click', function () {
       var B = global.VSLC_BRIDGE;

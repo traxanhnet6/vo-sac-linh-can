@@ -23,6 +23,84 @@
     var y = Math.max(0, Math.min(maxY, Number(cy) || 0));
     return { x: x, y: y };
   }
+  /* ---------- Phóng to / thu nhỏ khung nhìn thế giới (Luồng C, đợt
+     "Bản đồ mượt + Ngày đêm", lệnh Bui 13:46 ngày 2026-11-01) ----------
+     Zoom là lớp HIỂN THỊ thuần túy: không đổi tọa độ logic / dữ liệu bản đồ.
+     Mọi phép biến đổi màn hình <-> thế giới trong engine PHẢI đi qua
+     screenToWorld / worldToScreen ở đây (một hàm dùng chung cho chạm-để-đi,
+     chạm-tương-tác, neo chụm hai ngón và neo lăn chuột). */
+  var ZOOM_MIN = 0.6;        // hệ số nhỏ nhất (thấy rộng nhất)
+  var ZOOM_MAX = 2.0;        // hệ số lớn nhất (phóng to nhất)
+  var ZOOM_DEFAULT = 1;      // mức phóng mặc định mỗi phiên chơi
+  var ZOOM_LERP = 0.22;      // hệ số nội suy mỗi khung hình: hiển thị tiến dần về đích, không nhảy bậc
+  var ZOOM_SNAP_EPS = 0.002; // đủ gần đích thì chốt hẳn (tránh rung đuôi nội suy)
+  var ZOOM_WHEEL_EXP = 0.0016; // độ nhạy lăn chuột: đích *= exp(-deltaY * hằng số này)
+  function clampZoom(z) {
+    var n = Number(z);
+    if (!isFinite(n)) return ZOOM_DEFAULT;
+    return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, n));
+  }
+  // Một bước nội suy từ cur về target: tiến THEO HƯỚNG đích, không bao giờ vượt đích.
+  function zoomLerpStep(cur, target, factor) {
+    var c = Number(cur), t = clampZoom(target);
+    if (!isFinite(c)) c = ZOOM_DEFAULT;
+    var f = (factor == null ? ZOOM_LERP : Number(factor));
+    if (!isFinite(f) || f <= 0) f = ZOOM_LERP;
+    if (f > 1) f = 1;
+    var nxt = c + (t - c) * f;
+    if ((t > c && nxt > t) || (t < c && nxt < t)) nxt = t;
+    if (Math.abs(t - nxt) < ZOOM_SNAP_EPS) nxt = t;
+    return nxt;
+  }
+  function pinchDistance(ax, ay, bx, by) {
+    var dx = (Number(bx) || 0) - (Number(ax) || 0), dy = (Number(by) || 0) - (Number(ay) || 0);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function pinchMidpoint(ax, ay, bx, by) {
+    return { x: ((Number(ax) || 0) + (Number(bx) || 0)) / 2, y: ((Number(ay) || 0) + (Number(by) || 0)) / 2 };
+  }
+  // Tỉ lệ khoảng cách hai ngón so với lúc bắt đầu cử chỉ -> hệ số phóng đích (kẹp hai đầu).
+  function pinchTargetZoom(startZoom, startDist, curDist) {
+    var sd = Number(startDist), cd = Number(curDist);
+    if (!isFinite(sd) || sd <= 0 || !isFinite(cd) || cd < 0) return clampZoom(startZoom);
+    return clampZoom((Number(startZoom) || ZOOM_DEFAULT) * (cd / sd));
+  }
+  function wheelTargetZoom(curTarget, deltaY) {
+    var t = Number(curTarget); if (!isFinite(t)) t = ZOOM_DEFAULT;
+    var dy = Number(deltaY); if (!isFinite(dy)) dy = 0;
+    return clampZoom(t * Math.exp(-dy * ZOOM_WHEEL_EXP));
+  }
+  // Khung thế giới NHÌN THẤY được ở một mức zoom: càng thu nhỏ càng thấy nhiều đất.
+  function effectiveView(vw, vh, zoom) {
+    var z = clampZoom(zoom);
+    return { w: (Number(vw) || 0) / z, h: (Number(vh) || 0) / z, zoom: z };
+  }
+  function worldToScreen(wx, wy, camX, camY, zoom) {
+    var z = clampZoom(zoom);
+    return { x: ((Number(wx) || 0) - (Number(camX) || 0)) * z, y: ((Number(wy) || 0) - (Number(camY) || 0)) * z };
+  }
+  function screenToWorld(sx, sy, camX, camY, zoom) {
+    var z = clampZoom(zoom);
+    return { x: (Number(camX) || 0) + (Number(sx) || 0) / z, y: (Number(camY) || 0) + (Number(sy) || 0) / z };
+  }
+  // Camera mà tại đó điểm thế giới (wx,wy) nằm đúng tại điểm màn hình (sx,sy) ở mức zoom cho trước — hàm neo dùng chung.
+  function camForAnchor(wx, wy, sx, sy, zoom) {
+    var z = clampZoom(zoom);
+    return { x: (Number(wx) || 0) - (Number(sx) || 0) / z, y: (Number(wy) || 0) - (Number(sy) || 0) / z };
+  }
+  // Kẹp camera theo biên bản đồ Ở MỨI ZOOM hiện tại. Khi khung nhìn hiệu dụng
+  // lớn hơn bản đồ (zoom nhỏ + bản đồ nhỏ) thì CĂN GIỮA bản đồ trong khung
+  // (camera âm) thay vì dính góc 0,0 như clampCam cũ.
+  function clampCamZoom(cx, cy, vw, vh, zoom, worldW, worldH) {
+    var eff = effectiveView(vw, vh, zoom);
+    var ww = Number(worldW) || 0, wh = Number(worldH) || 0;
+    var x, y;
+    if (ww <= eff.w) x = (ww - eff.w) / 2;
+    else x = Math.max(0, Math.min(ww - eff.w, Number(cx) || 0));
+    if (wh <= eff.h) y = (wh - eff.h) / 2;
+    else y = Math.max(0, Math.min(wh - eff.h, Number(cy) || 0));
+    return { x: x, y: y };
+  }
   /* VIEWFN-END */
 
   /* ---------- Tiện ích DOM ---------- */
@@ -171,6 +249,10 @@
 
   /* ---------- Tài khoản ---------- */
   var currentUser = null;
+  // Số thứ tự bản lưu mà phiên này đã nạp (hoặc đã ghi gần nhất). Mọi lần
+  // ghi đều tăng số này; một phiên khác ghi trước sẽ đẩy số trong kho lên
+  // cao hơn mốc của phiên này — dấu hiệu phiên này đã CŨ (xem saveNow).
+  var sessionSaveSeq = 0, saveStaleWarned = false;
   function authError(msg) { $('auth-error').textContent = msg || ''; }
   $('btn-register').addEventListener('click', function () {
     var u = $('auth-user').value, p = $('auth-pass').value;
@@ -191,12 +273,59 @@
     var name = $('char-name').value.trim() || 'Giang Phàm';
     var gender = document.querySelector('input[name="gender"]:checked').value;
     var st = L.newCharacter(name, gender);
+    st.saveSeq = 1; // bản lưu đầu tiên của tài khoản (chỉ tạo khi chưa có bản lưu nào)
     L.saveGame(localStorage, currentUser, st);
     startGame(st);
   });
   function exitToAuth() {
     hideConfirm();
+    if (window.VSLC_MUSIC) VSLC_MUSIC.stop();
     stopVoice(); currentUser = null; state = null; show('screen-auth');
+  }
+  /* ---------- Nhạc nền + tiếng động môi trường (module nhạc) ----------
+     Nối dây mỏng theo hợp đồng VSLC_MUSIC: mở khóa ở tương tác đầu tiên
+     của người chơi (chính sách trình duyệt); mỗi khung hình áp cài đặt
+     khi có đổi, cập nhật cảnh theo bản đồ + pha ngày đêm thật, giảm nền
+     khi thoại đang mở, tiếng suối theo khoảng cách tới ô nước gần nhất.
+     Mọi lời gọi đều có guard: thiếu module nhạc thì game chạy như cũ. */
+  var musCache = { mOn: null, mVol: null, aOn: null, aVol: null, sceneKey: null, sceneAt: 0, duck: null, prox: -1 };
+  function musicProximity() {
+    var def = (L.MAPS || {})[state.map]; if (!def || !def.grid) return 0;
+    var pt = playerTile(), best = 99;
+    for (var dy = -7; dy <= 7; dy++) for (var dx = -7; dx <= 7; dx++) {
+      var row = def.grid[pt.y + dy]; if (!row) continue;
+      if (row.charAt(pt.x + dx) === 'W') { var d = Math.max(Math.abs(dx), Math.abs(dy)); if (d < best) best = d; }
+    }
+    return best > 7 ? 0 : Math.max(0, 1 - best / 8);
+  }
+  function musicApplyFrame() {
+    var M = window.VSLC_MUSIC;
+    if (!M || !state) return;
+    var c = SET ? SET.current : null;
+    var mOn = !c || c.musicOn !== false, mVol = (c && typeof c.musicVol === 'number') ? c.musicVol : 0.7;
+    var aOn = !c || c.ambienceOn !== false, aVol = (c && typeof c.ambienceVol === 'number') ? c.ambienceVol : 0.6;
+    if (musCache.mOn !== mOn || musCache.mVol !== mVol) { M.setMusic(mOn, mVol); musCache.mOn = mOn; musCache.mVol = mVol; }
+    if (musCache.aOn !== aOn || musCache.aVol !== aVol) { M.setAmbience(aOn, aVol); musCache.aOn = aOn; musCache.aVol = aVol; }
+    var dk = !!dlg;
+    if (musCache.duck !== dk) { M.setDuck(dk); musCache.duck = dk; }
+    var ph = L.dayPhaseFor ? L.dayPhaseFor(state, c ? c.dayMode : 'cycle') : null;
+    var key = state.map + '|' + (ph ? (ph.isNight ? 'n' : 'd') : '');
+    var nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (key !== musCache.sceneKey || nowMs - musCache.sceneAt > 2000) {
+      M.setScene(state.map, ph || 'day');
+      musCache.sceneKey = key; musCache.sceneAt = nowMs;
+    }
+    var prox = musicProximity();
+    if (Math.abs(prox - musCache.prox) > 0.05) { M.setProximity(prox); musCache.prox = prox; }
+  }
+  if (window.VSLC_MUSIC) {
+    var musUnlock = function () {
+      VSLC_MUSIC.unlock();
+      window.removeEventListener('pointerdown', musUnlock);
+      window.removeEventListener('keydown', musUnlock);
+    };
+    window.addEventListener('pointerdown', musUnlock);
+    window.addEventListener('keydown', musUnlock);
   }
   /* Hộp thoại xác nhận TRONG GAME (DOM) — thay cho hộp thoại gốc của trình duyệt.
      Nguyên nhân gốc của lỗi "cả hai nút Thoát đều chết" trên bản live 1.1.0:
@@ -242,6 +371,7 @@
   // xóa không được ghi lại bởi một lần lưu cuối.
   window.VSLC_BRIDGE = {
     saveNow: saveNow, requestLogout: requestLogout, exitToAuth: exitToAuth,
+    resetZoom: resetZoom,
     getUser: function () { return currentUser; }
   };
 
@@ -253,6 +383,22 @@
   var dlgTypeTimer = null, dlgTypeFull = null; // chữ thoại chạy dần (cài đặt dlgSpeed = 'normal')
   /* ---------- Đợt 2: asset ảnh thật + camera + di chuyển bằng chuột ---------- */
   var camX = 0, camY = 0;                 // camera bám mượt (trạng thái toàn cục)
+  /* ---------- Trạng thái phóng/thu (Luồng C) — chỉ giữ trong PHIÊN chơi:
+     vào phiên mới luôn bắt đầu ở ZOOM_DEFAULT; KHÔNG lưu vào save/cài đặt. */
+  var zoom = ZOOM_DEFAULT, zoomTarget = ZOOM_DEFAULT;
+  // Cử chỉ chụm hai ngón: pointers = pointerId -> {x,y} (tọa độ màn hình);
+  // anchorWorld = điểm thế giới nằm dưới tâm chụm lúc bắt đầu, giữ nguyên
+  // trên màn hình suốt cử chỉ (desiredCam tính lại theo neo mỗi khung).
+  var pinch = { active: false, pointers: {}, startDist: 0, startZoom: ZOOM_DEFAULT, anchorWorld: null, midX: 0, midY: 0, joyCancelled: false };
+  var zoomAnchor = null; // neo lăn chuột {wx, wy, sx, sy} — sống cho tới khi zoom hiển thị bắt kịp đích
+  var pinchSuppressUntil = 0; // cửa sổ nuốt sự kiện chạm/chuột tổng hợp phát sinh ngay sau khi chụm kết thúc
+  function zoomEnabled() { return !SET || SET.current.zoomEnabled !== false; }
+  function resetZoom() {
+    zoom = ZOOM_DEFAULT; zoomTarget = ZOOM_DEFAULT; zoomAnchor = null;
+  }
+  function cancelPinch() {
+    pinch.active = false; pinch.pointers = {}; pinch.anchorWorld = null; pinch.joyCancelled = false;
+  }
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
@@ -261,6 +407,14 @@
   var ASSETS = { bgByMap: {}, chars: {}, props: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
+  // Tranh nền mượt 5 bản đồ còn lại (đợt "Bản đồ mượt + Ngày đêm", Luồng A):
+  // sinh từ dữ liệu grid thật bằng tools/gen-bg-smooth.py, kiểm chứng khớp
+  // dữ liệu bằng tools/verify-bgs.py — lớp đất/nền thuần, prop vẫn vẽ đè lên.
+  ASSETS.bgByMap.duong_mon = loadImg('assets/bg-duong_mon.png');
+  ASSETS.bgByMap.co_chau = loadImg('assets/bg-co_chau.png');
+  ASSETS.bgByMap.kiem_trac_thap = loadImg('assets/bg-kiem_trac_thap.png');
+  ASSETS.bgByMap.thap_noi = loadImg('assets/bg-thap_noi.png');
+  ASSETS.bgByMap.thanh_van_tong = loadImg('assets/bg-thanh_van_tong.png');
   CHAR_LOOKS.forEach(function (id) { ASSETS.chars[id] = loadImg('assets/chars/' + id + '.png'); });
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
@@ -340,6 +494,8 @@
   }
   function startGame(saved) {
     state = L.normalizeSave(saved); // save cũ: bổ sung ví Linh Thạch + cờ mở khóa theo mốc đã qua
+    sessionSaveSeq = (typeof state.saveSeq === 'number' && state.saveSeq > 0) ? Math.floor(state.saveSeq) : 0;
+    saveStaleWarned = false;
     if (SET) {
       SET.loadFor(currentUser, localStorage, isTouchDevice());
       questMinimized = SET.current.questStart === 'min'; // cài đặt "ô nhiệm vụ khi vào game"
@@ -350,6 +506,7 @@
     updateToastTab();
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
     dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; resetJoy();
+    resetZoom(); cancelPinch(); // phiên chơi mới luôn bắt đầu ở mức phóng mặc định 1,0×
     npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
     setMinimapLabel();
     show('screen-game');
@@ -388,10 +545,28 @@
     refreshHUD(); saveNow();
     toast((retro ? 'Nhận bù lộ phí của trưởng lão: +' : 'Trưởng lão tặng lộ phí: +') + L.fmtNum(L.LINH_GIFT_AMOUNT) + ' Linh Thạch (số dư: ' + L.fmtNum(r.balance) + ').', 4600);
   }
+  // Ghi tiến trình — có CHỐNG GHI ĐÈ NGƯỢC (lỗi chặn chơi ở chơi thử live
+  // chương 3): trước đây mọi phiên đang mở đều ghi vô điều kiện, nên một
+  // cửa sổ còn giữ trạng thái cũ (tự lưu mỗi vài giây, lưu khi thoát, lưu
+  // trước khi tải lại) lặng lẽ ghi đè bản lưu mới hơn của phiên khác, làm
+  // tiến trình "quay ngược" về một mốc cũ dù các lần lưu đều báo thành
+  // công. Nay: nếu bản lưu trong kho đã mang số thứ tự cao hơn mốc phiên
+  // này biết, phiên này đã cũ — KHÔNG ghi, trả false để nơi gọi báo thật.
   function saveNow() {
-    if (!state || !currentUser) return;
+    if (!state || !currentUser) return false;
     state.x = Math.round(px / TILE); state.y = Math.round(py / TILE); state.dir = facing;
+    var stored = L.loadGame(localStorage, currentUser);
+    if (stored && (stored.saveSeq || 0) > sessionSaveSeq) {
+      if (!saveStaleWarned) {
+        saveStaleWarned = true;
+        toast('Cảnh báo: tiến trình mới hơn đang nằm ở một phiên chơi khác. Phiên này không ghi đè lên — hãy tải lại trang để chơi tiếp từ tiến trình mới nhất.', 5600);
+      }
+      return false;
+    }
+    state.saveSeq = sessionSaveSeq + 1;
     L.saveGame(localStorage, currentUser, state);
+    sessionSaveSeq = state.saveSeq;
+    return true;
   }
   window.addEventListener('beforeunload', saveNow);
 
@@ -542,9 +717,21 @@
     if (mml) mml.textContent = L.activeMap().name;
   }
   function desiredCam() {
-    var v = computeView(viewW, viewH);
     var def = L.activeMap();
-    return clampCam(px + 16 - v.w / 2, py + 16 - v.h / 2, v.w, v.h, def.w * TILE, def.h * TILE);
+    var worldW = def.w * TILE, worldH = def.h * TILE;
+    // Đang chụm: camera neo tại điểm thế giới dưới tâm hai ngón — điểm đó
+    // giữ nguyên vị trí màn hình trong suốt cử chỉ (theo zoom HIỂN THỊ).
+    if (pinch.active && pinch.anchorWorld) {
+      var pc = camForAnchor(pinch.anchorWorld.x, pinch.anchorWorld.y, pinch.midX, pinch.midY, zoom);
+      return clampCamZoom(pc.x, pc.y, viewW, viewH, zoom, worldW, worldH);
+    }
+    // Lăn chuột chưa bắt kịp đích: camera neo tại điểm thế giới dưới con trỏ.
+    if (zoomAnchor) {
+      var ac = camForAnchor(zoomAnchor.wx, zoomAnchor.wy, zoomAnchor.sx, zoomAnchor.sy, zoom);
+      return clampCamZoom(ac.x, ac.y, viewW, viewH, zoom, worldW, worldH);
+    }
+    var eff = effectiveView(viewW, viewH, zoom);
+    return clampCamZoom(px + 16 - eff.w / 2, py + 16 - eff.h / 2, viewW, viewH, zoom, worldW, worldH);
   }
   function contactShadow(cx, cy, w) {
     ctx.fillStyle = 'rgba(24,34,18,0.18)';
@@ -647,6 +834,11 @@
 
   function render() {
     ctx.setTransform(viewDpr, 0, 0, viewDpr, 0, 0);
+    // Nội suy mức phóng: hiển thị tiến dần về đích mỗi khung (không nhảy bậc);
+    // neo lăn chuột hết vai trò ngay khi hiển thị đã bắt kịp đích.
+    zoom = zoomLerpStep(zoom, zoomTarget);
+    if (zoomAnchor && zoom === zoomTarget) zoomAnchor = null;
+    var effW = viewW / zoom, effH = viewH / zoom; // khung thế giới nhìn thấy ở mức zoom hiện tại
     var dc = desiredCam();
     camX += (dc.x - camX) * 0.18; camY += (dc.y - camY) * 0.18;
     if (Math.abs(dc.x - camX) < 0.5) camX = dc.x;
@@ -654,23 +846,30 @@
     var shX = 0, shY = 0;
     if (shakeT > 0 && (!SET || SET.current.fxShake)) { var m = Math.min(10, shakeT * 9); shX = (Math.random() - 0.5) * m; shY = (Math.random() - 0.5) * m; }
     ctx.fillStyle = '#2c3527'; ctx.fillRect(0, 0, viewW, viewH);
-    ctx.save(); ctx.translate(-camX + shX, -camY + shY);
+    // Ở mức phóng khác 1 thì bật làm mượt ảnh khi co/giãn (vẽ điểm ảnh gốc vẫn
+    // giữ nguyên ở đúng 1,0× như trước); rung màn hình là độ lệch MÀN HÌNH nên
+    // áp trước phép tỉ lệ thế giới.
+    ctx.imageSmoothingEnabled = zoom !== ZOOM_DEFAULT;
+    ctx.save(); ctx.translate(shX, shY); ctx.scale(zoom, zoom); ctx.translate(-camX, -camY);
     // Nền: ảnh toàn bản đồ nếu bản đồ đó có và đã tải; chưa có thì vẽ lưới ô (dự phòng).
     var defR = L.activeMap();
+    // Pha ngày đêm của khung hình này (logic thuần ở js/logic.js; module
+    // logic cũ không có hàm pha thì dnPhase = null và cảnh vẽ như trước).
+    var dnPhase = (L.dayPhaseFor && state) ? L.dayPhaseFor(state, SET ? SET.current.dayMode : 'cycle') : null;
     var bgIm = ASSETS.bgByMap[state.map];
     if (imgReady(bgIm)) {
       ctx.drawImage(bgIm, 0, 0);
     } else {
-      var x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(defR.w - 1, x0 + viewW / TILE + 1);
-      var y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(defR.h - 1, y0 + viewH / TILE + 1);
+      var x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(defR.w - 1, x0 + effW / TILE + 1);
+      var y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(defR.h - 1, y0 + effH / TILE + 1);
       for (var ty = y0; ty <= y1; ty++) for (var tx = x0; tx <= x1; tx++) drawTile(tx, ty, tx * TILE, ty * TILE, L.tileAt(tx, ty));
     }
     // Hạt linh khí lơ lửng trong không gian trấn: thưa, nhẹ, trôi theo gió —
     // xác định theo ô lưới lớn (không lưu trạng thái), tắt theo fxParticles.
     if (fxOn()) {
       var cell = 150;
-      var gx0 = Math.floor(camX / cell) - 1, gx1 = Math.floor((camX + viewW) / cell) + 1;
-      var gy0 = Math.floor(camY / cell) - 1, gy1 = Math.floor((camY + viewH) / cell) + 1;
+      var gx0 = Math.floor(camX / cell) - 1, gx1 = Math.floor((camX + effW) / cell) + 1;
+      var gy0 = Math.floor(camY / cell) - 1, gy1 = Math.floor((camY + effH) / cell) + 1;
       for (var mgx = gx0; mgx <= gx1; mgx++) for (var mgy = gy0; mgy <= gy1; mgy++) {
         var mh = hash2(mgx, mgy);
         if (mh % 3 !== 0) continue;
@@ -852,9 +1051,11 @@
       ctx.beginPath(); ctx.ellipse(px + 16, py + 30, 30 + (1 - pa) * 22, 9 + (1 - pa) * 6, 0, 0, Math.PI * 2); ctx.stroke();
     }
     // Hào quang thổ nạp: hai vòng cung xoay ngược chiều quanh người khi đang nạp.
+    // Ban đêm hào quang rõ hơn một chút (chỉ hình ảnh, không đổi số cân bằng).
     if (meditating && fxOn()) {
       var ma = tNow / 620;
-      ctx.strokeStyle = 'rgba(150,220,255,0.55)'; ctx.lineWidth = 2;
+      var medAlpha = 0.55 + (dnPhase ? dnPhase.night * 0.3 : 0);
+      ctx.strokeStyle = 'rgba(150,220,255,' + medAlpha.toFixed(3) + ')'; ctx.lineWidth = dnPhase && dnPhase.night > 0.5 ? 2.6 : 2;
       ctx.beginPath(); ctx.arc(px + 16, py + 18, 25, ma, ma + Math.PI * 1.25); ctx.stroke();
       ctx.beginPath(); ctx.arc(px + 16, py + 18, 31, -ma * 0.8, -ma * 0.8 + Math.PI * 0.9); ctx.stroke();
     }
@@ -864,7 +1065,68 @@
       ctx.fillStyle = 'rgba(' + p.col + ',' + al + ')';
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
     });
+    // Lớp phủ ngày đêm: SAU toàn bộ thế giới, TRƯỚC giao diện (vẽ trong hệ
+    // tọa độ thế giới ngay trước restore). Độ tối là hàm liên tục theo giờ
+    // (js/logic.js dayPhaseAt) và bị chặn ở trần NIGHT_DARK_MAX nên đêm vẫn
+    // nhìn rõ. Quầng sáng đèn lồng/cửa sổ nhà vẽ bằng composite 'lighter'
+    // chồng lên lớp phủ — sáng xuyên qua màn đêm mà không xóa thế giới.
+    if (dnPhase && dnPhase.dark > 0.004) {
+      var dvx = camX - 40, dvy = camY - 40, dvw = effW + 80, dvh = effH + 80;
+      ctx.fillStyle = 'rgba(' + dnPhase.r + ',' + dnPhase.g + ',' + dnPhase.b + ',' + dnPhase.dark.toFixed(3) + ')';
+      ctx.fillRect(dvx, dvy, dvw, dvh);
+      // Sao li ti nhấp nháy (lớp không khí): xác định theo ô lưới lớn như hạt
+      // linh khí, chỉ hiện khi đêm đã sâu; điểm rất nhỏ và thưa.
+      if (dnPhase.night > 0.55) {
+        var sCell = 110;
+        var sgx0 = Math.floor(camX / sCell) - 1, sgx1 = Math.floor((camX + effW) / sCell) + 1;
+        var sgy0 = Math.floor(camY / sCell) - 1, sgy1 = Math.floor((camY + effH) / sCell) + 1;
+        for (var sgx = sgx0; sgx <= sgx1; sgx++) for (var sgy = sgy0; sgy <= sgy1; sgy++) {
+          var sh = hash2(sgx, sgy);
+          if (sh % 4 !== 0) continue;
+          var sx2 = sgx * sCell + (sh % 80) + 12, sy2 = sgy * sCell + (sh % 70) + 10;
+          var tw = 0.5 + 0.5 * Math.sin(tNow / 900 + sh);
+          ctx.fillStyle = 'rgba(235,242,255,' + ((0.05 + 0.16 * tw) * dnPhase.night).toFixed(3) + ')';
+          ctx.fillRect(sx2, sy2, 1.6, 1.6);
+        }
+      }
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      defR.props.forEach(function (p) {
+        var pcx = (p.x + p.w / 2) * TILE;
+        if (pcx < camX - 90 || pcx > camX + effW + 90) return;
+        if (p.type === 'lantern') {
+          var lcy = (p.y + 1) * TILE;
+          if (lcy < camY - 90 || lcy > camY + effH + 90) return;
+          // Quầng xuyên tâm quanh đèn lồng, nhấp nháy cùng nhịp quầng nền sẵn có.
+          var lfl = 0.92 + 0.08 * Math.sin(tNow / 110 + (p.x * 7 + p.y * 13));
+          var lg = null;
+          try { lg = ctx.createRadialGradient(pcx, lcy, 2, pcx, lcy, 58); } catch (e) { lg = null; }
+          if (lg) {
+            lg.addColorStop(0, 'rgba(255,196,110,' + (0.36 * dnPhase.night * lfl).toFixed(3) + ')');
+            lg.addColorStop(0.45, 'rgba(255,170,80,' + (0.16 * dnPhase.night * lfl).toFixed(3) + ')');
+            lg.addColorStop(1, 'rgba(255,160,70,0)');
+            ctx.fillStyle = lg;
+          } else ctx.fillStyle = 'rgba(255,180,90,' + (0.10 * dnPhase.night * lfl).toFixed(3) + ')'; // ctx tối giản (harness cũ): quầng phẳng mờ thay gradient
+          ctx.beginPath(); ctx.arc(pcx, lcy, 58, 0, Math.PI * 2); ctx.fill();
+        } else if (p.type === 'house' || p.type === 'house_b' || p.type === 'house_c' || p.type === 'house_big' || p.type === 'inn') {
+          // Ánh đèn cửa sổ nhà: XẤP XI theo neo prop (dữ liệu bản đồ không có
+          // tọa độ cửa sổ riêng) — quầng ấm mềm ở thân nhà phía trên chân nhà.
+          var wcy = (p.y + p.h - p.fy) * TILE - 20;
+          if (wcy < camY - 80 || wcy > camY + effH + 80) return;
+          var wg = null;
+          try { wg = ctx.createRadialGradient(pcx, wcy, 2, pcx, wcy, 46); } catch (e) { wg = null; }
+          if (wg) {
+            wg.addColorStop(0, 'rgba(255,186,96,' + (0.20 * dnPhase.night).toFixed(3) + ')');
+            wg.addColorStop(1, 'rgba(255,170,80,0)');
+            ctx.fillStyle = wg;
+          } else ctx.fillStyle = 'rgba(255,180,90,' + (0.07 * dnPhase.night).toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(pcx, wcy, 46, 0, Math.PI * 2); ctx.fill();
+        }
+      });
+      ctx.restore();
+    }
     ctx.restore();
+    ctx.imageSmoothingEnabled = false; // trả lại mặc định vẽ điểm ảnh cho các lớp màn hình về sau
     if (meditating) {
       ctx.fillStyle = 'rgba(160,220,255,0.10)'; ctx.fillRect(0, 0, viewW, viewH);
     }
@@ -1050,7 +1312,7 @@
       state.flags.soulPaidFor = L.chapterOfQuest(state);
       state.soulPower = (state.soulPower || 0) + 10;
       var rsw = L.addLinhThach(state, 25);
-      say([{ who: 'narrate', text: 'Đêm đó, vị "Hồn Sư thần bí" lại tới và đi như một cái bóng. Sáng ra, Trần gia chuyển tới tay ngươi một túi nhỏ — tiền công của một người mà họ không hề biết chính là ngươi. (+25 Linh Thạch' + (rsw.ok ? ', số dư: ' + L.fmtNum(rsw.balance) : '') + '.)' }], function () { refreshHUD(); saveNow(); });
+      say([{ who: 'narrate', text: 'Đêm đó, vị "Hồn Sư thần bí" lại tới và đi như một cái bóng. Sáng ra, Trần gia chuyển tới tay ngươi một túi nhỏ — tiền công của một người mà họ không hề biết chính là ngươi. (+25 Linh Thạch.)' }], function () { refreshHUD(); saveNow(); if (rsw.ok) toast('Số dư Linh Thạch: ' + L.fmtNum(rsw.balance) + '.', 3600); });
     } else if (action === 'ch5_support' || action === 'ch5_nosupport') {
       var supported = false;
       if (action === 'ch5_support') {
@@ -1254,7 +1516,7 @@
       return say(state.flags.uNhanSupported ? ST.SCENE_DUEL : ST.SCENE_DUEL_HARD, function () {
         var cap = L.REALMS[state.realm].tuviNext;
         if (cap) state.tuvi = cap;
-        state.quest = 'q5_done'; refreshHUD(); saveNow();
+        state.quest = 'q6_sinh_le'; refreshHUD(); saveNow(); // nối thẳng sang chương 6 ngay trong phiên
         toast('Hoàn thành chương 5: Trần gia và Hồn Sư thần bí.', 4200);
       });
     }
@@ -1272,7 +1534,7 @@
     }
     if (npc.id === 'tran_chinh_dao' && state.map === 'co_chau' && state.quest === 'q4_doi_chat') {
       return say(state.flags.usedChanCh4 ? ST.SCENE_FAREWELL4_CHAN : ST.SCENE_FAREWELL4, function () {
-        state.quest = 'q4_done'; refreshHUD(); saveNow();
+        state.quest = 'q5_hon_su'; refreshHUD(); saveNow(); // nối thẳng sang chương 5 ngay trong phiên
         toast('Hoàn thành chương 4: Thiên Cơ Các tới nhà.', 4200);
       });
     }
@@ -1683,10 +1945,40 @@
   /* Đột phá Trúc Cơ (chương 8): qua tryBreakthrough sẵn có — điều kiện lần
      lượt nói rõ thiếu gì, đan chỉ bị trừ khi mọi điều kiện đã đủ. */
   function doTrucCo() {
-    if (state.realm >= 2) return say([{ who: 'narrate', text: 'Ngươi đã là tu sĩ Trúc Cơ. Đài đá dưới chân vẫn còn ấm dư âm của lần đột phá ấy.' }]);
+    if (state.realm >= 2) {
+      // Lưới cứu save đã lỡ lên Trúc Cơ bằng nút đột phá thường trước khi
+      // có lớp chặn ở doBreakthrough: cảnh giới đã qua mốc nhưng nhiệm vụ
+      // q8_truc_co còn dở dang — cho hoàn tất nghi lễ ngay tại đài (phát
+      // lại cảnh Trúc Cơ và câu cất lời của mốc này, ghi sổ lời nói nếu
+      // chưa từng ghi) để chuỗi chương 8 vẫn khép được tới q8_thu_tieng.
+      // Không trừ đan, không cấp thưởng ở bước này: khoản thưởng tông 30
+      // Linh Thạch vẫn nằm ở cảnh thu tiếng với trưởng lão, chống trùng
+      // bằng cờ sectReward như luồng chính thống.
+      if (state.quest === 'q8_truc_co') {
+        sfxBigBell();
+        pillarT = 2.8; // cột sáng lớn của mốc Trúc Cơ
+        spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
+        rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 }); // vòng sóng vàng lớn — Thiên Đạo Ấn của mốc mới
+        rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+        shakeT = Math.max(shakeT, 0.8);
+        var daGhiSoTrucCo = (state.spokeLedger || []).some(function (e) { return e && e.ctx === 'loi-dau-o-truc-co'; });
+        if (!daGhiSoTrucCo) L.recordSpeech(state, 8, 'loi-dau-o-truc-co', 'thanh-van-tong');
+        say(ST.SCENE_TRUC_CO, function () {
+          state.quest = 'q8_thu_tieng';
+          refreshHUD(); saveNow();
+          toast('Nghi lễ Trúc Cơ đã hoàn tất tại đài. Về đại điện gặp trưởng lão tông.', 4600);
+        });
+        refreshHUD();
+        return;
+      }
+      return say([{ who: 'narrate', text: 'Ngươi đã là tu sĩ Trúc Cơ. Đài đá dưới chân vẫn còn ấm dư âm của lần đột phá ấy.' }]);
+    }
     if (!(state.realm === 1 && state.stage === 8)) return say([{ who: 'narrate', text: 'Tu vi của ngươi chưa tới Luyện Khí tầng chín viên mãn — chưa thể nghĩ tới Trúc Cơ. Hãy tu luyện tiếp cho tới khi tầng chín đầy hẳn.' }]);
     var cap = L.REALMS[state.realm].tuviNext;
-    if (cap && state.tuvi < cap) return say([{ who: 'narrate', text: 'Tu vi chưa đầy (' + Math.floor(state.tuvi) + '/' + cap + '). Hãy thổ nạp ở điểm linh khí của tông — sân tông phía tây nam quảng trường (điểm linh khí ở phía tây sân luyện) — cho đầy hẳn rồi quay lại đài.' }]);
+    if (cap && state.tuvi < cap) {
+      toast('Tu vi hiện tại: ' + Math.floor(state.tuvi) + '/' + cap + '.', 3600);
+      return say([{ who: 'narrate', text: 'Tu vi chưa đầy. Hãy thổ nạp ở điểm linh khí của tông — sân tông phía tây nam quảng trường (điểm linh khí ở phía tây sân luyện) — cho đầy hẳn rồi quay lại đài.' }]);
+    }
     if (!L.bagHas(state, 'truc_co_dan')) return say([{ who: 'narrate', text: 'Ngươi chưa có Trúc Cơ Đan trong túi. Về Thanh Vân Đại Điện gặp trưởng lão tông — đan của ngươi đang chờ ở đó.' }]);
     var rm = L.bagRemove(state, 'truc_co_dan', 1);
     if (!rm.ok) { toast(rm.reason); return; }
@@ -1720,7 +2012,7 @@
       if (state.unlocked.indexOf('that_tinh') < 0) state.unlocked.push('that_tinh');
       var cap = L.REALMS[state.realm].tuviNext;
       if (cap) state.tuvi = cap; // lĩnh hội công pháp: tu vi đầy tầng
-      state.quest = 'q3_done';
+      state.quest = 'q4_thien_co'; // nối thẳng sang chương 4 ngay trong phiên (không chờ nạp lại save)
       // Mốc mở khóa Túi Trữ Vật (chương 3 — xem docs/part2-design.md): tháp
       // tặng kèm hai quyển công pháp; từ đây nút Túi mới xuất hiện.
       var bagNew = !state.flags.bagUnlocked;
@@ -1819,6 +2111,18 @@
   }
   function doBreakthrough() {
     if (dlg) return;
+    // Chặn ở nguồn tại biên đại cảnh giới Luyện Khí tầng 9 -> Trúc Cơ: nâng
+    // đại cảnh giới là sự kiện truyện tại Đài Trúc Cơ (docs/realm-prep/),
+    // không phải nút bấm thường. Chuỗi chương 8 chưa khép (chưa tới
+    // q8_done) thì nút Đột phá/phím B không được qua mặt Trúc Cơ Đan và
+    // vòng hộ pháp ở đài — nếu không, nhiệm vụ q8_truc_co kẹt vĩnh viễn
+    // vì nó chỉ hoàn tất trong luồng doTrucCo tại đài. Mọi tầng nhỏ và
+    // biên đại cảnh giới khác giữ nguyên hành vi.
+    if (state.realm === 1 && state.stage === L.REALMS[1].stages.length - 1 &&
+        state.tuvi >= L.REALMS[1].tuviNext && state.quest !== 'q8_done') {
+      toast('Đột phá Trúc Cơ là bước qua đại cảnh giới — phải thực hiện tại Đài Trúc Cơ ở phía bắc Thanh Vân Tông cùng Trúc Cơ Đan, theo nhiệm vụ chương 8. Hãy tới đài và tương tác với đài để bắt đầu.', 5600);
+      return;
+    }
     var r = L.tryBreakthrough(state);
     if (!r.ok) { toast(r.reason); return; }
     sfxBell();
@@ -1875,6 +2179,61 @@
     if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
     if (medBtn) medBtn.classList.toggle('active', medLatch);
+  }
+
+  /* ---------- Chỉ thị giờ thế giới (chu kỳ ngày đêm) ---------- */
+  // Biểu tượng mặt trời/mặt trăng vẽ bằng mã trên canvas 16x16 (#clock-icon),
+  // chữ giờ HH:MM từ logic thuần. Chỉ vẽ lại khi phút hiển thị đổi.
+  var clockShown = '';
+  function dayPhaseName(dm, mode) {
+    if (mode === 'day') return 'Ghim ban ngày';
+    if (mode === 'night') return 'Ghim ban đêm';
+    var h = dm / 60;
+    if (h < 5) return 'Đêm khuya';
+    if (h < 6.5) return 'Bình minh';
+    if (h < 11) return 'Sáng';
+    if (h < 14) return 'Trưa';
+    if (h < 17.5) return 'Chiều';
+    if (h < 19.5) return 'Hoàng hôn';
+    if (h < 22) return 'Tối';
+    return 'Đêm khuya';
+  }
+  function drawClockIcon(dm) {
+    var c = $('clock-icon');
+    if (!c || !c.getContext) return;
+    var g = c.getContext('2d');
+    g.clearRect(0, 0, 16, 16);
+    var ph = L.dayPhaseAt ? L.dayPhaseAt(dm) : { night: 0 };
+    if (ph.night < 0.5) {
+      // Mặt trời: đĩa vàng + 8 tia ngắn.
+      g.strokeStyle = '#f3d94e'; g.fillStyle = '#f3d94e'; g.lineWidth = 1.4;
+      g.beginPath(); g.arc(8, 8, 3.4, 0, Math.PI * 2); g.fill();
+      for (var i = 0; i < 8; i++) {
+        var a = i * Math.PI / 4;
+        g.beginPath();
+        g.moveTo(8 + Math.cos(a) * 5.2, 8 + Math.sin(a) * 5.2);
+        g.lineTo(8 + Math.cos(a) * 7.2, 8 + Math.sin(a) * 7.2);
+        g.stroke();
+      }
+    } else {
+      // Mặt trăng khuyết: đĩa sáng bị đĩa nền khoét lệch (destination-out).
+      g.fillStyle = '#e8ecf5';
+      g.beginPath(); g.arc(8, 8, 5.6, 0, Math.PI * 2); g.fill();
+      g.globalCompositeOperation = 'destination-out';
+      g.beginPath(); g.arc(11, 6, 4.8, 0, Math.PI * 2); g.fill();
+      g.globalCompositeOperation = 'source-over';
+    }
+  }
+  function updateClockHud() {
+    if (!state || !L.displayDayMinutes || !L.formatDayTime) return;
+    var mode = SET ? SET.current.dayMode : 'cycle';
+    var dm = L.displayDayMinutes(state, mode);
+    var txt = L.formatDayTime(dm) + '|' + mode;
+    if (txt === clockShown) return;
+    clockShown = txt;
+    var el = $('clock-text'); if (el) el.textContent = L.formatDayTime(dm);
+    var phEl = $('clock-phase'); if (phEl) phEl.textContent = dayPhaseName(dm, mode);
+    drawClockIcon(dm);
   }
 
   /* ---------- Vòng lặp ---------- */
@@ -2019,6 +2378,15 @@
       // Mở thoại thì hủy đường đi bằng chuột và hủy cần cảm ứng.
       clickPath = null; clickTarget = null; resetJoy();
     }
+    // Đồng hồ thế giới: chỉ chạy trong phiên chơi (vòng lặp này), theo tốc
+    // độ cài đặt. Chế độ ghim ngày/đêm thì đồng hồ nền TẠM DỪNG (giờ hiển
+    // thị bị ghim ở 12:00/00:00) — quay về "Theo chu kỳ" là chạy tiếp từ
+    // đúng giờ đã dừng, không nhảy vọt.
+    if (L.advanceDayClock && (!SET || SET.current.dayMode === 'cycle')) {
+      L.advanceDayClock(state, dt, SET ? SET.current.daySpeed : 'normal');
+    }
+    musicApplyFrame();
+    updateClockHud();
     render();
     saveTimer += dt;
     // Tự động lưu theo cài đặt (tắt, hoặc khoảng 5/15/30/60 giây); không có
@@ -2040,7 +2408,7 @@
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0;
       npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
       setMinimapLabel();
-      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy();
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null;
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       saveNow(); refreshHUD();
       toast('Đã tới: ' + L.activeMap().name + '.', 2600);
@@ -2099,7 +2467,10 @@
       say(ST.SCENE_AMBUSH);
     } else if (state.quest === 'q2_cong_thanh' && pt.y >= 67 && Math.abs(pt.x - 48) <= 6) {
       say(ST.SCENE_GATE, function () {
-        state.quest = 'q2_done'; refreshHUD(); saveNow();
+        // Nối THẲNG sang chương 3 ngay trong phiên (trước đây chỉ đặt
+        // q2_done và nhờ khâu chuẩn hóa lúc nạp sau chuyển tiếp — người
+        // chơi không tải lại trang thì cổng tháp không bao giờ mở).
+        state.quest = 'q3_hang_cho'; refreshHUD(); saveNow();
         toast('Hoàn thành chương 2: Tới cổng Cô Châu Thành.', 4200);
       });
     }
@@ -2145,7 +2516,10 @@
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
   $('dialogue').addEventListener('click', function () { if (dlgTypeFinish()) return; if (dlg && dlg.who !== 'choice') nextLine(); });
-  $('btn-save').addEventListener('click', function () { saveNow(); toast('Đã lưu tiến trình.'); });
+  $('btn-save').addEventListener('click', function () {
+    if (saveNow()) toast('Đã lưu tiến trình.');
+    else toast('Chưa lưu được: tiến trình mới hơn đang ở một phiên chơi khác — hãy tải lại trang để chơi tiếp từ bản mới nhất.', 4600);
+  });
   var settingsBtnEl = $('btn-settings');
   if (settingsBtnEl && SET && SET.openPanel) settingsBtnEl.addEventListener('click', function () { SET.openPanel(); });
   var questToggleEl = $('quest-toggle');
@@ -2184,11 +2558,13 @@
   /* ---------- Bấm chuột để di chuyển + nút thanh kỹ năng ---------- */
   function handleCanvasPoint(clientX, clientY) {
     if (!state || dlg) return;
+    if (pinch.active) return; // đang chụm hai ngón: không sinh lệnh đi/tương tác nào
     if (SET && !SET.current.clickMove) return; // cài đặt tắt di chuyển bằng bấm chuột/chạm đất
     var rect = cv.getBoundingClientRect();
-    var wx = (clientX - rect.left) + camX;
-    var wy = (clientY - rect.top) + camY;
-    var tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
+    // MÀN HÌNH -> THẾ GIỚI qua đúng một hàm dùng chung (screenToWorld), đã
+    // gồm cả hệ số phóng: chạm ở mọi mức zoom vẫn trúng đúng ô thế giới.
+    var wpt = screenToWorld(clientX - rect.left, clientY - rect.top, camX, camY, zoom);
+    var tx = Math.floor(wpt.x / TILE), ty = Math.floor(wpt.y / TILE);
     // Chạm thẳng vào đối tượng có tương tác -> đi tới và tự mở (tapInteract);
     // chạm đất trống -> chỉ di chuyển như cũ và hủy hành động chờ trước đó.
     // (Cổng clickMove ở đầu hàm đã chặn cả hai khi cài đặt tắt; thoại đang mở
@@ -2224,17 +2600,44 @@
     suppressTapUntil = 0;
     return within;
   }
+  // Sự kiện tổng hợp (chuột giả lập sau chạm) phát sinh ngay sau cử chỉ chụm
+  // phải bị NUỐT: trong cửa sổ ngắn sau khi chụm kết thúc, một lần chạm/chuột
+  // nối tiếp bị bỏ qua; các lần chạm thật sau đó hoạt động như cũ.
+  function pinchTapBlocked() {
+    if (!pinchSuppressUntil) return false;
+    var within = Date.now() <= pinchSuppressUntil;
+    pinchSuppressUntil = 0;
+    return within;
+  }
   cv.addEventListener('mousedown', function (e) {
     if (e.button !== 0) return;
+    if (pinch.active) return;
     if (joy.state === 'pending' || joy.state === 'stick') return; // đang kéo cần bằng chuột (chế độ Luôn bật)
-    if (tapSuppressed()) return;
+    // Cả hai cửa sổ nuốt đều được TIÊU THỤ trong cùng lần sự kiện này, để
+    // lần chạm thật ngay sau đó không bị nuốt oan bởi cửa sổ còn sót.
+    var supJoy = tapSuppressed(), supPinch = pinchTapBlocked();
+    if (supJoy || supPinch) return;
     handleCanvasPoint(e.clientX, e.clientY);
   });
   cv.addEventListener('touchstart', function (e) {
     if (!e.touches || !e.touches[0]) return;
     e.preventDefault();
+    // Ngón thứ hai chạm xuống / đang trong cử chỉ chụm: TUYỆT ĐỐI không diễn
+    // giải thành chạm-để-đi hay chạm-tương-tác (cử chỉ do pointer events lo).
+    if (pinch.active || e.touches.length >= 2) return;
     if (tapSuppressed()) return;
     handleCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  /* ---------- Phóng/thu bằng lăn chuột: neo tại con trỏ ---------- */
+  cv.addEventListener('wheel', function (e) {
+    if (!state || dlg) return;
+    if (!zoomEnabled()) return; // công tắc cài đặt tắt: lăn chuột không tác dụng
+    if (e.preventDefault) e.preventDefault();
+    var rect = cv.getBoundingClientRect();
+    var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    var wp = screenToWorld(sx, sy, camX, camY, zoom);
+    zoomAnchor = { wx: wp.x, wy: wp.y, sx: sx, sy: sy };
+    zoomTarget = wheelTargetZoom(zoomTarget, e.deltaY);
   }, { passive: false });
   /* Cần điều khiển cảm ứng: chỉ nhận sự kiện pointer type 'touch' trên chính canvas
      (các nút giao diện là phần tử DOM nổi phía trên nên tự nhận chạm trước).
@@ -2249,7 +2652,61 @@
     if (e.pointerType === 'touch') return true;
     return !!(SET && SET.current.joyMode === 'on' && e.pointerType === 'mouse');
   }
+  /* ---------- Cử chỉ chụm hai ngón (Luồng C) ----------
+     Theo dõi MỌI pointer cảm ứng trên canvas (không qua cổng joyPointerOk —
+     phóng/thu là tính năng riêng, kể cả khi cần đang tắt). Ngón thứ hai chạm
+     xuống thì cử chỉ chụm TIẾP QUẢN ngay: cần điều khiển bị hủy tức thì,
+     đường tap-to-move / hẹn tương tác đang chạy bị hủy, và từ đây cho tới
+     khi nhấc hết ngón không một lệnh đi/tương-tác nào được sinh ra. */
+  function pinchPointerPos(e) { var rect = cv.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+  function pinchStartIfReady() {
+    var ids = Object.keys(pinch.pointers);
+    if (ids.length !== 2 || pinch.active) return;
+    var a = pinch.pointers[ids[0]], b = pinch.pointers[ids[1]];
+    var mid = pinchMidpoint(a.x, a.y, b.x, b.y);
+    pinch.active = true;
+    pinch.startDist = pinchDistance(a.x, a.y, b.x, b.y);
+    pinch.startZoom = zoomTarget;
+    pinch.midX = mid.x; pinch.midY = mid.y;
+    pinch.anchorWorld = screenToWorld(mid.x, mid.y, camX, camY, zoom);
+    pinch.joyCancelled = joy.state !== 'idle';
+    resetJoy(); // HỦY cần ngay khi ngón thứ hai xuống — nhân vật dừng nhận hướng từ cần
+    clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
+    zoomAnchor = null;
+  }
+  function pinchMoveUpdate(e) {
+    var p = pinchPointerPos(e);
+    pinch.pointers[e.pointerId] = p;
+    if (!pinch.active) return;
+    var ids = Object.keys(pinch.pointers);
+    if (ids.length !== 2) return;
+    var a = pinch.pointers[ids[0]], b = pinch.pointers[ids[1]];
+    var mid = pinchMidpoint(a.x, a.y, b.x, b.y);
+    pinch.midX = mid.x; pinch.midY = mid.y;
+    if (zoomEnabled()) zoomTarget = pinchTargetZoom(pinch.startZoom, pinch.startDist, pinchDistance(a.x, a.y, b.x, b.y));
+    // Khi công tắc phóng/thu tắt: cử chỉ vẫn tiếp quản để không rò lệnh
+    // đi/tương-tác, nhưng hệ số phóng KHÔNG đổi.
+  }
+  function pinchPointerEnd(e) {
+    if (e.pointerType !== 'touch') return;
+    if (!pinch.pointers[e.pointerId]) return;
+    delete pinch.pointers[e.pointerId];
+    if (pinch.active && Object.keys(pinch.pointers).length < 2) {
+      pinch.active = false; pinch.anchorWorld = null;
+      // Nuốt sự kiện nhả/tổng hợp nối tiếp sau chụm (cả đường cần lẫn đường chạm).
+      pinchSuppressUntil = Date.now() + 700;
+      suppressTapUntil = Date.now() + 700;
+      resetJoy();
+    }
+    // Ngón còn lại (nếu có) KHÔNG trở thành cần hay chạm mới: pointer của nó
+    // đã qua giai đoạn down; nhấc hết ngón thì trạng thái trở lại bình thường.
+  }
   cv.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch' && state && !dlg) {
+      pinch.pointers[e.pointerId] = pinchPointerPos(e);
+      if (Object.keys(pinch.pointers).length >= 2) { pinchStartIfReady(); return; }
+      if (pinch.active) return;
+    }
     if (!joyPointerOk(e) || !state || dlg) return;
     var p = joyPoint(e);
     // Chế độ Luôn hiện sẵn: chạm bắt đầu ngay trên đế cố định -> vào thẳng
@@ -2272,6 +2729,7 @@
     joy.t0 = Date.now(); joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
   });
   cv.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch' && pinch.pointers[e.pointerId]) { pinchMoveUpdate(e); if (pinch.active) return; }
     if (!joyPointerOk(e) || joy.id !== e.pointerId) return;
     if (joy.state !== 'pending' && joy.state !== 'stick') return;
     var p = joyPoint(e); joy.cx = p.x; joy.cy = p.y;
@@ -2300,6 +2758,8 @@
   }
   cv.addEventListener('pointerup', joyEnd);
   cv.addEventListener('pointercancel', joyEnd);
+  cv.addEventListener('pointerup', pinchPointerEnd);
+  cv.addEventListener('pointercancel', pinchPointerEnd);
   $('sk-pha').addEventListener('click', function () { castPha(); });
   $('sk-chan').addEventListener('click', function () { castChan(); });
   $('sk-sword').addEventListener('click', function () { castSword(); });
@@ -2356,6 +2816,33 @@
     toast('Đã nâng cấp Túi Trữ Vật lên tầng ' + next.tier + ' (' + next.cap + ' ô chứa).');
     renderBag(); refreshHUD(); saveNow();
   });
+
+  /* Tay nắm kiểm chứng cho phóng/thu (harness + nút đặt lại trong panel qua
+     VSLC_BRIDGE.resetZoom): đọc trạng thái hiển thị thuần túy, không phải
+     đường lưu dữ liệu — mức phóng không bao giờ đi vào save. */
+  window.VSLC_ZOOM = {
+    ZOOM_MIN: ZOOM_MIN, ZOOM_MAX: ZOOM_MAX, ZOOM_DEFAULT: ZOOM_DEFAULT, ZOOM_LERP: ZOOM_LERP,
+    clampZoom: clampZoom, zoomLerpStep: zoomLerpStep,
+    pinchDistance: pinchDistance, pinchMidpoint: pinchMidpoint, pinchTargetZoom: pinchTargetZoom,
+    wheelTargetZoom: wheelTargetZoom, effectiveView: effectiveView,
+    worldToScreen: worldToScreen, screenToWorld: screenToWorld,
+    camForAnchor: camForAnchor, clampCamZoom: clampCamZoom,
+    getZoom: function () { return zoom; },
+    getTarget: function () { return zoomTarget; },
+    isPinching: function () { return pinch.active; },
+    pinchJoyCancelled: function () { return pinch.joyCancelled; },
+    joyState: function () { return joy.state; },
+    cam: function () { return { x: camX, y: camY }; },
+    getClickTarget: function () { return clickTarget ? { x: clickTarget.x, y: clickTarget.y } : null; },
+    hasClickPath: function () { return !!(clickPath && clickPath.length); },
+    reset: resetZoom,
+    snap: function (z) {
+      zoom = clampZoom(z); zoomTarget = zoom; zoomAnchor = null;
+      var dc = desiredCam(); camX = dc.x; camY = dc.y;
+    },
+    screenToWorldNow: function (sx, sy) { return screenToWorld(sx, sy, camX, camY, zoom); },
+    worldToScreenNow: function (wx, wy) { return worldToScreen(wx, wy, camX, camY, zoom); }
+  };
 
   show('screen-auth');
 })();

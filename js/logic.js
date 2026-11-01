@@ -942,6 +942,7 @@
       unlocked: [],              // 'voice' sau sự kiện mở miệng, 'luyenkhi1' sau đột phá
       quest: 'q_trac',
       map: 'tran',               // bản đồ hiện tại (đa bản đồ từ chương 2)
+      dayMinutes: DAY_DEFAULT_MINUTES, // đồng hồ thế giới: phút-trong-ngày, bắt đầu 08:00 sáng
       spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
@@ -1110,6 +1111,94 @@
     return { ok: true, label: realmName(state.realm, state.stage) };
   }
 
+  /* ---------------- Chu kỳ ngày đêm (đợt "Bản đồ mượt + Ngày đêm") ----------------
+     Đồng hồ thế giới: phút-trong-ngày (0..1440, cho phép lẻ) nằm trong save
+     của nhân vật (state.dayMinutes). Pha sáng là hàm LIÊN TỤC theo giờ: nội
+     suy tuyến tính giữa các mốc neo dưới đây — không nhảy bậc. Độ tối hiệu
+     dụng bị chặn bởi sàn sáng ban đêm NIGHT_DARK_MAX: đêm vẫn nhìn rõ đường
+     đi và NPC. Giờ giấc KHÔNG khóa nhiệm vụ/cổng/NPC nào — chỉ ánh sáng và
+     không khí (điểm móc cho NPC sinh hoạt theo giờ: docs/part2-design.md
+     mục "Ngày đêm"). Mọi số nằm ở hằng số có tên tại đây. */
+  var DAY_MINUTES = 1440;                 // phút trong một ngày game
+  var DAY_DEFAULT_MINUTES = 480;          // 08:00 — giờ mặc định cho save cũ/nhân vật mới
+  var NIGHT_DARK_MAX = 0.45;              // trần độ phủ tối ban đêm (sàn sáng)
+  // Tốc độ đồng hồ theo cài đặt: số PHÚT THẬT cho một ngày game, và tốc độ
+  // quy đổi phút-game/giây-thật tương ứng (1440 / (phút thật * 60)).
+  var DAYNIGHT_REAL_MIN_PER_DAY = { slow: 20, normal: 10, fast: 5 };
+  var DAYNIGHT_MIN_PER_SEC = { slow: 1.2, normal: 2.4, fast: 4.8 };
+  // Mốc neo pha sáng: m = phút trong ngày, dark = độ tối chuẩn hóa 0..1
+  // (nhân NIGHT_DARK_MAX ra độ phủ thật), warm = độ ấm tông màu 0..1
+  // (chạng vạng/bình minh ấm lên, trưa và đêm khuya về 0).
+  var DAY_PHASE_KEYS = [
+    { m: 0, dark: 1, warm: 0 },        // 00:00 đêm khuya
+    { m: 300, dark: 1, warm: 0 },      // 05:00 vẫn đêm
+    { m: 360, dark: 0.72, warm: 0.35 },// 06:00 bình minh bắt đầu
+    { m: 450, dark: 0.12, warm: 0.85 },// 07:30 mặt trời lên, tông ấm
+    { m: 540, dark: 0, warm: 0.25 },   // 09:00 sáng trong
+    { m: 720, dark: 0, warm: 0 },      // 12:00 trưa
+    { m: 960, dark: 0, warm: 0.15 },   // 16:00 chiều
+    { m: 1050, dark: 0.12, warm: 0.7 },// 17:30 chiều tà
+    { m: 1140, dark: 0.68, warm: 0.95 },// 19:00 hoàng hôn
+    { m: 1200, dark: 1, warm: 0.3 },   // 20:00 đêm xuống
+    { m: 1290, dark: 1, warm: 0 },     // 21:30 đêm khuya
+    { m: 1440, dark: 1, warm: 0 }      // 24:00 = 00:00
+  ];
+  function normalizeDayMinutes(v) {
+    var n = Number(v);
+    if (!isFinite(n)) return DAY_DEFAULT_MINUTES;
+    n = n % DAY_MINUTES;
+    if (n < 0) n += DAY_MINUTES;
+    return n;
+  }
+  // Pha sáng tại một phút-trong-ngày bất kỳ: nội suy tuyến tính giữa hai mốc
+  // neo kề nhau. Trả: dark = độ phủ tối HIỆU DỤNG (đã nhân trần 0,45),
+  // night = hệ số đêm 0..1 (cho quầng đèn/sao/hào quang), warm = tông ấm,
+  // r/g/b = màu lớp phủ (đêm lạnh ngả ấm theo warm).
+  function dayPhaseAt(minutes) {
+    var m = normalizeDayMinutes(minutes);
+    var a = DAY_PHASE_KEYS[0], b = DAY_PHASE_KEYS[DAY_PHASE_KEYS.length - 1];
+    for (var i = 0; i < DAY_PHASE_KEYS.length - 1; i++) {
+      if (m >= DAY_PHASE_KEYS[i].m && m <= DAY_PHASE_KEYS[i + 1].m) { a = DAY_PHASE_KEYS[i]; b = DAY_PHASE_KEYS[i + 1]; break; }
+    }
+    var span = b.m - a.m, t = span > 0 ? (m - a.m) / span : 0;
+    var darkN = a.dark + (b.dark - a.dark) * t;
+    var warm = a.warm + (b.warm - a.warm) * t;
+    return {
+      minutes: m,
+      dark: darkN * NIGHT_DARK_MAX,
+      night: darkN,
+      warm: warm,
+      r: Math.round(10 + (122 - 10) * warm),
+      g: Math.round(16 + (54 - 16) * warm),
+      b: Math.round(44 + (18 - 44) * warm),
+      isNight: darkN >= 0.5
+    };
+  }
+  // Tiến đồng hồ dt giây thật theo tốc độ cài đặt ('slow'|'normal'|'fast';
+  // giá trị lạ rơi về 'normal'). Vòng qua 24h nhờ normalizeDayMinutes.
+  function advanceDayClock(state, dtSec, speedKey) {
+    if (!state) return 0;
+    var cur = (typeof state.dayMinutes === 'number' && isFinite(state.dayMinutes)) ? state.dayMinutes : DAY_DEFAULT_MINUTES;
+    var rate = DAYNIGHT_MIN_PER_SEC[speedKey] || DAYNIGHT_MIN_PER_SEC.normal;
+    var dt = Number(dtSec);
+    if (!isFinite(dt) || dt < 0) dt = 0;
+    state.dayMinutes = normalizeDayMinutes(cur + rate * dt);
+    return state.dayMinutes;
+  }
+  // Phút HIỂN THỊ theo chế độ cài đặt: 'day' ghim 12:00, 'night' ghim 00:00,
+  // còn lại ('cycle' hoặc lạ) dùng giờ thật trong save.
+  function displayDayMinutes(state, mode) {
+    if (mode === 'day') return 720;
+    if (mode === 'night') return 0;
+    return normalizeDayMinutes(state ? state.dayMinutes : undefined);
+  }
+  function dayPhaseFor(state, mode) { return dayPhaseAt(displayDayMinutes(state, mode)); }
+  function formatDayTime(minutes) {
+    var m = Math.floor(normalizeDayMinutes(minutes));
+    var hh = Math.floor(m / 60), mm = m % 60;
+    return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+
   /* ---------------- Ví Linh Thạch ---------------- */
   // Linh Thạch bị khóa ở giai đoạn phàm nhân: không hiện ví, không cộng được.
   // Mốc mở: đột phá Luyện Khí tầng 1 (xem tryBreakthrough ở trên).
@@ -1161,6 +1250,7 @@
   function normalizeSave(state) {
     if (!state || typeof state !== 'object') return state;
     state.linhThach = linhBalance(state);
+    state.dayMinutes = normalizeDayMinutes(state.dayMinutes); // save cũ chưa có đồng hồ -> 08:00 mặc định, không lỗi
     if (!state.flags || typeof state.flags !== 'object') state.flags = { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false };
     if (typeof state.flags.ltGift !== 'boolean') state.flags.ltGift = false;
     if (typeof state.flags.dummyBroken !== 'boolean') state.flags.dummyBroken = false;
@@ -1354,6 +1444,10 @@
     chapterOfQuest: chapterOfQuest, soulServiceDue: soulServiceDue, healSoul: healSoul,
     ITEM_DEFS: ITEM_DEFS, BAG_TIERS: BAG_TIERS, bagOf: bagOf, bagCount: bagCount, bagHas: bagHas,
     bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors,
+    DAY_MINUTES: DAY_MINUTES, DAY_DEFAULT_MINUTES: DAY_DEFAULT_MINUTES, NIGHT_DARK_MAX: NIGHT_DARK_MAX,
+    DAYNIGHT_REAL_MIN_PER_DAY: DAYNIGHT_REAL_MIN_PER_DAY, DAYNIGHT_MIN_PER_SEC: DAYNIGHT_MIN_PER_SEC, DAY_PHASE_KEYS: DAY_PHASE_KEYS,
+    normalizeDayMinutes: normalizeDayMinutes, advanceDayClock: advanceDayClock,
+    dayPhaseAt: dayPhaseAt, displayDayMinutes: displayDayMinutes, dayPhaseFor: dayPhaseFor, formatDayTime: formatDayTime,
     LINH_GIFT_AMOUNT: LINH_GIFT_AMOUNT, walletOpen: walletOpen, fmtNum: fmtNum,
     linhBalance: linhBalance, addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, addSectMerit: addSectMerit, normalizeSave: normalizeSave,
     MAPS: MAPS, activeMap: activeMap, activeMapId: activeMapId, setActiveMap: setActiveMap,
