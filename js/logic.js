@@ -293,6 +293,49 @@
     return { ok: true, label: realmName(state.realm, state.stage) };
   }
 
+  /* ---------------- Chọn hướng 8 chiều + cần điều khiển cảm ứng ---------------- */
+  // Chuẩn: docs/char-sheet-8dir.md mục 4 và docs/touch-joystick.md mục 3.
+  // Hàng sheet theo chiều kim đồng hồ từ hướng xuống: 0 down, 1 down-right,
+  // 2 right, 3 up-right, 4 up, 5 up-left, 6 left, 7 down-left.
+  var DIR8_HYSTERESIS_DEG = 32.5; // nửa cung 22,5° + biên 10°
+  var JOY_DEAD = 0.18;            // vùng chết = 18% bán kính cần
+  var JOY_MIN_SPEED = 0.45;       // tốc độ tối thiểu khi vừa ra khỏi vùng chết
+  var JOY_STICK_DIST = 12;        // kéo lệch quá 12px => chế độ cần
+  var JOY_STICK_MS = 250;         // giữ quá 250ms => chế độ cần
+  // Góc của vector đo từ trục xuống (a = atan2(dx, dy), dương về phía phải).
+  // Trễ chuyển hướng: còn lệch khỏi tâm cung của hướng cũ không quá 32,5°
+  // thì giữ hướng cũ, tránh rung hình khi vector đi gần biên cung.
+  function dir8FromVector(dx, dy, prevDir8) {
+    var prevOk = typeof prevDir8 === 'number' && isFinite(prevDir8) &&
+      Math.floor(prevDir8) === prevDir8 && prevDir8 >= 0 && prevDir8 <= 7;
+    var prev = prevOk ? prevDir8 : 0;
+    if (!dx && !dy) return prev;
+    var a = Math.atan2(dx, dy);
+    var k = Math.round(a / (Math.PI / 4)) % 8;
+    if (k < 0) k += 8;
+    if (prevOk) {
+      var center = (prev <= 4 ? prev * 45 : (prev - 8) * 45) * Math.PI / 180;
+      var diff = Math.abs(Math.atan2(Math.sin(a - center), Math.cos(a - center)));
+      if (diff <= DIR8_HYSTERESIS_DEG * Math.PI / 180 + 1e-9) return prev;
+    }
+    return k;
+  }
+  // Chuẩn hóa vector kéo của cần: áp vùng chết, tốc độ tỉ lệ từ JOY_MIN_SPEED
+  // (ở mép vùng chết) tới 1 (ở mép vòng và quá mép), (ux, uy) là vector đơn vị.
+  function joyNormalize(dxPx, dyPx, radius) {
+    var r = Number(radius) || 0;
+    var dist = Math.sqrt(dxPx * dxPx + dyPx * dyPx);
+    var dead = JOY_DEAD * r;
+    if (!(r > 0) || dist === 0 || dist <= dead) return { active: false, ux: 0, uy: 0, speed: 0 };
+    var t = (dist - dead) / (r - dead);
+    if (t < 0) t = 0; else if (t > 1) t = 1;
+    return { active: true, ux: dxPx / dist, uy: dyPx / dist, speed: JOY_MIN_SPEED + (1 - JOY_MIN_SPEED) * t };
+  }
+  // Phân loại một lần chạm: kéo xa hoặc giữ lâu là 'stick', còn lại là 'tap'.
+  function joyClassify(durationMs, distPx) {
+    return (distPx > JOY_STICK_DIST || durationMs > JOY_STICK_MS) ? 'stick' : 'tap';
+  }
+
   /* ---------------- Tài khoản local ---------------- */
   // storage: đối tượng có getItem/setItem/removeItem (localStorage hoặc bản giả lập trong test).
   var ACC_KEY = 'vslc_accounts', SAVE_PREFIX = 'vslc_save_';
@@ -337,7 +380,9 @@
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, tryBreakthrough: tryBreakthrough,
     register: register, login: login, saveGame: saveGame, loadGame: loadGame,
-    ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX
+    ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX,
+    dir8FromVector: dir8FromVector, joyNormalize: joyNormalize, joyClassify: joyClassify,
+    JOY_DEAD: JOY_DEAD, JOY_MIN_SPEED: JOY_MIN_SPEED, JOY_STICK_DIST: JOY_STICK_DIST, JOY_STICK_MS: JOY_STICK_MS
   };
   global.VSLC = VSLC;
   if (typeof module !== 'undefined' && module.exports) module.exports = VSLC;

@@ -119,6 +119,35 @@
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
   var DIR_ROW = { down: 0, up: 1, right: 2, left: 3 }; // hàng trong sheet nhân vật
+  /* ---------- Đợt 8 hướng + cần cảm ứng (docs/char-sheet-8dir.md, docs/touch-joystick.md) ---------- */
+  // Nhân vật đã chuyển sang sheet 8 hướng 480x960 (ô 96x120, hàng = dir8, cột = khung).
+  // Nhân vật chưa có trong bảng này vẫn dùng sheet cũ 128x320 (ô 64x80, DIR_ROW).
+  var CHAR8 = { player_nam: true };
+  var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
+  var DIR8_EVEN_DIR = { 0: 'down', 2: 'right', 4: 'up', 6: 'left' }; // hàng chẵn -> tên hướng 4 chính
+  var dir8 = 0;          // hướng HIỂN THỊ riêng của người chơi (0..7); `facing` 4 hướng vẫn là hướng logic
+  var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..4 chu kỳ bước (mỗi khung ~0,11s)
+  var stepTimer = 0;
+  function isChar8(look, im) {
+    return !!(CHAR8[look] && im && im.naturalWidth === 480 && im.naturalHeight === 960);
+  }
+  // Hình chữ nhật nguồn trong sheet: sheet mới -> ô 96x120 (hàng dir8, cột frame8);
+  // sheet cũ -> ô 64x80 (hàng DIR_ROW theo hướng 4 chính, cột frame01).
+  function charSrc(look, im, dirName, d8, frame8, frame01) {
+    if (isChar8(look, im)) return { x: frame8 * 96, y: d8 * 120, w: 96, h: 120 };
+    return { x: frame01 * 64, y: (DIR_ROW[dirName] || 0) * 80, w: 64, h: 80 };
+  }
+  // Hướng 4 chính gần nhất của một dir8 (làm tròn về hàng chẵn) — cho sprite lưới dự phòng.
+  function dir8NearDir(d8) {
+    return DIR8_EVEN_DIR[(Math.round(d8 / 2) * 2) % 8] || 'down';
+  }
+  /* ---------- Cần điều khiển cảm ứng (floating joystick) ---------- */
+  var JOY_R = 56; // bán kính vòng cần (px, hệ tọa độ màn hình)
+  var joy = { state: 'idle', id: null, sx: 0, sy: 0, cx: 0, cy: 0, t0: 0, active: false, ux: 0, uy: 0, speed: 0 };
+  var suppressTapUntil = 0; // sau một lần kéo cần, chặn 1 lần chạm nối tiếp (click chuột tổng hợp) trong cửa sổ ngắn
+  function resetJoy() {
+    joy.state = 'idle'; joy.id = null; joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
+  }
   var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1 };
   // Vật thể trang trí thị giác: CHỈ vẽ, không vào logic, không chặn đường.
   // PHẢI GIỮ ĐỒNG BỘ với VISUAL_DECOR trong tools/dump-scene.js.
@@ -146,11 +175,18 @@
     applyQuestMin();
     updateToastTab();
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
+    dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; resetJoy();
     npcsLive = L.NPCS.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
     show('screen-game');
     $('hud-name').textContent = state.name;
     var pt = $('portrait');
-    if (pt) pt.style.backgroundImage = 'url(assets/chars/' + (saved.gender === 'nu' ? 'player_nu' : 'player_nam') + '.png)';
+    if (pt) {
+      var pLook = saved.gender === 'nu' ? 'player_nu' : 'player_nam';
+      pt.style.backgroundImage = 'url(assets/chars/' + pLook + '.png)';
+      // Ô down/đứng yên phải lấp đúng khung chân dung 40x50 ở cả hai định dạng sheet.
+      if (CHAR8[pLook]) { pt.style.backgroundSize = '200px 400px'; pt.style.backgroundPosition = '0 0'; }
+      else { pt.style.backgroundSize = '80px 200px'; pt.style.backgroundPosition = '0 0'; }
+    }
     var dc0 = desiredCam();
     camX = dc0.x; camY = dc0.y;
     clickPath = null; clickTarget = null; medLatch = false;
@@ -497,7 +533,9 @@
         ctx.beginPath(); ctx.ellipse(n.x * TILE + 16, (n.y + 1) * TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var nim = ASSETS.chars[n.look], nTop;
         if (imgReady(nim)) {
-          ctx.drawImage(nim, 0, (DIR_ROW[n.dir] || 0) * 80, 64, 80, n.x * TILE + 16 - 32, (n.y + 1) * TILE - 80, 64, 80);
+          // NPC đứng yên: khung 0; sheet mới dùng hàng chẵn theo hướng 4 chính của NPC.
+          var nsrc = charSrc(n.look, nim, n.dir, DIR8_ROW4[n.dir] || 0, 0, 0);
+          ctx.drawImage(nim, nsrc.x, nsrc.y, nsrc.w, nsrc.h, n.x * TILE + 16 - 32, (n.y + 1) * TILE - 80, 64, 80);
           nTop = (n.y + 1) * TILE - 80;
         } else {
           drawSprite(S.charSprite(n.look, n.dir, 0), n.x * TILE, n.y * TILE - 8, 2);
@@ -517,15 +555,18 @@
         ctx.fillText(d.s.text, gx + 16, gy + 9.5);
       } else if (d.kind === 'player') {
         var look = state.gender === 'nu' ? 'player_nu' : 'player_nam';
-        var fr = moving ? walkFrame : 0;
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var plim = ASSETS.chars[look], pTop;
         if (imgReady(plim)) {
-          ctx.drawImage(plim, fr * 64, (DIR_ROW[facing] || 0) * 80, 64, 80, px + 16 - 32, py + 32 - 80, 64, 80);
+          // Sheet mới: hàng dir8, cột = pha bước 1..4 (đứng yên cột 0).
+          // Sheet cũ: hàng DIR_ROW theo facing, cột = pha%2 khi đi, 0 khi đứng.
+          var psrc = charSrc(look, plim, facing, dir8, moving ? stepPhase : 0, moving ? stepPhase % 2 : 0);
+          ctx.drawImage(plim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80, 64, 80);
           pTop = py + 32 - 80;
         } else {
-          drawSprite(S.charSprite(look, facing, fr), px, py - 8, 2);
+          // Ảnh chưa tải: sprite lưới theo hướng chính gần nhất của dir8, khung 1 khi đi / 0 khi đứng.
+          drawSprite(S.charSprite(look, dir8NearDir(dir8), moving ? 1 : 0), px, py - 8, 2);
           pTop = py - 8;
         }
         labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
@@ -559,6 +600,20 @@
       ctx.fillStyle = 'rgba(160,220,255,0.10)'; ctx.fillRect(0, 0, viewW, viewH);
     }
     if (flashA > 0) { ctx.fillStyle = 'rgba(255,250,230,' + flashA + ')'; ctx.fillRect(0, 0, viewW, viewH); }
+    // Cần điều khiển cảm ứng: vẽ ở hệ tọa độ màn hình (transform DPR còn hiệu lực sau restore),
+    // chỉ hiện khi đang chạm giữ ở chế độ cần.
+    if (joy.state === 'stick') {
+      var jdx = joy.cx - joy.sx, jdy = joy.cy - joy.sy;
+      var jdist = Math.sqrt(jdx * jdx + jdy * jdy);
+      var jclamp = Math.min(jdist, JOY_R);
+      var jux = jdist > 0 ? jdx / jdist : 0, juy = jdist > 0 ? jdy / jdist : 0;
+      ctx.beginPath(); ctx.arc(joy.sx, joy.sy, JOY_R, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(18,24,18,0.38)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,246,220,0.85)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(joy.sx + jux * jclamp, joy.sy + juy * jclamp, 26, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,246,220,0.55)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(40,32,20,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
     drawMinimap();
   }
 
@@ -576,7 +631,7 @@
   function addFloat(x, y, text, color) { floats.push({ x: x, y: y, text: text, color: color || '255,235,170', a: 1 }); }
 
   /* ---------- Thoại ---------- */
-  function say(lines, cb) { clickPath = null; clickTarget = null; dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  function say(lines, cb) { clickPath = null; clickTarget = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
   function nextLine() {
     if (!dlgQueue.length) { dlg = null; $('dialogue').classList.add('hidden'); if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } return; }
     dlg = dlgQueue.shift();
@@ -624,22 +679,33 @@
   }
 
   /* ---------- Tương tác ---------- */
+  // Ô nhân vật đang đứng, tính theo HỘP CHÂN (hộp va chạm của tryMove:
+  // x px+6..px+26, y py+22..py+31) chứ KHÔNG theo tâm sprite (px+16, py+16).
+  // Khi đi từ phía nam tới áp sát vật/NPC, hộp chân vẫn còn ở ô phía nam nhưng
+  // tâm sprite đã lọt sang ô của vật (py+16 < py+22) — suy ô từ tâm sẽ lệch 1
+  // hàng lên trên, khiến frontTile trượt khỏi vật/NPC ngay trước mặt và nhánh
+  // dự phòng (khoảng cách tới ô người chơi === 1) cũng trượt theo (lỗi E chết
+  // khi áp sát bia đá/trưởng lão từ phía nam). Điểm mẫu y lấy giữa hộp chân.
+  function playerTile() {
+    return { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 27) / TILE) };
+  }
   function frontTile() {
-    var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
-    if (facing === 'up') return { x: cx, y: cy - 1 };
-    if (facing === 'down') return { x: cx, y: cy + 1 };
-    if (facing === 'left') return { x: cx - 1, y: cy };
-    return { x: cx + 1, y: cy };
+    var pt = playerTile();
+    if (facing === 'up') return { x: pt.x, y: pt.y - 1 };
+    if (facing === 'down') return { x: pt.x, y: pt.y + 1 };
+    if (facing === 'left') return { x: pt.x - 1, y: pt.y };
+    return { x: pt.x + 1, y: pt.y };
   }
   function interact() {
     if (dlg) { if (dlg.who !== 'choice') nextLine(); return; }
     var ft = frontTile();
+    var pt = playerTile();
     var npc = npcsLive.filter(function (n) { return n.x === ft.x && n.y === ft.y; })[0];
     if (!npc) { // cho phép tương tác NPC kề bên khi quay chưa khớp
-      npc = npcsLive.filter(function (n) { return Math.abs(n.x - ft.x) + Math.abs(n.y - ft.y) <= 1 && Math.abs(n.x - Math.floor((px + 16) / TILE)) + Math.abs(n.y - Math.floor((py + 16) / TILE)) === 1; })[0];
+      npc = npcsLive.filter(function (n) { return Math.abs(n.x - ft.x) + Math.abs(n.y - ft.y) <= 1 && Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y) === 1; })[0];
     }
     if (npc) return talkTo(npc);
-    var p = L.propAt(ft.x, ft.y) || L.propAt(Math.floor((px + 16) / TILE), Math.floor((py + 16) / TILE) + 1);
+    var p = L.propAt(ft.x, ft.y) || L.propAt(pt.x, pt.y + 1);
     if (p && p.id === 'bia_trac_linh') return touchStele();
     if (p && p.id === 'coc_go') {
       if (state.flags.dummyBroken) return say([{ who: 'narrate', text: 'Cọc gỗ đã gãy. Tiếng nói đầu tiên của ngươi làm nó nứt từ trong lõi.' }]);
@@ -762,37 +828,70 @@
     floats.forEach(function (f) { f.y -= dt * 26; f.a -= dt * 0.8; });
     meditating = false;
     if (!dlg) {
+      // Giữ chạm quá ngưỡng thời gian (kể cả không kéo) cũng vào chế độ cần.
+      if (joy.state === 'pending' && Date.now() - joy.t0 > L.JOY_STICK_MS) {
+        joy.state = 'stick';
+        clickPath = null; clickTarget = null; medLatch = false;
+        var n0 = L.joyNormalize(joy.cx - joy.sx, joy.cy - joy.sy, JOY_R);
+        joy.active = n0.active; joy.ux = n0.ux; joy.uy = n0.uy; joy.speed = n0.speed;
+      }
       var sp = 132, dx = 0, dy = 0;
       var manual = false;
       if (keys['arrowleft'] || keys['a']) { dx = -sp; facing = 'left'; manual = true; }
       else if (keys['arrowright'] || keys['d']) { dx = sp; facing = 'right'; manual = true; }
       if (keys['arrowup'] || keys['w']) { dy = -sp; facing = 'up'; manual = true; }
       else if (keys['arrowdown'] || keys['s']) { dy = sp; facing = 'down'; manual = true; }
-      if (manual) { clickPath = null; clickTarget = null; medLatch = false; }
+      if (manual) {
+        clickPath = null; clickTarget = null; medLatch = false;
+        resetJoy(); // phím di chuyển hủy trạng thái cần ngay
+        dir8 = L.dir8FromVector(dx, dy, dir8);
+      }
+      // Cần cảm ứng: ghi đè đường bấm chuột (đường đã bị hủy ngay khi vào chế độ cần);
+      // phím tay vẫn ưu tiên cao nhất. Cùng một đường chọn hướng dir8FromVector.
+      if (!manual && joy.state === 'stick') {
+        var jn = L.joyNormalize(joy.cx - joy.sx, joy.cy - joy.sy, JOY_R);
+        joy.active = jn.active; joy.ux = jn.ux; joy.uy = jn.uy; joy.speed = jn.speed;
+        if (jn.active) {
+          dx = jn.ux * sp * jn.speed; dy = jn.uy * sp * jn.speed;
+          dir8 = L.dir8FromVector(dx, dy, dir8);
+          if (Math.abs(jn.ux) >= Math.abs(jn.uy)) facing = jn.ux > 0 ? 'right' : 'left';
+          else facing = jn.uy > 0 ? 'down' : 'up';
+        }
+      }
       // Di chuyển bằng chuột: đi theo các ô của clickPath tới tâm ô kế tiếp.
-      if (!manual && clickPath && clickPath.length) {
+      if (!manual && joy.state !== 'stick' && clickPath && clickPath.length) {
         var wp = clickPath[0];
         var mdx = (wp.x * TILE + 16) - (px + 16), mdy = (wp.y * TILE + 16) - (py + 16);
         if (Math.abs(mdx) < 3 && Math.abs(mdy) < 3) {
           clickPath.shift();
           if (!clickPath.length) { clickPath = null; clickTarget = null; }
-        } else if (Math.abs(mdx) >= Math.abs(mdy) && mdx !== 0) {
-          dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
-        } else if (mdy !== 0) {
-          dy = mdy > 0 ? sp : -sp; facing = mdy > 0 ? 'down' : 'up';
-        } else if (mdx !== 0) {
-          dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+        } else {
+          // Hướng hiển thị tính từ vector thật tới điểm đường đi kế tiếp (có thể chéo).
+          dir8 = L.dir8FromVector(mdx, mdy, dir8);
+          if (Math.abs(mdx) >= Math.abs(mdy) && mdx !== 0) {
+            dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+          } else if (mdy !== 0) {
+            dy = mdy > 0 ? sp : -sp; facing = mdy > 0 ? 'down' : 'up';
+          } else if (mdx !== 0) {
+            dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+          }
         }
       }
       moving = !!(dx || dy);
       if (moving) {
         walkTimer += dt; if (walkTimer > 0.16) { walkFrame = 1 - walkFrame; walkTimer = 0; }
+        // Pha bước cho sheet 8 hướng: chạy 1->2->3->4 lặp, mỗi khung ~0,11s.
+        if (stepPhase === 0) { stepPhase = 1; stepTimer = 0; }
+        else {
+          stepTimer += dt;
+          while (stepTimer >= 0.11) { stepTimer -= 0.11; stepPhase = stepPhase % 4 + 1; }
+        }
         var prevPx = px, prevPy = py;
         tryMove(dx * dt, 0); tryMove(0, dy * dt);
         if (clickPath && px === prevPx && py === prevPy) { clickPath = null; clickTarget = null; } // bị chặn hẳn thì bỏ đường
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
-        walkFrame = 0;
+        walkFrame = 0; stepPhase = 0; stepTimer = 0;
         state.silence = L.silenceGain('idle', dt, state.silence);
       }
       // thổ nạp cạnh giếng (phím T giữ, hoặc chốt thổ nạp từ thanh kỹ năng)
@@ -808,8 +907,8 @@
         refreshHUD();
       }
     } else {
-      // Mở thoại thì hủy đường đi bằng chuột.
-      clickPath = null; clickTarget = null;
+      // Mở thoại thì hủy đường đi bằng chuột và hủy cần cảm ứng.
+      clickPath = null; clickTarget = null; resetJoy();
     }
     render();
     saveTimer += dt;
@@ -902,15 +1001,67 @@
     if (path && path.length) { clickPath = path; clickTarget = dest; medLatch = false; }
     else { clickPath = null; clickTarget = null; }
   }
+  // Sau một lần kéo cần, trình duyệt có thể phát thêm 1 sự kiện chuột tổng hợp nối tiếp:
+  // chặn đúng lần đó (trong cửa sổ ngắn), các lần chạm thật sau vẫn bình thường.
+  function tapSuppressed() {
+    if (!suppressTapUntil) return false;
+    var within = Date.now() <= suppressTapUntil;
+    suppressTapUntil = 0;
+    return within;
+  }
   cv.addEventListener('mousedown', function (e) {
     if (e.button !== 0) return;
+    if (tapSuppressed()) return;
     handleCanvasPoint(e.clientX, e.clientY);
   });
   cv.addEventListener('touchstart', function (e) {
     if (!e.touches || !e.touches[0]) return;
     e.preventDefault();
+    if (tapSuppressed()) return;
     handleCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
+  /* Cần điều khiển cảm ứng: chỉ nhận sự kiện pointer type 'touch' trên chính canvas
+     (các nút giao diện là phần tử DOM nổi phía trên nên tự nhận chạm trước).
+     Chạm nhanh rồi thả = tap-to-move do handler touchstart ở trên xử lý như cũ;
+     kéo lệch quá ngưỡng hoặc giữ quá ngưỡng thời gian = chế độ cần (vòng lặp sẽ
+     tự nâng 'pending' thành 'stick' khi giữ lâu mà không kéo). */
+  function joyPoint(e) { var rect = cv.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+  cv.addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch' || !state || dlg) return;
+    var p = joyPoint(e);
+    joy.state = 'pending'; joy.id = e.pointerId;
+    joy.sx = p.x; joy.sy = p.y; joy.cx = p.x; joy.cy = p.y;
+    joy.t0 = Date.now(); joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (e.pointerType !== 'touch' || joy.id !== e.pointerId) return;
+    if (joy.state !== 'pending' && joy.state !== 'stick') return;
+    var p = joyPoint(e); joy.cx = p.x; joy.cy = p.y;
+    var ddx = joy.cx - joy.sx, ddy = joy.cy - joy.sy;
+    var dist = Math.sqrt(ddx * ddx + ddy * ddy);
+    if (joy.state === 'pending' && dist > L.JOY_STICK_DIST) {
+      joy.state = 'stick';
+      clickPath = null; clickTarget = null; medLatch = false; // vào chế độ cần: hủy lệnh tap-to-move đang chạy
+    }
+    if (joy.state === 'stick') {
+      var n2 = L.joyNormalize(ddx, ddy, JOY_R);
+      joy.active = n2.active; joy.ux = n2.ux; joy.uy = n2.uy; joy.speed = n2.speed;
+    }
+  });
+  function joyEnd(e) {
+    if (e.pointerType !== 'touch' || joy.id !== e.pointerId) return;
+    var endStick = joy.state === 'stick';
+    if (joy.state === 'pending') {
+      var ddx = joy.cx - joy.sx, ddy = joy.cy - joy.sy;
+      var dist = Math.sqrt(ddx * ddx + ddy * ddy);
+      // 'tap' => giữ nguyên tap-to-move cho handler touchstart hiện tại; 'stick' => coi như vừa dùng cần.
+      if (L.joyClassify(Date.now() - joy.t0, dist) === 'stick') endStick = true;
+    }
+    if (endStick) suppressTapUntil = Date.now() + 700;
+    resetJoy(); // nhấc ngón tay: cần tắt, nhân vật dừng
+  }
+  cv.addEventListener('pointerup', joyEnd);
+  cv.addEventListener('pointercancel', joyEnd);
   $('sk-pha').addEventListener('click', function () { castPha(); });
   $('sk-chan').addEventListener('click', function () { castChan(); });
   $('sk-med').addEventListener('click', function () { medLatch = !medLatch; refreshHUD(); });
