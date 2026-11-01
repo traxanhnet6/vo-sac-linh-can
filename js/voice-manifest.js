@@ -175,13 +175,13 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "truong_lao"
   },
-  "f05c82e52cf9": {
-   "f": "vf05c82e52cf9.mp3",
+  "64fb9ccac3a4": {
+   "f": "v64fb9ccac3a4.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "7a5741f272cf": {
-   "f": "v7a5741f272cf.mp3",
+  "1fc26cc36a88": {
+   "f": "v1fc26cc36a88.mp3",
    "k": "say",
    "s": "truong_lao"
   },
@@ -210,8 +210,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "9ff2135a56f2": {
-   "f": "v9ff2135a56f2.mp3",
+  "41b36e5d6620": {
+   "f": "v41b36e5d6620.mp3",
    "k": "say",
    "s": "truong_lao"
   },
@@ -1655,8 +1655,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "u_nhan"
   },
-  "990357064b49": {
-   "f": "v990357064b49.mp3",
+  "ee92ddeb49bd": {
+   "f": "vee92ddeb49bd.mp3",
    "k": "narrate",
    "s": "narrate"
   },

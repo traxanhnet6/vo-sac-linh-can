@@ -806,7 +806,14 @@
       meditate: { x: roadCX(20) - 1, y: 21 },
       signs: [{ x: 47, y: 4, text: 'Đường đi Cô Châu' }, { x: 44, y: 65, text: 'Cổng Cô Châu Thành' }],
       portals: [
-        { x: 46, y: 0, w: 4, h: 1, to: 'tran', toX: 29, toY: 43, label: 'Về Hứa Gia Trấn' },
+        /* Dải cổng mép bắc mở sâu hơn 1 hàng (đợt nóng 3, gói F): người chơi
+           chạm-để-đi tới Ô MỐC nhiệm vụ hoặc tới HÌNH vật thể trước cổng
+           (bia đá/thước sân) thì dừng ở hàng 1–3, không bao giờ bước lên
+           hàng 0 — dải chỉ có hàng 0 khiến cổng "chết" với người thật dù
+           bài kiểm tra chạm thẳng ô dải vẫn xanh. Độ sâu từng cổng đã đối
+           chiếu điểm rơi phía bên kia để không nảy ngược: cổng về trấn ở
+           đây giữ h:2 vì điểm rơi vào đường mòn từ trấn là hàng 2. */
+        { x: 46, y: 0, w: 4, h: 2, to: 'tran', toX: 29, toY: 43, label: 'Về Hứa Gia Trấn' },
         { x: 46, y: 73, w: 4, h: 1, to: 'co_chau', toX: 51, toY: 74, label: 'Vào Cô Châu Thành', cond: 'quest:q2_cong_thanh', lockMsg: 'Hãy tới quảng trường cổng thành trước đã.' }
       ]
     },
@@ -816,8 +823,8 @@
       signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }],
       portals: [
         { x: 50, y: 77, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 70, label: 'Về Đường Mòn Xuyên Rừng' },
-        { x: 48, y: 0, w: 8, h: 1, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
-        { x: 96, y: 0, w: 4, h: 1, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' }
+        { x: 48, y: 0, w: 8, h: 4, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
+        { x: 96, y: 0, w: 4, h: 3, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' }
       ]
     },
     kiem_trac_thap: {
@@ -826,7 +833,7 @@
       signs: [{ x: 32, y: 52, text: 'Kiểm Trắc Tháp' }, { x: 30, y: 11, text: 'Đài Thước Pha Lê' }],
       portals: [
         { x: 34, y: 55, w: 4, h: 1, to: 'co_chau', toX: 51, toY: 6, label: 'Về Cô Châu Thành' },
-        { x: 34, y: 0, w: 4, h: 1, to: 'thap_noi', toX: 19, toY: 27, label: 'Vào Sảnh Tháp', cond: 'quest:q3_thuoc_do', lockMsg: 'Chưa tới lượt vào sảnh — hãy chờ ở sân theo thứ tự danh sách.' }
+        { x: 34, y: 0, w: 4, h: 4, to: 'thap_noi', toX: 19, toY: 27, label: 'Vào Sảnh Tháp', cond: 'quest:q3_thuoc_do', lockMsg: 'Chưa tới lượt vào sảnh — hãy chờ ở sân theo thứ tự danh sách.' }
       ]
     },
     thap_noi: {
@@ -880,13 +887,13 @@
     { id: 'q_meditate', name: 'Thổ nạp đầu tiên', desc: 'Tới cạnh giếng nước đầu trấn, giữ phím T để thổ nạp, tích đủ 100 tu vi.', hint: { x: 50, y: 20 } },
     { id: 'q_break', name: 'Đột phá Luyện Khí tầng 1', desc: 'Tu vi đã đầy. Nhấn phím B để đột phá.', hint: null },
     { id: 'q_dummy', name: 'Một lời phá cọc', desc: 'Dùng Ngôn Linh "PHÁ" (phím 1, cần 30 Tĩnh Mặc) phá cọc gỗ luyện công ở phía nam sân.', hint: { x: 36, y: 32 } },
-    { id: 'q_done', name: 'Chương sau: Kiểm Trắc Tháp', desc: 'Bản v1 kết thúc tại đây. Con đường tới Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null },
+    { id: 'q_done', name: 'Lên đường dự kiểm trắc', desc: 'Cọc gỗ đã phá, lộ phí trưởng lão đã trao. Lên đường tới Cô Châu Thành dự kỳ kiểm trắc tại Kiểm Trắc Tháp.', hint: null },
     /* Chương 2 — lên đường (docs/part2-design.md mục 4) */
     { id: 'q2_len_duong', name: 'Lên đường tới Cô Châu Thành', desc: 'Ra cổng nam Hứa Gia Trấn, theo đường mòn xuyên rừng đi về phía nam.', hint: { map: 'tran', x: 29, y: 43 } },
-    { id: 'q2_vet_tich', name: 'Dấu vết dọc đường', desc: 'Dừng ở trạm nghỉ giữa đường, xem dấu vết người đi trước để lại (phím E).', hint: { map: 'duong_mon', x: 53, y: 24 } },
+    { id: 'q2_vet_tich', name: 'Dấu vết dọc đường', desc: 'Dừng ở trạm nghỉ giữa đường, đứng kề bao tải bên đường và xem dấu vết người đi trước để lại (phím E hoặc nút Tương tác).', hint: { map: 'duong_mon', x: 53, y: 24 } },
     { id: 'q2_phuc_kich', name: 'Bóng người trong rừng', desc: 'Đi tiếp về phía nam. Rừng càng lúc càng rậm — cẩn thận.', hint: { map: 'duong_mon', x: 43, y: 54 } },
     { id: 'q2_cong_thanh', name: 'Tới cổng Cô Châu Thành', desc: 'Cổng thành ở cuối đường. Tiến vào quảng trường cổng thành.', hint: { map: 'duong_mon', x: 48, y: 69 } },
-    { id: 'q2_done', name: 'Chương 3: Kiểm Trắc Tháp', desc: 'Đã tới cổng Cô Châu Thành. Kỳ kiểm trắc tại Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null },
+    { id: 'q2_done', name: 'Chương 3: Kiểm Trắc Tháp', desc: 'Đã tới cổng Cô Châu Thành. Vào thành, đi thẳng phố chính lên phía bắc là tới Kiểm Trắc Tháp — kỳ kiểm trắc đang chờ ngươi.', hint: null },
     /* Chương 3 — Kiểm Trắc Tháp: thước pha lê vượt cửu phẩm */
     { id: 'q3_hang_cho', name: 'Hàng chờ trăm người', desc: 'Vào Cô Châu Thành, đi thẳng phố chính lên phía bắc, qua cổng tháp vào khuôn viên Kiểm Trắc Tháp.', hint: { map: 'co_chau', x: 51, y: 1 } },
     { id: 'q3_thuoc_do', name: 'Thước pha lê vượt cửu phẩm', desc: 'Vào sảnh tháp ở phía bắc khuôn viên, tới trước thước pha lê lớn và đặt tay lên thước (phím E).', hint: { map: 'thap_noi', x: 19, y: 7 } },
@@ -919,7 +926,7 @@
     { id: 'q8_ho_phap', name: 'Hộ pháp trong im lặng', desc: 'Lên Đài Trúc Cơ ở phía bắc tông bắt đầu vận công; trong lúc đột phá, tuyệt đối không được cất tiếng.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q8_truc_co', name: 'Trúc Cơ', desc: 'Vận công đã tới điểm cuối. Nuốt Trúc Cơ Đan và đột phá tại Đài Trúc Cơ.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q8_thu_tieng', name: 'Gạch bỏ hai chữ vô linh căn', desc: 'Về đại điện gặp trưởng lão tông.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
-    { id: 'q8_done', name: 'Kết thúc phần hai: Trúc Cơ', desc: 'Phần hai khép lại ở Trúc Cơ Sơ Kỳ. Các tuyến Huyết Bạc Cung, Hồn Sư, Thiên Cơ Các và Liễu Khuynh Tiên còn để ngỏ cho phần sau.', hint: null }
+    { id: 'q8_done', name: 'Trúc Cơ Sơ Kỳ', desc: 'Ngươi đã đứng ở Trúc Cơ Sơ Kỳ. Những món nợ cũ vẫn còn đó: Huyết Bạc Cung chưa dứt, thân phận Hồn Sư còn giấu kín, Thiên Cơ Các còn theo dõi, và Liễu Khuynh Tiên vẫn là một ẩn số.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];

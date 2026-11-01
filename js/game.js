@@ -29,7 +29,7 @@
      Mọi phép biến đổi màn hình <-> thế giới trong engine PHẢI đi qua
      screenToWorld / worldToScreen ở đây (một hàm dùng chung cho chạm-để-đi,
      chạm-tương-tác, neo chụm hai ngón và neo lăn chuột). */
-  var ZOOM_MIN = 0.6;        // hệ số nhỏ nhất (thấy rộng nhất)
+  var ZOOM_MIN = 0.35;       // hệ số nhỏ nhất (thấy rộng nhất) — mở từ 0,6 xuống 0,35 theo lệnh Bui 19:17 ngày 2026-11-01 ("không zoom được rộng hẳn")
   var ZOOM_MAX = 2.0;        // hệ số lớn nhất (phóng to nhất)
   var ZOOM_DEFAULT = 1;      // mức phóng mặc định mỗi phiên chơi
   var ZOOM_LERP = 0.22;      // hệ số nội suy mỗi khung hình: hiển thị tiến dần về đích, không nhảy bậc
@@ -378,6 +378,7 @@
   /* ---------- Trạng thái phiên chơi ---------- */
   var state = null, px = 0, py = 0, facing = 'up', moving = false, walkFrame = 0, walkTimer = 0;
   var velX = 0, velY = 0; // vận tốc thật (px/giây) — quán tính tăng/giảm tốc của đợt nóng 2
+  var tapDesired = null; // vector mong muốn của khung trước (đường chạm) — để xoay rẽ cong (gói E)
   var pathStuckT = 0;     // đồng hồ kẹt đường của chạm-để-đi (giây đứng im hẳn)
   var keys = {}, npcsLive = [], floats = [], rings = [], shakeT = 0, dlg = null, dlgQueue = [], dlgCb = null;
   var meditating = false, saveTimer = 0, startedAt = 0;
@@ -391,15 +392,16 @@
   // Cử chỉ chụm hai ngón: pointers = pointerId -> {x,y} (tọa độ màn hình);
   // anchorWorld = điểm thế giới nằm dưới tâm chụm lúc bắt đầu, giữ nguyên
   // trên màn hình suốt cử chỉ (desiredCam tính lại theo neo mỗi khung).
-  var pinch = { active: false, pointers: {}, startDist: 0, startZoom: ZOOM_DEFAULT, anchorWorld: null, midX: 0, midY: 0, joyCancelled: false };
+  var pinch = { active: false, pointers: {}, startDist: 0, startZoom: ZOOM_DEFAULT, anchorWorld: null, midX: 0, midY: 0, joyCancelled: false, fallback: false };
   var zoomAnchor = null; // neo lăn chuột {wx, wy, sx, sy} — sống cho tới khi zoom hiển thị bắt kịp đích
   var pinchSuppressUntil = 0; // cửa sổ nuốt sự kiện chạm/chuột tổng hợp phát sinh ngay sau khi chụm kết thúc
+  var pinchPtrSeenAt = 0; // mốc lần cuối thấy sự kiện con trỏ cảm ứng — đường chụm dự phòng qua sự kiện chạm chỉ mở khi đường con trỏ câm lặng hẳn
   function zoomEnabled() { return !SET || SET.current.zoomEnabled !== false; }
   function resetZoom() {
     zoom = ZOOM_DEFAULT; zoomTarget = ZOOM_DEFAULT; zoomAnchor = null;
   }
   function cancelPinch() {
-    pinch.active = false; pinch.pointers = {}; pinch.anchorWorld = null; pinch.joyCancelled = false;
+    pinch.active = false; pinch.pointers = {}; pinch.anchorWorld = null; pinch.joyCancelled = false; pinch.fallback = false;
   }
   /* Dọn TOÀN BỘ trạng thái nhập khi cửa sổ mất tiêu điểm hoặc trang bị ẩn:
      không một trạng thái nhập nào được sống sót qua mất focus. Thiếu khâu
@@ -412,7 +414,7 @@
     for (var kk in keys) keys[kk] = false;
     resetJoy();
     cancelPinch();
-    clickPath = null; clickTarget = null; pendingInteract = null;
+    clickPath = null; clickTarget = null; pendingInteract = null; questNav = null;
     velX = 0; velY = 0;
   }
   window.addEventListener('blur', resetAllInput);
@@ -423,6 +425,7 @@
   var clickPathRaw = false;   // true khi đang đi theo đường ô THÔ (đường cứu hộ sau khi đường vuốt kẹt)
   var clickSegAnchor = null;  // gốc sprite tại điểm bắt đầu nhịp vuốt hiện tại (cho bám đuổi thuần túy)
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
+  var questNav = null; // tự tìm đường làm nhiệm vụ: { targetMap, hx, hy, leg, replans, lastMap, lockMsg }
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
   var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks'];
@@ -448,8 +451,10 @@
   var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
   var DIR8_EVEN_DIR = { 0: 'down', 2: 'right', 4: 'up', 6: 'left' }; // hàng chẵn -> tên hướng 4 chính
   var dir8 = 0;          // hướng HIỂN THỊ riêng của người chơi (0..7); `facing` 4 hướng vẫn là hướng logic
-  var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..4 chu kỳ bước (mỗi khung ~0,11s)
+  var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..4 chu kỳ bước
   var stepTimer = 0;
+  var stepAcc = 0;       // bộ tích lũy quãng đường cho pha bước (điểm ảnh đã đi chưa đủ một khung bước)
+  var STRIDE_PX = 18;    // một khung bước ứng với đúng 18px đường đã đi — đo từ sheet (gói G): sải chân vẽ ở khung tiếp đất hướng ngang ≈ 64–68px sheet ≈ 43–45px thế giới cho một bước (2 khung), tức ~21px/khung; 18px giữ nhịp 7,3 khung/giây ở tốc độ tối đa, trượt chân dư ~1,2 lần thay vì ~2,4 lần ở nhịp 9px cũ (14,7 khung/giây, chân chạy nhanh gấp đôi mặt đất)
   function isChar8(look, im) {
     return !!(CHAR8[look] && im && im.naturalWidth === 480 && im.naturalHeight === 960);
   }
@@ -527,8 +532,8 @@
     applyQuestMin();
     updateToastTab();
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
-    dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; resetJoy(); velX = 0; velY = 0;
-    resetZoom(); cancelPinch(); // phiên chơi mới luôn bắt đầu ở mức phóng mặc định 1,0×
+    dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; resetJoy(); velX = 0; velY = 0;
+    resetZoom(); cancelPinch(); questNav = null; // phiên chơi mới luôn bắt đầu ở mức phóng mặc định 1,0×
     npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
     setMinimapLabel();
     show('screen-game');
@@ -862,9 +867,11 @@
     if (zoomAnchor && zoom === zoomTarget) zoomAnchor = null;
     var effW = viewW / zoom, effH = viewH / zoom; // khung thế giới nhìn thấy ở mức zoom hiện tại
     var dc = desiredCam();
-    // Nội suy mũ theo thời gian thật (hằng số ~0,085s, tương đương hệ số
-    // 0,18/khung ở 60fps như trước) — độ mượt không còn phụ thuộc nhịp khung.
-    var camK = 1 - Math.exp(-frameDt / 0.085);
+    // Nội suy mũ theo thời gian thật (hằng số 0,10s — nới nhẹ từ 0,085s
+    // ở vòng chỉnh cảm giác 2 để camera lướt êm hơn khi đổi hướng; độ
+    // lệch bám ở tốc độ tối đa đo bằng harness ~10px) — độ mượt không
+    // còn phụ thuộc nhịp khung.
+    var camK = 1 - Math.exp(-frameDt / 0.10);
     camX += (dc.x - camX) * camK; camY += (dc.y - camY) * camK;
     if (Math.abs(dc.x - camX) < 0.5) camX = dc.x;
     if (Math.abs(dc.y - camY) < 0.5) camY = dc.y;
@@ -1075,6 +1082,24 @@
       ctx.strokeStyle = 'rgba(255,240,190,' + (0.55 * pa) + ')'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.ellipse(px + 16, py + 30, 30 + (1 - pa) * 22, 9 + (1 - pa) * 6, 0, 0, Math.PI * 2); ctx.stroke();
     }
+    // Làm nổi bật người đang đo (gói I): cột sáng + vòng chân nhấp nháy tại
+    // nhân vật mà dữ kiện cảnh đang ghim (dlg.spot) — người chơi nhìn là biết
+    // lượt đo này của ai, khớp với băng kết quả trong hộp thoại.
+    if (dlg && dlg.spot) {
+      var spx = px + 16, spy = py + 30;
+      if (dlg.spot !== 'hero') {
+        var snp = npcsLive.filter(function (x) { return x.id === dlg.spot; })[0];
+        if (snp) { spx = snp.x * TILE + 16; spy = snp.y * TILE + 30; }
+      }
+      var spl = 0.72 + 0.28 * Math.sin(tNow / 260);
+      var sgr = ctx.createLinearGradient(spx, spy - 230, spx, spy);
+      sgr.addColorStop(0, 'rgba(255,244,200,0)');
+      sgr.addColorStop(1, 'rgba(255,240,190,' + (0.5 * spl) + ')');
+      ctx.fillStyle = sgr;
+      ctx.fillRect(spx - 20, spy - 230, 40, 230);
+      ctx.strokeStyle = 'rgba(255,240,190,' + (0.85 * spl) + ')'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.ellipse(spx, spy, 26, 8, 0, 0, Math.PI * 2); ctx.stroke();
+    }
     // Hào quang thổ nạp: hai vòng cung xoay ngược chiều quanh người khi đang nạp.
     // Ban đêm hào quang rõ hơn một chút (chỉ hình ảnh, không đổi số cân bằng).
     if (meditating && fxOn()) {
@@ -1204,11 +1229,60 @@
   function addFloat(x, y, text, color) { floats.push({ x: x, y: y, text: text, color: color || '255,235,170', a: 1 }); }
 
   /* ---------- Thoại ---------- */
-  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; questNav = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  /* Gói I (đợt nóng 3) — cảnh đo phải phân rõ AI ĐANG ĐO: dữ kiện cảnh
+     (story.js) ghim trên từng dòng: spot = id nhân vật đang đứng tại đá
+     đo/thước ('hero' = người chơi), spotAt = ô đứng trước đá đo cho NPC,
+     result = {name, grade, tone} công bố kèm tên. Engine: NPC được ghim
+     sẽ bước tới ô spotAt (về chỗ cũ khi lượt đổi), nhân vật đang đo được
+     cột sáng + vòng chân làm nổi bật, và băng kết quả hiện tên + phẩm cấp
+     ngay trong hộp thoại. Bộ ba (người tại đá, tên, phẩm cấp) lấy từ CÙNG
+     một dòng dữ kiện nên không thể lệch nhau. */
+  var sceneSpot = null; // { id, home:{x,y} } — NPC đang được đưa tới đá đo
+  function restoreSceneSpot() {
+    if (!sceneSpot) return;
+    var n = npcsLive.filter(function (x) { return x.id === sceneSpot.id; })[0];
+    if (n) { n.x = sceneSpot.home.x; n.y = sceneSpot.home.y; }
+    sceneSpot = null;
+  }
+  function updateSceneSpot(line) {
+    var want = line && line.spot ? line.spot : null;
+    if (sceneSpot && want !== sceneSpot.id) restoreSceneSpot();
+    if (!want || want === 'hero' || sceneSpot) return;
+    var n = npcsLive.filter(function (x) { return x.id === want; })[0];
+    if (!n) return;
+    sceneSpot = { id: want, home: { x: n.x, y: n.y } };
+    if (line.spotAt) {
+      var pt = playerTile();
+      var cands = [line.spotAt, { x: line.spotAt.x + 1, y: line.spotAt.y }, { x: line.spotAt.x - 1, y: line.spotAt.y }, { x: line.spotAt.x, y: line.spotAt.y + 1 }, { x: line.spotAt.x, y: line.spotAt.y - 1 }];
+      for (var i = 0; i < cands.length; i++) {
+        var c = cands[i];
+        if (c.x === pt.x && c.y === pt.y) continue;
+        if (npcsLive.some(function (o) { return o !== n && o.x === c.x && o.y === c.y; })) continue;
+        if (!L.isWalkable(c.x, c.y, [])) continue;
+        n.x = c.x; n.y = c.y; break;
+      }
+    }
+  }
+  function updateDlgResult(line) {
+    var resEl = $('dlg-result');
+    if (!resEl) return;
+    if (line && line.result) {
+      $('dlg-result-name').textContent = line.result.name;
+      $('dlg-result-grade').textContent = line.result.grade;
+      resEl.classList.remove('hidden', 'tone-gold', 'tone-dim');
+      resEl.classList.add('tone-' + (line.result.tone || 'gold'));
+    } else {
+      resEl.classList.add('hidden');
+      resEl.classList.remove('tone-gold', 'tone-dim');
+    }
+  }
   function nextLine() {
     if (dlgTypeTimer) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; dlgTypeFull = null; }
-    if (!dlgQueue.length) { stopVoice(); dlg = null; $('dialogue').classList.add('hidden'); if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } return; }
+    if (!dlgQueue.length) { stopVoice(); dlg = null; restoreSceneSpot(); updateDlgResult(null); $('dialogue').classList.add('hidden'); if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } return; }
     dlg = dlgQueue.shift();
+    updateSceneSpot(dlg);
+    updateDlgResult(dlg);
     sfxPage();
     playVoiceFor(dlg); // tiếng bắt đầu cùng lúc chữ hiện; qua câu thì playVoiceFor dừng tiếng câu cũ
     $('dialogue').classList.remove('hidden');
@@ -1438,6 +1512,27 @@
       }
     }
     var p = L.propAt(ft.x, ft.y) || L.propAt(pt.x, pt.y + 1);
+    if (!p) {
+      // Dự phòng kề bốn hướng cho VẬT THỂ — cùng lớp lỗi với dự phòng NPC ở
+      // trên: hai đường tra cứu đầu chỉ trúng khi người chơi quay mặt đúng
+      // vào footprint (hoặc đứng trên hàng vẽ trên của vật), nhưng hướng mặt
+      // lúc dừng lại do hướng di chuyển cuối quyết định — đi bộ tới ô gợi ý
+      // của nhiệm vụ "Dấu vết dọc đường" từ phía tây/bắc rồi bấm E/Tương tác
+      // là im lặng hoàn toàn dù đang đứng sát bao tải, nhiệm vụ không sao
+      // hoàn thành được (Bui báo trực tiếp 19:16 ngày 2026-11-01; chạm thẳng
+      // vào vật thì được vì đường đó tự quay mặt về ô tiêu điểm trước). Đứng
+      // kề bất kỳ phía nào của một vật có cờ tương tác cũng phải mở được:
+      // tự quay mặt về ô footprint kề rồi đi tiếp đúng các nhánh dưới đây.
+      var adjOff = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      for (var ao = 0; ao < 4; ao++) {
+        var candP = L.propAt(pt.x + adjOff[ao][0], pt.y + adjOff[ao][1]);
+        if (candP && candP.interact) {
+          p = candP;
+          faceTowardTile(pt.x + adjOff[ao][0], pt.y + adjOff[ao][1]);
+          break;
+        }
+      }
+    }
     if (p && p.id === 'bia_trac_linh') return touchStele();
     if (p && p.id === 'coc_go') {
       if (state.flags.dummyBroken) return say([{ who: 'narrate', text: 'Cọc gỗ đã gãy. Tiếng nói đầu tiên của ngươi làm nó nứt từ trong lõi.' }]);
@@ -1517,6 +1612,129 @@
     clickPath = smoothPath(bestPath); clickTarget = best; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
     pendingInteract = { kind: target.kind, id: target.id, name: target.name || target.id, standX: best.x, standY: best.y, focusX: f1.x, focusY: f1.y };
   }
+  /* ---------- Tự tìm đường làm nhiệm vụ (lệnh Bui 19:16 ngày 2026-11-01) ----------
+     Bấm nút "Tự tìm đường" ở ô nhiệm vụ (hoặc bấm vào tên/mô tả nhiệm vụ):
+     nhân vật tự ĐI BỘ tới mốc gợi ý (hint) của nhiệm vụ hiện tại. Cùng bản
+     đồ thì tìm đường thẳng tới ô đích của mốc; khác bản đồ thì đi từng
+     chặng qua đồ thị cổng — mỗi chặng chỉ tìm đường trên bản đồ đang đứng,
+     bước lên dải cổng để cổng tự kích hoạt như đi tay. Điều kiện cổng được
+     tôn trọng tuyệt đối: cổng chưa mở khóa thì chặng dừng ở ô kề dải cổng
+     và báo đúng lý do khóa, không bao giờ đi xuyên điều kiện. Tới đích của
+     mốc là DỪNG — không tự bấm tương tác thay người chơi (nhiệm vụ dạng
+     tới-nơi-là-xong vốn kích hoạt bằng vùng khi bước vào). Mọi điều khiển
+     tay (phím, cần, chạm mới, mở thoại) đều hủy tự tìm đường ngay. */
+  function cancelQuestNav() { questNav = null; }
+  function navRouteMaps(fromMap, toMap) {
+    if (fromMap === toMap) return [fromMap];
+    var prev = {}; prev[fromMap] = null;
+    var queue = [fromMap];
+    while (queue.length) {
+      var cur = queue.shift();
+      var def = L.MAPS[cur];
+      if (!def) continue;
+      for (var i = 0; i < def.portals.length; i++) {
+        var nx = def.portals[i].to;
+        if (nx in prev) continue;
+        prev[nx] = cur;
+        if (nx === toMap) {
+          var route = [nx], c = cur;
+          while (c) { route.unshift(c); c = prev[c]; }
+          return route;
+        }
+        queue.push(nx);
+      }
+    }
+    return null;
+  }
+  function navFromTile() { return { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) }; }
+  // Ô đích đi được cho mốc gợi ý trên bản đồ hiện tại: mốc đứng được thì
+  // dùng thẳng; mốc nằm trong dấu chân vật thể / ô NPC thì lấy ô đi được
+  // kề gần nhất mà tìm đường tới được.
+  function navResolveDest(hx, hy) {
+    if (L.isWalkable(hx, hy, npcsLive)) return { x: hx, y: hy };
+    for (var r = 1; r <= 4; r++) {
+      var best = null, bestPath = null;
+      for (var oy = -r; oy <= r; oy++) for (var ox = -r; ox <= r; ox++) {
+        if (Math.max(Math.abs(ox), Math.abs(oy)) !== r) continue;
+        var cx = hx + ox, cy = hy + oy;
+        if (!L.isWalkable(cx, cy, npcsLive)) continue;
+        var p = L.findPath(navFromTile(), { x: cx, y: cy }, npcsLive);
+        if (p && (!bestPath || p.length < bestPath.length)) { best = { x: cx, y: cy }; bestPath = p; }
+      }
+      if (best) return best;
+    }
+    return null;
+  }
+  function navIssuePath(dest) {
+    var path = L.findPath(navFromTile(), dest, npcsLive);
+    if (!path) return false;
+    if (!path.length) return true; // đã đứng ngay đích
+    clickPath = smoothPath(path); clickTarget = dest; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
+    pathStuckT = 0;
+    return true;
+  }
+  function startQuestNav() {
+    if (!state || dlg) return;
+    var q = L.questById(state.quest);
+    if (!q || !q.hint) { toast('Nhiệm vụ này chưa có điểm đến cố định — hãy làm theo phần mô tả của nhiệm vụ.'); return; }
+    questNav = { targetMap: q.hint.map || 'tran', hx: q.hint.x, hy: q.hint.y, leg: null, replans: 0, lastMap: state.map, lockMsg: '' };
+    pendingInteract = null;
+    toast('Tự tìm đường tới: ' + q.name + '.', 2400);
+  }
+  function questNavTick() {
+    if (!questNav || dlg || fade.phase !== 'idle') return;
+    if (clickPath && clickPath.length) return; // còn đang đi chặng hiện tại
+    if (questNav.lastMap !== state.map) { questNav.lastMap = state.map; questNav.replans = 0; questNav.leg = null; }
+    var pt = playerTile();
+    var leg = questNav.leg;
+    if (leg && leg.map === state.map && pt.x === leg.dest.x && pt.y === leg.dest.y) {
+      if (leg.kind === 'hint') { questNav = null; toast('Đã tới điểm nhiệm vụ.'); return; }
+      var lm = questNav.lockMsg; questNav = null; toast(lm, 4200); return; // 'preportal' hoặc 'portal' không kích hoạt (khóa)
+    }
+    questNav.replans++;
+    if (questNav.replans > 4) { questNav = null; toast('Tự tìm đường bị chặn — hãy đi tay tới điểm nhiệm vụ theo mốc vàng trên bản đồ.'); return; }
+    if (state.map === questNav.targetMap) {
+      var dest = navResolveDest(questNav.hx, questNav.hy);
+      if (!dest) { questNav = null; toast('Không tìm được ô đứng cạnh điểm nhiệm vụ.'); return; }
+      if (dest.x === pt.x && dest.y === pt.y) { questNav = null; toast('Đã tới điểm nhiệm vụ.'); return; }
+      questNav.leg = { kind: 'hint', dest: dest, map: state.map };
+      if (!navIssuePath(dest)) { questNav = null; toast('Không tìm được đường tới điểm nhiệm vụ.'); }
+      return;
+    }
+    var route = navRouteMaps(state.map, questNav.targetMap);
+    if (!route || route.length < 2) { questNav = null; toast('Chưa có đường nối tới bản đồ của nhiệm vụ này.'); return; }
+    var def = L.activeMap(), po = null, i;
+    for (i = 0; i < def.portals.length; i++) if (def.portals[i].to === route[1]) { po = def.portals[i]; break; }
+    if (!po) { questNav = null; toast('Chưa có đường nối tới bản đồ của nhiệm vụ này.'); return; }
+    questNav.lockMsg = po.cond === 'dummy' ? 'Hãy hoàn thành chương 1 (phá cọc gỗ) trước khi rời trấn.' : (po.lockMsg || 'Chưa thể qua cổng này lúc này.');
+    if (L.portalUnlocked(state, po)) {
+      // Đích chặng = một ô trên dải cổng tới được; bước lên dải thì cổng
+      // tự kích hoạt và vòng lặp lập chặng tiếp trên bản đồ mới.
+      var stripDest = null;
+      for (var sx = po.x; sx < po.x + po.w && !stripDest; sx++) for (var sy = po.y; sy < po.y + po.h; sy++) {
+        if (L.isWalkable(sx, sy, npcsLive) && L.findPath(navFromTile(), { x: sx, y: sy }, npcsLive)) stripDest = { x: sx, y: sy };
+      }
+      if (!stripDest) { questNav = null; toast('Không tìm được đường tới cổng.'); return; }
+      questNav.leg = { kind: 'portal', dest: stripDest, map: state.map };
+      if (!navIssuePath(stripDest)) { questNav = null; toast('Không tìm được đường tới cổng.'); }
+      return;
+    }
+    // Cổng chưa mở khóa: đi tới ô kề dải cổng phía trong bản đồ, dừng và
+    // báo đúng lý do — tuyệt đối không bước lên dải cổng, không xuyên qua.
+    var preDest = null;
+    for (var ax = po.x - 1; ax <= po.x + po.w && !preDest; ax++) for (var ay = po.y - 1; ay <= po.y + po.h; ay++) {
+      if (ax >= po.x && ax < po.x + po.w && ay >= po.y && ay < po.y + po.h) continue; // chính dải cổng
+      if (!L.isWalkable(ax, ay, npcsLive)) continue;
+      var adjStrip = false;
+      for (var bx = po.x; bx < po.x + po.w; bx++) for (var by = po.y; by < po.y + po.h; by++)
+        if (Math.abs(bx - ax) + Math.abs(by - ay) === 1) adjStrip = true;
+      if (adjStrip && L.findPath(navFromTile(), { x: ax, y: ay }, npcsLive)) preDest = { x: ax, y: ay };
+    }
+    if (!preDest) { var lm2 = questNav.lockMsg; questNav = null; toast(lm2, 4200); return; }
+    questNav.leg = { kind: 'preportal', dest: preDest, map: state.map };
+    if (!navIssuePath(preDest)) { var lm3 = questNav.lockMsg; questNav = null; toast(lm3, 4200); }
+  }
+
   function talkTo(npc) {
     // Điểm chạm theo nhiệm vụ/cửa hàng của chương 3 (ưu tiên hơn thoại thường).
     if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q3_cong_phap') return receiveManuals();
@@ -1619,7 +1837,7 @@
         sfxQuest();
         say(ST.SCENE_END_P2, function () {
           state.quest = 'q8_done'; refreshHUD(); saveNow();
-          toast('Hoàn thành chương 8 — phần hai khép lại ở Trúc Cơ Sơ Kỳ.', 4600);
+          toast('Hoàn thành chương 8 — ngươi đã đứng ở Trúc Cơ Sơ Kỳ.', 4600);
         });
       });
     }
@@ -2292,14 +2510,14 @@
         var n0 = L.joyNormalize(joy.cx - joy.sx, joy.cy - joy.sy, JOY_R);
         joy.active = n0.active; joy.ux = n0.ux; joy.uy = n0.uy; joy.speed = n0.speed;
       }
-      var sp = 132, dx = 0, dy = 0;
+      var sp = 132, dx = 0, dy = 0, smoothDrive = false;
       var manual = false;
       if (keys['arrowleft'] || keys['a']) { dx = -sp; facing = 'left'; manual = true; }
       else if (keys['arrowright'] || keys['d']) { dx = sp; facing = 'right'; manual = true; }
       if (keys['arrowup'] || keys['w']) { dy = -sp; facing = 'up'; manual = true; }
       else if (keys['arrowdown'] || keys['s']) { dy = sp; facing = 'down'; manual = true; }
       if (manual) {
-        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
+        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; questNav = null;
         resetJoy(); // phím di chuyển hủy trạng thái cần ngay
         dir8 = L.dir8FromVector(dx, dy, dir8);
       }
@@ -2310,6 +2528,7 @@
         if (SET) jn.speed = Math.min(1.5, jn.speed * SET.current.joySens); // độ nhạy cần (cài đặt)
         joy.active = jn.active; joy.ux = jn.ux; joy.uy = jn.uy; joy.speed = jn.speed;
         if (jn.active) {
+          questNav = null; // người chơi cầm cần là hủy tự tìm đường ngay
           dx = jn.ux * sp * jn.speed; dy = jn.uy * sp * jn.speed;
           dir8 = L.dir8FromVector(dx, dy, dir8);
           if (Math.abs(jn.ux) >= Math.abs(jn.uy)) facing = jn.ux > 0 ? 'right' : 'left';
@@ -2334,7 +2553,13 @@
         var distWp = Math.hypot(mdx, mdy);
         var isFinalWp = clickPath.length === 1;
         var stepW = sp * dt + 0.6;
-        if (isFinalWp && Math.abs(mdx) <= stepW && Math.abs(mdy) <= stepW) {
+        // Cửa sổ khớp ô đích cuối tính theo tốc độ THẬT (vòng chỉnh cảm
+        // giác 2): bản cũ luôn lấy tốc độ tối đa 132 nên ở khung chậm
+        // nhân vật có thể "nhảy" tới ~7px vào ô đích ở nhịp cuối; khi đã
+        // giảm tốc áp sát đích, cửa sổ thu về ~1-3px nên bước vào ô đích
+        // êm như một bước đi thường. Đường thô cứu hộ giữ nguyên cửa sổ cũ.
+        var stepSnap = Math.min(stepW, Math.max(1.2, Math.hypot(velX, velY) * dt + 0.6));
+        if (isFinalWp && Math.abs(mdx) <= stepSnap && Math.abs(mdy) <= stepSnap) {
           px = wp.x * TILE; py = wp.y * TILE; velX = 0; velY = 0;
           clickPath.shift();
           clickPath = null; clickTarget = null;
@@ -2371,7 +2596,13 @@
           if (aimLen > 0.01) {
             dir8 = L.dir8FromVector(aimX, aimY, dir8);
             var spdWp = sp;
-            if (isFinalWp && distWp < 30) spdWp = Math.max(30, sp * distWp / 30); // giảm tốc êm khi vào ô đích cuối
+            // Giảm tốc áp sát đích (gói E tăng cường): vùng hãm nới từ
+            // 30px lên 78px và sàn tốc hạ xuống 24px/giây — người chơi
+            // thật báo "dừng đột ngột đúng điểm chạm" vì vùng hãm cũ chỉ
+            // dài chưa tới một ô và bị cửa sổ khớp ô đích nuốt mất; nay
+            // nhân vật lướt chậm dần suốt hơn hai ô cuối rồi mới dừng.
+            if (isFinalWp && distWp < 78) spdWp = Math.max(24, sp * distWp / 78);
+            smoothDrive = true;
             dx = aimX / aimLen * spdWp; dy = aimY / aimLen * spdWp;
             if (Math.abs(aimX) >= Math.abs(aimY)) facing = aimX > 0 ? 'right' : 'left';
             else facing = aimY > 0 ? 'down' : 'up';
@@ -2388,12 +2619,42 @@
           interact();
         }
       }
+      // Tự tìm đường làm nhiệm vụ: lập chặng khi không còn đường đi dở
+      // (đầu phiên, vừa sang bản đồ mới, hoặc đường cũ vừa kết thúc).
+      questNavTick();
+      // Rẽ cong khi đi theo đường chạm (gói E tăng cường): vector vận
+      // tốc mong muốn được XOAY về hướng mới với tốc độ góc hữu hạn
+      // (~430 độ/giây) thay vì lật tức thì — ở góc cua, thân nhân vật đi
+      // theo cung tròn ngắn thay vì gãy góc. Chỉ áp cho đường chạm vuốt;
+      // phím/cần giữ đáp ứng trực tiếp như cũ.
+      if (smoothDrive && clickPath && (dx || dy)) {
+        if (tapDesired && (tapDesired.x || tapDesired.y)) {
+          var a0 = Math.atan2(tapDesired.y, tapDesired.x), a1 = Math.atan2(dy, dx);
+          var da = a1 - a0;
+          while (da > Math.PI) da -= Math.PI * 2;
+          while (da < -Math.PI) da += Math.PI * 2;
+          var maxTurn = 7.5 * dt;
+          if (Math.abs(da) > maxTurn) {
+            var aN = a0 + (da > 0 ? maxTurn : -maxTurn);
+            var magD = Math.hypot(dx, dy);
+            dx = Math.cos(aN) * magD; dy = Math.sin(aN) * magD;
+          }
+        }
+        tapDesired = { x: dx, y: dy };
+      } else if (!clickPath) tapDesired = null;
       // Quán tính (đợt nóng 2): vận tốc thật tiến về vận tốc mong muốn
       // (dx/dy) với gia tốc hữu hạn — bắt đầu và dừng bước đều có độ dốc
       // ngắn thay vì bật/tắt tức thì. Trục bị tường chặn thì vận tốc trục
       // đó về 0 ngay, trục còn lại vẫn trượt tự do dọc tường. Tốc độ tối
       // đa giữ nguyên như trước (132 px/giây, cần cảm ứng theo độ nhạy).
-      var ACCEL = 1500, DECEL = 1200;
+      // Vòng chỉnh cảm giác 2 (Bui vẫn báo thô cứng sau vòng 1): hạ gia
+      // tốc 1500 -> 1150 và giảm tốc 1200 -> 800 — đo harness trước/sau:
+      // quãng đi 2 khung đầu 10,4px -> ~8,6px (khởi hành bớt giật), trượt
+      // dừng 4,2px -> ~7,8px (dừng êm thay vì khựng), tốc độ tối đa và
+      // trễ đổi hướng không đổi đáng kể.
+      // Tăng cường gói E: gia tốc 1150 -> 1000, giảm tốc 800 -> 620 để
+      // dốc khởi hành/dừng dài ra rõ rệt khi kết hợp vùng hãm đích 78px.
+      var ACCEL = 1000, DECEL = 620;
       velX = approachVel(velX, dx, dx !== 0 ? ACCEL : DECEL, dt);
       velY = approachVel(velY, dy, dy !== 0 ? ACCEL : DECEL, dt);
       var prevPx = px, prevPy = py;
@@ -2429,19 +2690,23 @@
         }
       } else pathStuckT = 0;
       if (moving) {
-        // Nhịp khung bước tỉ lệ theo tốc độ THẬT: đi chậm bước chậm, đủ
-        // tốc độ thì đúng nhịp cũ (pha bước ~0,11s, đổi khung đi 0,16s).
-        var sf = Math.min(1.6, speedNow / sp);
-        walkTimer += dt * sf; if (walkTimer > 0.16) { walkFrame = 1 - walkFrame; walkTimer = 0; }
-        // Pha bước cho sheet 8 hướng: chạy 1->2->3->4 lặp theo nhịp tỉ lệ tốc độ.
-        if (stepPhase === 0) { stepPhase = 1; stepTimer = 0; }
+        // Pha bước theo QUÃNG ĐƯỜNG THẬT đã đi (vòng chỉnh cảm giác 2):
+        // bản cũ chạy pha theo đồng hồ (0,11 giây một khung, tức 14,5px
+        // mỗi khung bước ở tốc độ tối đa — đo bằng harness) nên chân trượt
+        // trên mặt đất và nhịp bước lạc hẳn khỏi tốc độ ở đoạn tăng/giảm
+        // tốc. Nay mỗi khung bước ứng với đúng STRIDE_PX điểm ảnh đã đi:
+        // chân bám đất ở mọi tốc độ, đổi hướng giữa chừng giữ nguyên
+        // nhịp, dừng lại thì pha đứng ở khung yên như cũ.
+        var distFrame = Math.hypot(px - prevPx, py - prevPy);
+        if (stepPhase === 0) { stepPhase = 1; stepAcc = 0; }
         else {
-          stepTimer += dt * sf;
-          while (stepTimer >= 0.11) { stepTimer -= 0.11; stepPhase = stepPhase % 4 + 1; }
+          stepAcc += distFrame;
+          while (stepAcc >= STRIDE_PX) { stepAcc -= STRIDE_PX; stepPhase = stepPhase % 4 + 1; }
         }
+        walkFrame = stepPhase % 2;
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
-        walkFrame = 0; stepPhase = 0; stepTimer = 0;
+        walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
         state.silence = L.silenceGain('idle', dt, state.silence);
       }
       // thổ nạp tại điểm linh khí của bản đồ hiện tại (phím T giữ, hoặc chốt từ thanh kỹ năng)
@@ -2493,7 +2758,7 @@
       state.dir = po.to === 'tran' ? 'up' : 'down';
       L.setActiveMap(po.to);
       px = po.toX * TILE; py = po.toY * TILE; facing = state.dir;
-      dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0;
+      dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
       npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
@@ -2527,8 +2792,11 @@
       }
     }
     if (state.map === 'co_chau' && state.quest === 'q6_sinh_le' && !state.flags.dowrySeen && pt.x >= 4 && pt.x <= 30 && pt.y >= 29 && pt.y <= 42) {
-      state.flags.dowrySeen = true; // đoàn sính lễ của Chu Kiến Thâm vào sân phủ Hứa
+      // Cờ Seen chỉ đặt KHI CẢNH CHẠY XONG (trong callback bên dưới): đặt
+      // trước khi cảnh chạy khiến thoát/tải lại giữa cảnh làm cờ đã lưu
+      // mà nhiệm vụ chưa tiến — cảnh không bao giờ nổ lại, kẹt vĩnh viễn.
       say(ST.SCENE_DOWRY, function () {
+        state.flags.dowrySeen = true; // đoàn sính lễ của Chu Kiến Thâm vào sân phủ Hứa
         var cap = L.REALMS[state.realm].tuviNext;
         if (cap) state.tuvi = cap;
         state.quest = 'q6_phong_thu'; refreshHUD(); saveNow();
@@ -2536,8 +2804,8 @@
       return;
     }
     if (state.map === 'co_chau' && state.quest === 'q4_thien_co' && !state.flags.thienCoSeen && pt.x >= 4 && pt.x <= 30 && pt.y >= 29 && pt.y <= 42) {
-      state.flags.thienCoSeen = true; // sứ giả Thiên Cơ Các tới sân phủ Hứa
       say(ST.SCENE_THIENCO, function () {
+        state.flags.thienCoSeen = true; // sứ giả Thiên Cơ Các tới sân phủ Hứa
         var cap = L.REALMS[state.realm].tuviNext;
         if (cap) state.tuvi = cap;
         state.quest = 'q4_vu_cao'; refreshHUD(); saveNow();
@@ -2545,8 +2813,9 @@
       return;
     }
     if (state.map === 'kiem_trac_thap' && state.quest === 'q3_hang_cho' && !state.flags.queueSeen) {
-      state.flags.queueSeen = true; // sự kiện xếp hàng nổ ngay khi bước vào khuôn viên tháp
-      say(ST.SCENE_QUEUE, function () { state.quest = 'q3_thuoc_do'; refreshHUD(); saveNow(); });
+      // Sự kiện xếp hàng nổ ngay khi bước vào khuôn viên tháp; cờ Seen đặt
+      // trong callback hoàn thành cảnh (xem ghi chú ở cảnh sính lễ phía trên).
+      say(ST.SCENE_QUEUE, function () { state.flags.queueSeen = true; state.quest = 'q3_thuoc_do'; refreshHUD(); saveNow(); });
       return;
     }
     if (state.map !== 'duong_mon') return;
@@ -2648,7 +2917,7 @@
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].indexOf(k) >= 0 && state && !$('screen-game').classList.contains('hidden')) e.preventDefault();
     keys[k] = true;
     if (!state || $('screen-game').classList.contains('hidden')) return;
-    if (k === 'e' || k === ' ') interact();
+    if (k === 'e' || k === ' ') { cancelQuestNav(); interact(); }
     else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2' || k === '3')) {
       var idx = parseInt(k, 10) - 1;
       if (dlg.options[idx]) chooseOption(dlg.options[idx].action);
@@ -2675,6 +2944,14 @@
     questTabEl.classList.remove('pulse');
     if (lastQuestId) seenQuestIds[lastQuestId] = true;
     if (state && state.quest) seenQuestIds[state.quest] = true;
+  });
+  // Tự tìm đường làm nhiệm vụ: nút riêng trong ô nhiệm vụ, và bấm thẳng
+  // vào tên/mô tả nhiệm vụ cũng bắt đầu (đúng hai cách Bui mô tả).
+  var questNavBtn = $('quest-nav-btn');
+  if (questNavBtn) questNavBtn.addEventListener('click', function () { startQuestNav(); });
+  ['hud-quest-name', 'hud-quest-desc'].forEach(function (qid) {
+    var qel = $(qid);
+    if (qel) qel.addEventListener('click', function () { startQuestNav(); });
   });
   var toastMinEl = $('toast-min');
   if (toastMinEl) toastMinEl.addEventListener('click', function () {
@@ -2725,6 +3002,7 @@
     // chạm đất trống -> chỉ di chuyển như cũ và hủy hành động chờ trước đó.
     // (Cổng clickMove ở đầu hàm đã chặn cả hai khi cài đặt tắt; thoại đang mở
     // cũng đã bị chặn ở đầu hàm nên chạm lúc thoại giữ nguyên tiến thoại.)
+    cancelQuestNav(); // chạm mới là lệnh tay — hủy tự tìm đường
     var tapTgt = L.tapTargetAt(tx, ty, npcsLive);
     if (tapTgt) { tapInteract(tapTgt); return; }
     pendingInteract = null;
@@ -2780,10 +3058,64 @@
     e.preventDefault();
     // Ngón thứ hai chạm xuống / đang trong cử chỉ chụm: TUYỆT ĐỐI không diễn
     // giải thành chạm-để-đi hay chạm-tương-tác (cử chỉ do pointer events lo).
-    if (pinch.active || e.touches.length >= 2) return;
+    if (pinch.active) return;
+    if (e.touches.length >= 2) {
+      // ĐƯỜNG DỰ PHÒNG cho môi trường không bắn sự kiện con trỏ cho cảm
+      // ứng (một số webview nhúng): ở đó sổ con trỏ chụm không bao giờ có
+      // dữ liệu nên cử chỉ chụm chết hẳn — đúng triệu chứng "chụm vẫn lỗi"
+      // Bui báo 19:17 ngày 2026-11-01. Cổng mở rất hẹp: chỉ khi đường con
+      // trỏ CÂM LẶNG hẳn (không một pointerdown cảm ứng nào trong 1,5
+      // giây qua) mới cho đường chạm tiếp quản; trình duyệt có sự kiện
+      // con trỏ luôn bắn pointerdown ngay trước touchstart nên cổng này
+      // không bao giờ mở ở đó — hai đường không tranh chấp.
+      if (Date.now() - pinchPtrSeenAt > 1500 && state && !dlg) {
+        var rectF = cv.getBoundingClientRect();
+        pinch.fallback = true;
+        pinch.pointers = {};
+        for (var ti = 0; ti < 2; ti++) {
+          var tt0 = e.touches[ti];
+          pinch.pointers['touch' + (tt0.identifier != null ? tt0.identifier : ti)] = { x: tt0.clientX - rectF.left, y: tt0.clientY - rectF.top };
+        }
+        pinchStartIfReady();
+      }
+      return;
+    }
     if (tapSuppressed()) return;
     handleCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
+  /* Đường chụm dự phòng (tiếp nối touchstart ở trên): kéo và nhấc ngón qua
+     sự kiện chạm thuần khi đường con trỏ vắng mặt. Nhấc ngón KHÔNG sinh
+     bất kỳ lệnh chạm nào — chỉ đóng cử chỉ và dựng cửa sổ nuốt sự kiện
+     tổng hợp nối tiếp, đúng như đường con trỏ. */
+  cv.addEventListener('touchmove', function (e) {
+    if (!pinch.fallback || !pinch.active || !e.touches) return;
+    e.preventDefault();
+    var rectM = cv.getBoundingClientRect();
+    for (var tm = 0; tm < e.touches.length; tm++) {
+      var ttM = e.touches[tm];
+      var idM = 'touch' + (ttM.identifier != null ? ttM.identifier : tm);
+      if (pinch.pointers[idM]) pinch.pointers[idM] = { x: ttM.clientX - rectM.left, y: ttM.clientY - rectM.top };
+    }
+    var idsM = Object.keys(pinch.pointers);
+    if (idsM.length !== 2) return;
+    var aM = pinch.pointers[idsM[0]], bM = pinch.pointers[idsM[1]];
+    var midM = pinchMidpoint(aM.x, aM.y, bM.x, bM.y);
+    pinch.midX = midM.x; pinch.midY = midM.y;
+    if (zoomEnabled()) zoomTarget = pinchTargetZoom(pinch.startZoom, pinch.startDist, pinchDistance(aM.x, aM.y, bM.x, bM.y));
+  }, { passive: false });
+  function pinchTouchEnd() {
+    if (!pinch.fallback) return;
+    pinch.fallback = false;
+    pinch.pointers = {};
+    if (pinch.active) {
+      pinch.active = false; pinch.anchorWorld = null;
+      pinchSuppressUntil = Date.now() + 700;
+      suppressTapUntil = Date.now() + 700;
+      resetJoy();
+    }
+  }
+  cv.addEventListener('touchend', pinchTouchEnd);
+  cv.addEventListener('touchcancel', pinchTouchEnd);
   /* ---------- Phóng/thu bằng lăn chuột: neo tại con trỏ ---------- */
   cv.addEventListener('wheel', function (e) {
     if (!state || dlg) return;
@@ -2821,7 +3153,10 @@
     var a = pinch.pointers[ids[0]], b = pinch.pointers[ids[1]];
     var mid = pinchMidpoint(a.x, a.y, b.x, b.y);
     pinch.active = true;
-    pinch.startDist = pinchDistance(a.x, a.y, b.x, b.y);
+    // Khoảng cách bắt đầu có sàn 30px: hai ngón chạm gần như cùng một điểm
+    // mà không có sàn thì tỉ lệ khoảng cách bùng nổ ngay nhịp kéo đầu và
+    // hệ số phóng nhảy thẳng lên trần — cảm giác "chụm lỗi" dù toán đúng.
+    pinch.startDist = Math.max(30, pinchDistance(a.x, a.y, b.x, b.y));
     pinch.startZoom = zoomTarget;
     pinch.midX = mid.x; pinch.midY = mid.y;
     pinch.anchorWorld = screenToWorld(mid.x, mid.y, camX, camY, zoom);
@@ -2858,6 +3193,7 @@
     // đã qua giai đoạn down; nhấc hết ngón thì trạng thái trở lại bình thường.
   }
   cv.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch') pinchPtrSeenAt = Date.now();
     if (e.pointerType === 'touch' && state && !dlg) {
       pinch.pointers[e.pointerId] = pinchPointerPos(e);
       if (Object.keys(pinch.pointers).length >= 2) { pinchStartIfReady(); return; }
@@ -2992,6 +3328,7 @@
     getZoom: function () { return zoom; },
     getTarget: function () { return zoomTarget; },
     isPinching: function () { return pinch.active; },
+    isPinchFallback: function () { return pinch.fallback; },
     pinchJoyCancelled: function () { return pinch.joyCancelled; },
     joyState: function () { return joy.state; },
     cam: function () { return { x: camX, y: camY }; },
@@ -3004,6 +3341,39 @@
     },
     screenToWorldNow: function (sx, sy) { return screenToWorld(sx, sy, camX, camY, zoom); },
     worldToScreenNow: function (wx, wy) { return worldToScreen(wx, wy, camX, camY, zoom); }
+  };
+
+  /* Tay nắm đo lường chuyển động (harness + công cụ dựng clip cảm giác):
+     vị trí/vận tốc/pha bước theo điểm ảnh của khung hiện tại. */
+  window.VSLC_MOVE = {
+    pos: function () { return { x: px, y: py }; },
+    vel: function () { return { x: velX, y: velY }; },
+    stepPhase: function () { return stepPhase; },
+    dir8: function () { return dir8; },
+    facing: function () { return facing; },
+    moving: function () { return moving; },
+    tile: function () { return playerTile(); }
+  };
+
+  /* Tay nắm kiểm chứng cho cảnh đo (gói I): người đang được ghim tại đá
+     đo, kết quả đang công bố, và vị trí sống của NPC — để bài kiểm tra
+     khẳng định bộ ba (người tại đá, tên hiển thị, phẩm cấp) khớp nhau. */
+  window.VSLC_SCENE = {
+    spot: function () { return dlg ? (dlg.spot || null) : null; },
+    result: function () { return dlg ? (dlg.result || null) : null; },
+    line: function () { return dlg ? { who: dlg.who, text: dlg.text } : null; },
+    npcPos: function (id) { var n = npcsLive.filter(function (x) { return x.id === id; })[0]; return n ? { x: n.x, y: n.y } : null; }
+  };
+
+  /* Tay nắm kiểm chứng cho tự tìm đường nhiệm vụ: trạng thái thuần túy
+     của bộ máy chặng, không phải đường lưu dữ liệu. */
+  window.VSLC_NAV = {
+    start: startQuestNav, cancel: cancelQuestNav,
+    isActive: function () { return !!questNav; },
+    info: function () {
+      return questNav ? { targetMap: questNav.targetMap, hx: questNav.hx, hy: questNav.hy, leg: questNav.leg ? questNav.leg.kind : null, legMap: questNav.leg ? questNav.leg.map : null } : null;
+    },
+    route: navRouteMaps
   };
 
   show('screen-auth');

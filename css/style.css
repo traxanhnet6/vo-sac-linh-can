@@ -80,6 +80,11 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 
 /* Panel nhiệm vụ trái, dưới khung nhân vật */
 #hud-quest { position: absolute; top: 96px; left: 10px; z-index: 4; width: 208px; padding: 7px 10px; }
+#quest-nav-btn { margin-top: 6px; width: 100%; min-height: 34px; cursor: pointer;
+  background: linear-gradient(180deg, #6d5433, #4c3a20); border: 1px solid #a8893a; border-radius: 6px;
+  color: #ffe9a8; font-family: inherit; font-size: 12.5px; letter-spacing: 1px; }
+#quest-nav-btn:hover { background: linear-gradient(180deg, #7d623c, #584326); }
+#hud-quest-name, #hud-quest-desc { cursor: pointer; }
 #quest-toggle { position: absolute; top: 2px; right: 2px; min-width: 36px; min-height: 36px; width: 36px; height: 36px;
   cursor: pointer; background: transparent; border: none; color: #e3b83c; font-size: 18px; line-height: 1;
   font-family: inherit; display: flex; align-items: center; justify-content: center; }
@@ -114,6 +119,11 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 #dialogue { position: absolute; left: 2%; right: 2%; bottom: 8px; z-index: 5; max-height: 32dvh; overflow-y: auto;
   background: rgba(16, 19, 15, 0.94); border: 1px solid #77683c; border-radius: 8px;
   padding: 10px 14px 7px; cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+#dlg-result { text-align: center; margin-bottom: 6px; padding: 5px 8px; border-radius: 8px; background: rgba(0,0,0,0.35); }
+#dlg-result-name { display: block; font-size: 13px; letter-spacing: 2px; color: #cfc4a5; text-transform: uppercase; }
+#dlg-result-grade { display: block; font-size: 21px; font-weight: bold; line-height: 1.25; }
+#dlg-result.tone-gold #dlg-result-grade { color: #ffd94e; text-shadow: 0 0 14px rgba(255,217,78,0.65); }
+#dlg-result.tone-dim #dlg-result-grade { color: #9a958a; }
 #dlg-name { color: #ffd94e; font-size: 14.5px; font-weight: bold; margin-bottom: 4px; min-height: 17px; }
 #dlg-text { font-size: 15.5px; line-height: 1.55; color: #f0e8d2; white-space: pre-wrap; }
 #dialogue.dlg-write { background: rgba(238, 230, 205, 0.97); }
@@ -168,7 +178,14 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .set-title { font-size: 17px; color: #ffe9a8; letter-spacing: 2px; }
 .set-head-btns { display: flex; gap: 6px; }
 .set-head-btns .btn { min-width: 40px; min-height: 36px; }
-.set-body { overflow-y: auto; padding: 6px 14px 14px; }
+.set-body { overflow-y: auto; padding: 6px 14px 14px; flex: 1 1 auto; min-height: 0; }
+/* Hàng Lưu + Thoát cố định dính đáy panel cài đặt: không cuộn theo thân,
+   luôn nhìn thấy dù đang ở bất kỳ mục nào của panel. */
+.set-foot { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 14px; border-top: 1px solid #77683c; background: rgba(24, 17, 10, 0.55);
+  border-radius: 0 0 10px 10px; }
+.set-foot .btn { min-height: 44px; }
+.set-foot .set-msg { margin: 0; }
 .set-sec { font-size: 12px; letter-spacing: 2px; color: #e3b83c; margin: 14px 0 4px;
   border-bottom: 1px solid rgba(168, 137, 58, 0.4); padding-bottom: 3px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;

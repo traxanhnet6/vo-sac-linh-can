@@ -344,20 +344,27 @@
     on('settings-tab', 'click', openPanel);
     on('set-reset-btn', 'click', function () { resetAll(); syncControls(); flashMsg('set-info-msg', 'Đã đặt lại toàn bộ cài đặt về mặc định.'); });
 
-    /* Phiên chơi: CÙNG hàm với nút Lưu/Thoát ở hàng chức năng (qua cầu VSLC_BRIDGE). */
-    on('set-save-btn', 'click', function () {
+    /* Phiên chơi: CÙNG hàm với nút Lưu/Thoát ở hàng chức năng (qua cầu VSLC_BRIDGE).
+       Hai cặp nút (trong mục Tài khoản của thân panel và ở HÀNG CỐ ĐỊNH
+       dính đáy panel) dùng chung hai hàm này — một đường xử lý duy nhất,
+       thông báo hiện ở dòng trạng thái của đúng nút vừa bấm. */
+    function doPanelSave(msgId) {
       var B = global.VSLC_BRIDGE;
       if (B && B.saveNow) {
         // saveNow trả false khi phiên này đã cũ so với một phiên khác —
         // báo thật cho người chơi thay vì khẳng định đã lưu như trước.
-        if (B.saveNow()) flashMsg('set-save-msg', 'Đã lưu tiến trình.');
-        else flashMsg('set-save-msg', 'Chưa lưu được: tiến trình mới hơn đang ở một phiên chơi khác — hãy tải lại trang.');
+        if (B.saveNow()) flashMsg(msgId, 'Đã lưu tiến trình.');
+        else flashMsg(msgId, 'Chưa lưu được: tiến trình mới hơn đang ở một phiên chơi khác — hãy tải lại trang.');
       }
-    });
-    on('set-logout-btn', 'click', function () {
+    }
+    function doPanelLogout() {
       var B = global.VSLC_BRIDGE;
       if (B && B.requestLogout) { closePanel(); B.requestLogout(); }
-    });
+    }
+    on('set-save-btn', 'click', function () { doPanelSave('set-save-msg'); });
+    on('set-logout-btn', 'click', doPanelLogout);
+    on('set-save-btn-foot', 'click', function () { doPanelSave('set-save-msg-foot'); });
+    on('set-logout-btn-foot', 'click', doPanelLogout);
 
     /* Đổi mật khẩu */
     on('set-pw-btn', 'click', function () {

@@ -99,6 +99,7 @@
       <div class="quest-label">Nhiệm vụ chính</div>
       <div class="quest-name" id="hud-quest-name"></div>
       <div class="quest-desc" id="hud-quest-desc"></div>
+      <button id="quest-nav-btn" type="button">Tự tìm đường</button>
     </div>
     <button id="quest-tab" type="button" class="hidden">! Nhiệm vụ</button>
 
@@ -188,10 +189,21 @@
         </div>
         <div id="set-info-msg" class="set-msg"></div>
       </div>
+      <!-- Hàng Lưu + Thoát CỐ ĐỊNH dính đáy panel (lệnh Bui 19:17 ngày
+           2026-11-01): hai nút này trước đây chỉ nằm trong mục "Tài khoản
+           và phiên chơi" ở gần cuối thân cuộn — mở Cài đặt ra là không
+           thấy ngay. Hàng này luôn nhìn thấy ở mọi mục của panel và gọi
+           đúng cùng đường xử lý qua cầu VSLC_BRIDGE như hai nút trong thân. -->
+      <div class="set-foot">
+        <button id="set-save-btn-foot" class="btn red" type="button">Lưu tiến trình</button>
+        <button id="set-logout-btn-foot" class="btn wood" type="button">Thoát về màn hình đăng nhập</button>
+        <span id="set-save-msg-foot" class="set-msg"></span>
+      </div>
     </div>
     <button id="settings-tab" type="button" class="hidden">Cài đặt</button>
 
     <div id="dialogue" class="hidden">
+      <div id="dlg-result" class="hidden"><span id="dlg-result-name"></span><span id="dlg-result-grade"></span></div>
       <div id="dlg-name"></div>
       <div id="dlg-text"></div>
       <div id="dlg-choices"></div>

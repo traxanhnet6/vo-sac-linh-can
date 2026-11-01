@@ -173,15 +173,15 @@
   /* Kịch bản trắc linh căn (chạy khi tương tác bia đá lần đầu). */
   var SCENE_TEST = [
     { who: 'narrate', text: 'Sân nhà họ Hứa, ngày trắc linh căn. Dân cả trấn vây quanh bia đá khắc chín màu.' },
-    { who: 'truong_lao', text: 'Lục Tranh, lên trước. Đặt tay lên bia.' },
-    { who: 'narrate', text: 'Bia đá bừng sáng — một màu, hai màu… rồi chín màu cùng rực lên như cầu vồng úp xuống sân.' },
-    { who: 'truong_lao', text: 'Cửu… CỬU PHẨM LINH CĂN! Trấn ta trăm năm chưa từng có!' },
-    { who: 'luc_tranh', text: 'Ha ha! Thấy chưa, Giang Phàm? Đây mới là chân long. Còn ngươi, lát nữa đừng khóc.' },
+    { who: 'truong_lao', text: 'Lục Tranh, lên trước. Đặt tay lên bia.', spot: 'luc_tranh', spotAt: { x: 29, y: 18 } },
+    { who: 'narrate', text: 'Lục Tranh đặt tay lên bia. Bia đá bừng sáng — một màu, hai màu… rồi chín màu cùng rực lên như cầu vồng úp xuống sân.', spot: 'luc_tranh' },
+    { who: 'truong_lao', text: 'Lục Tranh — cửu… CỬU PHẨM LINH CĂN! Trấn ta trăm năm chưa từng có!', spot: 'luc_tranh', result: { name: 'Lục Tranh', grade: 'Cửu phẩm linh căn', tone: 'gold' } },
+    { who: 'luc_tranh', text: 'Ha ha! Thấy chưa, Giang Phàm? Đây mới là chân long. Còn ngươi, lát nữa đừng khóc.', spot: 'luc_tranh' },
     { who: 'dan_a', text: 'Cửu phẩm! Lục công tử là chân long chuyển thế rồi!' },
     { who: 'anh_phung', text: 'Tốt, tốt lắm! U Nhàn, thấy chưa? Đó mới là người xứng với nhà họ Hứa.' },
-    { who: 'truong_lao', text: 'Tiếp theo — Giang Phàm. Đặt tay lên bia.' },
-    { who: 'narrate', text: 'Ngươi đặt tay lên mặt đá lạnh. Một hơi thở. Hai hơi thở. Mười hơi thở… Bia đá tối om. Không một tia sáng. Không một màu nào đáp lại.' },
-    { who: 'truong_lao', text: 'Không màu… không hệ nào đáp lại… Vô Sắc — PHẾ CĂN. Cả đời này, không tu tiên được.' },
+    { who: 'truong_lao', text: 'Tiếp theo — Giang Phàm. Đặt tay lên bia.', spot: 'hero' },
+    { who: 'narrate', text: 'Ngươi đặt tay lên mặt đá lạnh. Một hơi thở. Hai hơi thở. Mười hơi thở… Bia đá tối om. Không một tia sáng. Không một màu nào đáp lại.', spot: 'hero' },
+    { who: 'truong_lao', text: 'Giang Phàm — không màu… không hệ nào đáp lại… Vô Sắc — PHẾ CĂN. Cả đời này, không tu tiên được.', spot: 'hero', result: { name: 'Giang Phàm', grade: 'Vô sắc — Phế căn', tone: 'dim' } },
     { who: 'dan_b', text: 'Quả nhiên! Câm đã đành, lại còn phế căn. Đúng là phế vật trọn gói.' },
     { who: 'dan_a', text: 'Ở rể mười năm ăn cơm Hứa gia, trắc ra cái kết cục này, ha ha!' },
     { who: 'di_ninh', text: 'Thấy rồi chứ? Đây là lý do ta thà chết cũng không gả cho ngươi.' },
@@ -297,13 +297,13 @@
   ];
 
   var SCENE_MEASURE = [
-    { who: 'narrate', text: 'Sảnh tháp lặng như tờ. Lục Tranh đặt tay lên thước pha lê. Gợn sáng leo nhanh: một phẩm, ba phẩm, ngũ phẩm… rồi bùng lên ở vạch cao nhất của chín màu.' },
-    { who: 'thap_chu', text: 'Cửu phẩm! Thước pha lê xác nhận — Lục Tranh, cửu phẩm linh căn, không sai một ly!' },
-    { who: 'luc_tranh', text: 'Ha ha ha! Thấy chưa, cả thành thấy chưa! Cửu phẩm là cửu phẩm, ở đâu cũng là cửu phẩm! Giang Phàm, giờ tới lượt ngươi — để thước cho thiên hạ thấy phế căn thật sự trông thế nào!' },
-    { who: 'narrate', text: 'Ngươi bước tới, đặt tay lên mặt pha lê lạnh. Một gợn sáng mảnh nhú lên từ đáy thước — đỏ… cam… vàng… Nó không dừng. Xanh lá — tứ phẩm. Nó vẫn leo. Xanh lam — lục phẩm, ngang Hứa Di Ninh. Tím — thất phẩm. Đen — bát phẩm…' },
-    { who: 'thi_sinh_b', text: 'Nó… nó qua bát phẩm rồi! Trời ơi, nó vẫn đang leo!' },
-    { who: 'narrate', text: 'Gợn sáng chạm vạch cửu phẩm — rồi VƯỢT QUA. Cả cây thước pha lê rung lên, phát ra tiếng ngân như chuông cổ. Ánh sáng trong suốt tràn khỏi đỉnh thước, soi khắp sảnh như nước — không màu nào, mà chứa tất cả các màu.' },
-    { who: 'thap_chu', text: 'Vô… VÔ CỰC LINH CĂN! Chỉ có trong truyền thuyết! Mạnh hơn cửu phẩm mười lần, trăm lần! Lão phu chủ trì tháp bốn mươi năm — hôm nay mới được thấy tận mắt!' },
+    { who: 'narrate', text: 'Sảnh tháp lặng như tờ. Lục Tranh đặt tay lên thước pha lê. Gợn sáng leo nhanh: một phẩm, ba phẩm, ngũ phẩm… rồi bùng lên ở vạch cao nhất của chín màu.', spot: 'luc_tranh', spotAt: { x: 20, y: 7 } },
+    { who: 'thap_chu', text: 'Cửu phẩm! Thước pha lê xác nhận — Lục Tranh, cửu phẩm linh căn, không sai một ly!', spot: 'luc_tranh', result: { name: 'Lục Tranh', grade: 'Cửu phẩm linh căn', tone: 'gold' } },
+    { who: 'luc_tranh', text: 'Ha ha ha! Thấy chưa, cả thành thấy chưa! Cửu phẩm là cửu phẩm, ở đâu cũng là cửu phẩm! Giang Phàm, giờ tới lượt ngươi — để thước cho thiên hạ thấy phế căn thật sự trông thế nào!', spot: 'luc_tranh' },
+    { who: 'narrate', text: 'Ngươi bước tới, đặt tay lên mặt pha lê lạnh. Một gợn sáng mảnh nhú lên từ đáy thước — đỏ… cam… vàng… Nó không dừng. Xanh lá — tứ phẩm. Nó vẫn leo. Xanh lam — lục phẩm, ngang Hứa Di Ninh. Tím — thất phẩm. Đen — bát phẩm…', spot: 'hero' },
+    { who: 'thi_sinh_b', text: 'Nó… nó qua bát phẩm rồi! Trời ơi, nó vẫn đang leo!', spot: 'hero' },
+    { who: 'narrate', text: 'Gợn sáng chạm vạch cửu phẩm — rồi VƯỢT QUA. Cả cây thước pha lê rung lên, phát ra tiếng ngân như chuông cổ. Ánh sáng trong suốt tràn khỏi đỉnh thước, soi khắp sảnh như nước — không màu nào, mà chứa tất cả các màu.', spot: 'hero' },
+    { who: 'thap_chu', text: 'Vô… VÔ CỰC LINH CĂN! Chỉ có trong truyền thuyết! Mạnh hơn cửu phẩm mười lần, trăm lần! Lão phu chủ trì tháp bốn mươi năm — hôm nay mới được thấy tận mắt!', spot: 'hero', result: { name: 'Giang Phàm', grade: 'Vô Cực Linh Căn', tone: 'gold' } },
     { who: 'luc_tranh', text: 'Không… không thể nào! Thước hỏng rồi! Chắc chắn thước hỏng rồi! Hắn là phế căn, cả trấn đều biết hắn là phế căn!' },
     { who: 'thap_chu', text: 'Thước pha lê của tháp này ba trăm năm chưa từng nói dối. Cậu Lục, lời của cậu đang xúc phạm tháp — và xúc phạm cả thành này. Còn cậu Giang — bia đá ở trấn không đo được cậu, vì linh căn của cậu KHÔNG NẰM TRONG CHÍN MÀU. Từ hôm nay, hồ sơ của Cô Châu Thành ghi: Giang Phàm — Vô Cực Linh Căn.' },
     { who: 'narrate', text: 'Tin vượt cửu phẩm sẽ lan khỏi thành trước khi trời tối. Còn Lục Tranh — kẻ vừa đạt đỉnh danh vọng của đời mình — đang nhìn ngươi bằng ánh mắt của một kẻ vừa mất tất cả. (Tu vi chấn động thông suốt kinh mạch: tu vi đã đầy.)' }
@@ -846,7 +846,7 @@
     { who: 'narrate', text: 'Nhưng những sợi dây của quãng đường đã qua vẫn chưa sợi nào đứt hẳn: Huyết Bạc Cung chưa dứt, tên cầm đầu trọng thương rút vào rừng sau núi vẫn còn sống; thân phận Hồn Sư thần bí của ngươi vẫn là bí mật chưa một lần lộ ra ánh sáng.' },
     { who: 'narrate', text: 'Thiên Cơ Các vẫn đang theo dõi từng bước đi của ngươi trong những cuốn sổ không ai được xem. Và Liễu Khuynh Tiên — người con gái mà hình chiếu của nàng ngươi đã thắng, còn con người thật của nàng thì chưa — vẫn là một ẩn số đứng giữa gió cao của ngọn núi này.' },
     { who: 'u_nhan', text: 'Phàm ca, gió trên sơn môn lạnh lắm. Về thôi — chặng đường tới, dù huynh đi tới đâu, muội vẫn sẽ tìm được đường lên đứng cạnh huynh như hôm nay.' },
-    { who: 'narrate', text: '— HẾT PHẦN HAI — Cảm ơn bạn đã chơi. Những tuyến truyện còn mở sẽ tiếp tục ở phần sau.' }
+    { who: 'narrate', text: 'Gió trên sơn môn vẫn thổi, mây vẫn trôi qua bậc đá. Câu chuyện của chàng trai từng bị cả trấn phán là phế căn — vẫn đang được viết tiếp, từng ngày, bằng chính đôi chân của chàng.' }
   ];
 
   var STORY = {
