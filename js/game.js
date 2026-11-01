@@ -253,6 +253,11 @@
   // ghi đều tăng số này; một phiên khác ghi trước sẽ đẩy số trong kho lên
   // cao hơn mốc của phiên này — dấu hiệu phiên này đã CŨ (xem saveNow).
   var sessionSaveSeq = 0, saveStaleWarned = false;
+  // Dấu ấn của PHIÊN này, đóng vào mọi bản lưu phiên ghi (trường
+  // saveSession trong dữ kiện). Nó phân biệt "mốc cao hơn do CHÍNH phiên
+  // này ghi" với "mốc cao hơn do PHIÊN KHÁC ghi": chỉ dấu vết của người
+  // lạ mới là bằng chứng phiên này đã cũ (xem saveNow — đợt nóng 3B).
+  var sessionToken = null;
   function authError(msg) { $('auth-error').textContent = msg || ''; }
   $('btn-register').addEventListener('click', function () {
     var u = $('auth-user').value, p = $('auth-pass').value;
@@ -451,12 +456,61 @@
   var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
   var DIR8_EVEN_DIR = { 0: 'down', 2: 'right', 4: 'up', 6: 'left' }; // hàng chẵn -> tên hướng 4 chính
   var dir8 = 0;          // hướng HIỂN THỊ riêng của người chơi (0..7); `facing` 4 hướng vẫn là hướng logic
-  var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..4 chu kỳ bước
+  var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..N chu kỳ bước (N = số khung bước của sheet)
   var stepTimer = 0;
   var stepAcc = 0;       // bộ tích lũy quãng đường cho pha bước (điểm ảnh đã đi chưa đủ một khung bước)
-  var STRIDE_PX = 18;    // một khung bước ứng với đúng 18px đường đã đi — đo từ sheet (gói G): sải chân vẽ ở khung tiếp đất hướng ngang ≈ 64–68px sheet ≈ 43–45px thế giới cho một bước (2 khung), tức ~21px/khung; 18px giữ nhịp 7,3 khung/giây ở tốc độ tối đa, trượt chân dư ~1,2 lần thay vì ~2,4 lần ở nhịp 9px cũ (14,7 khung/giây, chân chạy nhanh gấp đôi mặt đất)
+  /* ---------- Đợt ĐỘNG TÁC ĐI BỘ ĐÚNG CHUẨN (lệnh Bui 22:10 ngày 2026-11-01:
+     "Đi như lướt vậy, sửa đi như đi bộ đúng các hướng") ----------
+     Ba nguồn lướt đã xử lý đồng thời:
+     (1) SẢI RIÊNG THEO NHÓM HƯỚNG: sải vẽ đo thật từ sheet (tools/
+         measure-stride.py + đọc tâm đế giày trên ảnh phóng to) KHÁC nhau
+         theo hướng — ngang nam 33 / nữ 37px thế giới một bước, chéo nam
+         17 / nữ 26 (góc nhìn 3/4 nén trục), trong khi hằng số 18px duy nhất
+         của gói G bắt mọi hướng chạy cùng một nhịp. STRIDE_STEP dưới đây là
+         quãng đường thế giới của MỘT BƯỚC (một lần chạm đất) theo từng
+         nhóm; ngưỡng qua một KHUNG = sải bước / (số khung trong nửa chu
+         kỳ). Riêng nhóm dọc: sải sâu vẽ đo được chỉ ~6–10px vì chân khuất
+         dưới tà áo (không đọc được độ trượt trên màn hình), nên lấy 0,75
+         sải ngang để giữ NHỊP BƯỚC nhất quán giữa các hướng thay vì quay
+         chu kỳ tới ~15 bước/giây.
+     (2) NHÚN THÂN theo pha: bản chuẩn hóa gói G ép mọi khung cao bằng
+         nhau tuyệt đối nên thân trượt phẳng như lướt. walkBobY khôi phục
+         nhịp nhún 2,6px (hạ tối đa ở khung tiếp đất, nâng tối đa ở khung
+         qua giữa), suy từ PHA LIÊN TỤC của bước nên khóa cứng vào chân —
+         đây là chuyển động VẼ, không đổi neo logic/ô chân.
+     (3) Chu kỳ dài hơn khi sheet có thêm khung (xem walkCycleFrames). */
+  var STRIDE_STEP = {
+    player_nam: { side: 33, diag: 17, vert: 25 },
+    player_nu: { side: 37, diag: 26, vert: 28 },
+    _default: { side: 35, diag: 21, vert: 26 }
+  };
+  var BOB_AMP = 1.3;     // biên độ nhún thân (px thế giới): thân hạ +1,3 ở tiếp đất, nâng -1,3 ở qua giữa
+  var walkBobY = 0;      // độ nhún thân của khung hình hiện tại (chỉ người chơi, chỉ khi đang đi)
+  function strideGroupOf(d8) {
+    if (d8 % 2 === 1) return 'diag';
+    return (d8 === 2 || d8 === 6) ? 'side' : 'vert';
+  }
+  function playerLookId() { return state && state.gender === 'nu' ? 'player_nu' : 'player_nam'; }
+  // Số khung bước trong một chu kỳ của sheet người chơi = số cột - 1 (cột 0
+  // là đứng yên). Sheet 5 cột -> 4 khung; sheet 7 cột -> 6 khung. Ảnh chưa
+  // tải xong thì dùng 4 như bản cũ.
+  function walkCycleFrames() {
+    var im = ASSETS.chars[playerLookId()];
+    if (imgReady(im)) {
+      var cols = Math.round(im.naturalWidth / 96);
+      if (cols >= 3 && im.naturalHeight === 960) return cols - 1;
+    }
+    return 4;
+  }
+  // Quãng đường thế giới ứng với MỘT KHUNG bước ở hướng hiện tại.
+  function stridePerFrame() {
+    var t = STRIDE_STEP[playerLookId()] || STRIDE_STEP._default;
+    return t[strideGroupOf(dir8)] / (walkCycleFrames() / 2);
+  }
   function isChar8(look, im) {
-    return !!(CHAR8[look] && im && im.naturalWidth === 480 && im.naturalHeight === 960);
+    // Khổ sheet 8 hướng: 5 cột (480px) hoặc 7 cột (672px, chu kỳ đi 6
+    // khung của đợt động tác đi bộ) x 8 hàng (960px), ô 96x120.
+    return !!(CHAR8[look] && im && (im.naturalWidth === 480 || im.naturalWidth === 672) && im.naturalHeight === 960);
   }
   // Hình chữ nhật nguồn trong sheet: sheet mới -> ô 96x120 (hàng dir8, cột frame8);
   // sheet cũ -> ô 64x80 (hàng DIR_ROW theo hướng 4 chính, cột frame01).
@@ -522,6 +576,7 @@
   function startGame(saved) {
     state = L.normalizeSave(saved); // save cũ: bổ sung ví Linh Thạch + cờ mở khóa theo mốc đã qua
     sessionSaveSeq = (typeof state.saveSeq === 'number' && state.saveSeq > 0) ? Math.floor(state.saveSeq) : 0;
+    sessionToken = 'p' + Date.now().toString(36) + Math.floor(Math.random() * 4294967296).toString(36);
     saveStaleWarned = false;
     if (SET) {
       SET.loadFor(currentUser, localStorage, isTouchDevice());
@@ -584,13 +639,24 @@
     state.x = Math.round(px / TILE); state.y = Math.round(py / TILE); state.dir = facing;
     var stored = L.loadGame(localStorage, currentUser);
     if (stored && (stored.saveSeq || 0) > sessionSaveSeq) {
-      if (!saveStaleWarned) {
-        saveStaleWarned = true;
-        toast('Cảnh báo: tiến trình mới hơn đang nằm ở một phiên chơi khác. Phiên này không ghi đè lên — hãy tải lại trang để chơi tiếp từ tiến trình mới nhất.', 5600);
+      // Mốc trong kho cao hơn mốc phiên này biết. Nếu bản lưu đó mang
+      // DẤU ẤN CỦA CHÍNH PHIÊN NÀY (saveSession khớp) thì đó là dấu vết
+      // ghi của chính phiên — nhận lại mốc và ghi tiếp, TUYỆT ĐỐI không
+      // tự khóa mình (lỗi đợt nóng 3B: phiên đơn cửa sổ bị chính cơ chế
+      // của mình từ chối lưu). Chỉ khi dấu ấn là của PHIÊN KHÁC (hoặc
+      // không có dấu ấn của phiên này) mới kết luận phiên này đã cũ.
+      if (sessionToken && stored.saveSession === sessionToken) {
+        sessionSaveSeq = Math.floor(stored.saveSeq);
+      } else {
+        if (!saveStaleWarned) {
+          saveStaleWarned = true;
+          toast('Cảnh báo: tiến trình mới hơn đang nằm ở một phiên chơi khác. Phiên này không ghi đè lên — hãy tải lại trang để chơi tiếp từ tiến trình mới nhất.', 5600);
+        }
+        return false;
       }
-      return false;
     }
     state.saveSeq = sessionSaveSeq + 1;
+    if (sessionToken) state.saveSession = sessionToken;
     L.saveGame(localStorage, currentUser, state);
     sessionSaveSeq = state.saveSeq;
     return true;
@@ -1036,12 +1102,14 @@
           // Sheet mới: hàng dir8, cột = pha bước 1..4 (đứng yên cột 0).
           // Sheet cũ: hàng DIR_ROW theo facing, cột = pha%2 khi đi, 0 khi đứng.
           var psrc = charSrc(look, plim, facing, dir8, moving ? stepPhase : 0, moving ? stepPhase % 2 : 0);
-          ctx.drawImage(plim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80, 64, 80);
-          pTop = py + 32 - 80;
+          // Nhún thân theo pha bước (walkBobY): chỉ dời HÌNH VẼ theo chiều
+          // dọc, bóng chân và ô logic giữ nguyên trên mặt đất.
+          ctx.drawImage(plim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
+          pTop = py + 32 - 80 + walkBobY;
         } else {
           // Ảnh chưa tải: sprite lưới theo hướng chính gần nhất của dir8, khung 1 khi đi / 0 khi đứng.
-          drawSprite(S.charSprite(look, dir8NearDir(dir8), moving ? 1 : 0), px, py - 8, 2);
-          pTop = py - 8;
+          drawSprite(S.charSprite(look, dir8NearDir(dir8), moving ? 1 : 0), px, py - 8 + walkBobY, 2);
+          pTop = py - 8 + walkBobY;
         }
         labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
       }
@@ -2690,23 +2758,29 @@
         }
       } else pathStuckT = 0;
       if (moving) {
-        // Pha bước theo QUÃNG ĐƯỜNG THẬT đã đi (vòng chỉnh cảm giác 2):
-        // bản cũ chạy pha theo đồng hồ (0,11 giây một khung, tức 14,5px
-        // mỗi khung bước ở tốc độ tối đa — đo bằng harness) nên chân trượt
-        // trên mặt đất và nhịp bước lạc hẳn khỏi tốc độ ở đoạn tăng/giảm
-        // tốc. Nay mỗi khung bước ứng với đúng STRIDE_PX điểm ảnh đã đi:
-        // chân bám đất ở mọi tốc độ, đổi hướng giữa chừng giữ nguyên
-        // nhịp, dừng lại thì pha đứng ở khung yên như cũ.
+        // Pha bước theo QUÃNG ĐƯỜNG THẬT đã đi, KHÓA PHA CHÂN–ĐẤT: mỗi
+        // khung bước ứng với đúng (sải vẽ của nhóm hướng hiện tại / số
+        // khung trong một bước) điểm ảnh đã đi — trong thời gian một chân
+        // chạm đất, thân đi đúng một sải vẽ nên chân đứng yên so với mặt
+        // đất thay vì trượt theo thân. Đổi hướng giữa chừng: ngưỡng tính
+        // lại theo nhóm hướng mới, bộ tích lũy giữ nguyên.
+        // Nhún thân: pha liên tục chạy 0..1 trong một chu kỳ (2 bước);
+        // thân hạ tối đa ở hai điểm tiếp đất (pha 0 và 0,5), nâng tối đa ở
+        // hai điểm qua giữa (0,25 và 0,75) — cos(4π·pha) cho đúng nhịp đó.
         var distFrame = Math.hypot(px - prevPx, py - prevPy);
+        var cyc = walkCycleFrames();
+        var thr = stridePerFrame();
         if (stepPhase === 0) { stepPhase = 1; stepAcc = 0; }
         else {
           stepAcc += distFrame;
-          while (stepAcc >= STRIDE_PX) { stepAcc -= STRIDE_PX; stepPhase = stepPhase % 4 + 1; }
+          while (stepAcc >= thr) { stepAcc -= thr; stepPhase = stepPhase % cyc + 1; }
         }
+        var contPhase = ((stepPhase - 1) + stepAcc / thr) / cyc;
+        walkBobY = BOB_AMP * Math.cos(4 * Math.PI * contPhase);
         walkFrame = stepPhase % 2;
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
-        walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
+        walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; walkBobY = 0;
         state.silence = L.silenceGain('idle', dt, state.silence);
       }
       // thổ nạp tại điểm linh khí của bản đồ hiện tại (phím T giữ, hoặc chốt từ thanh kỹ năng)
@@ -3287,6 +3361,24 @@
         (def.stack ? '<span class="bag-count">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">Pháp khí</span>');
       grid.appendChild(cell);
     });
+    // Ngăn riêng cốt truyện: liệt kê kinh thư/kiếm quyết ĐÃ SỞ HỮU (ghi
+    // nhận qua state.unlocked, không tính sức chứa) — đợt nóng 3B sửa lỗi
+    // nhận công pháp ở tháp xong mở túi vẫn trống vì panel không liệt kê
+    // ngăn này. Chưa sở hữu món nào thì ẩn cả vùng.
+    var storyBox = $('bag-story'), storyGrid = $('bag-story-grid');
+    if (storyBox && storyGrid) {
+      var owned = L.storyItemsOwned(state);
+      storyGrid.innerHTML = '';
+      owned.forEach(function (id) {
+        var sdef = L.ITEM_DEFS[id];
+        var scell = document.createElement('div');
+        scell.className = 'bag-cell story';
+        scell.innerHTML = '<span class="bag-glyph">' + sdef.glyph + '</span><span class="bag-name">' + sdef.name + '</span>' +
+          '<span class="bag-count">Cốt truyện</span>';
+        storyGrid.appendChild(scell);
+      });
+      storyBox.classList.toggle('hidden', !owned.length);
+    }
     if (up) {
       var next = L.BAG_TIERS[bag.tier + 1];
       up.classList.toggle('hidden', !next);
@@ -3352,7 +3444,13 @@
     dir8: function () { return dir8; },
     facing: function () { return facing; },
     moving: function () { return moving; },
-    tile: function () { return playerTile(); }
+    tile: function () { return playerTile(); },
+    // Đợt động tác đi bộ: nhịp nhún thân hiện tại, ngưỡng quãng đường của
+    // một khung bước ở hướng hiện tại, số khung trong chu kỳ, nhóm sải.
+    bobY: function () { return walkBobY; },
+    stridePerFrame: function () { return stridePerFrame(); },
+    cycleFrames: function () { return walkCycleFrames(); },
+    strideGroup: function () { return strideGroupOf(dir8); }
   };
 
   /* Tay nắm kiểm chứng cho cảnh đo (gói I): người đang được ghim tại đá

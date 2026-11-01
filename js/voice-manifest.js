@@ -340,15 +340,10 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "u_nhan"
   },
-  "360758cd2b87": {
-   "f": "v360758cd2b87.mp3",
+  "73470c07110f": {
+   "f": "v73470c07110f.mp3",
    "k": "say",
    "s": "truong_lao"
-  },
-  "724319cd027e": {
-   "f": "v724319cd027e.mp3",
-   "k": "narrate",
-   "s": "narrate"
   },
   "9028508d7b07": {
    "f": "v9028508d7b07.mp3",

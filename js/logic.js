@@ -1018,8 +1018,8 @@
     ngoc_tu_linh: { name: 'Tụ Linh Ngọc', type: 'phap_khi', stack: false, glyph: 'Ngọc' },
     linh_chi: { name: 'Linh Chi Sau Núi', type: 'nguyen_lieu', stack: true, glyph: 'Chi' },
     truc_co_dan: { name: 'Trúc Cơ Đan', type: 'dan', stack: true, glyph: 'Cơ' },
-    thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh' },
-    that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết' }
+    thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh', unlockKey: 'thanh_phong' },
+    that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết', unlockKey: 'that_tinh' }
   };
   // Sức chứa theo tầng — giá nâng cấp là số [ĐỀ XUẤT] chờ parent duyệt (docs/part2-design.md).
   var BAG_TIERS = [null,
@@ -1073,6 +1073,21 @@
     if (b.items[id] <= 0) delete b.items[id];
     syncBagMirrors(state);
     return { ok: true, count: Math.max(0, have - n) };
+  }
+  // Vật phẩm ngăn riêng cốt truyện MÀ NGƯỜI CHƠI ĐÃ SỞ HỮU: chúng không
+  // nằm trong túi thường (bagAdd từ chối theo thiết kế) mà được ghi nhận
+  // qua state.unlocked — mỗi định nghĩa mang unlockKey trỏ vào khóa mở
+  // khóa tương ứng. Panel túi dùng hàm này để LIỆT KÊ ngăn cốt truyện;
+  // thiếu bước liệt kê này là lỗi đợt nóng 3B (nhận công pháp ở tháp xong
+  // mở túi ra trống, hai quyển sách vô hình dù đã sở hữu thật).
+  function storyItemsOwned(state) {
+    var owned = [];
+    if (!state || !Array.isArray(state.unlocked)) return owned;
+    for (var id in ITEM_DEFS) {
+      var def = ITEM_DEFS[id];
+      if (def.storySlot && def.unlockKey && state.unlocked.indexOf(def.unlockKey) >= 0) owned.push(id);
+    }
+    return owned;
   }
   function syncBagMirrors(state) {
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
@@ -1475,7 +1490,7 @@
     swordPower: swordPower, castSword: castSword,
     chapterOfQuest: chapterOfQuest, soulServiceDue: soulServiceDue, healSoul: healSoul,
     ITEM_DEFS: ITEM_DEFS, BAG_TIERS: BAG_TIERS, bagOf: bagOf, bagCount: bagCount, bagHas: bagHas,
-    bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors,
+    bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors, storyItemsOwned: storyItemsOwned,
     DAY_MINUTES: DAY_MINUTES, DAY_DEFAULT_MINUTES: DAY_DEFAULT_MINUTES, NIGHT_DARK_MAX: NIGHT_DARK_MAX,
     DAYNIGHT_REAL_MIN_PER_DAY: DAYNIGHT_REAL_MIN_PER_DAY, DAYNIGHT_MIN_PER_SEC: DAYNIGHT_MIN_PER_SEC, DAY_PHASE_KEYS: DAY_PHASE_KEYS,
     normalizeDayMinutes: normalizeDayMinutes, advanceDayClock: advanceDayClock,

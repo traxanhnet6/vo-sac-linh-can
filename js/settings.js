@@ -15,8 +15,6 @@
   var SETTINGS_PREFIX = 'vslc_settings_';
   // Khóa tài khoản/bản lưu — PHẢI khớp logic.js (test khóa điều này).
   var ACC_KEY = 'vslc_accounts', SAVE_PREFIX = 'vslc_save_';
-  var BUILD_VERSION = '1.1.0';
-  var BUILD_NOTE = 'Bản dựng 2026-11-01: trấn 60×45, sửa lỗi tương tác, engine 8 hướng + cần cảm ứng, panel cài đặt đầy đủ.';
 
   var AUTOSAVE_SECS = [5, 15, 30, 60];
 
@@ -224,7 +222,6 @@
   var SET = {
     SETTINGS_PREFIX: SETTINGS_PREFIX, ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX,
     sfxAllowed: sfxAllowed, gainScale: gainScale, voiceAllowed: voiceAllowed, voiceScale: voiceScale,
-    BUILD_VERSION: BUILD_VERSION, BUILD_NOTE: BUILD_NOTE,
     AUTOSAVE_SECS: AUTOSAVE_SECS, DEFAULTS: DEFAULTS,
     sanitize: sanitize, keyFor: keyFor, load: load, save: save, deviceJoyDefault: deviceJoyDefault,
     current: current, loadFor: loadFor, update: update, resetAll: resetAll,
@@ -255,8 +252,6 @@
     p.classList.remove('hidden');
     var tab = $('settings-tab'); if (tab) tab.classList.add('hidden');
     syncControls();
-    var ver = $('set-version');
-    if (ver) ver.textContent = 'Phiên bản bản dựng: ' + BUILD_VERSION + ' — ' + BUILD_NOTE;
   }
   function closePanel() {
     var p = panelEl(); if (p) p.classList.add('hidden');

@@ -237,8 +237,7 @@
   var SCENE_DUMMY_DONE = [
     { who: 'narrate', text: 'Cọc gỗ nứt toác rồi đổ sụp. Cả sân im phăng phắc — lần này, không ai cười.' },
     { who: 'u_nhan', text: 'Phàm ca, huynh làm được rồi! Từ phế căn bị cả trấn cười… tới tu sĩ Luyện Khí, chỉ trong một ngày!' },
-    { who: 'truong_lao', text: 'Chặng tiếp theo là Kiểm Trắc Tháp ở Cô Châu Thành — thước pha lê chín màu ở đó sẽ cho cậu biết linh căn của mình thật sự ở đâu. Nhưng đó là chuyện của chương sau.' },
-    { who: 'narrate', text: '— HẾT BẢN V1 — Cảm ơn bạn đã chơi. Chương "Kiểm Trắc Tháp" đang được xây dựng.' }
+    { who: 'truong_lao', text: 'Chặng tiếp theo là Kiểm Trắc Tháp ở Cô Châu Thành — thước pha lê chín màu ở đó sẽ cho cậu biết linh căn của mình thật sự ở đâu.' }
   ];
 
   /* ---------- Chương 2: lên đường tới Cô Châu Thành ---------- */

@@ -219,6 +219,9 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .bag-cell .bag-name { font-size: 10px; line-height: 1.25; color: #f0e8d2; }
 .bag-cell .bag-count { font-size: 11px; color: #9fd8a8; }
 .bag-cell.empty { opacity: 0.35; }
+#bag-story.hidden { display: none; }
+.bag-story-title { padding: 10px 14px 0; font-size: 12px; letter-spacing: 1px; color: #9fd8a8; }
+.bag-cell.story { border-color: #4c7a58; background: rgba(38, 68, 46, 0.35); }
 .bag-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 0 14px 12px; font-size: 11px; color: #cbbd93; }
 
