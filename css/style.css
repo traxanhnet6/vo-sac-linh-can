@@ -185,6 +185,36 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .set-warn { font-size: 13px; line-height: 1.5; color: #f3c1b4; background: rgba(110, 42, 36, 0.35);
   border: 1px solid #a04a3a; border-radius: 6px; padding: 9px 11px; }
 .set-info { font-size: 12.5px; color: #b9ac8d; line-height: 1.55; margin: 4px 0 6px; }
+/* Panel Túi Trữ Vật: cùng tông gỗ/vàng với panel cài đặt; lưới ô vật phẩm
+   có ký tự đại diện + tên + số lượng (không dùng emoji). */
+#bag-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 8; width: min(480px, 94vw); max-height: 86dvh; display: flex; flex-direction: column;
+  background: rgba(43, 31, 19, 0.96); border: 1px solid #a8893a; border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.35); color: #f0e8d2; }
+#bag-panel.hidden { display: none; }
+.bag-info { padding: 8px 14px 0; font-size: 13px; color: #ffe9a8; }
+.bag-grid { display: grid; grid-template-columns: repeat(auto-fill, 64px); gap: 8px;
+  padding: 12px 14px; overflow-y: auto; }
+.bag-cell { width: 64px; min-height: 64px; border: 1px solid #77683c; border-radius: 8px;
+  background: rgba(24, 17, 10, 0.6); display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px; padding: 4px 2px; text-align: center; }
+.bag-cell .bag-glyph { font-size: 15px; color: #ffd94e; letter-spacing: 1px; }
+.bag-cell .bag-name { font-size: 10px; line-height: 1.25; color: #f0e8d2; }
+.bag-cell .bag-count { font-size: 11px; color: #9fd8a8; }
+.bag-cell.empty { opacity: 0.35; }
+.bag-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 0 14px 12px; font-size: 11px; color: #cbbd93; }
+
+/* Hộp thoại xác nhận trong game: lớp phủ mờ + hộp giữa màn hình, nổi trên
+   cả panel cài đặt (z-index 8) để đường Thoát trong panel dùng chung được. */
+#confirm-dialog { position: absolute; inset: 0; z-index: 40; display: flex;
+  align-items: center; justify-content: center; background: rgba(8, 6, 3, 0.55); }
+#confirm-dialog.hidden { display: none; }
+#confirm-dialog .confirm-box { width: min(400px, 90vw); padding: 18px 18px 14px;
+  background: rgba(43, 31, 19, 0.97); border: 1px solid #a8893a; border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7), inset 0 0 24px rgba(0,0,0,0.35); color: #f0e8d2; }
+#confirm-dialog .confirm-box p { margin: 0 0 14px; font-size: 15px; line-height: 1.5; }
+#confirm-dialog .confirm-btns { display: flex; justify-content: flex-end; gap: 10px; }
 #settings-tab { position: absolute; top: 54px; left: 50%; transform: translateX(-50%); z-index: 7;
   cursor: pointer; background: rgba(43, 31, 19, 0.92); border: 1px solid #a8893a; border-radius: 8px;
   color: #ffe9a8; font-family: inherit; font-size: 12.5px; padding: 8px 14px; min-height: 38px;

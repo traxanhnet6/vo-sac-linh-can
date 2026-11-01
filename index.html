@@ -76,6 +76,10 @@
     <!-- Hàng biểu tượng chức năng phía trên giữa -->
     <div id="func-row">
       <button id="btn-save" class="btn wood">Lưu</button>
+      <!-- Nút Túi chỉ tồn tại trong giao diện SAU mốc mở khóa chương 3
+           (mặc định ẩn; engine bật khi flags.bagUnlocked — đúng kỷ luật
+           khóa như ví Linh Thạch ở giai đoạn phàm nhân). -->
+      <button id="btn-bag" class="btn wood hidden" type="button">Túi</button>
       <button id="btn-logout" class="btn wood">Thoát</button>
       <button id="btn-settings" class="btn wood" type="button" aria-label="Mở cài đặt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"></path></svg> Cài đặt</button>
     </div>
@@ -99,6 +103,7 @@
     <div id="skillbar">
       <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-name">PHÁ</span></button>
       <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-name">CHẤN</span></button>
+      <button class="sk" id="sk-sword" type="button"><span class="sk-key">3</span><span class="sk-name">Kiếm quyết</span></button>
       <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-name">Thổ nạp</span></button>
       <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-name">Đột phá</span></button>
       <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
@@ -126,9 +131,9 @@
         <label class="set-row"><span>Tên + danh hiệu trên đầu</span><input id="set-names" type="checkbox"></label>
         <label class="set-row"><span>Thanh trạng thái trong khung nhân vật</span><input id="set-bars" type="checkbox"></label>
         <div class="set-sec">Điều khiển</div>
-        <label class="set-row"><span>Cần cảm ứng</span><select id="set-joymode"><option value="auto">Tự động theo thiết bị</option><option value="on">Luôn bật</option><option value="off">Tắt</option></select></label>
+        <label class="set-row"><span>Hiển thị cần điều khiển</span><select id="set-joymode"><option value="on">Luôn hiện sẵn (đế cố định ở góc dưới trái)</option><option value="auto">Hiện khi chạm kéo (cần nổi)</option><option value="off">Ẩn hẳn</option></select></label>
         <label class="set-row"><span>Độ nhạy cần</span><input id="set-joysens" type="range" min="50" max="150" step="10"></label>
-        <label class="set-row"><span>Di chuyển bằng bấm chuột / chạm đất</span><input id="set-clickmove" type="checkbox"></label>
+        <label class="set-row"><span>Bấm chuột / chạm để di chuyển và tương tác (chạm thẳng vào người hoặc vật để nói chuyện, tắt mục này thì chạm-để-tương-tác cũng tắt)</span><input id="set-clickmove" type="checkbox"></label>
         <div class="set-sec">Giao diện</div>
         <label class="set-row"><span>Cỡ chữ thoại</span><select id="set-dlgfont"><option value="normal">Vừa</option><option value="large">Lớn</option></select></label>
         <label class="set-row"><span>Tốc độ chữ thoại</span><select id="set-dlgspeed"><option value="instant">Tức thì</option><option value="normal">Bình thường</option></select></label>
@@ -179,6 +184,33 @@
     <div id="toast-wrap">
       <div id="toast" class="hidden"><span id="toast-text"></span><button id="toast-min" type="button" aria-label="Thu nhỏ thông báo">–</button></div>
       <button id="toast-tab" type="button" class="hidden">Thông báo <span id="toast-count">0</span></button>
+    </div>
+
+    <!-- Panel Túi Trữ Vật: lưới vật phẩm; chỉ mở được sau mốc mở khóa. -->
+    <div id="bag-panel" class="hidden" role="dialog" aria-label="Túi Trữ Vật">
+      <div class="set-head">
+        <span class="set-title">Túi Trữ Vật</span>
+        <button id="bag-close" class="btn wood" type="button" aria-label="Đóng túi">×</button>
+      </div>
+      <div id="bag-info" class="bag-info"></div>
+      <div id="bag-grid" class="bag-grid"></div>
+      <div class="bag-foot">
+        <span id="bag-story-note">Ngăn riêng cốt truyện: kinh thư và kiếm quyết không chiếm sức chứa.</span>
+        <button id="bag-upgrade" class="btn wood" type="button">Nâng cấp túi</button>
+      </div>
+    </div>
+
+    <!-- Hộp thoại xác nhận TRONG GAME (không dùng hộp thoại gốc của trình
+         duyệt: window.confirm bị nhiều môi trường — iframe nhúng, webview,
+         trình duyệt tự động — bác im lặng khiến nút Thoát chết không dấu vết). -->
+    <div id="confirm-dialog" class="hidden" role="alertdialog" aria-label="Xác nhận">
+      <div class="confirm-box">
+        <p id="confirm-text"></p>
+        <div class="confirm-btns">
+          <button id="confirm-no" class="btn wood" type="button">Ở lại</button>
+          <button id="confirm-yes" class="btn red" type="button">Thoát</button>
+        </div>
+      </div>
     </div>
   </div>
 </section>

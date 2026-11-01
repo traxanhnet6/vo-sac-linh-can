@@ -401,6 +401,74 @@
     return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
   }
 
+  // Thước pha lê (vật trung tâm của Kiểm Trắc Tháp): trụ pha lê cao nhiều mặt
+  // trên đế đá hai bậc, chín vạch chín màu leo từ dưới lên, hào quang sáng ở đỉnh.
+  function makeThuoc() {
+    var rows = grid(40, 72, '.');
+    // Đế đá hai bậc + thân đài.
+    rect(rows, 4, 64, 32, 3, 'S'); rect(rows, 2, 67, 36, 3, 'D'); rect(rows, 0, 70, 40, 2, 'd');
+    rect(rows, 10, 56, 20, 8, 's'); rect(rows, 12, 54, 16, 2, 'S');
+    // Thân pha lê: lõi trong sáng, mặt trái bắt sáng trắng, mặt phải tối lam.
+    rect(rows, 16, 10, 8, 44, 'K');
+    rect(rows, 16, 10, 2, 44, 'W'); rect(rows, 22, 10, 2, 44, 'k');
+    rect(rows, 18, 12, 1, 40, 'W');
+    // Đầu nhọn pha lê.
+    rect(rows, 17, 6, 6, 4, 'K'); rect(rows, 18, 3, 4, 3, 'K'); setPx(rows, 19, 2, 'W'); setPx(rows, 20, 2, 'K');
+    setPx(rows, 17, 7, 'W'); setPx(rows, 22, 8, 'k');
+    // Chín vạch chín màu bên trái thân (cấp 1 dưới cùng, cấp 9 trên cùng).
+    var gradeChars = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o'];
+    for (var i = 0; i < 9; i++) { setPx(rows, 13, 50 - i * 4, 'D'); setPx(rows, 14, 50 - i * 4, gradeChars[i]); setPx(rows, 15, 50 - i * 4, gradeChars[i]); }
+    // Vệt sáng lốm đốm trên mặt pha lê + rêu ở đế.
+    var x;
+    for (x = 17; x < 23; x++) if (hashN(x, 5, 31) < 26) setPx(rows, x, 20 + (x % 5) * 6, 'W');
+    for (x = 3; x < 37; x++) if (hashN(x, 8, 41) < 20) setPx(rows, x, 68, 'm');
+    return {
+      w: 40, h: 72, rows: rows, pal: {
+        S: '#969ca4', s: '#7e848d', D: '#5d6266', d: '#484c50',
+        K: '#dff3f8', k: '#9dc3d4', W: '#ffffff', m: '#5c8a48',
+        q: '#eceae2', w: '#c3cad1', e: '#8fd07a', r: '#57a7e8', t: '#4a6fd4',
+        y: '#8a5fc0', u: '#d46aa8', i: '#e04a3a', o: '#f0b429'
+      }
+    };
+  }
+  // Sạp chợ: hai cột gỗ, mái vải sọc, mặt hàng vải + thúng ở chân.
+  function makeStall() {
+    var rows = grid(48, 40, '.');
+    rect(rows, 4, 12, 3, 26, 'T'); rect(rows, 41, 12, 3, 26, 'T');
+    for (var sx = 0; sx < 48; sx += 8) { rect(rows, sx, 2, 4, 7, 'R'); rect(rows, sx + 4, 2, 4, 7, 'W'); }
+    rect(rows, 0, 9, 48, 2, 'D');
+    rect(rows, 6, 24, 36, 4, 'L'); rect(rows, 6, 28, 36, 3, 'l');
+    rect(rows, 9, 20, 8, 4, 'g'); rect(rows, 20, 20, 7, 4, 'Y'); rect(rows, 30, 20, 9, 4, 'r');
+    rect(rows, 10, 33, 10, 5, 'B'); rect(rows, 28, 33, 10, 5, 'B');
+    return {
+      w: 48, h: 40, rows: rows, pal: {
+        T: '#6f4c2c', R: '#a03c34', W: '#e8dfc8', D: '#5d3d20',
+        L: '#a67c4a', l: '#8a6238', g: '#79bfa0', Y: '#ffd97a', r: '#c96f4a', B: '#8a6a42'
+      }
+    };
+  }
+  // Bao tải chất đống: ba bao buộc miệng, vải bố hai tông.
+  function makeSacks() {
+    var rows = grid(34, 28, '.');
+    rect(rows, 3, 14, 13, 12, 'B'); rect(rows, 18, 14, 13, 12, 'B');
+    rect(rows, 10, 4, 13, 12, 'b');
+    rect(rows, 5, 12, 2, 3, 'T'); rect(rows, 20, 12, 2, 3, 'T'); rect(rows, 15, 2, 3, 3, 'T');
+    rect(rows, 3, 24, 28, 2, 'T');
+    var x2;
+    for (x2 = 4; x2 < 30; x2++) if (hashN(x2, 3, 53) < 18) setPx(rows, x2, 18, 'T');
+    return { w: 34, h: 28, rows: rows, pal: { B: '#b49b72', b: '#c8ae84', T: '#8a6f47' } };
+  }
+  // Đống củi: các khúc gỗ xếp chồng, mặt cắt sáng ở hai đầu.
+  function makeWoodpile() {
+    var rows = grid(38, 26, '.');
+    rect(rows, 4, 18, 30, 5, 'T'); rect(rows, 7, 12, 26, 6, 'T'); rect(rows, 11, 6, 18, 6, 'T');
+    [6, 13, 20, 27].forEach(function (lx) { rect(rows, lx, 19, 4, 3, 'W'); });
+    [10, 17, 24].forEach(function (lx) { rect(rows, lx, 13, 4, 3, 'W'); });
+    [14, 21].forEach(function (lx) { rect(rows, lx, 7, 4, 3, 'W'); });
+    rect(rows, 2, 23, 34, 2, 'd');
+    return { w: 38, h: 26, rows: rows, pal: { T: '#7c5a36', W: '#d9c096', d: '#4a3520' } };
+  }
+
   function cloneWithPal(src, pal) { return { w: src.w, h: src.h, rows: src.rows, pal: pal }; }
   var houseBase = makeHouse(64, 62, '#54606e', '#e6dcc4');
   var houseBigBase = makeHouse(86, 76, '#6e3f36', '#eadfc6');
@@ -412,6 +480,10 @@
     well: makeWell(),
     dummy: makeDummy(false),
     dummy_broken: makeDummy(true),
+    thuoc: makeThuoc(),
+    stall: makeStall(),
+    sacks: makeSacks(),
+    woodpile: makeWoodpile(),
     house: houseBase,
     house_big: houseBigBase,
     house_b: cloneWithPal(houseBase, {

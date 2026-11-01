@@ -67,6 +67,101 @@ window.VSLC_VOICE = {
    "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
    "speed": 100,
    "label": "Xa phu Lão Mã — nam phụ đường dài (chung giọng người dẫn)"
+  },
+  "thap_chu": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3497_v068_28k_g5k",
+   "speed": 80,
+   "label": "Chủ trì Kiểm Trắc Tháp — lão nam trầm (chung giọng trưởng lão, chậm hơn)"
+  },
+  "chu_quan": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 94,
+   "label": "Chủ quán Chu — nam trung niên niềm nở (chung giọng người dẫn, chậm hơn)"
+  },
+  "duoc_su": {
+   "voice": "avocado_v2:vd2_r8_rep1k_a131_v068_28k_g5k",
+   "speed": 88,
+   "label": "Dược sư hiệu thuốc — nữ đứng tuổi điềm đạm (chung giọng U Nhàn, chậm hơn)"
+  },
+  "phap_khi_chu": {
+   "voice": "avocado_v2:vd2_smoky_teacup",
+   "speed": 88,
+   "label": "Chủ Tụ Bảo Các — nam trung niên rành giá (chung giọng Lục Tranh, chậm hơn nhiều)"
+  },
+  "tran_chinh_dao": {
+   "voice": "avocado_v2:vd2_smoky_teacup",
+   "speed": 80,
+   "label": "Trần Chính Đạo, Thiên Cơ Các — nam uy nghiêm (chung giọng Lục Tranh, chậm nhất)"
+  },
+  "tran_tu_linh": {
+   "voice": "avocado_v2:vd2_r8_rep1k_a131_v068_28k_g5k",
+   "speed": 104,
+   "label": "Trần Tư Linh — nữ trẻ nhanh nhẹn (chung giọng U Nhàn, nhanh hơn)"
+  },
+  "thi_sinh_a": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 110,
+   "label": "Thí sinh A — nam trẻ háo hức (chung giọng người dẫn, nhanh hơn)"
+  },
+  "thi_sinh_b": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3492_v068_28k_g5k",
+   "speed": 98,
+   "label": "Thí sinh B — nữ trẻ (chung giọng Di Ninh, chậm hơn)"
+  },
+  "cho_a": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 104,
+   "label": "Người bán hàng rong ở chợ — nam phụ (chung giọng người dẫn)"
+  },
+  "cho_b": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3492_v068_28k_g5k",
+   "speed": 100,
+   "label": "Người bán vải ở chợ — nữ phụ (chung giọng Di Ninh)"
+  },
+  "dan_thanh_a": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 96,
+   "label": "Dân thành A — nam đứng tuổi (chung giọng người dẫn, chậm hơn)"
+  },
+  "dan_thanh_b": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3492_v068_28k_g5k",
+   "speed": 94,
+   "label": "Dân thành B — nữ phụ (chung giọng Di Ninh, chậm hơn)"
+  },
+  "chu_kien_tham": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 98,
+   "label": "Chu Kiến Thâm — công tử Chu gia, ngạo mạn (chung giọng người dẫn, chậm hơn một chút)"
+  },
+  "truong_lao_tong": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3497_v068_28k_g5k",
+   "speed": 78,
+   "label": "Trưởng lão Thanh Vân Tông — lão thành trầm nhất (chung giọng trưởng lão, chậm hơn)"
+  },
+  "lieu_khuynh_tien": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3492_v068_28k_g5k",
+   "speed": 88,
+   "label": "Liễu Khuynh Tiên — con gái tông chủ, thanh lãnh (chung giọng Di Ninh, chậm rãi)"
+  },
+  "hoa_huong_than": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3494_v068_28k_g5k",
+   "speed": 96,
+   "label": "Hoa Hướng Thần — đại đệ tử, điềm đạm (giọng riêng)"
+  },
+  "tap_dich_truong": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3497_v068_28k_g5k",
+   "speed": 96,
+   "label": "Quản sự tạp dịch — đứng tuổi thực tế (chung giọng trưởng lão, nhanh hơn)"
+  },
+  "de_tu_a": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 106,
+   "label": "Đệ tử A — nam trẻ tò mò (chung giọng người dẫn, nhanh hơn)"
+  },
+  "de_tu_b": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3494_v068_28k_g5k",
+   "speed": 102,
+   "label": "Đệ tử B — nữ trẻ (chung giọng Hoa Hướng Thần, nhanh hơn)"
   }
  },
  "lines": {
@@ -330,6 +425,596 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
+  "bf090579596d": {
+   "f": "vbf090579596d.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "37d10c65ca7e": {
+   "f": "v37d10c65ca7e.mp3",
+   "k": "say",
+   "s": "thi_sinh_a"
+  },
+  "f3d0a8c18e96": {
+   "f": "vf3d0a8c18e96.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "be91c4a5079c": {
+   "f": "vbe91c4a5079c.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "aa04b765f8cd": {
+   "f": "vaa04b765f8cd.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "df2aa4712a3e": {
+   "f": "vdf2aa4712a3e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8184bb6856fc": {
+   "f": "v8184bb6856fc.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "56927e37e5b1": {
+   "f": "v56927e37e5b1.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "add079207ebe": {
+   "f": "vadd079207ebe.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "7fc59b6b660c": {
+   "f": "v7fc59b6b660c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "03a7bd084d9c": {
+   "f": "v03a7bd084d9c.mp3",
+   "k": "say",
+   "s": "thi_sinh_b"
+  },
+  "a649a7a5d507": {
+   "f": "va649a7a5d507.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "6b4d1aa86709": {
+   "f": "v6b4d1aa86709.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "e27e85cfbf82": {
+   "f": "ve27e85cfbf82.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "9a0eff528891": {
+   "f": "v9a0eff528891.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "00f3b39e5553": {
+   "f": "v00f3b39e5553.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b0f30495896b": {
+   "f": "vb0f30495896b.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8eeab520ac0f": {
+   "f": "v8eeab520ac0f.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "57a2efe673bc": {
+   "f": "v57a2efe673bc.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "1484f5088c18": {
+   "f": "v1484f5088c18.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "00bc2b320f97": {
+   "f": "v00bc2b320f97.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "1eb4ee663921": {
+   "f": "v1eb4ee663921.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "267468b09a01": {
+   "f": "v267468b09a01.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "42d8f20dadab": {
+   "f": "v42d8f20dadab.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "4438ef189e92": {
+   "f": "v4438ef189e92.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "38e2b95a4a8c": {
+   "f": "v38e2b95a4a8c.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "2de9af46380f": {
+   "f": "v2de9af46380f.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b588fd29bd77": {
+   "f": "vb588fd29bd77.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "644b62396166": {
+   "f": "v644b62396166.mp3",
+   "k": "say",
+   "s": "chu_quan"
+  },
+  "28278984b75f": {
+   "f": "v28278984b75f.mp3",
+   "k": "say",
+   "s": "duoc_su"
+  },
+  "114c77f77a04": {
+   "f": "v114c77f77a04.mp3",
+   "k": "say",
+   "s": "phap_khi_chu"
+  },
+  "0aa1524cce71": {
+   "f": "v0aa1524cce71.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "25ed651666c9": {
+   "f": "v25ed651666c9.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "0e9b9b2ad0b1": {
+   "f": "v0e9b9b2ad0b1.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "8a9741d81a3f": {
+   "f": "v8a9741d81a3f.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "fe3cd1cd94eb": {
+   "f": "vfe3cd1cd94eb.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "ff3ac05dc319": {
+   "f": "vff3ac05dc319.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "fc52bf16abda": {
+   "f": "vfc52bf16abda.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "067b56e31033": {
+   "f": "v067b56e31033.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "969be97722b9": {
+   "f": "v969be97722b9.mp3",
+   "k": "say",
+   "s": "anh_phung"
+  },
+  "8dc5f0f0df7a": {
+   "f": "v8dc5f0f0df7a.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "f7a4843bfd22": {
+   "f": "vf7a4843bfd22.mp3",
+   "k": "say",
+   "s": "di_ninh"
+  },
+  "c01756040c58": {
+   "f": "vc01756040c58.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "8094fa03289f": {
+   "f": "v8094fa03289f.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "baddb77c5ec9": {
+   "f": "vbaddb77c5ec9.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "6c49266aa7c4": {
+   "f": "v6c49266aa7c4.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c26f5fd487e7": {
+   "f": "vc26f5fd487e7.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "8283e6bc60b9": {
+   "f": "v8283e6bc60b9.mp3",
+   "k": "say",
+   "s": "dan_thanh_a"
+  },
+  "446747ebe5df": {
+   "f": "v446747ebe5df.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "f74ba472fcd6": {
+   "f": "vf74ba472fcd6.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e2ccb673aeed": {
+   "f": "ve2ccb673aeed.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "344513869beb": {
+   "f": "v344513869beb.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "9f82c5f362fd": {
+   "f": "v9f82c5f362fd.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "497545325554": {
+   "f": "v497545325554.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "25ceb6a07bb5": {
+   "f": "v25ceb6a07bb5.mp3",
+   "k": "say",
+   "s": "dan_thanh_a"
+  },
+  "df0a81a79de5": {
+   "f": "vdf0a81a79de5.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "7f4034d56c36": {
+   "f": "v7f4034d56c36.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "d17dc03b860d": {
+   "f": "vd17dc03b860d.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "cdfa729fedbc": {
+   "f": "vcdfa729fedbc.mp3",
+   "k": "say",
+   "s": "hero"
+  },
+  "9b50e97432b8": {
+   "f": "v9b50e97432b8.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "2e10965e96bb": {
+   "f": "v2e10965e96bb.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "0a2bf1df52e2": {
+   "f": "v0a2bf1df52e2.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "8cca6c31d362": {
+   "f": "v8cca6c31d362.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "761c84cd69c3": {
+   "f": "v761c84cd69c3.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "b69641127c88": {
+   "f": "vb69641127c88.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "f69f20a35059": {
+   "f": "vf69f20a35059.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "5ffcc23b72a4": {
+   "f": "v5ffcc23b72a4.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "74d9c2314ebe": {
+   "f": "v74d9c2314ebe.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "0d98c6ae7983": {
+   "f": "v0d98c6ae7983.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "07d5398fec01": {
+   "f": "v07d5398fec01.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "21e7a2791ed0": {
+   "f": "v21e7a2791ed0.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "990ff2665f51": {
+   "f": "v990ff2665f51.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "52708cf38f5c": {
+   "f": "v52708cf38f5c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "a6e3a3281ee3": {
+   "f": "va6e3a3281ee3.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "5c297aaaaf8f": {
+   "f": "v5c297aaaaf8f.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "3cfa27b7651c": {
+   "f": "v3cfa27b7651c.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "fa89c2aa58b3": {
+   "f": "vfa89c2aa58b3.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "afc65abcbf95": {
+   "f": "vafc65abcbf95.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e0a88052571f": {
+   "f": "ve0a88052571f.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "eb92879a573e": {
+   "f": "veb92879a573e.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "bbab0e9baa5e": {
+   "f": "vbbab0e9baa5e.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "d6443c015bb4": {
+   "f": "vd6443c015bb4.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "d61bc3540198": {
+   "f": "vd61bc3540198.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b3c3cc4d28a8": {
+   "f": "vb3c3cc4d28a8.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "8338064908ee": {
+   "f": "v8338064908ee.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "5d0817a21038": {
+   "f": "v5d0817a21038.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f015ec941238": {
+   "f": "vf015ec941238.mp3",
+   "k": "say",
+   "s": "anh_phung"
+  },
+  "6657f6973c77": {
+   "f": "v6657f6973c77.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "e38745bfa22b": {
+   "f": "ve38745bfa22b.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "78d410cf2359": {
+   "f": "v78d410cf2359.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ff2a5f0a289f": {
+   "f": "vff2a5f0a289f.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "d619ea1b4e57": {
+   "f": "vd619ea1b4e57.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "d1c5e92fb7fc": {
+   "f": "vd1c5e92fb7fc.mp3",
+   "k": "say",
+   "s": "luc_tranh"
+  },
+  "4efee56bdb82": {
+   "f": "v4efee56bdb82.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "39bb31736e89": {
+   "f": "v39bb31736e89.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "dbbef442fc0e": {
+   "f": "vdbbef442fc0e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "0a04b142b0e1": {
+   "f": "v0a04b142b0e1.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "c7132ed24fd2": {
+   "f": "vc7132ed24fd2.mp3",
+   "k": "say",
+   "s": "anh_phung"
+  },
+  "4f9ca2cc45f6": {
+   "f": "v4f9ca2cc45f6.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "64c5576a182a": {
+   "f": "v64c5576a182a.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "4b639abe6c9d": {
+   "f": "v4b639abe6c9d.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "a1124f3dabed": {
+   "f": "va1124f3dabed.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "79b76db6765d": {
+   "f": "v79b76db6765d.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "d1e97d8b0fcf": {
+   "f": "vd1e97d8b0fcf.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "05ca873e64f3": {
+   "f": "v05ca873e64f3.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "94908de13c06": {
+   "f": "v94908de13c06.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "855d8179fd02": {
+   "f": "v855d8179fd02.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "92faaeb02ffc": {
+   "f": "v92faaeb02ffc.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b01992fd5e65": {
+   "f": "vb01992fd5e65.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8b739a47fe0e": {
+   "f": "v8b739a47fe0e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "9a38369ccd3e": {
+   "f": "v9a38369ccd3e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "9caa082de466": {
+   "f": "v9caa082de466.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "921c6f8e57af": {
+   "f": "v921c6f8e57af.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "a355e78bb39e": {
+   "f": "va355e78bb39e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "d6d05e003775": {
+   "f": "vd6d05e003775.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "86628182b63a": {
+   "f": "v86628182b63a.mp3",
+   "k": "say",
+   "s": "chinh_ngon"
+  },
+  "8c96e54290ff": {
+   "f": "v8c96e54290ff.mp3",
+   "k": "say",
+   "s": "u_nhan"
+  },
+  "9c8c9687afc3": {
+   "f": "v9c8c9687afc3.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
   "8c1724625ba9": {
    "f": "v8c1724625ba9.mp3",
    "k": "say",
@@ -534,6 +1219,196 @@ window.VSLC_VOICE = {
    "f": "v4bc2068954d5.mp3",
    "k": "say",
    "s": "xa_phu"
+  },
+  "c5e4facd328c": {
+   "f": "vc5e4facd328c.mp3",
+   "k": "say",
+   "s": "chu_quan"
+  },
+  "8f0b7e9b7b82": {
+   "f": "v8f0b7e9b7b82.mp3",
+   "k": "say",
+   "s": "chu_quan"
+  },
+  "a3eca5656bb3": {
+   "f": "va3eca5656bb3.mp3",
+   "k": "say",
+   "s": "duoc_su"
+  },
+  "cb0712ae9cb4": {
+   "f": "vcb0712ae9cb4.mp3",
+   "k": "say",
+   "s": "duoc_su"
+  },
+  "c9eb95376b4a": {
+   "f": "vc9eb95376b4a.mp3",
+   "k": "say",
+   "s": "phap_khi_chu"
+  },
+  "53e2310f993f": {
+   "f": "v53e2310f993f.mp3",
+   "k": "say",
+   "s": "phap_khi_chu"
+  },
+  "dac786f95e4e": {
+   "f": "vdac786f95e4e.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "cd4609ecaba9": {
+   "f": "vcd4609ecaba9.mp3",
+   "k": "say",
+   "s": "tran_chinh_dao"
+  },
+  "a4480040e1ba": {
+   "f": "va4480040e1ba.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "084bfa36eeda": {
+   "f": "v084bfa36eeda.mp3",
+   "k": "say",
+   "s": "tran_tu_linh"
+  },
+  "7c41730f1e5b": {
+   "f": "v7c41730f1e5b.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "6c41382a8008": {
+   "f": "v6c41382a8008.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "707e4c0b0e42": {
+   "f": "v707e4c0b0e42.mp3",
+   "k": "say",
+   "s": "thi_sinh_a"
+  },
+  "483b26adea94": {
+   "f": "v483b26adea94.mp3",
+   "k": "say",
+   "s": "thi_sinh_a"
+  },
+  "c1128164c60c": {
+   "f": "vc1128164c60c.mp3",
+   "k": "say",
+   "s": "thi_sinh_b"
+  },
+  "3927e6458e8c": {
+   "f": "v3927e6458e8c.mp3",
+   "k": "say",
+   "s": "thi_sinh_b"
+  },
+  "936c595332b7": {
+   "f": "v936c595332b7.mp3",
+   "k": "say",
+   "s": "cho_a"
+  },
+  "605d2e6ad443": {
+   "f": "v605d2e6ad443.mp3",
+   "k": "say",
+   "s": "cho_a"
+  },
+  "b36c33acf185": {
+   "f": "vb36c33acf185.mp3",
+   "k": "say",
+   "s": "cho_b"
+  },
+  "7bc30141f82d": {
+   "f": "v7bc30141f82d.mp3",
+   "k": "say",
+   "s": "cho_b"
+  },
+  "f32195819529": {
+   "f": "vf32195819529.mp3",
+   "k": "say",
+   "s": "dan_thanh_a"
+  },
+  "4486bf6eae1f": {
+   "f": "v4486bf6eae1f.mp3",
+   "k": "say",
+   "s": "dan_thanh_a"
+  },
+  "934ab0106e7c": {
+   "f": "v934ab0106e7c.mp3",
+   "k": "say",
+   "s": "dan_thanh_b"
+  },
+  "596db94cf7fa": {
+   "f": "v596db94cf7fa.mp3",
+   "k": "say",
+   "s": "dan_thanh_b"
+  },
+  "ce93bd9fdfb9": {
+   "f": "vce93bd9fdfb9.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "2fbaaa629ab3": {
+   "f": "v2fbaaa629ab3.mp3",
+   "k": "say",
+   "s": "chu_kien_tham"
+  },
+  "5e3e7f3685db": {
+   "f": "v5e3e7f3685db.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "4b183b59f084": {
+   "f": "v4b183b59f084.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "bb1df95f32da": {
+   "f": "vbb1df95f32da.mp3",
+   "k": "say",
+   "s": "lieu_khuynh_tien"
+  },
+  "538f5c6e7159": {
+   "f": "v538f5c6e7159.mp3",
+   "k": "say",
+   "s": "lieu_khuynh_tien"
+  },
+  "189ba466cb39": {
+   "f": "v189ba466cb39.mp3",
+   "k": "say",
+   "s": "hoa_huong_than"
+  },
+  "108ff973d625": {
+   "f": "v108ff973d625.mp3",
+   "k": "say",
+   "s": "hoa_huong_than"
+  },
+  "1dbfb979c941": {
+   "f": "v1dbfb979c941.mp3",
+   "k": "say",
+   "s": "tap_dich_truong"
+  },
+  "1f0436ac9b9d": {
+   "f": "v1f0436ac9b9d.mp3",
+   "k": "say",
+   "s": "tap_dich_truong"
+  },
+  "a965ff06725a": {
+   "f": "va965ff06725a.mp3",
+   "k": "say",
+   "s": "de_tu_a"
+  },
+  "6aedee48ff88": {
+   "f": "v6aedee48ff88.mp3",
+   "k": "say",
+   "s": "de_tu_a"
+  },
+  "28f0b29314a6": {
+   "f": "v28f0b29314a6.mp3",
+   "k": "say",
+   "s": "de_tu_b"
+  },
+  "8c43f2d57599": {
+   "f": "v8c43f2d57599.mp3",
+   "k": "say",
+   "s": "de_tu_b"
   }
  }
 };

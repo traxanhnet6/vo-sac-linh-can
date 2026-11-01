@@ -34,7 +34,12 @@
     showNames: true,      // tên + danh hiệu trên đầu nhân vật và NPC
     showBars: true,       // thanh HP / Tu vi / Tĩnh Mặc trong khung nhân vật
     /* Điều khiển */
-    joyMode: 'auto',      // cần cảm ứng: 'auto' theo thiết bị | 'on' luôn bật (cả chuột kéo) | 'off' tắt
+    // Hiển thị cần điều khiển (lệnh Bui 11:59 ngày 2026-11-01):
+    // 'on' = Luôn hiện sẵn (đế cố định góc dưới trái, nhận cả chuột kéo);
+    // 'auto' = Hiện khi chạm kéo (cần nổi tại điểm chạm, chỉ cảm ứng thật);
+    // 'off' = Ẩn hẳn. Mặc định theo thiết bị khi tài khoản chưa từng lưu
+    // cài đặt: cảm ứng -> 'on', máy tính -> 'auto' (xem deviceJoyDefault).
+    joyMode: 'auto',
     joySens: 1,           // độ nhạy cần 0.5..1.5 (hệ số tốc độ)
     clickMove: true,      // di chuyển bằng bấm chuột / chạm đất
     /* Giao diện */
@@ -87,6 +92,12 @@
 
   function keyFor(username) { return SETTINGS_PREFIX + (username || ''); }
 
+  /* Mặc định hiển thị cần theo loại thiết bị — chỉ áp khi tài khoản CHƯA
+     từng lưu cài đặt (người chơi đã chọn tay thì tôn trọng lựa chọn đã lưu):
+     thiết bị cảm ứng hiện sẵn đế cố định để thấy cần ngay khi vào game;
+     máy tính giữ cần nổi như trước. */
+  function deviceJoyDefault(isTouch) { return isTouch ? 'on' : 'auto'; }
+
   function load(storage, username) {
     if (!username) return clone(DEFAULTS);
     try {
@@ -112,10 +123,13 @@
   // Móc hiệu ứng DOM: phần trình duyệt gán SET.applyDom/SET.syncControls;
   // trong môi trường kiểm thử (Node, không có DOM) hai móc này trống — bỏ qua.
   function applyDomSafe() { if (typeof SET !== 'undefined' && SET && SET.applyDom) SET.applyDom(); }
-  function loadFor(username, storage) {
+  function loadFor(username, storage, isTouch) {
     currentUser = username || null;
     boundStorage = storage || null;
     assignAll(current, load(storage, username));
+    var hadStored = false;
+    try { hadStored = !!(storage && username && storage.getItem(keyFor(username))); } catch (e) { hadStored = false; }
+    if (!hadStored) current.joyMode = deviceJoyDefault(!!isTouch);
     applyDomSafe();
     return current;
   }
@@ -191,7 +205,7 @@
     sfxAllowed: sfxAllowed, gainScale: gainScale, voiceAllowed: voiceAllowed, voiceScale: voiceScale,
     BUILD_VERSION: BUILD_VERSION, BUILD_NOTE: BUILD_NOTE,
     AUTOSAVE_SECS: AUTOSAVE_SECS, DEFAULTS: DEFAULTS,
-    sanitize: sanitize, keyFor: keyFor, load: load, save: save,
+    sanitize: sanitize, keyFor: keyFor, load: load, save: save, deviceJoyDefault: deviceJoyDefault,
     current: current, loadFor: loadFor, update: update, resetAll: resetAll,
     changePassword: changePassword, deleteAccount: deleteAccount,
     applyDom: null, openPanel: null, closePanel: null, syncControls: null

@@ -95,6 +95,16 @@
   }
   function sfxUi() { beep(660, 0.05, 'triangle', 0.028, 'ui'); }
   function sfxPage() { beep(320, 0.045, 'sine', 0.016, 'ui'); }
+  // Thước pha lê leo phẩm (chương 3): chín nốt leo thang theo chín phẩm rồi chuông kết.
+  function sfxThuoc() {
+    var notes = [392, 440, 494, 587, 659, 784, 988, 1175, 1568];
+    notes.forEach(function (f, i) { setTimeout(function () { beep(f, 0.3, 'sine', 0.04, 'skill'); }, i * 140); });
+    setTimeout(function () { sfxBell(); }, notes.length * 140 + 60);
+  }
+  // Kiếm quyết: tiếng xé gió hai nhịp, sắc và ngắn — khác hẳn tiếng lời nói.
+  function sfxSword() { beep(1180, 0.08, 'sawtooth', 0.03, 'skill'); setTimeout(function () { beep(760, 0.12, 'sawtooth', 0.035, 'skill'); }, 45); }
+  // Hồn lực (chương 5): âm trầm lạnh hai lớp, trầm và dài — không giống bất kỳ âm nào khác.
+  function sfxSoul() { beep(196, 0.7, 'sine', 0.05, 'skill'); setTimeout(function () { beep(147, 0.9, 'sine', 0.045, 'skill'); }, 160); setTimeout(function () { beep(294, 0.5, 'sine', 0.025, 'skill'); }, 320); }
 
   /* ---------- Lồng tiếng thoại (assets/voice/ + js/voice-manifest.js) ---------- */
   var VOICE = window.VSLC_VOICE || null, voiceAudio = null;
@@ -158,9 +168,45 @@
     L.saveGame(localStorage, currentUser, st);
     startGame(st);
   });
-  function exitToAuth() { stopVoice(); currentUser = null; state = null; show('screen-auth'); }
+  function exitToAuth() {
+    hideConfirm();
+    stopVoice(); currentUser = null; state = null; show('screen-auth');
+  }
+  /* Hộp thoại xác nhận TRONG GAME (DOM) — thay cho hộp thoại gốc của trình duyệt.
+     Nguyên nhân gốc của lỗi "cả hai nút Thoát đều chết" trên bản live 1.1.0:
+     requestLogout cũ treo toàn bộ đường thoát trên hộp thoại gốc; khi môi
+     trường chặn hộp thoại gốc (iframe nhúng không có quyền hộp thoại,
+     webview, trình duyệt tự động bác hộp thoại), hộp thoại bị bác NGAY mà
+     không hiện gì và trả về "không đồng ý" — handler âm thầm return, không
+     lỗi, không phản hồi, cả hai nút (dùng chung một hàm) chết cùng lúc.
+     Hộp thoại DOM tự vẽ thì không môi trường nào bác được và kiểm thử được
+     bằng harness DOM giả lập (tools/dom-harness.js). */
+  var confirmCb = null;
+  function askConfirm(text, cb) {
+    var box = $('confirm-dialog'), tx = $('confirm-text');
+    if (!box || !tx) { cb(true); return; } // thiếu phần tử hộp thoại: thực hiện luôn, không chặn tính năng
+    tx.textContent = text;
+    box.classList.remove('hidden');
+    confirmCb = cb;
+  }
+  function hideConfirm() {
+    var box = $('confirm-dialog');
+    if (box) box.classList.add('hidden');
+    confirmCb = null;
+  }
+  $('confirm-yes').addEventListener('click', function () {
+    var cb = confirmCb;
+    hideConfirm();
+    if (cb) cb(true);
+  });
+  $('confirm-no').addEventListener('click', function () { hideConfirm(); });
   function requestLogout() {
-    if (SET && SET.current.confirmLogout && !window.confirm('Thoát về màn hình đăng nhập? Tiến trình sẽ được lưu trước khi thoát.')) return;
+    if (SET && SET.current.confirmLogout) {
+      askConfirm('Thoát về màn hình đăng nhập? Tiến trình sẽ được lưu trước khi thoát.', function (yes) {
+        if (yes) { saveNow(); exitToAuth(); }
+      });
+      return;
+    }
     saveNow(); exitToAuth();
   }
   $('btn-logout').addEventListener('click', requestLogout);
@@ -182,6 +228,7 @@
   /* ---------- Đợt 2: asset ảnh thật + camera + di chuyển bằng chuột ---------- */
   var camX = 0, camY = 0;                 // camera bám mượt (trạng thái toàn cục)
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
+  var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
   var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks'];
@@ -216,6 +263,15 @@
   }
   /* ---------- Cần điều khiển cảm ứng (floating joystick) ---------- */
   var JOY_R = 56; // bán kính vòng cần (px, hệ tọa độ màn hình)
+  var JOY_BASE_MARGIN = 26; // lề vùng an toàn của đế cố định (px) ở chế độ Luôn hiện sẵn
+  // Chế độ hiển thị cần (cài đặt joyMode): 'on' = Luôn hiện sẵn — có đế cố
+  // định ở góc dưới trái; kéo bắt đầu từ đế thì neo tại đế, kéo ở chỗ khác
+  // vẫn là cần nổi như thường. 'auto' = chỉ cần nổi. 'off' = ẩn hẳn (cổng
+  // joyPointerOk chặn từ đầu).
+  function joyFixedMode() { return !!(SET && SET.current.joyMode === 'on'); }
+  function joyBasePos() {
+    return { x: JOY_R + JOY_BASE_MARGIN, y: (cv ? cv.clientHeight : viewH) - JOY_R - JOY_BASE_MARGIN };
+  }
   var joy = { state: 'idle', id: null, sx: 0, sy: 0, cx: 0, cy: 0, t0: 0, active: false, ux: 0, uy: 0, speed: 0 };
   var suppressTapUntil = 0; // sau một lần kéo cần, chặn 1 lần chạm nối tiếp (click chuột tổng hợp) trong cửa sổ ngắn
   function resetJoy() {
@@ -239,14 +295,27 @@
     chinh_ngon: 'Gia chủ Hứa gia', anh_phung: 'Chủ mẫu Hứa gia',
     luc_tranh: 'Thiếu gia Lục gia', truong_lao: 'Trưởng lão trắc linh',
     dan_a: 'Dân thôn', dan_b: 'Dân thôn', dan_c: 'Dân thôn',
-    xa_phu: 'Người đánh xe đường dài'
+    xa_phu: 'Người đánh xe đường dài',
+    tran_tu_linh: 'Tiểu thư Trần gia', tran_chinh_dao: 'Phó các chủ Thiên Cơ Các',
+    chu_kien_tham: 'Công tử Chu gia ở Cô Châu Thành',
+    chu_quan: 'Chủ quán khách điếm', cho_a: 'Người bán hàng rong', cho_b: 'Người bán hàng rong',
+    duoc_su: 'Dược sư hiệu thuốc', phap_khi_chu: 'Chủ các pháp khí',
+    dan_thanh_a: 'Dân thành', dan_thanh_b: 'Dân thành',
+    thap_chu: 'Chủ trì Kiểm Trắc Tháp', thi_sinh_a: 'Thí sinh kiểm trắc', thi_sinh_b: 'Thí sinh kiểm trắc',
+    tap_dich_truong: 'Quản sự tạp dịch', truong_lao_tong: 'Trưởng lão Thanh Vân Tông',
+    lieu_khuynh_tien: 'Con gái tông chủ Thanh Vân Tông', hoa_huong_than: 'Đại đệ tử Thanh Vân Tông',
+    de_tu_a: 'Đệ tử Thanh Vân Tông', de_tu_b: 'Đệ tử Thanh Vân Tông'
   };
 
 
+  function isTouchDevice() {
+    try { return !!((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window)); }
+    catch (e) { return false; }
+  }
   function startGame(saved) {
     state = L.normalizeSave(saved); // save cũ: bổ sung ví Linh Thạch + cờ mở khóa theo mốc đã qua
     if (SET) {
-      SET.loadFor(currentUser, localStorage);
+      SET.loadFor(currentUser, localStorage, isTouchDevice());
       questMinimized = SET.current.questStart === 'min'; // cài đặt "ô nhiệm vụ khi vào game"
     }
     L.setActiveMap(state.map || 'tran');
@@ -273,9 +342,12 @@
     startedAt = Date.now();
     refreshHUD();
     toast('Hứa Gia Trấn — ngày trắc linh căn. Hãy tới bia đá ở sân nhà họ Hứa.', 4200);
-    // Save cũ đã hoàn tất bản v1 mà chưa nhận lộ phí trưởng lão: nhận bù một lần.
-    if (state.flags && state.flags.dummyBroken && !state.flags.ltGift) {
-      setTimeout(function () { if (state) grantLinhGift(true); }, 4600);
+    // Khoản bù lộ phí cho save cũ đã được cộng ngay trong L.normalizeSave
+    // (trước lần vẽ giao diện đầu tiên); ở đây chỉ hiện thông báo một lần.
+    if (state.ltGiftJustGranted) {
+      delete state.ltGiftJustGranted;
+      toast('Nhận bù lộ phí của trưởng lão: +' + L.fmtNum(L.LINH_GIFT_AMOUNT) + ' Linh Thạch (số dư: ' + L.fmtNum(L.linhBalance(state)) + ').', 4600);
+      saveNow();
     }
     requestAnimationFrame(loop);
   }
@@ -590,6 +662,15 @@
       ctx.fillStyle = 'rgba(255,217,78,' + (pulse * 0.8) + ')';
       ctx.beginPath(); ctx.ellipse(clickTarget.x * TILE + 16, clickTarget.y * TILE + 26, 4.5, 2, 0, 0, Math.PI * 2); ctx.fill();
     }
+    // Mục tiêu chạm-để-tương-tác đang hẹn: vòng sáng rõ hơn dưới chân đối
+    // tượng (phân biệt với điểm đến di chuyển ở trên) để người chơi biết
+    // mình đã chọn đúng người/vật.
+    if (pendingInteract) {
+      var pPulse = 0.65 + 0.3 * Math.sin(tNow / 150);
+      ctx.strokeStyle = 'rgba(140,235,170,' + pPulse + ')'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.ellipse(pendingInteract.focusX * TILE + 16, pendingInteract.focusY * TILE + 27, 15, 6, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(pendingInteract.focusX * TILE + 16, pendingInteract.focusY * TILE + 27, 8, 3.4, 0, 0, Math.PI * 2); ctx.stroke();
+    }
     // hào quang bia đá sau khi trắc linh (vô sắc — vòng trong suốt phát sáng trắng)
     if (state.flags.tested) {
       var bia = null;
@@ -762,6 +843,21 @@
       ctx.fillStyle = 'rgba(160,220,255,0.10)'; ctx.fillRect(0, 0, viewW, viewH);
     }
     if (flashA > 0) { ctx.fillStyle = 'rgba(255,250,230,' + flashA + ')'; ctx.fillRect(0, 0, viewW, viewH); }
+    // Đế cố định của chế độ Luôn hiện sẵn (joyMode 'on'): luôn vẽ ở góc dưới
+    // trái — bán trong suốt khi không chạm; khi kéo từ đế, khối vẽ cần ở
+    // dưới vẽ đè lên với độ rõ đầy đủ.
+    if (joyFixedMode() && state) {
+      var bp = joyBasePos();
+      var baseActive = joy.state === 'stick' && Math.abs(joy.sx - bp.x) < 1 && Math.abs(joy.sy - bp.y) < 1;
+      if (!baseActive) {
+        ctx.beginPath(); ctx.arc(bp.x, bp.y, JOY_R, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(18,24,18,0.22)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,246,220,0.38)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(bp.x, bp.y, 26, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,246,220,0.28)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(40,32,20,0.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+    }
     // Cần điều khiển cảm ứng: vẽ ở hệ tọa độ màn hình (transform DPR còn hiệu lực sau restore),
     // chỉ hiện khi đang chạm giữ ở chế độ cần.
     if (joy.state === 'stick') {
@@ -795,7 +891,7 @@
   function addFloat(x, y, text, color) { floats.push({ x: x, y: y, text: text, color: color || '255,235,170', a: 1 }); }
 
   /* ---------- Thoại ---------- */
-  function say(lines, cb) { clickPath = null; clickTarget = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
   function nextLine() {
     if (dlgTypeTimer) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; dlgTypeFull = null; }
     if (!dlgQueue.length) { stopVoice(); dlg = null; $('dialogue').classList.add('hidden'); if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } return; }
@@ -855,6 +951,94 @@
       say(ST.SCENE_WRITE_BRANCH, function () { refreshHUD(); saveNow(); });
     } else if (action === 'voice') {
       doVoiceMoment();
+    } else if (action === 'inn_work') {
+      var rw = L.addLinhThach(state, 15);
+      if (rw.ok) { state.flags.innWork = (state.flags.innWork || 0) + 1; toast('Làm xong một ca ở khách điếm: +15 Linh Thạch (số dư: ' + L.fmtNum(rw.balance) + ').', 3600); }
+      else toast(rw.reason);
+      say([{ who: 'chu_quan', text: 'Xong ca rồi đấy. Tiền của cậu đây — làm ăn với lão Chu này thì cứ yên tâm, một đồng cũng không thiếu.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'inn_leave' || action === 'shop_leave') {
+      say([{ who: 'narrate', text: 'Ngươi gật đầu chào rồi rời đi.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'buy_dan') {
+      // Vật phẩm mua vào phải qua Túi Trữ Vật: kiểm sức chứa TRƯỚC khi trừ tiền.
+      var chkD = L.bagCanAdd(state, 'hoi_khi_dan', 1);
+      if (!chkD.ok) { toast(chkD.reason); say(ST.SCENE_PHARMACY); return; }
+      var rb = L.spendLinhThach(state, 12);
+      if (rb.ok) { L.bagAdd(state, 'hoi_khi_dan', 1); sfxUi(); toast('Đã mua một viên Hồi Khí Đan (−12 Linh Thạch). Trong túi: ' + L.bagCount(state, 'hoi_khi_dan') + ' viên.', 3200); }
+      else toast(rb.reason);
+      refreshHUD(); saveNow();
+      say(ST.SCENE_PHARMACY);
+    } else if (action === 'use_dan') {
+      var ru = L.bagRemove(state, 'hoi_khi_dan', 1);
+      if (ru.ok) {
+        state.silence = Math.min(L.SILENCE_MAX, state.silence + 25);
+        toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Mặc (còn ' + L.bagCount(state, 'hoi_khi_dan') + ' viên).', 3200);
+      } else toast('Không còn viên Hồi Khí Đan nào trong túi.');
+      refreshHUD(); saveNow();
+      say(ST.SCENE_PHARMACY);
+    } else if (action === 'buy_kiem' || action === 'buy_ngoc') {
+      var gid = action === 'buy_kiem' ? 'kiem_phong' : 'ngoc_tu_linh';
+      var price = action === 'buy_kiem' ? 150 : 260;
+      var gname = action === 'buy_kiem' ? 'Thanh Phong Kiếm' : 'Tụ Linh Ngọc';
+      if (L.bagHas(state, gid)) { toast('Ngươi đã có ' + gname + ' trong túi rồi.'); }
+      else {
+        var chkG = L.bagCanAdd(state, gid, 1);
+        if (!chkG.ok) { toast(chkG.reason); say(ST.SCENE_FASHOP); return; }
+        var rg = L.spendLinhThach(state, price);
+        if (rg.ok) { L.bagAdd(state, gid, 1); sfxQuest(); toast('Đã mua ' + gname + ' (−' + price + ' Linh Thạch) và cất vào Túi Trữ Vật. Hiệu quả có tác dụng ngay.', 3800); }
+        else toast(rg.reason);
+      }
+      refreshHUD(); saveNow();
+      say(ST.SCENE_FASHOP);
+    } else if (action === 'ch4_evidence') {
+      state.quest = 'q4_dieu_tra';
+      say([{ who: 'narrate', text: 'Ngươi không cãi một câu. Ngươi quay lưng đi về phía kho Hứa gia ở rìa đông sân phủ — sự thật nằm ở đó, không nằm ở miệng người. (Đường im lặng: hãy kiểm tra kho và tìm nhân chứng.)' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'ch4_chan') {
+      var rc = L.castWord(state, 'chan');
+      if (!rc.ok) {
+        // Tĩnh Mặc chưa đủ cho CHẤN: không khóa cứng — tự rơi về đường bằng chứng.
+        toast(rc.reason + ' Đi đường bằng chứng vậy.');
+        state.quest = 'q4_dieu_tra';
+        say([{ who: 'narrate', text: 'Ngươi định cất tiếng, nhưng Tĩnh Mặc trong ngực chưa đủ nặng cho một tiếng CHẤN. Ngươi nuốt lời nói xuống, quay đi tìm bằng chứng — đường chậm hơn, nhưng chắc hơn.' }], function () { refreshHUD(); saveNow(); });
+      } else {
+        state.flags.usedChanCh4 = true;
+        state.flags.daoNoticedVoice = true; // Trần Chính Đạo đã để ý tiếng nói bất thường
+        L.recordSpeech(state, 4, 'chan-dep-vu-cao', 'thien-co-cac');
+        sfxChan(); shakeT = Math.max(shakeT, 0.8);
+        rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
+        say(ST.SCENE_CHAN_QUELL, function () { state.quest = 'q4_doi_chat'; refreshHUD(); saveNow(); });
+      }
+    } else if (action === 'ch5_heal') {
+      var hs = L.healSoul(state);
+      sfxSoul();
+      rings.push({ x: px + 16, y: py + 16, r: 6, a: 0.9 });
+      spawnParts(px + 16, py + 16, 16, '170,200,255', 34, true); // hào quang lạnh của hồn lực
+      say(ST.SCENE_SOUL_HEAL, function () {
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap;
+        state.quest = 'q5_tiep_suc'; refreshHUD(); saveNow();
+        if (hs.first) toast('Thân phận giấu kín đã thức tỉnh: Hồn Sư nhị phẩm (chỉ mình ngươi biết).', 4200);
+      });
+    } else if (action === 'ch5_wait' || action === 'soul_leave') {
+      say([{ who: 'narrate', text: 'Ngươi gật đầu chào rồi rời đi. Chuyện này vẫn còn đó, chờ ngươi quay lại.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'soul_work') {
+      state.flags.soulPaidFor = L.chapterOfQuest(state);
+      state.soulPower = (state.soulPower || 0) + 10;
+      var rsw = L.addLinhThach(state, 25);
+      say([{ who: 'narrate', text: 'Đêm đó, vị "Hồn Sư thần bí" lại tới và đi như một cái bóng. Sáng ra, Trần gia chuyển tới tay ngươi một túi nhỏ — tiền công của một người mà họ không hề biết chính là ngươi. (+25 Linh Thạch' + (rsw.ok ? ', số dư: ' + L.fmtNum(rsw.balance) : '') + '.)' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'ch5_support' || action === 'ch5_nosupport') {
+      var supported = false;
+      if (action === 'ch5_support') {
+        var rsp = L.spendLinhThach(state, 60);
+        if (rsp.ok) { supported = true; toast('Đã chi 60 Linh Thạch tiếp sức cho U Nhàn (số dư: ' + L.fmtNum(rsp.balance) + ').', 3600); }
+        else toast(rsp.reason + ' — đành động viên nàng bằng lời vậy.');
+      }
+      state.flags.uNhanSupported = supported;
+      state.quest = 'q5_u_nhan_thang';
+      say([{ who: 'u_nhan', text: supported
+        ? 'Cậu… cảm ơn. Có chỗ dựa thế này, trận ngày mai em không có lý do gì để thua.'
+        : 'Cậu viết hay lắm. "Đi đi, ta ở phía sau nàng." — Chỉ một dòng vậy thôi mà em thấy đủ rồi. Xem em thắng đây.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'atk_pha' || action === 'atk_chan' || action === 'atk_sword' || action === 'atk_fallback') {
+      resolveAtkWave(action);
     } else if (action === 'ambush_silent') {
       say(ST.SCENE_AMBUSH_SILENT, function () { state.quest = 'q2_cong_thanh'; refreshHUD(); saveNow(); });
     } else if (action === 'ambush_chan') {
@@ -911,10 +1095,27 @@
     var ft = frontTile();
     var pt = playerTile();
     var npc = npcsLive.filter(function (n) { return n.x === ft.x && n.y === ft.y; })[0];
-    if (!npc) { // cho phép tương tác NPC kề bên khi quay chưa khớp
-      npc = npcsLive.filter(function (n) { return Math.abs(n.x - ft.x) + Math.abs(n.y - ft.y) <= 1 && Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y) === 1; })[0];
+    if (!npc) {
+      // NPC đứng kề ở BẤT KỲ hướng nào cũng bắt được, không chỉ hướng đang
+      // quay mặt: người chơi đi bằng chạm thường dừng lại với hướng mặt bất
+      // kỳ, và một lần ấn E im lặng hoàn toàn là đúng lỗi chặn chơi đã gặp
+      // ở chơi thử live 1.1.0. Bắt được thì tự quay mặt về phía NPC.
+      npc = npcsLive.filter(function (n) { return Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y) === 1; })[0];
+      if (npc) faceTowardTile(npc.x, npc.y);
     }
     if (npc) return talkTo(npc);
+    // Cổng bản đồ cũng đáp lại phím E khi đứng kề và quay mặt vào ô cổng:
+    // trước đây cổng chỉ kích hoạt khi bước đúng lên hàng ô cổng, đứng sát
+    // cổng ấn E là im lặng hoàn toàn (cũng là lỗi chặn chơi ở live 1.1.0).
+    var defI = L.activeMap();
+    for (var pi = 0; pi < defI.portals.length; pi++) {
+      var poI = defI.portals[pi];
+      if (ft.x >= poI.x && ft.x < poI.x + poI.w && ft.y >= poI.y && ft.y < poI.y + poI.h) {
+        if (!L.portalUnlocked(state, poI)) { toast(poI.cond === 'dummy' ? 'Hãy hoàn thành chương 1 (phá cọc gỗ) trước khi rời trấn.' : (poI.lockMsg || 'Chưa thể qua cổng này lúc này.')); return; }
+        switchMap(poI);
+        return;
+      }
+    }
     var p = L.propAt(ft.x, ft.y) || L.propAt(pt.x, pt.y + 1);
     if (p && p.id === 'bia_trac_linh') return touchStele();
     if (p && p.id === 'coc_go') {
@@ -923,10 +1124,254 @@
     }
     if (p && p.id === 'gieng') return say([{ who: 'narrate', text: 'Giếng nước đầu trấn. Nước trong, hơi mát bốc lên — linh khí quanh đây đậm hơn hẳn nơi khác.' }]);
     if (p && p.id === 'vet_tich') return touchTracks();
+    if (p && p.id === 'thuoc_lon') return towerMeasure();
+    if (p && p.id === 'kho_hua') {
+      if (state.quest === 'q4_dieu_tra' && !state.flags.clueKho) {
+        return say(ST.SCENE_KHO_CLUE, function () { state.flags.clueKho = true; refreshHUD(); saveNow(); toast('Đã có manh mối: sổ kho Hứa gia.', 3200); });
+      }
+      if (state.quest === 'q4_dieu_tra' && state.flags.clueKho) return say([{ who: 'narrate', text: 'Sổ kho đã nằm trong tay ngươi. Thêm lời của một nhân chứng nữa, vụ việc sẽ không còn đường chối.' }]);
+      return say([{ who: 'narrate', text: 'Kho Hứa gia: gạo, vải, và mấy rương linh thảo khô khóa kín. Mọi thứ ngăn nắp — ngăn nắp tới mức bất thường.' }]);
+    }
+    // Vật thể có cờ tương tác nhưng chưa có nhánh riêng ở các chương đã xây
+    // (việc tạp dịch, đài, linh chi của chương 7-8 sẽ nối nhánh riêng sau):
+    // vẫn đáp lại bằng một câu xem xét để chạm/E không bao giờ "chết lặng".
+    if (p && p.interact) return say([{ who: 'narrate', text: 'Ngươi xem xét ' + (p.name || 'vật này') + ' — lúc này chưa có việc gì với nó.' }]);
+  }
+  /* Quay mặt (4 hướng) về phía một ô — dùng cho chạm-để-tương-tác. */
+  function faceTowardTile(tx, ty) {
+    var pt = playerTile();
+    var dx = tx - pt.x, dy = ty - pt.y;
+    if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) facing = dx > 0 ? 'right' : 'left';
+    else if (dy !== 0) facing = dy > 0 ? 'down' : 'up';
+    dir8 = L.dir8FromVector(dx, dy, dir8);
+  }
+  /* Ô tiêu điểm của mục tiêu khi đứng ở ô kề: ô của NPC, hoặc ô footprint
+     của vật thể kề trực tiếp với ô đứng. */
+  function targetFocusTile(target, stand) {
+    if (target.kind === 'npc') return { x: target.x, y: target.y };
+    var def = L.activeMap();
+    for (var i = 0; i < def.props.length; i++) {
+      var p = def.props[i];
+      if (p.id !== target.id) continue;
+      var footY = p.y + p.h - p.fy;
+      var best = null, bestD = 1e9;
+      for (var a = 0; a < p.fx; a++) for (var b = 0; b < p.fy; b++) {
+        var cx = p.x + a, cy = footY + b;
+        var d = Math.abs(cx - stand.x) + Math.abs(cy - stand.y);
+        if (d < bestD) { bestD = d; best = { x: cx, y: cy }; }
+      }
+      return best || { x: p.x, y: p.y + p.h - 1 };
+    }
+    return { x: target.x, y: target.y };
+  }
+  /* Chạm/bấm thẳng vào đối tượng (lệnh Bui 12:00 ngày 2026-11-01): đang ở
+     ô kề hợp lệ thì mở ngay như phím E; ở xa thì tự tìm đường tới ô kề gần
+     nhất và hẹn mở khi tới nơi (pendingInteract). */
+  function tapInteract(target) {
+    var pt = playerTile();
+    var stands = L.standTilesFor(target, npcsLive);
+    var i;
+    for (i = 0; i < stands.length; i++) {
+      if (stands[i].x === pt.x && stands[i].y === pt.y) {
+        var f0 = targetFocusTile(target, pt);
+        faceTowardTile(f0.x, f0.y);
+        pendingInteract = null;
+        interact();
+        return;
+      }
+    }
+    var from = { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) };
+    var best = null, bestPath = null;
+    for (i = 0; i < stands.length; i++) {
+      var path = L.findPath(from, stands[i], npcsLive);
+      if (path && (!bestPath || path.length < bestPath.length)) { best = stands[i]; bestPath = path; }
+    }
+    if (!best || !bestPath) { toast('Không tìm được đường tới ' + (target.name || 'đối tượng') + '.'); return; }
+    var f1 = targetFocusTile(target, best);
+    clickPath = bestPath; clickTarget = best; medLatch = false;
+    pendingInteract = { kind: target.kind, id: target.id, name: target.name || target.id, standX: best.x, standY: best.y, focusX: f1.x, focusY: f1.y };
   }
   function talkTo(npc) {
-    var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id];
-    if (pool) say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; }));
+    // Điểm chạm theo nhiệm vụ/cửa hàng của chương 3 (ưu tiên hơn thoại thường).
+    if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q3_cong_phap') return receiveManuals();
+    if (npc.id === 'chu_quan' && (state.flags.innWork || 0) < 2 && L.walletOpen(state)) return say(ST.SCENE_INN);
+    if (npc.id === 'duoc_su') return say(ST.SCENE_PHARMACY);
+    if (npc.id === 'phap_khi_chu') return say(ST.SCENE_FASHOP);
+    // Chương 4: các điểm chạm trong sân phủ Hứa và Thiên Cơ Các phân đà.
+    if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_vu_cao') return say(ST.SCENE_ACCUSE);
+    if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_dieu_tra') return confrontLucTranh();
+    if (npc.id === 'dan_thanh_a' && state.map === 'co_chau' && state.quest === 'q4_dieu_tra' && !state.flags.clueWitness) {
+      return say([
+        { who: 'dan_thanh_a', text: 'Cậu Giang? Lão nghe chuyện vu cáo rồi — oan cho cậu quá. Lão nói thật nhé: ba tháng nay, cứ khuya là lão thấy cậu Lục sai người khuân bao từ kho Hứa gia ra xe ngựa.' },
+        { who: 'dan_thanh_a', text: 'Cần lão ra mặt làm chứng thì lão đi. Người lặng im như cậu mà bị đổ tội, lão già này nhìn không đặng. (Đã có nhân chứng: Lão Ngô.)' }
+      ], function () { state.flags.clueWitness = true; refreshHUD(); saveNow(); });
+    }
+    // Chương 5: Trần gia (chuyện hồn sư + dịch vụ luyện hồn kín) và trận tỉ thí.
+    if (npc.id === 'tran_tu_linh' && state.map === 'co_chau' && state.quest === 'q5_hon_su' && !state.flags.soulSecret) return say(ST.SCENE_SOUL_INTRO);
+    if (npc.id === 'tran_tu_linh' && state.map === 'co_chau' && L.soulServiceDue(state)) return say(ST.SCENE_SOUL_SERVICE);
+    if (npc.id === 'u_nhan' && state.map === 'co_chau' && state.quest === 'q5_tiep_suc') return say(ST.SCENE_SUPPORT);
+    if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q5_u_nhan_thang' && !state.flags.duelSeen) {
+      state.flags.duelSeen = true;
+      return say(state.flags.uNhanSupported ? ST.SCENE_DUEL : ST.SCENE_DUEL_HARD, function () {
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap;
+        state.quest = 'q5_done'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 5: Trần gia và Hồn Sư thần bí.', 4200);
+      });
+    }
+    // Chương 6: đêm tấn công bắt đầu từ lời cảnh báo của Chính Ngôn; thư mời sau trận.
+    if (npc.id === 'chinh_ngon' && state.map === 'co_chau' && state.quest === 'q6_phong_thu') {
+      state.flags.atkWave = 1;
+      return say(ST.SCENE_ATK_INTRO, function () { say(ST.SCENE_ATK1); });
+    }
+    if (npc.id === 'chinh_ngon' && state.map === 'co_chau' && state.quest === 'q6_thu_moi') {
+      return say(ST.SCENE_INVITE, function () {
+        state.flags.invited = true;
+        state.quest = 'q6_done'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 6: Năm mươi mốt vạn lượng. Cổng lên Thanh Vân Tông đã mở.', 4400);
+      });
+    }
+    if (npc.id === 'tran_chinh_dao' && state.map === 'co_chau' && state.quest === 'q4_doi_chat') {
+      return say(state.flags.usedChanCh4 ? ST.SCENE_FAREWELL4_CHAN : ST.SCENE_FAREWELL4, function () {
+        state.quest = 'q4_done'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 4: Thiên Cơ Các tới nhà.', 4200);
+      });
+    }
+    var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
+    if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
+    // Chốt chặn cuối: NPC chưa có thoại riêng vẫn phải đáp lại — ấn E mà im
+    // lặng hoàn toàn là lỗi chặn chơi, không phải trạng thái hợp lệ.
+    say([{ who: 'narrate', text: npc.name + ' nhìn ngươi một lúc, khẽ gật đầu. Lúc này chưa có chuyện gì cần nói.' }]);
+  }
+  /* Sự kiện trung tâm chương 3: đặt tay lên thước pha lê lớn trong sảnh tháp. */
+  function towerMeasure() {
+    if (state.quest !== 'q3_thuoc_do') {
+      return say([{ who: 'narrate', text: state.flags.measured
+        ? 'Thước pha lê lớn đứng im lìm giữa sảnh. Chín vạch màu khắc trên thân thước — và khoảng trống phía trên vạch cao nhất, nơi gợn sáng của ngươi từng vượt qua.'
+        : 'Thước pha lê lớn đứng im lìm giữa sảnh, chín vạch màu khắc dọc thân thước. Chưa tới lượt của ngươi.' }]);
+    }
+    sfxThuoc();
+    rings.push({ x: px + 16, y: py - 10, r: 8, a: 0.9 });
+    spawnParts(px + 16, py - 20, 20, '200,240,255', 36, true);
+    var finishMeasure = function () {
+      say(ST.SCENE_MEASURE, function () {
+        state.flags.measured = true;
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap; // chấn động thông kinh mạch: tu vi đầy tầng
+        if (!state.flags.thuocReward) {
+          var r = L.addLinhThach(state, 30);
+          if (r.ok) { state.flags.thuocReward = true; toast('Tháp thưởng lệ phá kỷ lục: +30 Linh Thạch (số dư: ' + L.fmtNum(r.balance) + ').', 4200); }
+        }
+        state.quest = 'q3_cong_phap';
+        refreshHUD(); saveNow();
+      });
+    };
+    if (!state.flags.voiced) {
+      // Điểm ép mở miệng muộn: người chơi đi nhánh im lặng tới tận tháp —
+      // chấn động mạnh hơn vì Tĩnh Mặc dồn nén lâu hơn (giữ nguyên 100).
+      say(ST.SCENE_TOWER_FORCED, function () {
+        state.flags.voiced = true;
+        L.recordSpeech(state, 3, 'ep-mo-mieng-tai-thap', 'ca-thap');
+        if (state.unlocked.indexOf('voice') < 0) state.unlocked.push('voice');
+        shakeT = 1.6; flashA = 0.5; rumble();
+        finishMeasure();
+      });
+    } else finishMeasure();
+  }
+  /* Đối chất Lục Tranh (chương 4): đủ bằng chứng thì lật vụ việc tại chỗ.
+     Bằng chứng chương 2 (cờ evidence) cho bản đối chất mạnh, khép kín hơn. */
+  function confrontLucTranh() {
+    var strong = !!state.flags.evidence;
+    var standard = state.flags.clueKho && state.flags.clueWitness;
+    if (!strong && !standard) {
+      var missing = !state.flags.clueKho ? 'sổ kho Hứa gia ở rìa đông sân phủ' : 'lời của nhân chứng Lão Ngô ở phố chính';
+      return say([{ who: 'luc_tranh', text: 'Sao, tới cãi tay đôi với ta à? Không có bằng chứng thì đừng hòng ai tin ngươi. Ta chờ đấy.' },
+        { who: 'narrate', text: 'Lời của hắn chưa đủ ngã ngũ. Ngươi còn thiếu: ' + missing + '.' }]);
+    }
+    sfxBell();
+    say(strong ? ST.SCENE_CONFRONT_STRONG : ST.SCENE_CONFRONT, function () {
+      var cap = L.REALMS[state.realm].tuviNext;
+      if (cap) state.tuvi = cap; // tâm cảnh thông suốt sau khi rửa oan: tu vi đầy tầng
+      if (!state.flags.thienCoPaid) {
+        var r = L.addLinhThach(state, 40);
+        if (r.ok) { state.flags.thienCoPaid = true; toast('Thiên Cơ Các trả công điều tra: +40 Linh Thạch (số dư: ' + L.fmtNum(r.balance) + ').', 4200); }
+      }
+      state.quest = 'q4_doi_chat';
+      refreshHUD(); saveNow();
+    });
+  }
+  /* Phòng thủ phủ Hứa (chương 6): ba đợt tấn công, mỗi đợt người chơi tự
+     chọn cách đánh qua cơ chế thật (Ngôn Linh tốn Tĩnh Mặc thật, kiếm quyết,
+     hoặc lùi gọi người). Tĩnh Mặc cạn thì vẫn còn đường kiếm và đường lùi —
+     tuyệt đối không khóa cứng. */
+  function resolveAtkWave(action) {
+    var wave = state.flags.atkWave || 1;
+    var resolved = false, line = null;
+    if (action === 'atk_pha' || action === 'atk_chan') {
+      var word = action === 'atk_pha' ? 'pha' : 'chan';
+      var rw = L.castWord(state, word);
+      if (!rw.ok) {
+        toast(rw.reason + ' Hãy chọn cách khác cho đợt này.');
+        say(ST['SCENE_ATK' + wave]); // hiện lại đợt hiện tại để chọn lại
+        return;
+      }
+      if (word === 'pha') { sfxPha(); rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 }); }
+      else { sfxChan(); shakeT = Math.max(shakeT, 0.6); rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 }); }
+      L.recordSpeech(state, 6, word + '-phong-thu-dot-' + wave, 'phu-hua');
+      spawnParts(px + 16, py + 16, 10, '200,200,210', 30, false); // bụi đá của sân phủ
+      resolved = true;
+      line = { who: 'narrate', text: word === 'pha'
+        ? 'Một tiếng PHÁ nổ giữa sân — đợt địch bị hất văng khỏi thềm, đao kiếm rơi loảng xoảng.'
+        : 'Tiếng CHẤN rung chuyển cả phủ — đợt địch ôm tai ngã khuỵu, đội hình tan nát.' };
+    } else if (action === 'atk_sword') {
+      var rs = L.castSword(state);
+      if (!rs.ok) { toast(rs.reason); say(ST['SCENE_ATK' + wave]); return; }
+      sfxSword();
+      spawnParts(px + 16, py + 16, 8, '190,235,200', 26, false);
+      resolved = true;
+      line = { who: 'narrate', text: 'Thất Tinh Kiếm Quyết lóe lên bảy đường sáng — đợt địch bị chém lui, không tên nào qua được thềm chính đường.' };
+    } else if (action === 'atk_fallback') {
+      state.flags.atkFallback = true;
+      sfxBell(); // chuông báo động của phủ
+      resolved = true;
+      line = { who: 'narrate', text: 'Ngươi lùi vào trong, chuông báo động rung lên — gia nhân cầm đuốc kéo ra, U Nhàn xách kiếm lao tới. Đợt địch bị đẩy lui trong hỗn loạn, nhưng thế trận của phủ đã rối.' };
+    }
+    if (!resolved) return;
+    if (wave < 3) {
+      state.flags.atkWave = wave + 1;
+      say([line].concat(ST['SCENE_ATK' + (wave + 1)]), function () { refreshHUD(); saveNow(); });
+    } else {
+      say([line].concat(ST.SCENE_ATK_END), function () {
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap;
+        if (!state.flags.hbcPaid) {
+          var r = L.addLinhThach(state, 35);
+          if (r.ok) { state.flags.hbcPaid = true; toast('Hứa gia tạ ơn: +35 Linh Thạch (số dư: ' + L.fmtNum(r.balance) + ').', 4000); }
+        }
+        state.flags.atkWave = 0;
+        state.quest = 'q6_thu_moi';
+        refreshHUD(); saveNow();
+      });
+    }
+  }
+  /* Nhận Thanh Phong Chân Kinh + Thất Tinh Kiếm Quyết từ chủ trì tháp. */
+  function receiveManuals() {
+    sfxQuest();
+    say(ST.SCENE_MANUALS, function () {
+      if (state.unlocked.indexOf('thanh_phong') < 0) state.unlocked.push('thanh_phong');
+      if (state.unlocked.indexOf('that_tinh') < 0) state.unlocked.push('that_tinh');
+      var cap = L.REALMS[state.realm].tuviNext;
+      if (cap) state.tuvi = cap; // lĩnh hội công pháp: tu vi đầy tầng
+      state.quest = 'q3_done';
+      // Mốc mở khóa Túi Trữ Vật (chương 3 — xem docs/part2-design.md): tháp
+      // tặng kèm hai quyển công pháp; từ đây nút Túi mới xuất hiện.
+      var bagNew = !state.flags.bagUnlocked;
+      state.flags.bagUnlocked = true;
+      spawnParts(px + 16, py + 16, 18, '190,235,200', 30, true);
+      refreshHUD(); saveNow();
+      toast('Hoàn thành chương 3: Thước pha lê vượt cửu phẩm.', 4200);
+      if (bagNew) setTimeout(function () { toast('Đã mở khóa Túi Trữ Vật — bấm nút Túi hoặc phím I để xem vật phẩm.', 4600); }, 4300);
+    });
   }
   function touchStele() {
     if (!state.flags.tested) {
@@ -989,6 +1434,31 @@
     shakeT = Math.max(shakeT, 0.35); // rung nhẹ — chỉ hiệu ứng trình diễn
     refreshHUD(); saveNow();
   }
+  /* Kiếm quyết (chương 3): đòn vật lý không tốn Tĩnh Mặc, không ghi sổ lời
+     nói. Đánh vào cọc gỗ thì nứt như mọi đòn nhưng không làm cọc đổ hẳn —
+     cọc gỗ của trấn vẫn là việc của một lời PHÁ. */
+  function castSword() {
+    if (dlg) return;
+    var r = L.castSword(state);
+    if (!r.ok) { toast(r.reason); return; }
+    sfxSword();
+    addFloat(px + 16, py - 20, 'KIẾM!', '190,235,200');
+    var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
+    var def = L.activeMap();
+    for (var i = 0; i < def.props.length; i++) {
+      var p = def.props[i];
+      if (p.type !== 'dummy') continue;
+      if (Math.abs(p.x - cx) + Math.abs(p.y - cy) > 3) continue;
+      addFloat(p.x * TILE + 16, p.y * TILE - 10, '-' + r.power, '190,235,200');
+      sfxCrack(false);
+      spawnParts(p.x * TILE + 16, p.y * TILE + 16, 4, '210,180,130', 24, false);
+      if (p.id === 'coc_go' && !state.flags.dummyBroken) {
+        state._dummyHp = Math.max(1, (state._dummyHp == null ? 40 : state._dummyHp) - r.power);
+        toast('Cọc gỗ nứt nặng nhưng chưa đổ (còn 1). Nhát cuối của cọc này vẫn phải là một lời PHÁ.');
+      }
+    }
+    refreshHUD(); saveNow();
+  }
   function doBreakthrough() {
     if (dlg) return;
     var r = L.tryBreakthrough(state);
@@ -1042,6 +1512,9 @@
     }
     setSkillLock('sk-pha', state.unlocked.indexOf('voice') < 0, 'Mở khóa sau sự kiện mở miệng trước bia đá');
     setSkillLock('sk-chan', state.unlocked.indexOf('luyenkhi1') < 0, 'Mở khóa khi đạt Luyện Khí tầng 1');
+    setSkillLock('sk-sword', state.unlocked.indexOf('that_tinh') < 0, 'Mở khóa khi nhận Thất Tinh Kiếm Quyết ở Kiểm Trắc Tháp');
+    var bagBtn = $('btn-bag');
+    if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
     if (medBtn) medBtn.classList.toggle('active', medLatch);
   }
@@ -1051,7 +1524,7 @@
   function loop(ts) {
     if (!state) return;
     requestAnimationFrame(loop);
-    var dt = Math.min(0.05, (ts - lastTs) / 1000 || 0.016); lastTs = ts; tNow = ts;
+    var dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000 || 0.016)); lastTs = ts; tNow = ts;
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
     if (flashA > 0) flashA = Math.max(0, flashA - dt * 0.7);
     if (pillarT > 0) pillarT = Math.max(0, pillarT - dt);
@@ -1073,7 +1546,7 @@
       // Giữ chạm quá ngưỡng thời gian (kể cả không kéo) cũng vào chế độ cần.
       if (joy.state === 'pending' && Date.now() - joy.t0 > L.JOY_STICK_MS) {
         joy.state = 'stick';
-        clickPath = null; clickTarget = null; medLatch = false;
+        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
         var n0 = L.joyNormalize(joy.cx - joy.sx, joy.cy - joy.sy, JOY_R);
         joy.active = n0.active; joy.ux = n0.ux; joy.uy = n0.uy; joy.speed = n0.speed;
       }
@@ -1084,7 +1557,7 @@
       if (keys['arrowup'] || keys['w']) { dy = -sp; facing = 'up'; manual = true; }
       else if (keys['arrowdown'] || keys['s']) { dy = sp; facing = 'down'; manual = true; }
       if (manual) {
-        clickPath = null; clickTarget = null; medLatch = false;
+        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
         resetJoy(); // phím di chuyển hủy trạng thái cần ngay
         dir8 = L.dir8FromVector(dx, dy, dir8);
       }
@@ -1105,7 +1578,15 @@
       if (!manual && joy.state !== 'stick' && clickPath && clickPath.length) {
         var wp = clickPath[0];
         var mdx = (wp.x * TILE + 16) - (px + 16), mdy = (wp.y * TILE + 16) - (py + 16);
-        if (Math.abs(mdx) < 3 && Math.abs(mdy) < 3) {
+        // Cửa sổ tới nơi tính theo quãng đường MỘT khung hình (cộng dung
+        // sai): cửa sổ cố định nhỏ hơn bước nhảy của khung sẽ làm nhân vật
+        // dao động qua lại quanh điểm đích mãi không qua được (bản cũ dùng
+        // ±3px trong khi một khung ở nhịp chậm đi tới 6,6px). Khớp đúng
+        // tâm ô khi bắt được điểm: hộp chân nằm trọn trong ô đích (vốn đi
+        // được theo đường ô) nên không bao giờ kẹt góc khi rẽ hướng.
+        var stepW = sp * dt + 0.6;
+        if (Math.abs(mdx) <= stepW && Math.abs(mdy) <= stepW) {
+          px = wp.x * TILE; py = wp.y * TILE;
           clickPath.shift();
           if (!clickPath.length) { clickPath = null; clickTarget = null; }
         } else {
@@ -1120,6 +1601,16 @@
           }
         }
       }
+      // Chạm-để-tương-tác: đường đi kết thúc ngay tại ô đứng hẹn -> quay mặt
+      // về phía mục tiêu và tự mở tương tác như phím E.
+      if (!manual && joy.state !== 'stick' && pendingInteract && !clickPath) {
+        var ptA = playerTile();
+        if (ptA.x === pendingInteract.standX && ptA.y === pendingInteract.standY) {
+          var tgtA = pendingInteract; pendingInteract = null;
+          faceTowardTile(tgtA.focusX, tgtA.focusY);
+          interact();
+        }
+      }
       moving = !!(dx || dy);
       if (moving) {
         walkTimer += dt; if (walkTimer > 0.16) { walkFrame = 1 - walkFrame; walkTimer = 0; }
@@ -1131,7 +1622,18 @@
         }
         var prevPx = px, prevPy = py;
         tryMove(dx * dt, 0); tryMove(0, dy * dt);
-        if (clickPath && px === prevPx && py === prevPy) { clickPath = null; clickTarget = null; } // bị chặn hẳn thì bỏ đường
+        if (clickPath && px === prevPx && py === prevPy) {
+          // Kẹt một khung vì hộp chân còn vương sang ô kề chéo (thường gặp
+          // ngay sau khi rẽ hướng: chân chưa rời hẳn hàng ô cũ, bước theo
+          // trục chính bị ô vật thể ở góc chéo chặn): thử bước theo trục
+          // phụ về phía điểm đường đi — chỉ khi cả hai trục đều kẹt mới
+          // kết luận bị chặn hẳn và bỏ đường.
+          var wpB = clickPath[0];
+          var mdxB = (wpB.x * TILE + 16) - (px + 16), mdyB = (wpB.y * TILE + 16) - (py + 16);
+          if (dx !== 0 && mdyB !== 0) tryMove(0, (mdyB > 0 ? sp : -sp) * dt);
+          else if (dy !== 0 && mdxB !== 0) tryMove((mdxB > 0 ? sp : -sp) * dt, 0);
+          if (px === prevPx && py === prevPy) { clickPath = null; clickTarget = null; pendingInteract = null; } // bị chặn hẳn thì bỏ đường
+        }
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
         walkFrame = 0; stepPhase = 0; stepTimer = 0;
@@ -1177,7 +1679,7 @@
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0;
       npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
       setMinimapLabel();
-      clickPath = null; clickTarget = null; medLatch = false; resetJoy();
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy();
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       saveNow(); refreshHUD();
       toast('Đã tới: ' + L.activeMap().name + '.', 2600);
@@ -1199,13 +1701,36 @@
     for (var i = 0; i < def.portals.length; i++) {
       var po = def.portals[i];
       if (pt.x >= po.x && pt.x < po.x + po.w && pt.y >= po.y && pt.y < po.y + po.h) {
-        if (po.cond === 'dummy' && !state.flags.dummyBroken) {
-          if (Date.now() - portalToastAt > 3000) { portalToastAt = Date.now(); toast('Hãy hoàn thành chương 1 (phá cọc gỗ) trước khi rời trấn.'); }
+        if (!L.portalUnlocked(state, po)) {
+          if (Date.now() - portalToastAt > 3000) { portalToastAt = Date.now(); toast(po.cond === 'dummy' ? 'Hãy hoàn thành chương 1 (phá cọc gỗ) trước khi rời trấn.' : (po.lockMsg || 'Chưa thể qua cổng này lúc này.')); }
           return;
         }
         switchMap(po);
         return;
       }
+    }
+    if (state.map === 'co_chau' && state.quest === 'q6_sinh_le' && !state.flags.dowrySeen && pt.x >= 4 && pt.x <= 30 && pt.y >= 29 && pt.y <= 42) {
+      state.flags.dowrySeen = true; // đoàn sính lễ của Chu Kiến Thâm vào sân phủ Hứa
+      say(ST.SCENE_DOWRY, function () {
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap;
+        state.quest = 'q6_phong_thu'; refreshHUD(); saveNow();
+      });
+      return;
+    }
+    if (state.map === 'co_chau' && state.quest === 'q4_thien_co' && !state.flags.thienCoSeen && pt.x >= 4 && pt.x <= 30 && pt.y >= 29 && pt.y <= 42) {
+      state.flags.thienCoSeen = true; // sứ giả Thiên Cơ Các tới sân phủ Hứa
+      say(ST.SCENE_THIENCO, function () {
+        var cap = L.REALMS[state.realm].tuviNext;
+        if (cap) state.tuvi = cap;
+        state.quest = 'q4_vu_cao'; refreshHUD(); saveNow();
+      });
+      return;
+    }
+    if (state.map === 'kiem_trac_thap' && state.quest === 'q3_hang_cho' && !state.flags.queueSeen) {
+      state.flags.queueSeen = true; // sự kiện xếp hàng nổ ngay khi bước vào khuôn viên tháp
+      say(ST.SCENE_QUEUE, function () { state.quest = 'q3_thuoc_do'; refreshHUD(); saveNow(); });
+      return;
     }
     if (state.map !== 'duong_mon') return;
     // Bãi phục kích: bước vào vùng khi nhiệm vụ đang chờ thì sự kiện nổ ra.
@@ -1247,13 +1772,15 @@
     keys[k] = true;
     if (!state || $('screen-game').classList.contains('hidden')) return;
     if (k === 'e' || k === ' ') interact();
-    else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2')) {
+    else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2' || k === '3')) {
       var idx = parseInt(k, 10) - 1;
       if (dlg.options[idx]) chooseOption(dlg.options[idx].action);
     }
     else if (k === '1') castPha();
     else if (k === '2') castChan();
+    else if (k === '3') castSword();
     else if (k === 'b') doBreakthrough();
+    else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
   $('dialogue').addEventListener('click', function () { if (dlgTypeFinish()) return; if (dlg && dlg.who !== 'choice') nextLine(); });
@@ -1301,6 +1828,13 @@
     var wx = (clientX - rect.left) + camX;
     var wy = (clientY - rect.top) + camY;
     var tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
+    // Chạm thẳng vào đối tượng có tương tác -> đi tới và tự mở (tapInteract);
+    // chạm đất trống -> chỉ di chuyển như cũ và hủy hành động chờ trước đó.
+    // (Cổng clickMove ở đầu hàm đã chặn cả hai khi cài đặt tắt; thoại đang mở
+    // cũng đã bị chặn ở đầu hàm nên chạm lúc thoại giữ nguyên tiến thoại.)
+    var tapTgt = L.tapTargetAt(tx, ty, npcsLive);
+    if (tapTgt) { tapInteract(tapTgt); return; }
+    pendingInteract = null;
     var dest = null;
     if (L.isWalkable(tx, ty, npcsLive)) {
       dest = { x: tx, y: ty };
@@ -1357,6 +1891,21 @@
   cv.addEventListener('pointerdown', function (e) {
     if (!joyPointerOk(e) || !state || dlg) return;
     var p = joyPoint(e);
+    // Chế độ Luôn hiện sẵn: chạm bắt đầu ngay trên đế cố định -> vào thẳng
+    // chế độ cần với neo TẠI ĐẾ (không chờ ngưỡng kéo như cần nổi).
+    if (joyFixedMode()) {
+      var base = joyBasePos();
+      var bd = Math.sqrt((p.x - base.x) * (p.x - base.x) + (p.y - base.y) * (p.y - base.y));
+      if (bd <= JOY_R + 16) {
+        joy.state = 'stick'; joy.id = e.pointerId;
+        joy.sx = base.x; joy.sy = base.y; joy.cx = p.x; joy.cy = p.y;
+        joy.t0 = Date.now();
+        var nb = L.joyNormalize(p.x - base.x, p.y - base.y, JOY_R);
+        joy.active = nb.active; joy.ux = nb.ux; joy.uy = nb.uy; joy.speed = nb.speed;
+        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
+        return;
+      }
+    }
     joy.state = 'pending'; joy.id = e.pointerId;
     joy.sx = p.x; joy.sy = p.y; joy.cx = p.x; joy.cy = p.y;
     joy.t0 = Date.now(); joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
@@ -1369,7 +1918,7 @@
     var dist = Math.sqrt(ddx * ddx + ddy * ddy);
     if (joy.state === 'pending' && dist > L.JOY_STICK_DIST) {
       joy.state = 'stick';
-      clickPath = null; clickTarget = null; medLatch = false; // vào chế độ cần: hủy lệnh tap-to-move đang chạy
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; // vào chế độ cần: hủy lệnh tap-to-move đang chạy
     }
     if (joy.state === 'stick') {
       var n2 = L.joyNormalize(ddx, ddy, JOY_R);
@@ -1392,9 +1941,60 @@
   cv.addEventListener('pointercancel', joyEnd);
   $('sk-pha').addEventListener('click', function () { castPha(); });
   $('sk-chan').addEventListener('click', function () { castChan(); });
+  $('sk-sword').addEventListener('click', function () { castSword(); });
   $('sk-med').addEventListener('click', function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
   $('sk-break').addEventListener('click', function () { doBreakthrough(); });
   $('sk-interact').addEventListener('click', function () { sfxUi(); interact(); });
+
+  /* ---------- Túi Trữ Vật (mở khóa ở chương 3) ---------- */
+  function renderBag() {
+    var info = $('bag-info'), grid = $('bag-grid'), up = $('bag-upgrade');
+    if (!info || !grid || !state) return;
+    var bag = L.bagOf(state);
+    info.textContent = 'Tầng ' + bag.tier + ' — đã dùng ' + L.bagUsed(state) + '/' + L.bagCap(state) + ' ô chứa.';
+    grid.innerHTML = '';
+    var ids = Object.keys(L.ITEM_DEFS).filter(function (id) { return !L.ITEM_DEFS[id].storySlot && L.bagCount(state, id) > 0; });
+    if (!ids.length) {
+      var empty = document.createElement('div');
+      empty.className = 'bag-cell empty';
+      empty.innerHTML = '<span class="bag-name">Túi đang trống</span>';
+      grid.appendChild(empty);
+    }
+    ids.forEach(function (id) {
+      var def = L.ITEM_DEFS[id];
+      var cell = document.createElement('div');
+      cell.className = 'bag-cell';
+      cell.innerHTML = '<span class="bag-glyph">' + def.glyph + '</span><span class="bag-name">' + def.name + '</span>' +
+        (def.stack ? '<span class="bag-count">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">Pháp khí</span>');
+      grid.appendChild(cell);
+    });
+    if (up) {
+      var next = L.BAG_TIERS[bag.tier + 1];
+      up.classList.toggle('hidden', !next);
+      if (next) up.textContent = 'Nâng cấp túi lên tầng ' + next.tier + ' (' + next.cap + ' ô) — ' + next.price + ' Linh Thạch';
+    }
+  }
+  function openBag() {
+    if (!state || !state.flags.bagUnlocked) return; // chưa tới mốc mở khóa: không có giao diện túi
+    sfxUi();
+    renderBag();
+    var p = $('bag-panel'); if (p) p.classList.remove('hidden');
+  }
+  function closeBag() { var p = $('bag-panel'); if (p) p.classList.add('hidden'); }
+  $('btn-bag').addEventListener('click', openBag);
+  $('bag-close').addEventListener('click', closeBag);
+  $('bag-upgrade').addEventListener('click', function () {
+    if (!state) return;
+    var bag = L.bagOf(state);
+    var next = L.BAG_TIERS[bag.tier + 1];
+    if (!next) return;
+    var r = L.spendLinhThach(state, next.price);
+    if (!r.ok) { toast(r.reason); return; }
+    state.bag.tier = next.tier;
+    sfxQuest();
+    toast('Đã nâng cấp Túi Trữ Vật lên tầng ' + next.tier + ' (' + next.cap + ' ô chứa).');
+    renderBag(); refreshHUD(); saveNow();
+  });
 
   show('screen-auth');
 })();
