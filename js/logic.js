@@ -907,7 +907,19 @@
     { id: 'q6_sinh_le', name: 'Sính lễ năm mươi vạn lượng', desc: 'Tới sân phủ Hứa: Chu Kiến Thâm đang mang sính lễ tới cầu hôn U Nhàn.', hint: { map: 'co_chau', x: 17, y: 37 } },
     { id: 'q6_phong_thu', name: 'Đêm phủ Hứa bị tấn công', desc: 'Gặp Hứa Chính Ngôn trong sân phủ: có tin kẻ lạ đang dò la quanh phủ Hứa sau vụ sính lễ.', hint: { map: 'co_chau', x: 13, y: 35 } },
     { id: 'q6_thu_moi', name: 'Thư mời lên Thanh Vân Tông', desc: 'Nhận thư mời nhập môn từ Hứa Chính Ngôn — cánh cửa Thanh Vân Tông đang mở.', hint: { map: 'co_chau', x: 13, y: 35 } },
-    { id: 'q6_done', name: 'Chương 7: Nhập Thanh Vân Tông', desc: 'Thư mời đã trong tay. Cổng lên Thanh Vân Tông ở đông bắc thành đã mở cho ngươi.', hint: null }
+    { id: 'q6_done', name: 'Chương 7: Nhập Thanh Vân Tông', desc: 'Thư mời đã trong tay. Cổng lên Thanh Vân Tông ở đông bắc thành đã mở cho ngươi.', hint: null },
+    /* Chương 7 — Vào Thanh Vân Tông với thân phận vô linh căn */
+    { id: 'q7_nhap_tong', name: 'Vào tông với thân phận vô linh căn', desc: 'Tới gặp trưởng lão tông ở Thanh Vân Đại Điện, trình thư mời nhập môn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q7_tap_dich', name: 'Việc tạp dịch', desc: 'Làm ba việc ở khu tạp dịch đông nam: bổ củi, gánh nước, chuyển bao dược, xong về gặp quản sự tạp dịch.', hint: { map: 'thanh_van_tong', x: 97, y: 69 } },
+    { id: 'q7_thang_long', name: 'Thăng Long Đạo', desc: 'Lên đài Thăng Long ở tây bắc tông, thắng hình chiếu bằng đúng ba chiêu kiếm, không dùng tiếng nói.', hint: { map: 'thanh_van_tong', x: 15, y: 9 } },
+    { id: 'q7_hoa_huong_than', name: 'Hoa Hướng Thần', desc: 'Gặp đại đệ tử Hoa Hướng Thần ở quảng trường tông.', hint: { map: 'thanh_van_tong', x: 62, y: 56 } },
+    { id: 'q7_done', name: 'Chương 8: Chuẩn bị Trúc Cơ', desc: 'Vị thế trong tông đã đổi. Kỳ Trúc Cơ của tông đang tới gần.', hint: null },
+    /* Chương 8 — Trúc Cơ: lời nói đầu tiên ở tầm cao mới */
+    { id: 'q8_chuan_bi', name: 'Chuẩn bị Trúc Cơ', desc: 'Gặp trưởng lão tông nhận điều kiện lên đài: mang về Linh Chi Sau Núi làm thuốc dẫn cho Trúc Cơ Đan.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q8_ho_phap', name: 'Hộ pháp trong im lặng', desc: 'Lên Đài Trúc Cơ ở phía bắc tông bắt đầu vận công; trong lúc đột phá, tuyệt đối không được cất tiếng.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q8_truc_co', name: 'Trúc Cơ', desc: 'Vận công đã tới điểm cuối. Nuốt Trúc Cơ Đan và đột phá tại Đài Trúc Cơ.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q8_thu_tieng', name: 'Gạch bỏ hai chữ vô linh căn', desc: 'Về đại điện gặp trưởng lão tông.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q8_done', name: 'Kết thúc phần hai: Trúc Cơ', desc: 'Phần hai khép lại ở Trúc Cơ Sơ Kỳ. Các tuyến Huyết Bạc Cung, Hồn Sư, Thiên Cơ Các và Liễu Khuynh Tiên còn để ngỏ cho phần sau.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -933,12 +945,13 @@
       spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
+      sectMerit: 0,              // điểm cống hiến tông môn — trục tích lũy thứ ba, tách khỏi Linh Thạch (chương 7)
       items: { dan: 0 },         // GƯƠNG đọc của túi: số Hồi Khí Đan (syncBagMirrors ghi)
       gear: [],                  // GƯƠNG đọc của túi: pháp khí đang có (syncBagMirrors ghi)
       bag: { tier: 1, items: {} }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3)
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false },
       hp: 100, hpMax: 100
     };
   }
@@ -996,6 +1009,7 @@
     kiem_phong: { name: 'Thanh Phong Kiếm', type: 'phap_khi', stack: false, glyph: 'Kiếm' },
     ngoc_tu_linh: { name: 'Tụ Linh Ngọc', type: 'phap_khi', stack: false, glyph: 'Ngọc' },
     linh_chi: { name: 'Linh Chi Sau Núi', type: 'nguyen_lieu', stack: true, glyph: 'Chi' },
+    truc_co_dan: { name: 'Trúc Cơ Đan', type: 'dan', stack: true, glyph: 'Cơ' },
     thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh' },
     that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết' }
   };
@@ -1131,6 +1145,16 @@
     state.linhThach = bal - n;
     return { ok: true, balance: state.linhThach };
   }
+  /* ---------------- Điểm cống hiến tông môn (chương 7) ----------------
+     Trục tích lũy thứ ba, tách hẳn khỏi Linh Thạch: việc tạp dịch và các
+     mốc trong tông ghi điểm vào đây; Linh Thạch vẫn là tiền tệ duy nhất. */
+  function addSectMerit(state, n) {
+    if (!state) return 0;
+    var cur = (typeof state.sectMerit === 'number' && isFinite(state.sectMerit) && state.sectMerit > 0) ? Math.floor(state.sectMerit) : 0;
+    var add = Math.floor(Number(n) || 0);
+    state.sectMerit = cur + Math.max(0, add);
+    return state.sectMerit;
+  }
   // Nạp save cũ (trước khi có ví): bổ sung trường còn thiếu, không lỗi.
   // Save đã qua mốc đột phá Luyện Khí tầng 1 (realm >= 1 hoặc đã ghi mốc
   // 'luyenkhi1') thì ví mở sẵn; chưa tới mốc thì ví vẫn khóa.
@@ -1165,6 +1189,22 @@
     if (typeof state.flags.atkFallback !== 'boolean') state.flags.atkFallback = false;
     if (typeof state.flags.hbcPaid !== 'boolean') state.flags.hbcPaid = false;
     if (typeof state.flags.bagUnlocked !== 'boolean') state.flags.bagUnlocked = false;
+    if (typeof state.sectMerit !== 'number' || !isFinite(state.sectMerit) || state.sectMerit < 0) state.sectMerit = 0;
+    else state.sectMerit = Math.floor(state.sectMerit);
+    if (typeof state.flags.sectSeen !== 'boolean') state.flags.sectSeen = false;
+    if (typeof state.flags.choreGo !== 'boolean') state.flags.choreGo = false;
+    if (typeof state.flags.choreNuoc !== 'boolean') state.flags.choreNuoc = false;
+    if (typeof state.flags.choreBao !== 'boolean') state.flags.choreBao = false;
+    if (typeof state.flags.choresPaid !== 'boolean') state.flags.choresPaid = false;
+    if (typeof state.flags.tlRound !== 'number') state.flags.tlRound = 0;
+    if (typeof state.flags.tlHits !== 'number') state.flags.tlHits = 0;
+    if (typeof state.flags.hhtHits !== 'number') state.flags.hhtHits = 0;
+    if (typeof state.flags.chuanBiSeen !== 'boolean') state.flags.chuanBiSeen = false;
+    if (typeof state.flags.chiGathered !== 'boolean') state.flags.chiGathered = false;
+    if (typeof state.flags.pillGranted !== 'boolean') state.flags.pillGranted = false;
+    if (typeof state.flags.guardWave !== 'number') state.flags.guardWave = 0;
+    if (typeof state.flags.guardBroken !== 'number') state.flags.guardBroken = 0;
+    if (typeof state.flags.sectReward !== 'boolean') state.flags.sectReward = false;
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
     if (typeof state.items.dan !== 'number' || !(state.items.dan >= 0)) state.items.dan = 0;
     if (!Array.isArray(state.gear)) state.gear = [];
@@ -1197,6 +1237,10 @@
     if (state.quest === 'q4_done') state.quest = 'q5_hon_su';
     // Save cũ dừng ở mốc cuối chương 5: nối thẳng sang chương 6.
     if (state.quest === 'q5_done') state.quest = 'q6_sinh_le';
+    // Save cũ dừng ở mốc cuối chương 6: nối thẳng sang chương 7.
+    if (state.quest === 'q6_done') state.quest = 'q7_nhap_tong';
+    // Save cũ dừng ở mốc cuối chương 7: nối thẳng sang chương 8.
+    if (state.quest === 'q7_done') state.quest = 'q8_chuan_bi';
     // Bù lộ phí trưởng lão NGAY trong khâu chuẩn hóa (đặt ở cuối hàm, sau
     // khi cờ mở ví linhUnlocked đã được suy ra): save đã hoàn tất bản v1
     // (đã phá cọc gỗ, ví đã mở) mà chưa nhận 50 Linh Thạch thì cộng luôn
@@ -1311,7 +1355,7 @@
     ITEM_DEFS: ITEM_DEFS, BAG_TIERS: BAG_TIERS, bagOf: bagOf, bagCount: bagCount, bagHas: bagHas,
     bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors,
     LINH_GIFT_AMOUNT: LINH_GIFT_AMOUNT, walletOpen: walletOpen, fmtNum: fmtNum,
-    linhBalance: linhBalance, addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, normalizeSave: normalizeSave,
+    linhBalance: linhBalance, addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, addSectMerit: addSectMerit, normalizeSave: normalizeSave,
     MAPS: MAPS, activeMap: activeMap, activeMapId: activeMapId, setActiveMap: setActiveMap,
     portalUnlocked: portalUnlocked,
     recordSpeech: recordSpeech,
