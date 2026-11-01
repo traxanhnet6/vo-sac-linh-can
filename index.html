@@ -69,6 +69,7 @@
           <div class="bar"><div id="hud-silence-bar" class="bar-fill silence"></div></div>
           <b id="hud-silence">100 / 100</b>
         </div>
+        <div id="hud-linh" class="hidden"><span class="linh-ico" aria-hidden="true"></span><span class="linh-label">Linh Thạch</span><b id="hud-linh-val">0</b></div>
       </div>
     </div>
 
@@ -76,6 +77,7 @@
     <div id="func-row">
       <button id="btn-save" class="btn wood">Lưu</button>
       <button id="btn-logout" class="btn wood">Thoát</button>
+      <button id="btn-settings" class="btn wood" type="button" aria-label="Mở cài đặt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"></circle><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"></path></svg> Cài đặt</button>
     </div>
 
     <!-- Bản đồ nhỏ góc trên phải -->
@@ -102,6 +104,72 @@
       <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
     </div>
 
+    <div id="settings-panel" class="hidden" role="dialog" aria-label="Cài đặt">
+      <div class="set-head">
+        <span class="set-title">Cài đặt</span>
+        <span class="set-head-btns">
+          <button id="set-min" class="btn wood" type="button" aria-label="Thu nhỏ cài đặt">—</button>
+          <button id="set-close" class="btn wood" type="button" aria-label="Đóng cài đặt">×</button>
+        </span>
+      </div>
+      <div class="set-body">
+        <div class="set-sec">Âm thanh</div>
+        <label class="set-row"><span>Tiếng</span><input id="set-sound" type="checkbox"></label>
+        <label class="set-row"><span>Âm lượng tổng</span><input id="set-volume" type="range" min="0" max="100" step="5"></label>
+        <label class="set-row"><span>Âm thanh chiêu thức / sự kiện</span><input id="set-sfx" type="checkbox"></label>
+        <label class="set-row"><span>Lồng tiếng lời thoại</span><input id="set-voice" type="checkbox"></label>
+        <label class="set-row"><span>Âm lượng giọng nói</span><input id="set-voicevol" type="range" min="0" max="100" step="5"></label>
+        <div class="set-sec">Hình ảnh</div>
+        <label class="set-row"><span>Rung màn hình khi dùng Ngôn Linh</span><input id="set-shake" type="checkbox"></label>
+        <label class="set-row"><span>Vòng sóng âm</span><input id="set-rings" type="checkbox"></label>
+        <label class="set-row"><span>Hạt linh khí và hào quang</span><input id="set-particles" type="checkbox"></label>
+        <label class="set-row"><span>Tên + danh hiệu trên đầu</span><input id="set-names" type="checkbox"></label>
+        <label class="set-row"><span>Thanh trạng thái trong khung nhân vật</span><input id="set-bars" type="checkbox"></label>
+        <div class="set-sec">Điều khiển</div>
+        <label class="set-row"><span>Cần cảm ứng</span><select id="set-joymode"><option value="auto">Tự động theo thiết bị</option><option value="on">Luôn bật</option><option value="off">Tắt</option></select></label>
+        <label class="set-row"><span>Độ nhạy cần</span><input id="set-joysens" type="range" min="50" max="150" step="10"></label>
+        <label class="set-row"><span>Di chuyển bằng bấm chuột / chạm đất</span><input id="set-clickmove" type="checkbox"></label>
+        <div class="set-sec">Giao diện</div>
+        <label class="set-row"><span>Cỡ chữ thoại</span><select id="set-dlgfont"><option value="normal">Vừa</option><option value="large">Lớn</option></select></label>
+        <label class="set-row"><span>Tốc độ chữ thoại</span><select id="set-dlgspeed"><option value="instant">Tức thì</option><option value="normal">Bình thường</option></select></label>
+        <label class="set-row"><span>Hiện bản đồ nhỏ</span><input id="set-minimap" type="checkbox"></label>
+        <label class="set-row"><span>Ô nhiệm vụ khi vào game</span><select id="set-queststart"><option value="open">Mở sẵn</option><option value="min">Thu nhỏ</option></select></label>
+        <div class="set-sec">Trò chơi</div>
+        <label class="set-row"><span>Tự động lưu</span><input id="set-autosave" type="checkbox"></label>
+        <label class="set-row"><span>Khoảng tự động lưu</span><select id="set-autosave-sec"><option value="5">5 giây</option><option value="15">15 giây</option><option value="30">30 giây</option><option value="60">60 giây</option></select></label>
+        <label class="set-row"><span>Xác nhận trước khi Thoát</span><input id="set-confirmlogout" type="checkbox"></label>
+        <div class="set-sec">Tài khoản và phiên chơi</div>
+        <div class="set-row two-btns">
+          <button id="set-save-btn" class="btn red" type="button">Lưu tiến trình</button>
+          <button id="set-logout-btn" class="btn wood" type="button">Thoát về màn hình đăng nhập</button>
+        </div>
+        <div id="set-save-msg" class="set-msg"></div>
+        <label class="set-row"><span>Mật khẩu cũ</span><input id="set-pw-old" type="password" autocomplete="current-password"></label>
+        <label class="set-row"><span>Mật khẩu mới</span><input id="set-pw-new" type="password" autocomplete="new-password"></label>
+        <div class="set-row two-btns">
+          <button id="set-pw-btn" class="btn wood" type="button">Đổi mật khẩu</button>
+        </div>
+        <div id="set-pw-msg" class="set-msg"></div>
+        <div class="set-row two-btns">
+          <button id="set-delete-btn" class="btn danger" type="button">Xóa toàn bộ dữ liệu tài khoản</button>
+        </div>
+        <div id="set-del-confirm" class="hidden">
+          <p class="set-warn">CẢNH BÁO: toàn bộ dữ liệu của tài khoản này — nhân vật, tiến trình, bản lưu và cài đặt — sẽ bị xóa vĩnh viễn và KHÔNG khôi phục được. Bạn có chắc chắn?</p>
+          <div class="set-row two-btns">
+            <button id="set-del-yes" class="btn danger" type="button">Xóa vĩnh viễn</button>
+            <button id="set-del-no" class="btn wood" type="button">Hủy</button>
+          </div>
+        </div>
+        <div class="set-sec">Thông tin</div>
+        <div id="set-version" class="set-info"></div>
+        <div class="set-row two-btns">
+          <button id="set-reset-btn" class="btn wood" type="button">Đặt lại cài đặt về mặc định</button>
+        </div>
+        <div id="set-info-msg" class="set-msg"></div>
+      </div>
+    </div>
+    <button id="settings-tab" type="button" class="hidden">Cài đặt</button>
+
     <div id="dialogue" class="hidden">
       <div id="dlg-name"></div>
       <div id="dlg-text"></div>
@@ -119,6 +187,8 @@
 <script src="js/logic.js"></script>
 <script src="js/sprites.js"></script>
 <script src="js/story.js"></script>
+<script src="js/voice-manifest.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

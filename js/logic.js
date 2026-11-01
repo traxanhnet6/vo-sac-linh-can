@@ -158,12 +158,14 @@
   var WELL_MEDITATE = { x: 50, y: 20 }; // điểm thổ nạp cạnh giếng (linh khí tụ)
 
   function tileAt(tx, ty) {
-    if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return 'X';
-    return MAP_GRID[ty].charAt(tx);
+    var def = MAPS[ACTIVE_MAP];
+    if (tx < 0 || ty < 0 || tx >= def.w || ty >= def.h) return 'X';
+    return def.grid[ty].charAt(tx);
   }
   function propAt(tx, ty) {
-    for (var i = 0; i < PROPS.length; i++) {
-      var p = PROPS[i];
+    var props = MAPS[ACTIVE_MAP].props;
+    for (var i = 0; i < props.length; i++) {
+      var p = props[i];
       var footY = p.y + p.h - p.fy;
       if (tx >= p.x && tx < p.x + p.fx && ty >= footY && ty < p.y + p.h) return p;
     }
@@ -232,6 +234,77 @@
     return null;
   }
 
+  /* ---------------- Bản đồ đường mòn xuyên rừng (chương 2) ---------------- */
+  // 96 x 74 ô (mốc cứng của Bui: đường/rừng >= 90x70). Sinh xác định bằng hàm
+  // thuần: đường đất uốn theo trục bắc-nam, suối + cầu ở hàng 36-37, trạm nghỉ
+  // ở hàng 20, bãi phục kích ở hàng 52, quảng trường cổng thành ở cuối nam.
+  var ROAD_W = 96, ROAD_H = 74;
+  function roadCX(y) { return 48 + Math.round(10 * Math.sin(y / 9)); }
+  function hashRoad(x, y) { var n = (x * 374761393 + y * 668265263) | 0; n = (n ^ (n >> 13)) | 0; return ((n * 1274126177) | 0) >>> 0; }
+  function buildRoadGrid() {
+    var rows = [], x, y;
+    for (y = 0; y < ROAD_H; y++) {
+      var row = '';
+      for (x = 0; x < ROAD_W; x++) {
+        var c = (hashRoad(x, y) % 23 === 0) ? ',' : '.';
+        if (x === 0 || y === 0 || x === ROAD_W - 1 || y === ROAD_H - 1) c = 'X';
+        var cx = roadCX(y);
+        if (Math.abs(x - cx) <= 1 && y >= 1 && y <= 67) c = 'D';                 // đường mòn
+        if ((y === 36 || y === 37) && Math.abs(x - roadCX(36)) > 1) c = 'W';    // suối (trừ cầu)
+        if ((y === 35 || y === 38) && Math.abs(x - cx) > 1 && hashRoad(x, y) % 2 === 0) c = 'w'; // bờ suối
+        if (Math.abs(x - roadCX(20)) <= 3 && Math.abs(y - 20) <= 2) c = 'S';    // sân trạm nghỉ
+        if (Math.abs(x - roadCX(52)) <= 3 && Math.abs(y - 52) <= 2) c = 'D';    // bãi trống phục kích
+        if (y >= 66 && Math.abs(x - 48) <= 9) c = 'S';                          // quảng trường cổng thành
+        if (y === 0 && x >= 46 && x <= 49) c = 'G';                             // cổng bắc (về trấn)
+        if (y === ROAD_H - 1 && x >= 46 && x <= 49) c = 'G';                    // cổng thành (chưa mở ở chương 2)
+        row += c;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+  var ROAD_GRID = buildRoadGrid();
+  var ROAD_PROPS = (function () {
+    var props = [
+      { id: 'tram_nghi', type: 'stall', x: roadCX(20) + 1, y: 18, w: 4, h: 2, fx: 4, fy: 1, name: 'Trạm nghỉ giữa đường' },
+      { id: 'vet_tich', type: 'sacks', x: roadCX(20) - 3, y: 22, w: 2, h: 2, fx: 2, fy: 1, name: 'Dấu vết bên đường', interact: true }
+    ];
+    for (var y = 3; y < ROAD_H - 3; y++) for (var x = 3; x < ROAD_W - 3; x++) {
+      if (ROAD_GRID[y].charAt(x) !== '.' && ROAD_GRID[y].charAt(x) !== ',') continue;
+      if (Math.abs(x - roadCX(y)) <= 3) continue;                              // không mọc lên đường/sân
+      if (Math.abs(y - 20) <= 3 && Math.abs(x - roadCX(20)) <= 5) continue;    // giữ trống trạm nghỉ
+      if (Math.abs(y - 52) <= 3 && Math.abs(x - roadCX(52)) <= 5) continue;    // giữ trống bãi phục kích
+      if (y >= 64) continue;                                                  // giữ trống quảng trường
+      var h = hashRoad(x, y);
+      if (h % 37 !== 0) continue;
+      props.push({ id: 'cay_r' + x + '_' + y, type: h % 2 ? 'tree' : 'pine', x: x, y: y, w: 1, h: 2, fx: 1, fy: 1 });
+    }
+    return props;
+  })();
+  var ROAD_NPCS = [
+    { id: 'xa_phu', name: 'Xa phu Lão Mã', look: 'villager_old', x: roadCX(20) + 2, y: 21, dir: 'left' }
+  ];
+
+  /* ---------------- Đăng ký bản đồ + cổng ---------------- */
+  var MAPS = {
+    tran: {
+      name: 'Hứa Gia Trấn', w: MAP_W, h: MAP_H, grid: MAP_GRID, props: PROPS, npcs: NPCS,
+      meditate: WELL_MEDITATE,
+      signs: [{ x: 27, y: 40, text: 'Hứa Gia Trấn' }, { x: 49, y: 21, text: 'Giếng đầu trấn' }],
+      portals: [{ x: 28, y: 44, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 2, label: 'Đường tới Cô Châu Thành', cond: 'dummy' }]
+    },
+    duong_mon: {
+      name: 'Đường Mòn Xuyên Rừng', w: ROAD_W, h: ROAD_H, grid: ROAD_GRID, props: ROAD_PROPS, npcs: ROAD_NPCS,
+      meditate: { x: roadCX(20) - 1, y: 21 },
+      signs: [{ x: 47, y: 4, text: 'Đường đi Cô Châu' }, { x: 44, y: 65, text: 'Cổng Cô Châu Thành' }],
+      portals: [{ x: 46, y: 0, w: 4, h: 1, to: 'tran', toX: 29, toY: 43, label: 'Về Hứa Gia Trấn' }]
+    }
+  };
+  var ACTIVE_MAP = 'tran';
+  function activeMap() { return MAPS[ACTIVE_MAP]; }
+  function activeMapId() { return ACTIVE_MAP; }
+  function setActiveMap(id) { if (MAPS[id]) ACTIVE_MAP = id; return ACTIVE_MAP; }
+
   /* ---------------- Nhiệm vụ chính ---------------- */
   // Chuỗi bản v1: trắc linh → mở miệng → thổ nạp → đột phá → phá cọc gỗ.
   var QUESTS = [
@@ -240,7 +313,13 @@
     { id: 'q_meditate', name: 'Thổ nạp đầu tiên', desc: 'Tới cạnh giếng nước đầu trấn, giữ phím T để thổ nạp, tích đủ 100 tu vi.', hint: { x: 50, y: 20 } },
     { id: 'q_break', name: 'Đột phá Luyện Khí tầng 1', desc: 'Tu vi đã đầy. Nhấn phím B để đột phá.', hint: null },
     { id: 'q_dummy', name: 'Một lời phá cọc', desc: 'Dùng Ngôn Linh "PHÁ" (phím 1, cần 30 Tĩnh Mặc) phá cọc gỗ luyện công ở phía nam sân.', hint: { x: 36, y: 32 } },
-    { id: 'q_done', name: 'Chương sau: Kiểm Trắc Tháp', desc: 'Bản v1 kết thúc tại đây. Con đường tới Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null }
+    { id: 'q_done', name: 'Chương sau: Kiểm Trắc Tháp', desc: 'Bản v1 kết thúc tại đây. Con đường tới Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null },
+    /* Chương 2 — lên đường (docs/part2-design.md mục 4) */
+    { id: 'q2_len_duong', name: 'Lên đường tới Cô Châu Thành', desc: 'Ra cổng nam Hứa Gia Trấn, theo đường mòn xuyên rừng đi về phía nam.', hint: { map: 'tran', x: 29, y: 43 } },
+    { id: 'q2_vet_tich', name: 'Dấu vết dọc đường', desc: 'Dừng ở trạm nghỉ giữa đường, xem dấu vết người đi trước để lại (phím E).', hint: { map: 'duong_mon', x: 53, y: 24 } },
+    { id: 'q2_phuc_kich', name: 'Bóng người trong rừng', desc: 'Đi tiếp về phía nam. Rừng càng lúc càng rậm — cẩn thận.', hint: { map: 'duong_mon', x: 43, y: 54 } },
+    { id: 'q2_cong_thanh', name: 'Tới cổng Cô Châu Thành', desc: 'Cổng thành ở cuối đường. Tiến vào quảng trường cổng thành.', hint: { map: 'duong_mon', x: 48, y: 69 } },
+    { id: 'q2_done', name: 'Chương 3: Kiểm Trắc Tháp', desc: 'Đã tới cổng Cô Châu Thành. Kỳ kiểm trắc tại Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -262,7 +341,11 @@
       timesSpoken: 0,
       unlocked: [],              // 'voice' sau sự kiện mở miệng, 'luyenkhi1' sau đột phá
       quest: 'q_trac',
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false },
+      map: 'tran',               // bản đồ hiện tại (đa bản đồ từ chương 2)
+      spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
+      linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
+      linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false },
       hp: 100, hpMax: 100
     };
   }
@@ -290,7 +373,74 @@
     state.tuvi = 0;
     state.hpMax += 20; state.hp = state.hpMax;
     if (state.realm === 1 && state.stage === 0 && state.unlocked.indexOf('luyenkhi1') < 0) state.unlocked.push('luyenkhi1');
+    // Đạt Luyện Khí tầng 1 = bắt đầu tu tiên chính thức: mở ví Linh Thạch —
+    // tiền tệ của giới tu tiên (phàm nhân chỉ dùng lượng bạc trong lời thoại).
+    if (state.realm === 1 && state.stage === 0) state.linhUnlocked = true;
     return { ok: true, label: realmName(state.realm, state.stage) };
+  }
+
+  /* ---------------- Ví Linh Thạch ---------------- */
+  // Linh Thạch bị khóa ở giai đoạn phàm nhân: không hiện ví, không cộng được.
+  // Mốc mở: đột phá Luyện Khí tầng 1 (xem tryBreakthrough ở trên).
+  var LINH_GIFT_AMOUNT = 50; // lộ phí trưởng lão tặng khi hoàn tất bản v1 — bảng kinh tế: docs/part2-design.md
+  function walletOpen(state) { return !!state && state.linhUnlocked === true; }
+  // Định dạng số có dấu phân cách nghìn kiểu Việt Nam: 1234567 -> "1.234.567".
+  function fmtNum(n) {
+    var neg = Number(n) < 0;
+    var s = String(Math.floor(Math.abs(Number(n) || 0)));
+    var out = '';
+    while (s.length > 3) { out = '.' + s.slice(-3) + out; s = s.slice(0, -3); }
+    return (neg ? '-' : '') + s + out;
+  }
+  function linhBalance(state) {
+    if (!state || typeof state.linhThach !== 'number' || !isFinite(state.linhThach) || state.linhThach < 0) return 0;
+    return Math.floor(state.linhThach);
+  }
+  function addLinhThach(state, n) {
+    n = Math.floor(Number(n) || 0);
+    if (!state) return { ok: false, reason: 'Chưa có nhân vật.' };
+    if (!(n > 0)) return { ok: false, reason: 'Số Linh Thạch cộng vào phải lớn hơn 0.' };
+    if (!walletOpen(state)) return { ok: false, reason: 'Chưa bắt đầu tu tiên — Linh Thạch là tiền của giới tu tiên, phàm nhân chưa dùng được.' };
+    state.linhThach = linhBalance(state) + n;
+    return { ok: true, balance: state.linhThach };
+  }
+  function spendLinhThach(state, n) {
+    n = Math.floor(Number(n) || 0);
+    if (!state) return { ok: false, reason: 'Chưa có nhân vật.' };
+    if (!(n > 0)) return { ok: false, reason: 'Số Linh Thạch chi ra phải lớn hơn 0.' };
+    if (!walletOpen(state)) return { ok: false, reason: 'Chưa bắt đầu tu tiên — ví Linh Thạch chưa mở.' };
+    var bal = linhBalance(state);
+    if (bal < n) return { ok: false, reason: 'Không đủ Linh Thạch (đang có ' + fmtNum(bal) + ', cần ' + fmtNum(n) + ').', balance: bal };
+    state.linhThach = bal - n;
+    return { ok: true, balance: state.linhThach };
+  }
+  // Nạp save cũ (trước khi có ví): bổ sung trường còn thiếu, không lỗi.
+  // Save đã qua mốc đột phá Luyện Khí tầng 1 (realm >= 1 hoặc đã ghi mốc
+  // 'luyenkhi1') thì ví mở sẵn; chưa tới mốc thì ví vẫn khóa.
+  function normalizeSave(state) {
+    if (!state || typeof state !== 'object') return state;
+    state.linhThach = linhBalance(state);
+    if (!state.flags || typeof state.flags !== 'object') state.flags = { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false };
+    if (typeof state.flags.ltGift !== 'boolean') state.flags.ltGift = false;
+    if (typeof state.flags.wroteFirst !== 'boolean') state.flags.wroteFirst = false;
+    if (typeof state.flags.evidence !== 'boolean') state.flags.evidence = false;
+    if (typeof state.flags.ltLetter !== 'boolean') state.flags.ltLetter = false;
+    var past = (typeof state.realm === 'number' && state.realm >= 1) ||
+      !!(state.unlocked && state.unlocked.indexOf('luyenkhi1') >= 0);
+    state.linhUnlocked = past ? true : state.linhUnlocked === true;
+    if (!MAPS[state.map]) state.map = 'tran';
+    if (!Array.isArray(state.spokeLedger)) state.spokeLedger = [];
+    // Save cũ dừng ở mốc cuối bản v1: nối thẳng sang chương 2.
+    if (state.quest === 'q_done') state.quest = 'q2_len_duong';
+    return state;
+  }
+  // Ghi một lần cất lời vào sổ: dữ kiện truyện (nhân chứng, bối cảnh), tách
+  // khỏi dữ liệu hiển thị — nền cho "giá của lời nói" ở các chương sau.
+  function recordSpeech(state, ch, ctx, witnesses) {
+    if (!state) return 0;
+    if (!Array.isArray(state.spokeLedger)) state.spokeLedger = [];
+    state.spokeLedger.push({ ch: ch, ctx: ctx, witnesses: witnesses });
+    return state.spokeLedger.length;
   }
 
   /* ---------------- Chọn hướng 8 chiều + cần điều khiển cảm ứng ---------------- */
@@ -379,6 +529,10 @@
     tileAt: tileAt, propAt: propAt, isWalkable: isWalkable, reachable: reachable, findPath: findPath,
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, tryBreakthrough: tryBreakthrough,
+    LINH_GIFT_AMOUNT: LINH_GIFT_AMOUNT, walletOpen: walletOpen, fmtNum: fmtNum,
+    addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, normalizeSave: normalizeSave,
+    MAPS: MAPS, activeMap: activeMap, activeMapId: activeMapId, setActiveMap: setActiveMap,
+    recordSpeech: recordSpeech,
     register: register, login: login, saveGame: saveGame, loadGame: loadGame,
     ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX,
     dir8FromVector: dir8FromVector, joyNormalize: joyNormalize, joyClassify: joyClassify,
