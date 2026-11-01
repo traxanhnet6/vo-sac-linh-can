@@ -617,7 +617,7 @@
     rectCh(g, 77, 12, 96, 16, 'S');         // sân Trần gia
     rectCh(g, 90, 6, 99, 10, 'S');          // bãi đáp đông bắc (điểm rơi từ tông)
     rectCh(g, 50, 77, 53, 77, 'G');         // cổng nam (về đường mòn)
-    rectCh(g, 50, 0, 53, 0, 'G');           // cổng tháp (bắc)
+    rectCh(g, 48, 0, 55, 0, 'G');           // cổng tháp (bắc): mở rộng 8 ô khớp dải cổng dữ liệu — khe qua thật nằm giữa biển tháp (48,7) và bia (48,3), người chơi đi lệch trục theo các mốc thị giác vẫn bước lên được hàng 0
     rectCh(g, 96, 0, 99, 0, 'G');           // đường lên tông (đông bắc)
     return gridStrings(g);
   }
@@ -816,7 +816,7 @@
       signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }],
       portals: [
         { x: 50, y: 77, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 70, label: 'Về Đường Mòn Xuyên Rừng' },
-        { x: 50, y: 0, w: 4, h: 1, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
+        { x: 48, y: 0, w: 8, h: 1, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
         { x: 96, y: 0, w: 4, h: 1, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' }
       ]
     },
@@ -888,7 +888,7 @@
     { id: 'q2_cong_thanh', name: 'Tới cổng Cô Châu Thành', desc: 'Cổng thành ở cuối đường. Tiến vào quảng trường cổng thành.', hint: { map: 'duong_mon', x: 48, y: 69 } },
     { id: 'q2_done', name: 'Chương 3: Kiểm Trắc Tháp', desc: 'Đã tới cổng Cô Châu Thành. Kỳ kiểm trắc tại Kiểm Trắc Tháp sẽ mở ở chương tiếp theo.', hint: null },
     /* Chương 3 — Kiểm Trắc Tháp: thước pha lê vượt cửu phẩm */
-    { id: 'q3_hang_cho', name: 'Hàng chờ trăm người', desc: 'Vào Cô Châu Thành, đi thẳng phố chính lên phía bắc, qua cổng tháp vào khuôn viên Kiểm Trắc Tháp.', hint: { map: 'co_chau', x: 51, y: 4 } },
+    { id: 'q3_hang_cho', name: 'Hàng chờ trăm người', desc: 'Vào Cô Châu Thành, đi thẳng phố chính lên phía bắc, qua cổng tháp vào khuôn viên Kiểm Trắc Tháp.', hint: { map: 'co_chau', x: 51, y: 1 } },
     { id: 'q3_thuoc_do', name: 'Thước pha lê vượt cửu phẩm', desc: 'Vào sảnh tháp ở phía bắc khuôn viên, tới trước thước pha lê lớn và đặt tay lên thước (phím E).', hint: { map: 'thap_noi', x: 19, y: 7 } },
     { id: 'q3_cong_phap', name: 'Thanh Phong Chân Kinh', desc: 'Nói chuyện với chủ trì tháp trong sảnh để nhận phần thưởng của thước: tâm pháp và kiếm quyết.', hint: { map: 'thap_noi', x: 22, y: 9 } },
     { id: 'q3_done', name: 'Chương 4: Thiên Cơ Các tới nhà', desc: 'Thước pha lê đã tuyên Vô Cực Linh Căn. Tin tức sẽ lan nhanh — Thiên Cơ Các đang trên đường tới Hứa gia.', hint: null },
@@ -1399,7 +1399,7 @@
 
   /* ---------------- Tài khoản local ---------------- */
   // storage: đối tượng có getItem/setItem/removeItem (localStorage hoặc bản giả lập trong test).
-  var ACC_KEY = 'vslc_accounts', SAVE_PREFIX = 'vslc_save_';
+  var ACC_KEY = 'vslc_accounts', SAVE_PREFIX = 'vslc_save_', SAVE_BACKUP_PREFIX = 'vslc_save_backup_';
   function loadAccounts(storage) {
     try { return JSON.parse(storage.getItem(ACC_KEY) || '{}'); } catch (e) { return {}; }
   }
@@ -1422,13 +1422,38 @@
     return { ok: true };
   }
   function saveGame(storage, username, state) {
-    storage.setItem(SAVE_PREFIX + username, JSON.stringify(state));
+    var raw = JSON.stringify(state);
+    storage.setItem(SAVE_PREFIX + username, raw);
+    // Bản dự phòng chống ghi đè bởi PHIÊN BẢN CŨ còn mở: giao thức số thứ
+    // tự chỉ ràng buộc được các phiên chạy bản mới; một cửa sổ còn chạy bản
+    // cũ (trước giao thức) vẫn ghi vô điều kiện đè lên khóa chính, xóa mất
+    // saveSeq và dayMinutes (hiện tượng live 2026-11-01: vị trí + giờ quay
+    // về điểm xuất phát/08:02 dù các trường khác khớp). Mọi lần ghi của bản
+    // mới (luôn có saveSeq) được soi gương sang khóa dự phòng mà bản cũ
+    // không hề biết tới; nạp mà thấy khóa chính thiếu saveSeq thì khôi
+    // phục từ bản dự phòng. Ghi dự phòng lỗi thì bỏ qua — khóa chính vẫn
+    // là nguồn sự thật.
+    if (state && typeof state.saveSeq === 'number') {
+      try { storage.setItem(SAVE_BACKUP_PREFIX + username, raw); } catch (e) {}
+    }
   }
   function loadGame(storage, username) {
+    var main = null;
     try {
       var raw = storage.getItem(SAVE_PREFIX + username);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+      main = raw ? JSON.parse(raw) : null;
+    } catch (e) { main = null; }
+    if (main && typeof main.saveSeq === 'number') return main;
+    // Khóa chính trống hoặc KHÔNG có saveSeq: hoặc là save di trú từ bản
+    // rất cũ (hợp lệ, không có bản dự phòng đi kèm), hoặc đã bị một phiên
+    // bản cũ ghi đè. Có bản dự phòng mang saveSeq thì bản dự phòng mới là
+    // trạng thái đúng gần nhất của tài khoản này.
+    try {
+      var rawB = storage.getItem(SAVE_BACKUP_PREFIX + username);
+      var bak = rawB ? JSON.parse(rawB) : null;
+      if (bak && typeof bak.saveSeq === 'number') return bak;
+    } catch (e) {}
+    return main;
   }
 
   var VSLC = {
@@ -1454,7 +1479,7 @@
     portalUnlocked: portalUnlocked,
     recordSpeech: recordSpeech,
     register: register, login: login, saveGame: saveGame, loadGame: loadGame,
-    ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX,
+    ACC_KEY: ACC_KEY, SAVE_PREFIX: SAVE_PREFIX, SAVE_BACKUP_PREFIX: SAVE_BACKUP_PREFIX,
     dir8FromVector: dir8FromVector, joyNormalize: joyNormalize, joyClassify: joyClassify,
     JOY_DEAD: JOY_DEAD, JOY_MIN_SPEED: JOY_MIN_SPEED, JOY_STICK_DIST: JOY_STICK_DIST, JOY_STICK_MS: JOY_STICK_MS
   };

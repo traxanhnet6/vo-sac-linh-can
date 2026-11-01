@@ -377,6 +377,8 @@
 
   /* ---------- Trạng thái phiên chơi ---------- */
   var state = null, px = 0, py = 0, facing = 'up', moving = false, walkFrame = 0, walkTimer = 0;
+  var velX = 0, velY = 0; // vận tốc thật (px/giây) — quán tính tăng/giảm tốc của đợt nóng 2
+  var pathStuckT = 0;     // đồng hồ kẹt đường của chạm-để-đi (giây đứng im hẳn)
   var keys = {}, npcsLive = [], floats = [], rings = [], shakeT = 0, dlg = null, dlgQueue = [], dlgCb = null;
   var meditating = false, saveTimer = 0, startedAt = 0;
   var medSfxT = 0, medNoteIdx = 0, MED_NOTES = [523, 587, 659, 784]; // vòng nốt thổ nạp
@@ -399,7 +401,27 @@
   function cancelPinch() {
     pinch.active = false; pinch.pointers = {}; pinch.anchorWorld = null; pinch.joyCancelled = false;
   }
+  /* Dọn TOÀN BỘ trạng thái nhập khi cửa sổ mất tiêu điểm hoặc trang bị ẩn:
+     không một trạng thái nhập nào được sống sót qua mất focus. Thiếu khâu
+     này, một keyup thất lạc (alt-tab, cuộc gọi tới, vuốt thanh thông báo)
+     để keys[] kẹt true vĩnh viễn và nhân vật tự đi mãi về một hướng; cần
+     điều khiển và sổ con trỏ chụm cũng kẹt tương tự nếu pointerup /
+     pointercancel lạc mất. Lệnh đi đang chạy cũng hủy: quay lại game là
+     đứng yên, người chơi ra lệnh mới. */
+  function resetAllInput() {
+    for (var kk in keys) keys[kk] = false;
+    resetJoy();
+    cancelPinch();
+    clickPath = null; clickTarget = null; pendingInteract = null;
+    velX = 0; velY = 0;
+  }
+  window.addEventListener('blur', resetAllInput);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden || document.visibilityState === 'hidden') resetAllInput();
+  });
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
+  var clickPathRaw = false;   // true khi đang đi theo đường ô THÔ (đường cứu hộ sau khi đường vuốt kẹt)
+  var clickSegAnchor = null;  // gốc sprite tại điểm bắt đầu nhịp vuốt hiện tại (cho bám đuổi thuần túy)
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
@@ -505,7 +527,7 @@
     applyQuestMin();
     updateToastTab();
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
-    dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; resetJoy();
+    dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; resetJoy(); velX = 0; velY = 0;
     resetZoom(); cancelPinch(); // phiên chơi mới luôn bắt đầu ở mức phóng mặc định 1,0×
     npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
     setMinimapLabel();
@@ -840,7 +862,10 @@
     if (zoomAnchor && zoom === zoomTarget) zoomAnchor = null;
     var effW = viewW / zoom, effH = viewH / zoom; // khung thế giới nhìn thấy ở mức zoom hiện tại
     var dc = desiredCam();
-    camX += (dc.x - camX) * 0.18; camY += (dc.y - camY) * 0.18;
+    // Nội suy mũ theo thời gian thật (hằng số ~0,085s, tương đương hệ số
+    // 0,18/khung ở 60fps như trước) — độ mượt không còn phụ thuộc nhịp khung.
+    var camK = 1 - Math.exp(-frameDt / 0.085);
+    camX += (dc.x - camX) * camK; camY += (dc.y - camY) * camK;
     if (Math.abs(dc.x - camX) < 0.5) camX = dc.x;
     if (Math.abs(dc.y - camY) < 0.5) camY = dc.y;
     var shX = 0, shY = 0;
@@ -1489,7 +1514,7 @@
     }
     if (!best || !bestPath) { toast('Không tìm được đường tới ' + (target.name || 'đối tượng') + '.'); return; }
     var f1 = targetFocusTile(target, best);
-    clickPath = bestPath; clickTarget = best; medLatch = false;
+    clickPath = smoothPath(bestPath); clickTarget = best; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
     pendingInteract = { kind: target.kind, id: target.id, name: target.name || target.id, standX: best.x, standY: best.y, focusX: f1.x, focusY: f1.y };
   }
   function talkTo(npc) {
@@ -2237,11 +2262,11 @@
   }
 
   /* ---------- Vòng lặp ---------- */
-  var tNow = 0, lastTs = 0;
+  var tNow = 0, lastTs = 0, frameDt = 0.016;
   function loop(ts) {
     if (!state) return;
     requestAnimationFrame(loop);
-    var dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000 || 0.016)); lastTs = ts; tNow = ts;
+    var dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000 || 0.016)); lastTs = ts; tNow = ts; frameDt = dt;
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
     if (flashA > 0) flashA = Math.max(0, flashA - dt * 0.7);
     if (pillarT > 0) pillarT = Math.max(0, pillarT - dt);
@@ -2291,30 +2316,65 @@
           else facing = jn.uy > 0 ? 'down' : 'up';
         }
       }
-      // Di chuyển bằng chuột: đi theo các ô của clickPath tới tâm ô kế tiếp.
+      // Di chuyển bằng chạm, hai chế độ:
+      // - Đường VUỐT (mặc định): bám đuổi thuần túy (pure pursuit) theo
+      //   từng nhịp thẳng đã kiểm thông suốt — chiếu vị trí lên đoạn, nhắm
+      //   điểm cách hình chiếu 12px về phía đích nên nhân vật BÁM đoạn
+      //   thẳng thay vì nhắm thẳng vào điểm đích (nhắm điểm đích từng làm
+      //   nhân vật cọ góc vật thể rồi kẹt túi góc ở chương 5). Bo góc bằng
+      //   quán tính; ô đích CUỐI vẫn khớp cứng về gốc ô khi vào cửa sổ một
+      //   khung (giữ ngữ nghĩa ô đích cho cổng và tương tác); ô trung
+      //   gian lướt qua trong 7px là tính đã qua.
+      // - Đường THÔ (cứu hộ): nếu đường vuốt kẹt hẳn, vòng lặp tự tìm lại
+      //   đường ô nguyên bản và đi theo logic tâm-ô trục-chính-trước của
+      //   bản cũ (đã kiểm chứng qua toàn bộ suite) cho tới đích.
       if (!manual && joy.state !== 'stick' && clickPath && clickPath.length) {
         var wp = clickPath[0];
-        var mdx = (wp.x * TILE + 16) - (px + 16), mdy = (wp.y * TILE + 16) - (py + 16);
-        // Cửa sổ tới nơi tính theo quãng đường MỘT khung hình (cộng dung
-        // sai): cửa sổ cố định nhỏ hơn bước nhảy của khung sẽ làm nhân vật
-        // dao động qua lại quanh điểm đích mãi không qua được (bản cũ dùng
-        // ±3px trong khi một khung ở nhịp chậm đi tới 6,6px). Khớp đúng
-        // tâm ô khi bắt được điểm: hộp chân nằm trọn trong ô đích (vốn đi
-        // được theo đường ô) nên không bao giờ kẹt góc khi rẽ hướng.
+        var mdx = wp.x * TILE - px, mdy = wp.y * TILE - py;
+        var distWp = Math.hypot(mdx, mdy);
+        var isFinalWp = clickPath.length === 1;
         var stepW = sp * dt + 0.6;
-        if (Math.abs(mdx) <= stepW && Math.abs(mdy) <= stepW) {
-          px = wp.x * TILE; py = wp.y * TILE;
+        if (isFinalWp && Math.abs(mdx) <= stepW && Math.abs(mdy) <= stepW) {
+          px = wp.x * TILE; py = wp.y * TILE; velX = 0; velY = 0;
           clickPath.shift();
-          if (!clickPath.length) { clickPath = null; clickTarget = null; }
-        } else {
-          // Hướng hiển thị tính từ vector thật tới điểm đường đi kế tiếp (có thể chéo).
+          clickPath = null; clickTarget = null;
+        } else if (!clickPathRaw && !isFinalWp && distWp <= 7) {
+          clickSegAnchor = { x: wp.x * TILE, y: wp.y * TILE };
+          clickPath.shift();
+        } else if (clickPathRaw) {
+          // Logic bản cũ: trục chính trước, khớp tâm từng ô, kẹt một khung
+          // thì thử trục phụ (xem thêm khối cứu kẹt sau bước di chuyển).
           dir8 = L.dir8FromVector(mdx, mdy, dir8);
-          if (Math.abs(mdx) >= Math.abs(mdy) && mdx !== 0) {
+          if (Math.abs(mdx) <= stepW && Math.abs(mdy) <= stepW) {
+            px = wp.x * TILE; py = wp.y * TILE;
+            clickPath.shift();
+            if (!clickPath.length) { clickPath = null; clickTarget = null; }
+          } else if (Math.abs(mdx) >= Math.abs(mdy) && mdx !== 0) {
             dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
           } else if (mdy !== 0) {
             dy = mdy > 0 ? sp : -sp; facing = mdy > 0 ? 'down' : 'up';
           } else if (mdx !== 0) {
             dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+          }
+        } else {
+          var axS = clickSegAnchor ? clickSegAnchor.x : px, ayS = clickSegAnchor ? clickSegAnchor.y : py;
+          var abx = wp.x * TILE - axS, aby = wp.y * TILE - ayS;
+          var abLen = Math.hypot(abx, aby);
+          var tAim = 1;
+          if (abLen > 0.01) {
+            var tProj = ((px - axS) * abx + (py - ayS) * aby) / (abLen * abLen);
+            tProj = Math.max(0, Math.min(1, tProj));
+            tAim = Math.min(1, (tProj * abLen + 12) / abLen);
+          }
+          var aimX = axS + abx * tAim - px, aimY = ayS + aby * tAim - py;
+          var aimLen = Math.hypot(aimX, aimY);
+          if (aimLen > 0.01) {
+            dir8 = L.dir8FromVector(aimX, aimY, dir8);
+            var spdWp = sp;
+            if (isFinalWp && distWp < 30) spdWp = Math.max(30, sp * distWp / 30); // giảm tốc êm khi vào ô đích cuối
+            dx = aimX / aimLen * spdWp; dy = aimY / aimLen * spdWp;
+            if (Math.abs(aimX) >= Math.abs(aimY)) facing = aimX > 0 ? 'right' : 'left';
+            else facing = aimY > 0 ? 'down' : 'up';
           }
         }
       }
@@ -2328,28 +2388,56 @@
           interact();
         }
       }
-      moving = !!(dx || dy);
+      // Quán tính (đợt nóng 2): vận tốc thật tiến về vận tốc mong muốn
+      // (dx/dy) với gia tốc hữu hạn — bắt đầu và dừng bước đều có độ dốc
+      // ngắn thay vì bật/tắt tức thì. Trục bị tường chặn thì vận tốc trục
+      // đó về 0 ngay, trục còn lại vẫn trượt tự do dọc tường. Tốc độ tối
+      // đa giữ nguyên như trước (132 px/giây, cần cảm ứng theo độ nhạy).
+      var ACCEL = 1500, DECEL = 1200;
+      velX = approachVel(velX, dx, dx !== 0 ? ACCEL : DECEL, dt);
+      velY = approachVel(velY, dy, dy !== 0 ? ACCEL : DECEL, dt);
+      var prevPx = px, prevPy = py;
+      if (velX !== 0) { var wantX = velX * dt, gotX = tryMove(wantX, 0); if (Math.abs(gotX) < Math.abs(wantX) - 0.001) velX = 0; }
+      if (velY !== 0) { var wantY = velY * dt, gotY = tryMove(0, wantY); if (Math.abs(gotY) < Math.abs(wantY) - 0.001) velY = 0; }
+      var speedNow = Math.hypot(velX, velY);
+      moving = !!(dx || dy) || speedNow > 6;
+      // Đường THÔ kẹt một khung vì hộp chân còn vương sang ô kề chéo
+      // (thường gặp ngay sau khi rẽ hướng): thử bước theo trục phụ về phía
+      // điểm đường đi — cơ chế cứu kẹt của bản cũ, giữ nguyên.
+      if (clickPath && clickPathRaw && px === prevPx && py === prevPy && (dx || dy)) {
+        var wpB = clickPath[0];
+        var mdxB = (wpB.x * TILE + 16) - (px + 16), mdyB = (wpB.y * TILE + 16) - (py + 16);
+        if (dx !== 0 && mdyB !== 0) tryMove(0, (mdyB > 0 ? sp : -sp) * dt);
+        else if (dy !== 0 && mdxB !== 0) tryMove((mdxB > 0 ? sp : -sp) * dt, 0);
+      }
+      // Đồng hồ kẹt cho chạm-để-đi: còn nhích được thì giữ đường. Đường
+      // VUỐT đứng im hẳn quá 0,45 giây thì TỰ TÌM LẠI đường ô thô về đúng
+      // đích cũ và đi tiếp bằng logic tâm-ô (cứu hộ — đường vuốt có thể
+      // kẹt túi góc dù từng nhịp đã kiểm thông suốt); cả hai chế độ đứng
+      // im quá 0,9 giây mới kết luận bị chặn hẳn và bỏ đường. (Bản cũ bỏ
+      // đường ngay khi kẹt một khung — quán tính lúc mới xuất phát đi rất
+      // chậm nên một khung không nói lên gì nữa.)
+      if (clickPath && clickPath.length) {
+        if (Math.abs(px - prevPx) > 0.2 || Math.abs(py - prevPy) > 0.2) pathStuckT = 0;
+        else {
+          pathStuckT += dt;
+          if (pathStuckT > 0.45 && !clickPathRaw && clickTarget) {
+            var rp = L.findPath(playerTile(), clickTarget, npcsLive);
+            if (rp && rp.length) { clickPath = rp; clickPathRaw = true; pathStuckT = 0; }
+          }
+          if (pathStuckT > 0.9) { clickPath = null; clickTarget = null; pendingInteract = null; pathStuckT = 0; velX = 0; velY = 0; }
+        }
+      } else pathStuckT = 0;
       if (moving) {
-        walkTimer += dt; if (walkTimer > 0.16) { walkFrame = 1 - walkFrame; walkTimer = 0; }
-        // Pha bước cho sheet 8 hướng: chạy 1->2->3->4 lặp, mỗi khung ~0,11s.
+        // Nhịp khung bước tỉ lệ theo tốc độ THẬT: đi chậm bước chậm, đủ
+        // tốc độ thì đúng nhịp cũ (pha bước ~0,11s, đổi khung đi 0,16s).
+        var sf = Math.min(1.6, speedNow / sp);
+        walkTimer += dt * sf; if (walkTimer > 0.16) { walkFrame = 1 - walkFrame; walkTimer = 0; }
+        // Pha bước cho sheet 8 hướng: chạy 1->2->3->4 lặp theo nhịp tỉ lệ tốc độ.
         if (stepPhase === 0) { stepPhase = 1; stepTimer = 0; }
         else {
-          stepTimer += dt;
+          stepTimer += dt * sf;
           while (stepTimer >= 0.11) { stepTimer -= 0.11; stepPhase = stepPhase % 4 + 1; }
-        }
-        var prevPx = px, prevPy = py;
-        tryMove(dx * dt, 0); tryMove(0, dy * dt);
-        if (clickPath && px === prevPx && py === prevPy) {
-          // Kẹt một khung vì hộp chân còn vương sang ô kề chéo (thường gặp
-          // ngay sau khi rẽ hướng: chân chưa rời hẳn hàng ô cũ, bước theo
-          // trục chính bị ô vật thể ở góc chéo chặn): thử bước theo trục
-          // phụ về phía điểm đường đi — chỉ khi cả hai trục đều kẹt mới
-          // kết luận bị chặn hẳn và bỏ đường.
-          var wpB = clickPath[0];
-          var mdxB = (wpB.x * TILE + 16) - (px + 16), mdyB = (wpB.y * TILE + 16) - (py + 16);
-          if (dx !== 0 && mdyB !== 0) tryMove(0, (mdyB > 0 ? sp : -sp) * dt);
-          else if (dy !== 0 && mdxB !== 0) tryMove((mdxB > 0 ? sp : -sp) * dt, 0);
-          if (px === prevPx && py === prevPy) { clickPath = null; clickTarget = null; pendingInteract = null; } // bị chặn hẳn thì bỏ đường
         }
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
@@ -2408,7 +2496,7 @@
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0;
       npcsLive = L.activeMap().npcs.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
       setMinimapLabel();
-      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null;
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       saveNow(); refreshHUD();
       toast('Đã tới: ' + L.activeMap().name + '.', 2600);
@@ -2488,13 +2576,70 @@
     }
   }
 
-  function tryMove(mx, my) {
-    var nx = px + mx, ny = py + my;
-    // hộp chân: rộng 20px, cao 10px ở đáy ô nhân vật
-    var box = { x0: nx + 6, x1: nx + 26, y0: ny + 22, y1: ny + 31 };
+  // Hộp chân (rộng 20px, cao 10px ở đáy ô nhân vật) có hoàn toàn tự do ở
+  // vị trí gốc sprite (nx, ny) không — đúng bốn ô góc như luật va chạm gốc.
+  // Đưa vận tốc hiện tại về phía vận tốc mong muốn, tối đa rate*dt mỗi khung.
+  function approachVel(cur, des, rate, dt) {
+    var d = des - cur, m = rate * dt;
+    return Math.abs(d) <= m ? des : cur + (d > 0 ? m : -m);
+  }
+  function footBoxFree(nx, ny) { return footBoxFreePad(nx, ny, 0); }
+  function footBoxFreePad(nx, ny, pad) {
+    var box = { x0: nx + 6 - pad, x1: nx + 26 + pad, y0: ny + 22 - pad, y1: ny + 31 + pad };
     var tiles = [[Math.floor(box.x0 / TILE), Math.floor(box.y0 / TILE)], [Math.floor(box.x1 / TILE), Math.floor(box.y0 / TILE)], [Math.floor(box.x0 / TILE), Math.floor(box.y1 / TILE)], [Math.floor(box.x1 / TILE), Math.floor(box.y1 / TILE)]];
-    for (var i = 0; i < 4; i++) if (!L.isWalkable(tiles[i][0], tiles[i][1], npcsLive)) return;
-    px = nx; py = ny;
+    for (var i = 0; i < 4; i++) if (!L.isWalkable(tiles[i][0], tiles[i][1], npcsLive)) return false;
+    return true;
+  }
+  // Di chuyển MỘT trục (người gọi luôn truyền đúng một trục khác 0) theo
+  // từng bước con tối đa 4px: đi được tới đâu hay tới đó, dừng sít mép vật
+  // cản thay vì dội cả bước khung như trước — trục còn lại vẫn trượt tự do
+  // nên nhân vật lướt dọc tường/cổng thay vì chết đứng. Trả về quãng đường
+  // thật đã đi (có dấu) để vòng lặp biết trục nào vừa bị chặn.
+  function tryMove(mx, my) {
+    var total = mx !== 0 ? mx : my;
+    if (!total) return 0;
+    var done = 0, remaining = total;
+    while (remaining !== 0) {
+      var chunk = Math.abs(remaining) > 4 ? (remaining > 0 ? 4 : -4) : remaining;
+      var nx = px + (mx !== 0 ? done + chunk : 0), ny = py + (my !== 0 ? done + chunk : 0);
+      if (!footBoxFree(nx, ny)) break;
+      done += chunk; remaining -= chunk;
+    }
+    if (mx !== 0) px += done; else py += done;
+    return done;
+  }
+  // Đoạn thẳng giữa hai gốc sprite có thông suốt cho hộp chân không (lấy
+  // mẫu mỗi 8px) — dùng để vuốt đường chạm-để-đi. Kiểm bằng hộp chân NỞ
+  // thêm 3px mỗi phía: nhịp vuốt chỉ được nhận khi còn dư khoảng hở, để
+  // lúc bám đoạn (bám đuổi thuần túy, luôn có sai lệch vài px) nhân vật
+  // không cọ vào góc vật thể rồi kẹt trong túi góc như ca cổng Thiên Cơ
+  // Các ở chương 5 (đứng chết một chỗ dù đích còn xa).
+  function segmentFree(x0, y0, x1, y1) {
+    var dist = Math.hypot(x1 - x0, y1 - y0);
+    var steps = Math.max(1, Math.ceil(dist / 8));
+    for (var i = 1; i <= steps; i++) {
+      var t = i / steps;
+      if (!footBoxFreePad(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 3)) return false;
+    }
+    return true;
+  }
+  // Vuốt đường ô của findPath: từ mỗi neo, nhảy thẳng tới ô xa nhất còn
+  // nhìn thông suốt (tầm nhìn tối đa 12 ô mỗi nhịp) — bỏ các điểm ngoặt
+  // thừa trên đoạn thẳng và các khúc leo bậc thang theo tâm ô; điểm đích
+  // cuối luôn được giữ nguyên để ngữ nghĩa ô đích không đổi.
+  function smoothPath(path) {
+    if (!path || path.length < 3) return path;
+    var out = [], ax = px, ay = py, i = 0;
+    while (i < path.length) {
+      var last = Math.min(path.length - 1, i + 11), pick = i;
+      for (var j = last; j > i; j--) {
+        if (segmentFree(ax, ay, path[j].x * TILE, path[j].y * TILE)) { pick = j; break; }
+      }
+      out.push(path[pick]);
+      ax = path[pick].x * TILE; ay = path[pick].y * TILE;
+      i = pick + 1;
+    }
+    return out;
   }
 
   /* ---------- Phím ---------- */
@@ -2559,6 +2704,17 @@
   function handleCanvasPoint(clientX, clientY) {
     if (!state || dlg) return;
     if (pinch.active) return; // đang chụm hai ngón: không sinh lệnh đi/tương tác nào
+    // Cần đang cầm quyền điều khiển thì chạm này THUỘC VỀ hệ cần, tuyệt đối
+    // không sinh lệnh đi/tương tác. Đây là cửa sự kiện thứ hai chạy SAU
+    // pointerdown cho cùng một chạm thật (trình duyệt bắn pointerdown rồi
+    // mới touchstart): ở chế độ đế cố định, pointerdown đã vào thẳng 'stick'
+    // và xóa lệnh cũ, nhưng touchstart tới sau vẫn đẻ ra một lệnh đi ma tới
+    // điểm thế giới dưới vị trí đế (góc dưới màn hình) — thả cần ra là nhân
+    // vật tự đi theo lệnh ma đó (lỗi "tự di chuyển xuống cuối map"). Chặn
+    // ngay tại hàm dùng chung này để mọi đường gọi đều được bảo vệ; chạm
+    // nhanh thật không bị ảnh hưởng vì lúc touchstart của nó cần chỉ đang
+    // 'pending' (cần nổi) hoặc 'idle', chưa bao giờ là 'stick'.
+    if (joy.state === 'stick') return;
     if (SET && !SET.current.clickMove) return; // cài đặt tắt di chuyển bằng bấm chuột/chạm đất
     var rect = cv.getBoundingClientRect();
     // MÀN HÌNH -> THẾ GIỚI qua đúng một hàm dùng chung (screenToWorld), đã
@@ -2589,7 +2745,7 @@
     if (!dest) return;
     var from = { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) };
     var path = L.findPath(from, dest, npcsLive);
-    if (path && path.length) { clickPath = path; clickTarget = dest; medLatch = false; }
+    if (path && path.length) { clickPath = smoothPath(path); clickTarget = dest; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py }; }
     else { clickPath = null; clickTarget = null; }
   }
   // Sau một lần kéo cần, trình duyệt có thể phát thêm 1 sự kiện chuột tổng hợp nối tiếp:
@@ -2753,7 +2909,13 @@
       // 'tap' => giữ nguyên tap-to-move cho handler touchstart hiện tại; 'stick' => coi như vừa dùng cần.
       if (L.joyClassify(Date.now() - joy.t0, dist) === 'stick') endStick = true;
     }
-    if (endStick) suppressTapUntil = Date.now() + 700;
+    if (endStick) {
+      suppressTapUntil = Date.now() + 700;
+      // Thả cần là DỪNG HẲN: không lệnh đi / chờ tương tác nào được phép
+      // sống sót qua một lần dùng cần, kể cả lệnh lọt vào giữa lúc đang
+      // giữ cần từ bất kỳ đường sự kiện nào.
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false;
+    }
     resetJoy(); // nhấc ngón tay: cần tắt, nhân vật dừng
   }
   cv.addEventListener('pointerup', joyEnd);

@@ -201,6 +201,7 @@
       try { storage.setItem(ACC_KEY, JSON.stringify(accs)); } catch (e) {}
     }
     try { storage.removeItem(SAVE_PREFIX + username); } catch (e) {}
+    try { storage.removeItem('vslc_save_backup_' + username); } catch (e) {}
     try { storage.removeItem(keyFor(username)); } catch (e) {}
     return existed;
   }
