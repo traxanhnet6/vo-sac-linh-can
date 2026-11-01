@@ -1,0 +1,115 @@
+/* Vô Sắc Linh Căn — giao diện tông sẫm, điểm vàng cổ, chất tu tiên Trung Quốc.
+   Đợt 2: lớp phủ kiểu video — panel gỗ/nâu sẫm bán trong suốt, viền vàng đồng. */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
+  font-family: "Noto Serif", "Times New Roman", serif; }
+.hidden { display: none !important; }
+.screen { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, #24382a 0%, #141a16 70%); padding: 16px; }
+
+.auth-box { width: 420px; max-width: 94vw; background: rgba(24, 30, 24, 0.92);
+  border: 1px solid #77683c; border-radius: 10px; padding: 28px 30px;
+  box-shadow: 0 0 40px rgba(0,0,0,0.55), inset 0 0 60px rgba(201,162,39,0.05); }
+.game-title { margin: 0 0 6px; text-align: center; font-size: 34px; letter-spacing: 4px;
+  color: #e9d9a8; text-shadow: 0 2px 0 #5d4a1e, 0 0 22px rgba(201,162,39,0.35); }
+.game-title.small { font-size: 24px; }
+.game-sub { text-align: center; color: #b9ac8d; font-size: 13.5px; line-height: 1.55; margin: 0 0 18px; }
+.auth-box label { display: block; font-size: 13px; color: #cbbfa0; margin-bottom: 12px; }
+.auth-box input[type="text"], .auth-box input[type="password"] {
+  width: 100%; margin-top: 5px; padding: 10px 12px; border-radius: 6px;
+  border: 1px solid #5d5136; background: #10140f; color: #f0e8d2; font-size: 15px; }
+.auth-btns { display: flex; gap: 10px; margin-top: 6px; }
+.btn { cursor: pointer; border: 1px solid #77683c; background: #2c2c22; color: #e8dfc0;
+  padding: 10px 18px; border-radius: 6px; font-size: 15px; font-family: inherit; }
+.btn:hover { background: #3a3a2a; }
+.btn-main { background: linear-gradient(180deg, #8a6d2f, #6d5522); color: #fff7dd; flex: 1; }
+.btn-main:hover { background: linear-gradient(180deg, #9d7d37, #7a6027); }
+.btn.wide { width: 100%; margin-top: 8px; }
+.btn.small { padding: 5px 12px; font-size: 13px; }
+.btn.wood { background: linear-gradient(180deg, rgba(92, 66, 38, 0.92), rgba(62, 42, 22, 0.92));
+  border: 1px solid #c9a227; color: #f7ead0; padding: 6px 16px; font-size: 13.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45); }
+.btn.wood:hover { background: linear-gradient(180deg, rgba(112, 82, 46, 0.95), rgba(74, 50, 26, 0.95)); }
+.error { color: #e88a7a; min-height: 18px; font-size: 13.5px; margin: 10px 0 0; }
+.note { color: #8d8271; font-size: 12.5px; line-height: 1.5; margin-top: 14px; }
+.gender-row { display: flex; gap: 22px; margin: 4px 0 10px; }
+.gender-row .radio { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14.5px; }
+
+/* Sân khấu chơi + lớp phủ */
+#screen-game { flex-direction: column; justify-content: flex-start; padding: 10px; }
+#stage { position: relative; width: 960px; max-width: 97vw; }
+#game-canvas { width: 100%; display: block; border: 1px solid #77683c; border-radius: 6px;
+  background: #2c3527; image-rendering: pixelated; }
+.panel { background: rgba(43, 31, 19, 0.84); border: 1px solid #a8893a; border-radius: 8px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.5), inset 0 0 24px rgba(0,0,0,0.35); color: #f0e8d2; }
+
+/* Khung nhân vật góc trên trái */
+#char-frame { position: absolute; top: 10px; left: 10px; z-index: 4; display: flex; gap: 10px;
+  padding: 8px 12px 8px 8px; min-width: 272px; }
+#portrait { width: 54px; height: 67px; flex: none; border: 1px solid #77683c; border-radius: 4px;
+  background-color: #22301f; background-repeat: no-repeat;
+  background-size: 108px 270px; background-position: 0 0; image-rendering: pixelated; }
+.char-info { flex: 1; min-width: 0; }
+.hud-name { font-size: 17px; color: #ffe9a8; font-weight: bold; line-height: 1.15; }
+.hud-realm { font-size: 12.5px; color: #a8c8e8; margin: 1px 0 5px; }
+.bar-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; margin-bottom: 3px; }
+.bar-row span { width: 52px; color: #d8c9a3; }
+.bar-row b { min-width: 58px; font-weight: normal; color: #f0e8d2; font-size: 11.5px; }
+.bar { flex: 1; height: 9px; background: #171208; border: 1px solid #5d4a26; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; width: 0%; transition: width 0.25s; }
+.bar-fill.hp { background: linear-gradient(90deg, #a03a30, #e0704e); }
+.bar-fill.tuvi { background: linear-gradient(90deg, #4e7fa0, #7fb2d9); }
+.bar-fill.silence { background: linear-gradient(90deg, #c9a227, #f3d94e); }
+
+/* Hàng nút chức năng phía trên giữa */
+#func-row { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 4;
+  display: flex; gap: 8px; }
+
+/* Bản đồ nhỏ góc trên phải */
+#minimap-wrap { position: absolute; top: 10px; right: 10px; z-index: 4; padding: 6px 6px 3px; }
+#minimap { display: block; border: 1px solid #5d4a26; border-radius: 3px; }
+.minimap-label { text-align: center; font-size: 12px; color: #f7ead0; padding: 3px 0 1px; letter-spacing: 1px; }
+
+/* Panel nhiệm vụ trái, dưới khung nhân vật */
+#hud-quest { position: absolute; top: 128px; left: 10px; z-index: 4; width: 262px; padding: 9px 12px; }
+.quest-label { font-size: 11px; letter-spacing: 2px; color: #e3b83c; }
+.quest-name { font-size: 15px; color: #ffe9a8; margin: 2px 0; }
+.quest-desc { font-size: 12.5px; color: #e2d5b5; line-height: 1.45; }
+
+/* Thanh kỹ năng giữa-dưới */
+#skillbar { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 4;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sk-row { display: flex; gap: 6px; }
+.sk { position: relative; width: 52px; height: 52px; padding: 0; cursor: pointer;
+  background: rgba(43, 31, 19, 0.88); border: 1px solid #a8893a; border-radius: 7px;
+  color: #f7ead0; font-family: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; }
+.sk:hover { border-color: #e3b83c; }
+.sk-key { position: absolute; top: 2px; left: 5px; font-size: 10px; color: #e3b83c; font-weight: bold; }
+.sk-name { font-size: 12px; font-weight: bold; text-align: center; line-height: 1.15; padding: 0 2px; }
+.sk.locked { opacity: 0.45; color: #b9ac8d; border-color: #6d5c33; }
+.sk.active { border-color: #f3d94e; box-shadow: 0 0 12px rgba(243, 217, 78, 0.55); }
+.sk.empty { opacity: 0.38; cursor: default; }
+.sk.empty .sk-name { font-size: 16px; color: #b9ac8d; }
+.skill-hint { font-size: 11.5px; color: #e8dfc0; background: rgba(16, 19, 15, 0.55);
+  padding: 2px 12px; border-radius: 10px; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+
+/* Hộp thoại: nâng lên trên thanh kỹ năng */
+#dialogue { position: absolute; left: 4%; right: 4%; bottom: 84px; z-index: 5;
+  background: rgba(16, 19, 15, 0.94); border: 1px solid #77683c; border-radius: 8px;
+  padding: 13px 18px 9px; cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+#dlg-name { color: #ffd94e; font-size: 14.5px; font-weight: bold; margin-bottom: 4px; min-height: 17px; }
+#dlg-text { font-size: 16.5px; line-height: 1.55; color: #f0e8d2; white-space: pre-wrap; }
+#dialogue.dlg-write { background: rgba(238, 230, 205, 0.97); }
+#dialogue.dlg-write #dlg-text { color: #33302a; font-style: italic; }
+#dialogue.dlg-write #dlg-name { color: #77683c; }
+#dialogue.dlg-say { border-color: #f3d94e; box-shadow: 0 0 26px rgba(243, 217, 78, 0.45); }
+#dialogue.dlg-say #dlg-text { font-size: 19px; font-weight: bold; }
+#dlg-choices { margin-top: 9px; display: flex; flex-direction: column; gap: 7px; }
+#dlg-choices button { text-align: left; cursor: pointer; font-family: inherit; font-size: 15px;
+  padding: 8px 12px; border-radius: 6px; border: 1px solid #77683c; background: #23231a; color: #ffe9a8; }
+#dlg-choices button:hover { background: #37351f; }
+.dlg-next { text-align: right; font-size: 11.5px; color: #8d8271; margin-top: 5px; }
+#toast { position: absolute; top: 52px; left: 50%; transform: translateX(-50%); z-index: 6;
+  background: rgba(16, 19, 15, 0.94); border: 1px solid #c9a227; color: #ffe9a8;
+  padding: 9px 18px; border-radius: 20px; font-size: 14.5px; max-width: 88%; text-align: center; }

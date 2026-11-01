@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vô Sắc Linh Căn — Thái Hư Chí Tôn</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Màn hình đăng kí / đăng nhập -->
+<section id="screen-auth" class="screen">
+  <div class="auth-box">
+    <h1 class="game-title">VÔ SẮC LINH CĂN</h1>
+    <p class="game-sub">Thái Hư Chí Tôn — mười tám năm im lặng, một lời chấn động thiên địa</p>
+    <label>Tài khoản
+      <input id="auth-user" type="text" autocomplete="username" placeholder="Tên tài khoản">
+    </label>
+    <label>Mật khẩu
+      <input id="auth-pass" type="password" autocomplete="current-password" placeholder="Mật khẩu">
+    </label>
+    <div class="auth-btns">
+      <button id="btn-login" class="btn btn-main">Đăng nhập</button>
+      <button id="btn-register" class="btn">Đăng kí</button>
+    </div>
+    <p id="auth-error" class="error"></p>
+    <p class="note">Tài khoản lưu ngay trên máy này. Mật khẩu được băm kèm muối, không lưu văn bản thuần.</p>
+  </div>
+</section>
+
+<!-- Màn hình tạo nhân vật -->
+<section id="screen-create" class="screen hidden">
+  <div class="auth-box">
+    <h2 class="game-title small">TẠO NHÂN VẬT</h2>
+    <p class="game-sub">Thiếu niên câm nhà họ Giang, ở nhờ Hứa gia tại Cô Châu Thành.
+      Hôm nay là ngày trắc linh căn — ngày cả trấn chờ xem ngươi là rồng hay là sâu.</p>
+    <label>Tên nhân vật
+      <input id="char-name" type="text" value="Giang Phàm" maxlength="16">
+    </label>
+    <div class="gender-row">
+      <label class="radio"><input type="radio" name="gender" value="nam" checked> Nam</label>
+      <label class="radio"><input type="radio" name="gender" value="nu"> Nữ</label>
+    </div>
+    <button id="btn-create" class="btn btn-main wide">Bước vào Hứa Gia Trấn</button>
+    <p class="note">Linh căn: <b>?</b> — bia đá sẽ cho ra phán quyết. Miệng: <b>đã im lặng 18 năm</b>.</p>
+  </div>
+</section>
+
+<!-- Màn hình chơi: giao diện lớp phủ kiểu video (đợt 2) -->
+<section id="screen-game" class="screen hidden">
+  <div id="stage">
+    <canvas id="game-canvas" width="960" height="720"></canvas>
+
+    <!-- Khung nhân vật góc trên trái -->
+    <div id="char-frame" class="panel">
+      <div id="portrait"></div>
+      <div class="char-info">
+        <div class="hud-name" id="hud-name">Giang Phàm</div>
+        <div class="hud-realm" id="hud-realm">Phàm Nhân</div>
+        <div class="bar-row"><span>HP</span>
+          <div class="bar"><div id="hud-hp-bar" class="bar-fill hp"></div></div>
+          <b id="hud-hp">100 / 100</b>
+        </div>
+        <div class="bar-row"><span>Tu vi</span>
+          <div class="bar"><div id="hud-tuvi-bar" class="bar-fill tuvi"></div></div>
+          <b id="hud-tuvi">0 / 100</b>
+        </div>
+        <div class="bar-row"><span>Tĩnh Mặc</span>
+          <div class="bar"><div id="hud-silence-bar" class="bar-fill silence"></div></div>
+          <b id="hud-silence">100 / 100</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hàng biểu tượng chức năng phía trên giữa -->
+    <div id="func-row">
+      <button id="btn-save" class="btn wood">Lưu</button>
+      <button id="btn-logout" class="btn wood">Thoát</button>
+    </div>
+
+    <!-- Bản đồ nhỏ góc trên phải -->
+    <div id="minimap-wrap" class="panel">
+      <canvas id="minimap" width="160" height="120"></canvas>
+      <div class="minimap-label">Hứa Gia Trấn</div>
+    </div>
+
+    <!-- Panel nhiệm vụ bên trái, dưới khung nhân vật -->
+    <div id="hud-quest" class="panel">
+      <div class="quest-label">Nhiệm vụ chính</div>
+      <div class="quest-name" id="hud-quest-name"></div>
+      <div class="quest-desc" id="hud-quest-desc"></div>
+    </div>
+
+    <!-- Thanh kỹ năng giữa-dưới, hai hàng -->
+    <div id="skillbar">
+      <div class="sk-row">
+        <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-name">PHÁ</span></button>
+        <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-name">CHẤN</span></button>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+      </div>
+      <div class="sk-row">
+        <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-name">Thổ nạp</span></button>
+        <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-name">Đột phá</span></button>
+        <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+        <div class="sk empty"><span class="sk-name">·</span></div>
+      </div>
+      <div class="skill-hint">WASD / phím mũi tên hoặc bấm chuột để di chuyển · E tương tác</div>
+    </div>
+
+    <div id="dialogue" class="hidden">
+      <div id="dlg-name"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-choices"></div>
+      <div class="dlg-next">E / Space / bấm để tiếp ▸</div>
+    </div>
+    <div id="toast" class="hidden"></div>
+  </div>
+</section>
+
+<script src="js/sha256.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/story.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
