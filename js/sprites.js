@@ -401,6 +401,9 @@
     return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
   }
 
+  function cloneWithPal(src, pal) { return { w: src.w, h: src.h, rows: src.rows, pal: pal }; }
+  var houseBase = makeHouse(64, 62, '#54606e', '#e6dcc4');
+  var houseBigBase = makeHouse(86, 76, '#6e3f36', '#eadfc6');
   var PROP_SPRITES = {
     tree: makeTree(),
     pine: makePine(),
@@ -409,8 +412,23 @@
     well: makeWell(),
     dummy: makeDummy(false),
     dummy_broken: makeDummy(true),
-    house: makeHouse(64, 62, '#54606e', '#e6dcc4'),
-    house_big: makeHouse(86, 76, '#6e3f36', '#eadfc6')
+    house: houseBase,
+    house_big: houseBigBase,
+    house_b: cloneWithPal(houseBase, {
+      R: '#8b6239', r: '#6f4c2c', L: '#a67c4a', W: '#d9c096', w: '#bfa77e',
+      T: '#4a3018', D: '#5d3d20', d: '#452c14', Y: '#ffd97a', y: '#8a6238',
+      S: '#8a7a68', s: '#6e5f4f', g: '#d9a441'
+    }),
+    house_c: cloneWithPal(houseBase, {
+      R: '#6b6f75', r: '#54575c', L: '#858a91', W: '#c9c9c4', w: '#a9a9a2',
+      T: '#4a4a4a', D: '#5a5a5a', d: '#3f3f3f', Y: '#f6cf6a', y: '#6e6e6e',
+      S: '#7d7f82', s: '#5f6163', g: '#b8b0a0'
+    }),
+    inn: cloneWithPal(houseBigBase, {
+      R: '#4a6741', r: '#37502f', L: '#5f8554', W: '#d8d0b0', w: '#bab090',
+      T: '#3d2f1a', D: '#4a3520', d: '#332414', Y: '#ffe98a', y: '#7a8a4a',
+      S: '#8d9299', s: '#6f747a', g: '#e8c84a'
+    })
   };
 
   var SPR = { BODY: BODY, LOOKS: LOOKS, charSprite: charSprite, PROP_SPRITES: PROP_SPRITES, mirror: mirror };

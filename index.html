@@ -80,36 +80,26 @@
 
     <!-- Bản đồ nhỏ góc trên phải -->
     <div id="minimap-wrap" class="panel">
-      <canvas id="minimap" width="160" height="120"></canvas>
+      <canvas id="minimap" width="240" height="180"></canvas>
       <div class="minimap-label">Hứa Gia Trấn</div>
     </div>
 
     <!-- Panel nhiệm vụ bên trái, dưới khung nhân vật -->
     <div id="hud-quest" class="panel">
+      <button id="quest-toggle" type="button" aria-label="Thu nhỏ nhiệm vụ">–</button>
       <div class="quest-label">Nhiệm vụ chính</div>
       <div class="quest-name" id="hud-quest-name"></div>
       <div class="quest-desc" id="hud-quest-desc"></div>
     </div>
+    <button id="quest-tab" type="button" class="hidden">! Nhiệm vụ</button>
 
-    <!-- Thanh kỹ năng giữa-dưới, hai hàng -->
+    <!-- Thanh kỹ năng gọn ở góc dưới phải: một hàng 5 nút -->
     <div id="skillbar">
-      <div class="sk-row">
-        <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-name">PHÁ</span></button>
-        <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-name">CHẤN</span></button>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-      </div>
-      <div class="sk-row">
-        <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-name">Thổ nạp</span></button>
-        <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-name">Đột phá</span></button>
-        <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-        <div class="sk empty"><span class="sk-name">·</span></div>
-      </div>
-      <div class="skill-hint">WASD / phím mũi tên hoặc bấm chuột để di chuyển · E tương tác</div>
+      <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-name">PHÁ</span></button>
+      <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-name">CHẤN</span></button>
+      <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-name">Thổ nạp</span></button>
+      <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-name">Đột phá</span></button>
+      <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
     </div>
 
     <div id="dialogue" class="hidden">
@@ -118,7 +108,10 @@
       <div id="dlg-choices"></div>
       <div class="dlg-next">E / Space / bấm để tiếp ▸</div>
     </div>
-    <div id="toast" class="hidden"></div>
+    <div id="toast-wrap">
+      <div id="toast" class="hidden"><span id="toast-text"></span><button id="toast-min" type="button" aria-label="Thu nhỏ thông báo">–</button></div>
+      <button id="toast-tab" type="button" class="hidden">Thông báo <span id="toast-count">0</span></button>
+    </div>
   </div>
 </section>
 

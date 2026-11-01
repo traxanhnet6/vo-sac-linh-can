@@ -3,15 +3,59 @@
 (function () {
   'use strict';
   var L = window.VSLC, S = window.VSLC_SPRITES, ST = window.VSLC_STORY, sha256 = window.VSLC_SHA256;
-  var TILE = 32, VIEW_W = 960, VIEW_H = 720;
+  var TILE = 32;
+  var viewW = 960, viewH = 720, viewDpr = 1;
+  /* VIEWFN-BEGIN */
+  function computeView(w, h) {
+    var vw = Math.floor(Number(w) || 0);
+    var vh = Math.floor(Number(h) || 0);
+    if (vw < 240) vw = 240;
+    if (vh < 180) vh = 180;
+    return { w: vw, h: vh };
+  }
+  function clampCam(cx, cy, vw, vh, worldW, worldH) {
+    var maxX = Math.max(0, (worldW || 0) - (vw || 0));
+    var maxY = Math.max(0, (worldH || 0) - (vh || 0));
+    var x = Math.max(0, Math.min(maxX, Number(cx) || 0));
+    var y = Math.max(0, Math.min(maxY, Number(cy) || 0));
+    return { x: x, y: y };
+  }
+  /* VIEWFN-END */
 
   /* ---------- Tiện ích DOM ---------- */
   function $(id) { return document.getElementById(id); }
   function show(id) {
     ['screen-auth', 'screen-create', 'screen-game'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
   }
+  var toastMinimized = false, toastUnread = 0, lastToastMsg = '', lastToastMs = 3200;
+  try { toastMinimized = localStorage.getItem('vslc_toast_min') === '1'; } catch (e) { toastMinimized = false; }
+  var questMinimized = false;
+  try { questMinimized = localStorage.getItem('vslc_quest_min') === '1'; } catch (e) { questMinimized = false; }
+  var seenQuestIds = {}, lastQuestId = null;
+  function updateToastTab() {
+    var tab = $('toast-tab'), cnt = $('toast-count');
+    if (cnt) cnt.textContent = String(toastUnread);
+    if (tab) tab.classList.toggle('hidden', !(toastMinimized && toastUnread > 0));
+  }
+  function applyQuestMin() {
+    var panel = $('hud-quest'), tab = $('quest-tab');
+    if (panel) panel.classList.toggle('hidden', questMinimized);
+    if (tab) tab.classList.toggle('hidden', !questMinimized);
+    try { localStorage.setItem('vslc_quest_min', questMinimized ? '1' : '0'); } catch (e) {}
+  }
   function toast(msg, ms) {
-    var t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
+    lastToastMsg = msg; lastToastMs = ms || 3200;
+    var t = $('toast'), txt = $('toast-text');
+    if (toastMinimized) {
+      toastUnread += 1;
+      if (t) t.classList.add('hidden');
+      clearTimeout(toast._h);
+      updateToastTab();
+      return;
+    }
+    if (txt) txt.textContent = msg; else if (t) t.textContent = msg;
+    if (t) t.classList.remove('hidden');
+    updateToastTab();
     clearTimeout(toast._h); toast._h = setTimeout(function () { t.classList.add('hidden'); }, ms || 3200);
   }
 
@@ -67,7 +111,7 @@
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
-  var PROP_TYPES = ['house_big', 'house', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks'];
+  var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks'];
   var ASSETS = { bg: null, chars: {}, props: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bg = loadImg('assets/bg.png');
@@ -75,16 +119,15 @@
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
   var DIR_ROW = { down: 0, up: 1, right: 2, left: 3 }; // hàng trong sheet nhân vật
-  var BIG_SHADOW = { house: 1, house_big: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1 };
+  var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1 };
   // Vật thể trang trí thị giác: CHỈ vẽ, không vào logic, không chặn đường.
   // PHẢI GIỮ ĐỒNG BỘ với VISUAL_DECOR trong tools/dump-scene.js.
   var VISUAL_DECOR = [
-    { type: 'gate', cx: 640, bottom: 960, depth: 927 },
-    { type: 'stall', cx: 256, bottom: 352, depth: 352 },
-    { type: 'jars', cx: 298, bottom: 224, depth: 224 },
-    { type: 'woodpile', cx: 134, bottom: 832, depth: 832 },
-    { type: 'rack', cx: 986, bottom: 736, depth: 736 },
-    { type: 'sacks', cx: 934, bottom: 192, depth: 192 }
+    { type: 'gate', cx: 960, bottom: 1440, depth: 1427 },
+    { type: 'jars', cx: 415, bottom: 245, depth: 245 },
+    { type: 'woodpile', cx: 225, bottom: 1170, depth: 1170 },
+    { type: 'rack', cx: 1500, bottom: 1175, depth: 1175 },
+    { type: 'sacks', cx: 1560, bottom: 218, depth: 218 }
   ];
   // Bảng tên trên cổng trong gate.png (224x150): đo bằng PIL — dải gỗ nâu sẫm
   // phẳng RGB ~(92,50,31) tại x 52..172, y 68..72 → tâm bảng tại (112, 70).
@@ -99,6 +142,9 @@
 
   function startGame(saved) {
     state = saved;
+    resizeCanvas();
+    applyQuestMin();
+    updateToastTab();
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
     npcsLive = L.NPCS.map(function (n) { return { id: n.id, name: n.name, look: n.look, x: n.x, y: n.y, dir: n.dir }; });
     show('screen-game');
@@ -123,6 +169,18 @@
   /* ---------- Vẽ sprite ---------- */
   var cv = $('game-canvas'), ctx = cv.getContext('2d');
   ctx.imageSmoothingEnabled = false;
+  function resizeCanvas() {
+    if (!cv) return;
+    var w = cv.clientWidth || window.innerWidth || viewW;
+    var h = cv.clientHeight || window.innerHeight || viewH;
+    var v = computeView(w, h);
+    viewW = v.w; viewH = v.h;
+    viewDpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(viewW * viewDpr);
+    cv.height = Math.round(viewH * viewDpr);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', resizeCanvas);
   function drawSprite(spr, dx, dy, scale) {
     var pal = spr.pal;
     for (var y = 0; y < spr.h; y++) {
@@ -242,19 +300,17 @@
     }
   }
 
-  var PROP_SCALE = { tree: 2, pine: 2, stele: 2, lantern: 2, well: 2, dummy: 2, house: 2, house_big: 2 };
+  var PROP_SCALE = { tree: 2, pine: 2, stele: 2, lantern: 2, well: 2, dummy: 2, house: 2, house_big: 2, house_b: 2, house_c: 2, inn: 2 };
   function propSprite(p) {
     if (p.type === 'dummy' && state && state.flags.dummyBroken) return S.PROP_SPRITES.dummy_broken;
     return S.PROP_SPRITES[p.type];
   }
   // Biển tên nơi (vật trang trí của engine, đặt cạnh điểm xuất phát).
-  var SIGNS = [{ x: 16, y: 22, text: 'Hứa Gia Trấn' }, { x: 32, y: 13, text: 'Giếng đầu trấn' }];
+  var SIGNS = [{ x: 27, y: 40, text: 'Hứa Gia Trấn' }, { x: 49, y: 21, text: 'Giếng đầu trấn' }];
 
   function desiredCam() {
-    return {
-      x: Math.max(0, Math.min(L.MAP_W * TILE - VIEW_W, px + 16 - VIEW_W / 2)),
-      y: Math.max(0, Math.min(L.MAP_H * TILE - VIEW_H, py + 16 - VIEW_H / 2))
-    };
+    var v = computeView(viewW, viewH);
+    return clampCam(px + 16 - v.w / 2, py + 16 - v.h / 2, v.w, v.h, L.MAP_W * TILE, L.MAP_H * TILE);
   }
   function contactShadow(cx, cy, w) {
     ctx.fillStyle = 'rgba(24,34,18,0.18)';
@@ -336,38 +392,40 @@
     var mm = $('minimap');
     if (!mm || !state) return;
     if (!mmCtx) mmCtx = mm.getContext('2d');
+    var ms = mm.width / L.MAP_W;
     var tx, ty;
     for (ty = 0; ty < L.MAP_H; ty++) for (tx = 0; tx < L.MAP_W; tx++) {
       mmCtx.fillStyle = TILE_COLORS[L.tileAt(tx, ty)] || '#5b9046';
-      mmCtx.fillRect(tx * 4, ty * 4, 4, 4);
+      mmCtx.fillRect(tx * ms, ty * ms, ms, ms);
     }
     mmCtx.fillStyle = 'rgba(30,24,16,0.85)';
-    L.PROPS.forEach(function (p) { mmCtx.fillRect(Math.round((p.x + p.w / 2) * 4) - 1, Math.round((p.y + p.h / 2) * 4) - 1, 2, 2); });
+    L.PROPS.forEach(function (p) { mmCtx.fillRect(Math.round((p.x + p.w / 2) * ms) - 1, Math.round((p.y + p.h / 2) * ms) - 1, 2, 2); });
     mmCtx.fillStyle = '#ffd94e';
-    npcsLive.forEach(function (n) { mmCtx.fillRect(n.x * 4 + 1, n.y * 4 + 1, 2, 2); });
-    var pcx = Math.floor((px + 16) / TILE) * 4 + 2, pcy = Math.floor((py + 16) / TILE) * 4 + 2;
+    npcsLive.forEach(function (n) { mmCtx.fillRect(n.x * ms + ms / 4, n.y * ms + ms / 4, 2, 2); });
+    var pcx = Math.floor((px + 16) / TILE) * ms + ms / 2, pcy = Math.floor((py + 16) / TILE) * ms + ms / 2;
     mmCtx.fillStyle = '#ffffff';
-    mmCtx.beginPath(); mmCtx.arc(pcx, pcy, 2.4, 0, Math.PI * 2); mmCtx.fill();
+    mmCtx.beginPath(); mmCtx.arc(pcx, pcy, 0.6 * ms, 0, Math.PI * 2); mmCtx.fill();
     mmCtx.strokeStyle = Math.floor(tNow / 400) % 2 ? '#e04a3a' : '#7a1f16';
-    mmCtx.lineWidth = 1.4;
-    mmCtx.beginPath(); mmCtx.arc(pcx, pcy, 3.4, 0, Math.PI * 2); mmCtx.stroke();
+    mmCtx.lineWidth = 0.35 * ms;
+    mmCtx.beginPath(); mmCtx.arc(pcx, pcy, 0.85 * ms, 0, Math.PI * 2); mmCtx.stroke();
   }
 
   function render() {
+    ctx.setTransform(viewDpr, 0, 0, viewDpr, 0, 0);
     var dc = desiredCam();
     camX += (dc.x - camX) * 0.18; camY += (dc.y - camY) * 0.18;
     if (Math.abs(dc.x - camX) < 0.5) camX = dc.x;
     if (Math.abs(dc.y - camY) < 0.5) camY = dc.y;
     var shX = 0, shY = 0;
     if (shakeT > 0) { var m = Math.min(10, shakeT * 9); shX = (Math.random() - 0.5) * m; shY = (Math.random() - 0.5) * m; }
-    ctx.fillStyle = '#2c3527'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.fillStyle = '#2c3527'; ctx.fillRect(0, 0, viewW, viewH);
     ctx.save(); ctx.translate(-camX + shX, -camY + shY);
     // Nền: ảnh toàn bản đồ nếu đã tải; chưa xong thì vẽ lưới ô như cũ (dự phòng).
     if (imgReady(ASSETS.bg)) {
       ctx.drawImage(ASSETS.bg, 0, 0);
     } else {
-      var x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(L.MAP_W - 1, x0 + VIEW_W / TILE + 1);
-      var y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(L.MAP_H - 1, y0 + VIEW_H / TILE + 1);
+      var x0 = Math.max(0, Math.floor(camX / TILE)), x1 = Math.min(L.MAP_W - 1, x0 + viewW / TILE + 1);
+      var y0 = Math.max(0, Math.floor(camY / TILE)), y1 = Math.min(L.MAP_H - 1, y0 + viewH / TILE + 1);
       for (var ty = y0; ty <= y1; ty++) for (var tx = x0; tx <= x1; tx++) drawTile(tx, ty, tx * TILE, ty * TILE, L.tileAt(tx, ty));
     }
     // Vòng đánh dấu đích bấm chuột (lớp đất: sau nền, trước vật thể).
@@ -380,10 +438,13 @@
     }
     // hào quang bia đá sau khi trắc linh (vô sắc — vòng trong suốt phát sáng trắng)
     if (state.flags.tested) {
-      var st = L.propAt(19, 11);
-      ctx.strokeStyle = 'rgba(240,246,255,' + (0.35 + 0.2 * Math.sin(tNow / 300)) + ')';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(20 * TILE, 11 * TILE, 26 + 4 * Math.sin(tNow / 300), 0, Math.PI * 2); ctx.stroke();
+      var bia = null;
+      for (var bi = 0; bi < L.PROPS.length; bi++) if (L.PROPS[bi].id === 'bia_trac_linh') { bia = L.PROPS[bi]; break; }
+      if (bia) {
+        ctx.strokeStyle = 'rgba(240,246,255,' + (0.35 + 0.2 * Math.sin(tNow / 300)) + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc((bia.x + bia.w / 2) * TILE, (bia.y + bia.h - bia.fy) * TILE, 26 + 4 * Math.sin(tNow / 300), 0, Math.PI * 2); ctx.stroke();
+      }
     }
     // điểm thổ nạp cạnh giếng: vòng linh khí
     if (state.unlocked.indexOf('voice') >= 0) {
@@ -495,9 +556,9 @@
     });
     ctx.restore();
     if (meditating) {
-      ctx.fillStyle = 'rgba(160,220,255,0.10)'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.fillStyle = 'rgba(160,220,255,0.10)'; ctx.fillRect(0, 0, viewW, viewH);
     }
-    if (flashA > 0) { ctx.fillStyle = 'rgba(255,250,230,' + flashA + ')'; ctx.fillRect(0, 0, VIEW_W, VIEW_H); }
+    if (flashA > 0) { ctx.fillStyle = 'rgba(255,250,230,' + flashA + ')'; ctx.fillRect(0, 0, viewW, viewH); }
     drawMinimap();
   }
 
@@ -673,6 +734,16 @@
     var q = L.questById(state.quest);
     $('hud-quest-name').textContent = q ? q.name : '';
     $('hud-quest-desc').textContent = q ? q.desc : '';
+    var qid = q ? q.id : state.quest;
+    if (qid && qid !== lastQuestId) {
+      var isUnseen = !seenQuestIds[qid];
+      lastQuestId = qid;
+      if (questMinimized && isUnseen) {
+        var qtab = $('quest-tab'); if (qtab) qtab.classList.add('pulse');
+      } else if (!questMinimized) {
+        seenQuestIds[qid] = true;
+      }
+    }
     setSkillLock('sk-pha', state.unlocked.indexOf('voice') < 0, 'Mở khóa sau sự kiện mở miệng trước bia đá');
     setSkillLock('sk-chan', state.unlocked.indexOf('luyenkhi1') < 0, 'Mở khóa khi đạt Luyện Khí tầng 1');
     var medBtn = $('sk-med');
@@ -771,14 +842,45 @@
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
   $('dialogue').addEventListener('click', function () { if (dlg && dlg.who !== 'choice') nextLine(); });
   $('btn-save').addEventListener('click', function () { saveNow(); toast('Đã lưu tiến trình.'); });
+  var questToggleEl = $('quest-toggle');
+  if (questToggleEl) questToggleEl.addEventListener('click', function () { questMinimized = true; applyQuestMin(); });
+  var questTabEl = $('quest-tab');
+  if (questTabEl) questTabEl.addEventListener('click', function () {
+    questMinimized = false; applyQuestMin();
+    questTabEl.classList.remove('pulse');
+    if (lastQuestId) seenQuestIds[lastQuestId] = true;
+    if (state && state.quest) seenQuestIds[state.quest] = true;
+  });
+  var toastMinEl = $('toast-min');
+  if (toastMinEl) toastMinEl.addEventListener('click', function () {
+    toastMinimized = true;
+    try { localStorage.setItem('vslc_toast_min', '1'); } catch (e) {}
+    var t = $('toast'); if (t) t.classList.add('hidden');
+    clearTimeout(toast._h);
+    if (lastToastMsg) { toastUnread += 1; }
+    updateToastTab();
+  });
+  var toastTabEl = $('toast-tab');
+  if (toastTabEl) toastTabEl.addEventListener('click', function () {
+    toastMinimized = false;
+    try { localStorage.setItem('vslc_toast_min', '0'); } catch (e) {}
+    toastUnread = 0;
+    updateToastTab();
+    if (lastToastMsg) {
+      var t2 = $('toast'), txt2 = $('toast-text');
+      if (txt2) txt2.textContent = lastToastMsg;
+      if (t2) t2.classList.remove('hidden');
+      clearTimeout(toast._h); toast._h = setTimeout(function () { if (t2) t2.classList.add('hidden'); }, lastToastMs || 3200);
+    }
+  });
 
 
   /* ---------- Bấm chuột để di chuyển + nút thanh kỹ năng ---------- */
-  cv.addEventListener('mousedown', function (e) {
-    if (e.button !== 0 || !state || dlg) return;
+  function handleCanvasPoint(clientX, clientY) {
+    if (!state || dlg) return;
     var rect = cv.getBoundingClientRect();
-    var wx = (e.clientX - rect.left) * (VIEW_W / rect.width) + camX;
-    var wy = (e.clientY - rect.top) * (VIEW_H / rect.height) + camY;
+    var wx = (clientX - rect.left) + camX;
+    var wy = (clientY - rect.top) + camY;
     var tx = Math.floor(wx / TILE), ty = Math.floor(wy / TILE);
     var dest = null;
     if (L.isWalkable(tx, ty, npcsLive)) {
@@ -799,7 +901,16 @@
     var path = L.findPath(from, dest, npcsLive);
     if (path && path.length) { clickPath = path; clickTarget = dest; medLatch = false; }
     else { clickPath = null; clickTarget = null; }
+  }
+  cv.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    handleCanvasPoint(e.clientX, e.clientY);
   });
+  cv.addEventListener('touchstart', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    e.preventDefault();
+    handleCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
   $('sk-pha').addEventListener('click', function () { castPha(); });
   $('sk-chan').addEventListener('click', function () { castChan(); });
   $('sk-med').addEventListener('click', function () { medLatch = !medLatch; refreshHUD(); });
