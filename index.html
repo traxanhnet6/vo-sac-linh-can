@@ -251,6 +251,18 @@
       </div>
     </div>
 
+    <!-- Panel Bảng Cày (làn C, đợt bí cảnh + hệ cày): cùng tông panel túi,
+         style inline theo #bag-panel vì css/style.css ngoài phạm vi làn này.
+         Nội dung do mã game dựng động (renderGrindBoard). -->
+    <div id="grind-panel" class="hidden" role="dialog" aria-label="Bảng nhiệm vụ cày" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;width:min(520px,94vw);max-height:86dvh;display:flex;flex-direction:column;background:rgba(43,31,19,0.96);border:1px solid #a8893a;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,0.65),inset 0 0 24px rgba(0,0,0,0.35);color:#f0e8d2;">
+      <div class="set-head">
+        <span id="grind-title" class="set-title">Bảng nhiệm vụ cày</span>
+        <button id="grind-close" class="btn wood" type="button" aria-label="Đóng bảng">×</button>
+      </div>
+      <div id="grind-info" class="bag-info"></div>
+      <div id="grind-list" style="padding:6px 14px 14px;overflow-y:auto;font-size:13.5px;line-height:1.55;color:#e8dfc0;"></div>
+    </div>
+
     <!-- Hộp thoại xác nhận TRONG GAME (không dùng hộp thoại gốc của trình
          duyệt: window.confirm bị nhiều môi trường — iframe nhúng, webview,
          trình duyệt tự động — bác im lặng khiến nút Thoát chết không dấu vết). -->

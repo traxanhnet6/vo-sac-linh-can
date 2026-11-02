@@ -1246,6 +1246,110 @@
     { who: 'npc', text: 'Người ngoài hay tưởng Thiên Cơ Các giấu vàng trong kho. Sai rồi: thứ các giấu là chuyện của thiên hạ — nặng hơn vàng nhiều.' }
   ];
 
+  /* ================= BÍ CẢNH + HỆ CÀY — LÀN D (thoại + giọng) =============
+     Các cảnh lần đầu của hệ bí cảnh (docs/bicanh-prep/bicanh-design.md) và
+     khung dẫn lượt lặp luyện hồn C-10 (docs/retention-prep/parent-decisions.md).
+     Giang Phàm không cất lời ở đây: chỉ lời dẫn, tiếng lòng và lời NPC.
+     SCENE_BC_HOIPHONG_THU chỉ hé tên người chết (Thạch Vạn Quân) — nội dung
+     thư để đội chương 11 quyết, không viết ở đây. */
+  var SCENE_BC_THUYLIEM_INTRO = [
+    { who: 'narrate', text: 'Trạm nghỉ sau trận phục kích đã vắng người. Trên phiến đá gần bờ suối, một vệt máu khô kéo dài về phía thác nước — kẻ trinh sát bị thương của Huyết Bạc Cung đã rút theo đường này.' },
+    { who: 'narrate', text: 'Ngươi lần theo vệt máu qua bãi sỏi, tới một thác nước giữa đường mòn. Sau màn thác, khe đá tối mở ra một lối vào mà mắt thường nhìn qua sẽ bỏ sót.' },
+    { who: 'narrate', text: 'Một lối vào giấu sau nước — kẻ rút chạy không chọn đường này vì tiện. Hắn chọn vì có người chờ bên trong.' },
+    { who: 'narrate', text: 'Trong động, hơi nước lạnh phả vào mặt. Trên vách đá, một dấu ấn bạc mờ khắc vội — ấn ký của Huyết Bạc Cung, giống hệt dấu trên tay áo kẻ phục kích.' },
+    { who: 'narrate', text: 'Bên cạnh ấn ký, một dòng chữ khắc dở dang, nét chữ run vì mất máu: "Sau núi… còn một đường…" — câu chữ đứt ngang ở đó, như người viết đã gục xuống giữa chừng.' },
+    { who: 'narrate', text: 'Sâu trong động, tiếng nước nhỏ giọt đều đặn, và xen giữa tiếng nước là một tiếng trườn khẽ qua mặt đá ướt — có thứ gì đó đang giữ cửa động này.' },
+    { who: 'narrate', text: 'Ngươi khẽ lùi ra cửa động, ghi nhớ mọi dấu vết: ấn ký, dòng chữ dở, tiếng trườn trong tối. Chuyện đường mòn chưa khép — nó chỉ đổi chỗ, từ mặt đất xuống lòng hang.' },
+    { who: 'narrate', text: 'Màn thác buông xuống sau lưng ngươi, che kín lối vào như chưa từng có ai qua. Động này sẽ còn ở đây — và những kẻ dùng nó làm điểm chôn tang vật cũng sẽ còn quay lại.' },
+    { who: 'narrate', text: 'Ngươi quay lại trạm nghỉ, lòng đã có quyết: khi nào sẵn sàng, sẽ trở lại đây, đi hết hang động tới khoang cuối cùng.' },
+    { who: 'narrate', text: 'Gió từ trong động thổi ra, mang theo hơi nước lạnh và mùi tanh thoang thoảng của loài bò sát. Thủy Liêm Động đang chờ — như một câu hỏi chưa ai trả lời.' }
+  ];
+  var SCENE_BC_TAPHA_INTRO = [
+    { who: 'thap_chu', text: 'Cậu Giang. Từ ngày cậu đo vượt cửu phẩm, phế tích dưới sảnh tháp bắt đầu có phản ứng — bia đá cũ rung khẽ mỗi khi cậu bước qua sảnh.' },
+    { who: 'thap_chu', text: 'Dưới sảnh này có một tầng hầm, nơi tháp lưu giữ tàn tích của những lần đo dị thường ba trăm năm qua: bia ghi chép và phế thước của những người từng làm thước "lệch vạch".' },
+    { who: 'thap_chu', text: 'Theo lệ, tầng ngoài chỉ mở cho người đã đo xong thước của mình. Cậu đã đo xong — ta mở cho cậu vào xem, không phải để khoe, mà để cậu biết mình không phải người đầu tiên làm thước lệch.' },
+    { who: 'narrate', text: 'Người giữ tháp đặt tay lên một phiến đá ở góc sảnh. Đá trượt sang bên, lộ cầu thang dẫn xuống tầng hầm, hơi lạnh và mùi giấy cũ bốc lên.' },
+    { who: 'thap_chu', text: 'Xuống đây thì đừng hỏi, hỏi thì đừng xuống sâu. Tầng ngoài chỉ có bia và tượng đá giữ cửa — xem xong thì lên, đừng nấn ná. Còn tầng sâu hơn, hôm nay chưa tới lúc nói.' },
+    { who: 'narrate', text: 'Ngươi bước xuống cầu thang đá. Sau lưng, phiến đá khép lại, tiếng bước chân của ngươi vang vọng giữa hàng bia cũ — và ở đâu đó dưới này, một phế thước khẽ rung lên như nhận ra khí tức của ngươi.' },
+    { who: 'thap_chu', text: 'Một lời cuối, cậu Giang: những gì cậu thấy dưới này, ra khỏi tháp thì giữ trong lòng. Tháp giữ bí mật cho người đo dị thường — và người đo dị thường cũng giữ bí mật cho tháp.' },
+    { who: 'narrate', text: 'Ánh đèn đồng trên tường hầm cháy leo lét, soi rõ hàng bia đầu tiên: những cái tên đã mờ, những vạch đo lệch khỏi chín màu — và một chỗ trống cuối hàng, như đang chờ thêm một cái tên.' }
+  ];
+  var SCENE_BC_TAPSAU_INVITE = [
+    { who: 'narrate', text: 'Vừa bước vào khuôn viên tháp, người giữ tháp đã chờ sẵn ở cổng, tay cầm một phong thư mỏng niêm bằng sáp tháp.' },
+    { who: 'thap_chu', text: 'Cậu Giang, thư này của tháp gửi cậu — không phải của ta viết, mà là lệ tháp tự mở khi có người đo dị thường quay lại với tu vi Trúc Cơ.' },
+    { who: 'narrate', text: 'Ngươi mở thư. Nét chữ cứng cáp, chỉ vài dòng: "Người đã đo vượt cửu phẩm, nay đã đứng ở Trúc Cơ — phế tích dưới tháp xin mời xuống tầng sâu. Nơi đó giữ tàn ảnh của lần đo dị thường lớn nhất trong sử sách tháp."' },
+    { who: 'thap_chu', text: 'Tầng sâu không giống tầng ngoài đâu. Tàn ảnh ở dưới đó không nói tiếng người, nhưng nó "nhận ra" khí tức — và cái nó nhận ra, có khi chính là thứ cậu chưa dám gọi tên.' },
+    { who: 'narrate', text: 'Ngươi gấp thư lại. Lệ tháp đã mở lời mời — từ nay, cầu thang dưới sảnh tháp dẫn thêm một tầng nữa, xuống nơi mà ba trăm năm nay tháp chỉ dám ghi là "phế tích không gọi được tên".' },
+    { who: 'thap_chu', text: 'Đi hay không, cậu tự quyết. Nhưng nếu xuống, nhớ lời cũ: xuống đây thì đừng hỏi — và ở tầng sâu, đừng hỏi cả tàn ảnh, vì nó không trả lời bằng lời.' }
+  ];
+  var SCENE_BC_TAPSAU_INTRO = [
+    { who: 'narrate', text: 'Cầu thang đá dẫn xuống sâu hơn tầng ngoài, tới một sảnh hầm rộng mà ánh đèn không soi tới hết. Giữa sảnh, một phế thước bằng đá đứng im, trên thân khắc chín vạch màu đã mờ.' },
+    { who: 'narrate', text: 'Ngươi bước tới gần. Phế thước khẽ rung — rồi một vạch sáng thứ mười, trong suốt như nước, chậm rãi hiện lên phía trên vạch cửu phẩm, đúng chỗ thước của ngươi từng vượt qua.' },
+    { who: 'narrate', text: 'Nó không đo ta. Nó nhận ra ta — như gặp lại một người từng đi qua nơi này, từ rất lâu trước khi ta ra đời.' },
+    { who: 'narrate', text: 'Cuối sảnh, một tàn ảnh không mặt đứng lặng trước phế thước: hình bóng mờ như khói, không nói, không cử động, chỉ hướng về phía ngươi như đang chờ.' },
+    { who: 'narrate', text: 'Không khí trong hầm nặng dần. Tàn ảnh giơ một tay về phía phế thước — chín vạch màu trên thân thước sáng lên lần lượt, rồi tắt dần, như một câu hỏi không lời: ngươi có xếp lại được trật tự của chúng không?' },
+    { who: 'narrate', text: 'Ngươi hiểu ra: cửa vào phòng tàn ảnh nằm sau cửa phế thước kia. Xếp chín mảnh sắc đúng thứ tự thước đã leo — hoặc dùng một lời CHẤN phá cửa, nếu ngươi chấp nhận cái giá của tiếng nói trong nơi này.' },
+    { who: 'narrate', text: 'Phía trên, người giữ tháp vẫn ở tầng ngoài. Ông sẽ nghe thấy tiếng động nếu cửa bị phá — nghe thấy tiếng, nhưng không nghe rõ lời. Một nhân chứng gián tiếp, nhẹ nhất mà vẫn là nhân chứng.' },
+    { who: 'narrate', text: 'Ngươi hít sâu, để Tĩnh Mặc lắng xuống. Tầng sâu này không đòi ngươi mạnh hơn — nó đòi ngươi nhớ rõ mình đã đi qua những vạch nào, và dám đi tiếp khi không còn vạch nào để bám.' },
+    { who: 'narrate', text: 'Tàn ảnh khẽ nghiêng đầu, như gật. Vạch sáng thứ mười trên phế thước vẫn còn đó, lặng lẽ — dữ kiện chỉ mình ngươi biết, và từ nay cũng là dấu hiệu rằng tầng sâu đã mở mắt với ngươi.' },
+    { who: 'narrate', text: 'Từ đây, Tàn Tích tầng sâu là nơi ngươi có thể quay lại mỗi ngày: luyện hồn, đối mặt tàn ảnh, và giữ lấy bí mật mà Thiên Cơ Các đang muốn biết — bí mật về một linh căn không nằm trong chín màu.' }
+  ];
+  var SCENE_BC_KIEMTRUNG_INTRO = [
+    { who: 'truong_lao_tong', text: 'Giang Phàm, ngươi còn nhớ cửa động bị kiếm cắm chắn ở rừng sau núi chứ? Hôm hái dược, ngươi thấy nó mà chưa vào được — vì kiếm ý ở đó nặng hơn tu vi Luyện Khí chịu nổi.' },
+    { who: 'truong_lao_tong', text: 'Nay ngươi đã Trúc Cơ, ta nói rõ cho ngươi biết: đó là Kiếm Trủng — mộ kiếm của một tiền bối kiếm tu vô danh của tông, người xưa kia cũng bị tông ghi hồ sơ là "tư chất không đo được", rồi mất tích sau một đêm.' },
+    { who: 'narrate', text: 'Trưởng lão im lặng một lúc, mắt nhìn về phía sau núi. Trong giọng ông có thứ gì đó không giống lệnh tông môn — giống một món nợ cũ hơn.' },
+    { who: 'truong_lao_tong', text: 'Tông ghi người ấy là niềm xấu hổ bị giấu. Ta không nói thế. Một kiếm tu bị thước đo bỏ sót mà vẫn luyện tới mức kiếm ý còn lại sau khi chết — người như thế, tông nợ họ một dòng sửa trong tàng thư.' },
+    { who: 'truong_lao_tong', text: 'Vào được Kiếm Trủng, đi tới mộ thất, thì tông sẽ lặng lẽ sửa lại một dòng trong tàng thư cho tiền bối ấy. Không phải vì ngươi xin — vì có người cuối cùng đã tới được nơi mà hồ sơ nói là không ai tới được.' },
+    { who: 'narrate', text: 'Ông đưa ngươi một tấm lệnh bài gỗ đã mòn: "Cầm lấy. Kiếm cắm ở cửa động nhận lệnh bài này thì dạt sang hai bên. Còn kiếm trận trong hành lang — cái đó không nhận lệnh bài, chỉ nhận bước chân vững."' },
+    { who: 'truong_lao_tong', text: 'Nghe kỹ: mộ thất bị tĩnh mặc trấn phong. Muốn mở, hoặc đứng yên trong vòng tròn trước cửa mà thổ nạp đủ lâu — im lặng như tiền bối đã im lặng; hoặc cất một lời phá trấn, và chấp nhận rằng kiếm ý trong động sẽ nhớ lấy tiếng người.' },
+    { who: 'narrate', text: 'Ngươi nắm chặt lệnh bài. Sau núi, nơi từng chỉ có phục kích và dược thảo, nay có thêm một nấm mộ kiếm đang chờ người đo được bằng thước khác — thước của chính mình.' },
+    { who: 'truong_lao_tong', text: 'Đi đi. Và nhớ: tiền bối ấy không phải họ hàng của ngươi, cũng không phải sư phụ nào đó chờ nhận đồ đệ. Đừng tự thêu thêm thân phận cho người đã khuất — chỉ cần tới nơi, và đi hết con đường của họ.' },
+    { who: 'narrate', text: 'Cửa Kiếm Trủng sau núi đã mở với ngươi. Mỗi ngày, ngươi có thể vào một lượt — qua sảnh kiếm gỉ, hành lang kiếm trận, khoang bia, tới mộ thất nơi kiếm ý tàn hồn đang chờ.' }
+  ];
+  var SCENE_BC_HOIPHONG_INTRO = [
+    { who: 'narrate', text: 'Bãi bắc Thung Lũng Hồi Phong sau trận đối đầu vẫn còn ngổn ngang đá lở. Một trận sạt đất do trận đánh gây ra đã xé toạc sườn đồi — và dưới lớp đất mới lở, nền một ngôi mộ cổ lộ ra, không bia, không tên.' },
+    { who: 'de_tu_ho_tong', text: 'Giang sư huynh, nhìn kìa — đá lở để lộ cả một lối xuống! Mộ này không có bia… mà oán khí từ dưới bốc lên đặc như sương, đứng đây đã thấy lạnh sống lưng.' },
+    { who: 'narrate', text: 'Ngươi bước tới mép nền mộ. Dưới ánh đuốc, bậc đá dẫn xuống tối dần, hai bên là đèn đá thấp đã tắt từ lâu, và một phiến đá khắc mờ ký hiệu mà ngươi từng thấy trên nửa miếng ngọc bội của phụ thân.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh định xuống thật sao? Huyết Bạc Cung bịt hai đầu thung lũng, một phần chính vì không muốn ai tới gần mộ này — dưới đó có thể là vật chứng của mối thù năm xưa, cũng có thể là cạm bẫy chúng bày sẵn.' },
+    { who: 'narrate', text: 'Ngươi gật đầu, không viết, không nói — chỉ siết chặt chuôi kiếm. Đệ tử đi cùng hiểu ý, giương đuốc đi trước một bước, soi từng bậc đá.' },
+    { who: 'de_tu_ho_tong', text: 'Được, ta đi cùng huynh. Một mình huynh xuống mộ của người chết trận, lỡ oán khí tụ lại thì ai kéo huynh ra? Hai người vẫn hơn một — và chuyện này, ta cũng muốn biết tới cùng.' },
+    { who: 'narrate', text: 'Trong tiền thất, bụi và đá vụn phủ kín sàn. Giữa thất, một bệ đá thấp đặt một bức thư chưa gửi và nửa miếng ngọc bội — vật chứng nằm đó như đã chờ ai đó tới nhận, từ nhiều năm trước.' },
+    { who: 'narrate', text: 'Ngươi cầm bức thư lên. Giấy đã ố vàng, nét chữ run run của người viết trong đêm trước trận đánh — nhưng ngươi chưa mở đọc vội, vì oán khí trong mộ đang cuộn lại phía mộ thất.' },
+    { who: 'narrate', text: 'Thư chưa gửi, ngọc bội vỡ nửa — người chết trong mộ này mang theo một câu chuyện chưa kịp nói ra, và chính câu chuyện ấy giữ hồn người lại.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh, nghe kìa… từ mộ thất vọng ra tiếng gì đó như tiếng thở dài, không phải gió. Ta đi trước soi đường — huynh đi sau, giữ khoảng cách với oán khí, đừng để nó chạm vào thần hồn.' },
+    { who: 'narrate', text: 'Hành lang cơ quan nhẹ: đá rơi theo nhịp, từng đợt một, đủ để người cẩn thận đi qua mà không sứt mẻ — và đủ để kẻ vội vàng phải trả giá.' },
+    { who: 'narrate', text: 'Qua hậu thất, một tinh anh mộ giữ cửa cuối cùng gục xuống dưới kiếm của ngươi. Trước mặt chỉ còn mộ thất — nơi oán hồn của người chết trận năm xưa đang chờ, chưa yên.' },
+    { who: 'de_tu_ho_tong', text: 'Tới đây thì ta không đi trước nữa đâu, sư huynh. Oán hồn trong kia chỉ nghe được tiếng của người nó chờ — hoặc cảm được hồn lực của người biết trấn an. Huynh chọn đường nào, ta đứng sau lưng huynh mà chứng kiến.' },
+    { who: 'narrate', text: 'Cổ Mộ Hồi Phong đã mở. Từ nay, mỗi ngày ngươi có thể xuống đây một lượt — đọc thư, đi qua ba khoang, và đối mặt với oán hồn bằng lời nói, bằng luyện hồn, hoặc bằng kiếm.' }
+  ];
+  var SCENE_BC_HOIPHONG_THU = [
+    { who: 'narrate', text: 'Ngươi mở bức thư chưa gửi trên bệ đá. Giấy ố vàng, nét chữ run run — nhưng những dòng trong thư thuộc về một câu chuyện mà người viết chưa kịp gửi đi, nên ngươi không đọc thành lời ở đây.' },
+    { who: 'narrate', text: 'Một điều ngươi ghi nhớ chắc chắn, không thể nhầm: tên người chết trong mộ này là Thạch Vạn Quân.' },
+    { who: 'narrate', text: 'Ngươi gấp thư lại, đặt về bệ đá. Cái tên ấy — Thạch Vạn Quân — là chìa khóa để gọi oán hồn, nếu ngươi chọn đường gọi tên. Còn nội dung thư, hãy để tới khi câu chuyện cần tới nó.' }
+  ];
+  var SCENE_BC_HOIPHONG_TRANTOI = [
+    { who: 'oan_hon', text: 'Thạch Vạn Quân… Đã bao nhiêu năm rồi, mới có người gọi đúng cái tên này.' },
+    { who: 'oan_hon', text: 'Ta chết trận năm ấy, oán khí giữ ta lại nơi này — không phải vì hận, mà vì chưa có ai gọi ta về bằng đúng tên.' },
+    { who: 'oan_hon', text: 'Người trẻ, cảm ơn ngươi đã đọc bức thư chưa gửi và gọi tên ta. Một người chết trận, chỉ cần có thế là đủ để buông kiếm xuống.' },
+    { who: 'oan_hon', text: 'Ta yên nghỉ đây… Gió trong mộ từ nay sẽ nhẹ hơn. Đi đi, và sống thay cả phần của những kẻ đã nằm xuống…' }
+  ];
+  var SCENE_C10_SOUL_A = [
+    { who: 'narrate', text: 'Tàn Tích tầng sâu sau một thời gian im ắng lại mở cửa với ngươi. Lần này ngươi tới không phải để khám phá — mà để luyện hồn, công khai, như một Hồn Sư đã tự mình nói ra thân phận.' },
+    { who: 'narrate', text: 'Phế thước vẫn đứng đó, vạch sáng thứ mười lặng lẽ hiện lên khi ngươi tới gần. Tàn ảnh không mặt nghiêng đầu, như nhận ra người quen.' },
+    { who: 'narrate', text: 'Tự mình nói ra — từ nay không còn đêm nào phải luyện trong bóng tối nữa. Hồn lực này là của ta, và ta không giấu nó.' },
+    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Oán khí còn sót trong hầm tan dần dưới hồn lực ấm — không một tiếng động, không một lời nói, chỉ có ánh sáng trong suốt lan ra từ lòng bàn tay.' },
+    { who: 'narrate', text: 'Một lượt luyện hồn khép lại. Thần hồn vững thêm một phần, và phế thước ghi nhận thêm một vạch sáng mờ — dấu vết của một Hồn Sư luyện hồn ngay giữa nơi từng chỉ dành cho người đo dị thường.' },
+    { who: 'narrate', text: 'Ngươi đứng dậy, phủi bụi trên áo. Tầng sâu vẫn im lặng như cũ — nhưng sự im lặng này khác: nó là im lặng của người đã chọn nói ra, rồi chọn trở lại với im lặng của riêng mình.' }
+  ];
+  var SCENE_C10_SOUL_B = [
+    { who: 'narrate', text: 'Tàn Tích tầng sâu mở cửa với ngươi trong một tâm trạng khác: thân phận Hồn Sư đã bị lộ ra ngoài chợ, bằng cái miệng xấu nhất mà kẻ khác tìm được.' },
+    { who: 'narrate', text: 'Phế thước vẫn đứng đó, nhưng vạch sáng thứ mười hiện lên chậm hơn, như dè chừng. Tàn ảnh không mặt quay về phía ngươi, lặng lẽ — nơi này không đồn nhảm, và cũng không hỏi ngươi điều gì.' },
+    { who: 'narrate', text: 'Thiên hạ nói thay ta — nhưng hồn lực này vẫn là của ta. Bị lộ không làm nó bẩn đi, cũng không làm nó yếu đi.' },
+    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Oán khí trong hầm cuộn lên một nhịp rồi lắng xuống — như chính những lời đồn ngoài kia, ầm ĩ một lúc rồi cũng phải tan khi gặp thứ thật.' },
+    { who: 'narrate', text: 'Một lượt luyện hồn khép lại trong im lặng. Thần hồn vững thêm một phần, và điều quan trọng hơn: ngươi vừa luyện hồn mà không cần xin phép ai, không cần thanh minh với ai.' },
+    { who: 'narrate', text: 'Ngươi đứng dậy, bước lên cầu thang về phía ánh sáng. Ngoài kia, lời đồn vẫn còn — nhưng trong này, ngươi đã có một nơi để trở về, mỗi ngày một lượt, cho tới khi sự thật tự nó đứng vững.' }
+  ];
+
   var STORY = {
     IDLE_BEFORE: IDLE_BEFORE, IDLE_AFTER: IDLE_AFTER,
     SCENE_TEST: SCENE_TEST, SCENE_WRITE_BRANCH: SCENE_WRITE_BRANCH,
@@ -1305,7 +1409,12 @@
     SCENE_KDGUARD_END: SCENE_KDGUARD_END, SCENE_CH12_TAM_MA: SCENE_CH12_TAM_MA,
     SCENE_CH12_TAMMA_SAY: SCENE_CH12_TAMMA_SAY, SCENE_CH12_TAMMA_SILENT: SCENE_CH12_TAMMA_SILENT,
     SCENE_CH12_KET_DAN: SCENE_CH12_KET_DAN, SCENE_CH12_LENH_1: SCENE_CH12_LENH_1,
-    SCENE_CH12_LENH_2: SCENE_CH12_LENH_2, SCENE_CH12_LENH_DONE: SCENE_CH12_LENH_DONE
+    SCENE_CH12_LENH_2: SCENE_CH12_LENH_2, SCENE_CH12_LENH_DONE: SCENE_CH12_LENH_DONE,
+    SCENE_BC_THUYLIEM_INTRO: SCENE_BC_THUYLIEM_INTRO, SCENE_BC_TAPHA_INTRO: SCENE_BC_TAPHA_INTRO,
+    SCENE_BC_TAPSAU_INVITE: SCENE_BC_TAPSAU_INVITE, SCENE_BC_TAPSAU_INTRO: SCENE_BC_TAPSAU_INTRO,
+    SCENE_BC_KIEMTRUNG_INTRO: SCENE_BC_KIEMTRUNG_INTRO, SCENE_BC_HOIPHONG_INTRO: SCENE_BC_HOIPHONG_INTRO,
+    SCENE_BC_HOIPHONG_THU: SCENE_BC_HOIPHONG_THU, SCENE_BC_HOIPHONG_TRANTOI: SCENE_BC_HOIPHONG_TRANTOI,
+    SCENE_C10_SOUL_A: SCENE_C10_SOUL_A, SCENE_C10_SOUL_B: SCENE_C10_SOUL_B
   };
   global.VSLC_STORY = STORY;
   if (typeof module !== 'undefined' && module.exports) module.exports = STORY;

@@ -45,6 +45,13 @@
   var BASS_LEVEL = 0.06;          // gain nốt trầm đầu nhịp
   var TICK_LEVEL = 0.012;         // gain nhịp nền — rất nhẹ
   var CHIRP_LEVEL = 0.05;         // gain tiếng chim/dế rời rạc
+  /* Đợt bí cảnh: các lớp rời rạc mới — giọt nước, tiếng đá, tiếng hú,
+     vệt kiếm khí — đều là oscillator rời rạc qua bus môi trường/nhạc
+     (không phải lớp ồn vòng lặp), gain rất khẽ như họ chim/dế. */
+  var DRIP_LEVEL = 0.04;         // gain một giọt nước (Thủy Liêm Động)
+  var STONE_LEVEL = 0.035;       // gain một tiếng đá gõ (Tàn Tích Dưới Tháp)
+  var HOWL_LEVEL = 0.03;         // gain một tiếng gió hú (Hồi Phong Cổ Mộ)
+  var SWORDQI_LEVEL = 0.03;      // gain một vệt kiếm khí đầu nhịp (Kiếm Trủng)
   var NIGHT_TEMPO_FACTOR = 0.88;  // biến thể đêm: chậm lại
   var NIGHT_PAD_FACTOR = 0.7;     // biến thể đêm: đệm mềm hơn
   var NIGHT_MOTIF_FACTOR = 0.8;   // biến thể đêm: giai điệu khẽ hơn
@@ -52,7 +59,13 @@
   var STEPS_PER_BAR = 8;          // 8 bước восьмым mỗi nhịp (ô nhịp = 4 phách)
   var MOTIF_STEPS = 16;           // mô-típ dài 2 nhịp, lặp theo vòng 4 nhịp hợp âm
 
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau'];
+  /* Đợt tích hợp BÍ CẢNH + HỆ CÀY (làn F): 5 bản đồ bí cảnh nối sau 8 bản
+     đồ cũ — thứ tự theo docs/bicanh-prep/bicanh-design.md mục 2 (tầng sâu
+     của tháp tính riêng một map). Lưu ý: các map này chờ làn A đăng ký
+     vào MAPS của js/logic.js; cho tới lúc đó test-music.js sẽ đỏ ở các
+     khẳng định đối chiếu MAPS (MAP_IDS khớp tuyệt đối + cờ stream khớp
+     ô nước) — đó là điểm chờ làn A, không phải lỗi module này. */
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo'];
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -180,22 +193,91 @@
       padWave: 'sine', motifWave: 'sine',
       chords: [[26, 38, 45], [24, 36, 43], [29, 41, 48], [27, 39, 46]],
       motif: [2, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]
+    },
+    /* ---- 5 bí cảnh (đợt tích hợp BÍ CẢNH + HỆ CÀY, theo
+       docs/bicanh-prep/bicanh-design.md mục 3 + mục 5) ---- */
+    bc_thuyliem: { /* Thủy Liêm Động — biến thể DỊU của duong_mon: cùng
+      thang Dor + vòng hợp âm đường mòn để nhận ra gốc, nhưng chậm hơn
+      (82 -> 72 bpm), nhịp nền thưa hơn (0,22 -> 0,16), mô-típ thưa hơn
+      (6 -> 5 nốt, bỏ nốt ở bước 5). Tiếng nước riêng xem AMBIENCE_DEFS
+      (giọt rời rạc + suối tiệm cận), không gộp vào một lớp ồn. */
+      root: 62, scale: SCALE_DOR_PENT, bpm: 72, density: 0.16,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[50, 53, 57], [46, 50, 53], [53, 57, 60], [48, 52, 55]],
+      motif: [7, -1, -1, 5, -1, -1, -1, -1, 5, -1, 7, -1, -1, -1, 2, -1]
+    },
+    bc_tapha: { /* Tàn Tích Dưới Tháp, Tầng Ngoài — biến thể TRẦM của
+      thap_noi: gốc hạ 2 nửa cung (52 -> 50), vòng hợp âm tháp hạ theo,
+      nhịp chậm hơn (50 -> 48 bpm), mô-típ 3 nốt (thêm nốt chốt thấp ở
+      bước 12 so với 2 nốt của tháp) để tầng sâu còn chỗ thưa hơn nữa. */
+      root: 50, scale: SCALE_MIN_PENT, bpm: 48, density: 0.05,
+      padWave: 'sine', motifWave: 'sine',
+      chords: [[38, 41, 45], [34, 38, 41], [39, 43, 46], [36, 40, 43]],
+      motif: [2, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 0, -1, -1, -1]
+    },
+    bc_tapsau: { /* Tàn Tích Dưới Tháp, Tầng Sâu — cùng biến thể trầm của
+      thap_noi nhưng THƯA NỐT HƠN tầng ngoài: gốc hạ thêm (50 -> 48),
+      chậm hơn (48 -> 46 bpm), nhịp nền thưa hơn (0,05 -> 0,03), mô-típ
+      chỉ còn 2 nốt và nốt thứ hai lùi tới bước 12 (tầng ngoài: 3 nốt,
+      nốt thứ hai ở bước 8). */
+      root: 48, scale: SCALE_MIN_PENT, bpm: 46, density: 0.03,
+      padWave: 'sine', motifWave: 'sine',
+      chords: [[36, 39, 43], [32, 36, 39], [37, 41, 44], [34, 38, 41]],
+      motif: [2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1]
+    },
+    bc_kiemtrung: { /* Kiếm Trủng Sau Núi — biến thể NHỊP CHẬM của
+      thanh_van_tong: giữ đệm rộng 5 nốt + mô-típ đi lên của tông để
+      nhận ra gốc, nhưng chậm hẳn (86 -> 68 bpm), nhịp nền thưa hơn
+      (0,40 -> 0,28). Kiếm khí theo nhịp: mỗi đầu nhịp (inBar === 0)
+      scheduleDeckStep() gọi scheduleSwordQi() — xem dưới. */
+      root: 60, scale: SCALE_MAJ_PENT, bpm: 68, density: 0.28,
+      padWave: 'triangle', motifWave: 'triangle',
+      chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
+      motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
+    },
+    bc_hoiphong_mo: { /* Hồi Phong Cổ Mộ — biến thể TRẦM của hb_valley:
+      gốc hạ 4 nửa cung (57 -> 53), vòng hợp âm thung lũng hạ theo,
+      chậm hơn (76 -> 62 bpm), nhịp nền thưa hơn (0,26 -> 0,18), mô-típ
+      thưa hơn (5 -> 3 nốt). Gió hú + hạt oán khí tối xem AMBIENCE_DEFS
+      và docs/effects-catalog.md mục 9 (hạt là lớp hình của game.js). */
+      root: 53, scale: SCALE_MIN_PENT, bpm: 62, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[29, 41, 48], [27, 39, 46], [32, 44, 51], [25, 37, 44]],
+      motif: [2, -1, -1, -1, -1, -1, 1, -1, 0, -1, -1, -1, -1, -1, -1, -1]
     }
   };
   /* Lớp môi trường theo bản đồ — tra dữ kiện bản đồ trong js/logic.js:
      ô nước 'W' chỉ có ở tran (ao đông bắc, 7 ô) và duong_mon (suối hàng
      36–37 + cầu, 186 ô); chợ chỉ ở co_chau (quảng trường chợ); rừng ở
      duong_mon, tông môn ở trên cao — hai nơi có gió. Tháp/sảnh: tĩnh lặng
-     trang nghiêm, không lớp môi trường (chỉ nhạc). */
+     trang nghiêm, không lớp môi trường (chỉ nhạc).
+     Đợt bí cảnh: ba cờ rời rạc mới — drips (giọt nước), stone (tiếng
+     đá), howl (tiếng hú) — KHÔNG phải lớp ồn vòng lặp: chúng được lập
+     lịch rời rạc như chim/dế trong schedulerTick(), qua bus môi trường.
+     LỰA CHỌN CHO THỦY LIÊM (ghi rõ theo giao việc): KHÔNG dùng lại cờ
+     stream một cách máy móc cho tiếng nhỏ giọt. Thiết kế đòi cả hai:
+     "nước nhỏ giọt + suối gần" (mục 5) — nên động có CẢ giọt rời rạc
+     luôn bật trong hang (drips) VÀ lớp suối tiệm cận theo setProximity
+     cho suối ngầm (stream, chờ làn A đặt ô 'W' cho suối ngầm trong
+     lưới bc_thuyliem thì cờ stream mới khớp quy tắc stream-khớp-nước
+     của test-music). Các hang/mộ/tháp khác không có chim/dế/chợ:
+     trong hang kín, ngoài trời không lọt tiếng vào. Cổ Mộ: lớp gió
+     (wind, nền ồn thấp) + tiếng hú rời rạc (howl) quét qua khe mộ —
+     gió hú không thay thế lớp gió, nó nổi trên nền gió. */
   var AMBIENCE_DEFS = {
-    tran: { birds: true, crickets: true, stream: true, wind: false, market: false },
-    duong_mon: { birds: true, crickets: true, stream: true, wind: true, market: false },
-    co_chau: { birds: false, crickets: false, stream: false, wind: false, market: true },
-    kiem_trac_thap: { birds: false, crickets: false, stream: false, wind: false, market: false },
-    thap_noi: { birds: false, crickets: false, stream: false, wind: false, market: false },
-    thanh_van_tong: { birds: false, crickets: false, stream: true, wind: true, market: false }, // gói phụ 12: tông có thác + hồ thật ở sườn tây — tiếng nước chỉ nổi trong bán kính tiệm cận 7 ô quanh ô nước
-    hb_valley: { birds: true, crickets: true, stream: true, wind: true, market: false },
-    thien_co_lau: { birds: false, crickets: false, stream: false, wind: false, market: false }
+    tran: { birds: true, crickets: true, stream: true, wind: false, market: false, drips: false, stone: false, howl: false },
+    duong_mon: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: false },
+    co_chau: { birds: false, crickets: false, stream: false, wind: false, market: true, drips: false, stone: false, howl: false },
+    kiem_trac_thap: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
+    thap_noi: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
+    thanh_van_tong: { birds: false, crickets: false, stream: true, wind: true, market: false, drips: false, stone: false, howl: false }, // gói phụ 12: tông có thác + hồ thật ở sườn tây — tiếng nước chỉ nổi trong bán kính tiệm cận 7 ô quanh ô nước
+    hb_valley: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: false },
+    thien_co_lau: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
+    bc_thuyliem: { birds: false, crickets: false, stream: true, wind: false, market: false, drips: true, stone: false, howl: false },
+    bc_tapha: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: true, howl: false },
+    bc_tapsau: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: true, howl: false },
+    bc_kiemtrung: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
+    bc_hoiphong_mo: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true }
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {
@@ -233,7 +315,10 @@
       crickets: def.crickets && ph.night01 >= 0.5,
       stream: def.stream,
       wind: def.wind,
-      market: def.market && (ph.bucket === 'day' || ph.bucket === 'dusk')
+      market: def.market && (ph.bucket === 'day' || ph.bucket === 'dusk'),
+      drips: !!def.drips,
+      stone: !!def.stone,
+      howl: !!def.howl
     };
   }
 
@@ -252,7 +337,9 @@
     timer: null,
     noiseBuf: null, layers: null,   // {stream:{gain}, wind:{gain}, market:{gain}}
     nextBirdAt: 0, nextCricketAt: 0, rngState: 123456789,
-    scheduledNotes: 0, scheduledChirps: 0
+    nextDripAt: 0, nextStoneAt: 0, nextHowlAt: 0,
+    scheduledNotes: 0, scheduledChirps: 0,
+    scheduledDrips: 0, scheduledStones: 0, scheduledHowls: 0, scheduledSwordQi: 0
   };
   function clamp01(v, dflt) {
     var n = Number(v);
@@ -439,6 +526,9 @@
         scheduleOsc(v.padWave, midiHz(chord[i] + (climax && i === chord.length - 1 ? 12 : 0)), t, stepDur * STEPS_PER_BAR * 1.05, padPeak, dest);
       }
       scheduleOsc('sine', midiHz(chord[0] - 12), t, stepDur * STEPS_PER_BAR * 0.9, BASS_LEVEL, dest);
+      // Kiếm Trủng: mỗi đầu nhịp thêm một vệt kiếm khí (âm quét cao
+      // qua tuyến nhạc của deck, không qua bus môi trường).
+      if (v.mapId === 'bc_kiemtrung') scheduleSwordQi(t, dest);
       if (bar % (MOTIF_STEPS / STEPS_PER_BAR) === 0 && bar > 0) deck.cycle++;
     }
     var deg = v.motif[inMotif];
@@ -483,6 +573,65 @@
       }
     }
     S.scheduledChirps++;
+  }
+  /* Đợt bí cảnh — bốn tiếng rời rạc mới, cùng khuôn scheduleChirp
+     (oscillator rời rạc, gain rất khẽ, lịch xác định qua rng()):
+     giọt nước rơi, tiếng đá gõ, gió hú qua khe, vệt kiếm khí đầu nhịp.
+     Giọt/đá/hú đi qua bus môi trường (chịu công tắc + âm lượng môi
+     trường + duck như chim/dế); kiếm khí đi qua tuyến nhạc của deck
+     (chịu nhạc nền) vì nó gắn với nhịp của vòng nhạc Kiếm Trủng. */
+  function scheduleDrip(t) {
+    if (!S.ctx) return;
+    var o = S.ctx.createOscillator(), g = S.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1400 + rng() * 400, t);
+    if (typeof o.frequency.exponentialRampToValueAtTime === 'function') o.frequency.exponentialRampToValueAtTime(650, t + 0.10);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(DRIP_LEVEL, t + 0.015);
+    g.gain.linearRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g); g.connect(S.ambBus);
+    o.start(t); o.stop(t + 0.17);
+    S.scheduledDrips++;
+  }
+  function scheduleStone(t) {
+    if (!S.ctx) return;
+    var o = S.ctx.createOscillator(), g = S.ctx.createGain();
+    o.type = 'sine'; o.frequency.value = 170;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(STONE_LEVEL, t + 0.01);
+    g.gain.linearRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g); g.connect(S.ambBus);
+    o.start(t); o.stop(t + 0.12);
+    S.scheduledStones++;
+  }
+  function scheduleHowl(t) {
+    if (!S.ctx) return;
+    var o = S.ctx.createOscillator(), g = S.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(300, t);
+    if (typeof o.frequency.exponentialRampToValueAtTime === 'function') {
+      o.frequency.exponentialRampToValueAtTime(520, t + 0.6);
+      o.frequency.exponentialRampToValueAtTime(300, t + 1.2);
+    }
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(HOWL_LEVEL, t + 0.35);
+    g.gain.linearRampToValueAtTime(0.0001, t + 1.2);
+    o.connect(g); g.connect(S.ambBus);
+    o.start(t); o.stop(t + 1.25);
+    S.scheduledHowls++;
+  }
+  function scheduleSwordQi(t, dest) {
+    if (!S.ctx) return;
+    var o = S.ctx.createOscillator(), g = S.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1900, t);
+    if (typeof o.frequency.exponentialRampToValueAtTime === 'function') o.frequency.exponentialRampToValueAtTime(2800, t + 0.18);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(SWORDQI_LEVEL, t + 0.02);
+    g.gain.linearRampToValueAtTime(0.0001, t + 0.25);
+    o.connect(g); g.connect(dest || S.musicBus);
+    o.start(t); o.stop(t + 0.3);
+    S.scheduledSwordQi++;
   }
   /* Trống trận boss: một tiếng trống trầm mỗi giây (60 nhịp/phút) vào
      tuyến nhạc — sine rơi 64 -> 40 Hz, biên độ vừa phải để nằm DƯỚI nhạc
@@ -530,6 +679,21 @@
     if (f.crickets && S.ambOn) {
       if (S.nextCricketAt <= 0) S.nextCricketAt = t + 0.4;
       if (t >= S.nextCricketAt) { scheduleChirp('cricket', t + 0.02); S.nextCricketAt = t + 1.2 + rng() * 1.8; }
+    }
+    // Môi trường rời rạc của bí cảnh: giọt nước (Thủy Liêm), tiếng đá
+    // (Tàn Tích hai tầng), gió hú (Cổ Mộ) — cùng khuôn lịch chim/dế,
+    // chỉ khác chu kỳ: giọt mau, đá thưa, hú thưa hơn nữa.
+    if (f.drips && S.ambOn) {
+      if (S.nextDripAt <= 0) S.nextDripAt = t + 0.5;
+      if (t >= S.nextDripAt) { scheduleDrip(t + 0.02); S.nextDripAt = t + 0.9 + rng() * 1.3; }
+    }
+    if (f.stone && S.ambOn) {
+      if (S.nextStoneAt <= 0) S.nextStoneAt = t + 1.0;
+      if (t >= S.nextStoneAt) { scheduleStone(t + 0.02); S.nextStoneAt = t + 3.5 + rng() * 4.0; }
+    }
+    if (f.howl && S.ambOn) {
+      if (S.nextHowlAt <= 0) S.nextHowlAt = t + 1.0;
+      if (t >= S.nextHowlAt) { scheduleHowl(t + 0.02); S.nextHowlAt = t + 4.0 + rng() * 3.0; }
     }
     applyGains();
   }
@@ -701,7 +865,9 @@
       decks: S.decks.map(function (d) { return { variantId: d.variant.id, gain: d.gain, active: d.active, hasRamp: !!d.ramp }; }),
       crossfadeActive: S.decks.some(function (d) { return !!d.ramp; }),
       lastCrossfade: S.lastCrossfade,
-      scheduledNotes: S.scheduledNotes, scheduledChirps: S.scheduledChirps
+      scheduledNotes: S.scheduledNotes, scheduledChirps: S.scheduledChirps,
+      scheduledDrips: S.scheduledDrips, scheduledStones: S.scheduledStones,
+      scheduledHowls: S.scheduledHowls, scheduledSwordQi: S.scheduledSwordQi
     };
   }
 
@@ -729,6 +895,7 @@
     SCHED_LOOKAHEAD_SEC: SCHED_LOOKAHEAD_SEC, SCHED_INTERVAL_MS: SCHED_INTERVAL_MS,
     DUCK_MUSIC: DUCK_MUSIC, DUCK_AMBIENCE: DUCK_AMBIENCE, BOSS_MUSIC_FACTOR: BOSS_MUSIC_FACTOR,
     STREAM_MAX: STREAM_MAX, WIND_MAX: WIND_MAX, MARKET_MAX: MARKET_MAX,
+    DRIP_LEVEL: DRIP_LEVEL, STONE_LEVEL: STONE_LEVEL, HOWL_LEVEL: HOWL_LEVEL, SWORDQI_LEVEL: SWORDQI_LEVEL,
     MUSIC_DEFAULT_VOL: MUSIC_DEFAULT_VOL, AMB_DEFAULT_VOL: AMB_DEFAULT_VOL,
     MAP_IDS: MAP_IDS, TRACKS: TRACKS, AMBIENCE_DEFS: AMBIENCE_DEFS,
     SETTINGS_SPEC: SETTINGS_SPEC,

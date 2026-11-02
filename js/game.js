@@ -354,6 +354,13 @@
     bossPillar = null; encStance = false; zoneDwell = 0;
     hideBossBanner(); hideHuntSummary(); updateComboBox();
     musicBoss(false);
+    // Làn bí cảnh + hệ cày: phiên bí cảnh, trò xếp sắc, bạn hộ tống và
+    // panel bảng đều là trạng thái phiên — dọn cùng đợt, không rò sang
+    // tài khoản kế tiếp; vật thể ẩn theo phiên cũng xóa hết.
+    bcSession = null; bcColorSort = null; escortT = 0;
+    guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
+    closeGrindBoard();
+    if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
   }
   function exitToAuth() {
     resetPresentationState();
@@ -518,7 +525,12 @@
     'bones', 'stake_cluster',
     /* Đợt làm giàu hình ảnh tông môn + gói phụ bàn trà (02/11): trụ và
        xà cổng sơn môn, lư hương đại điện, đôn đá bàn trà. */
-    'gate_pillar', 'gate_beam', 'lu_huong', 'tea_stool'];
+    'gate_pillar', 'gate_beam', 'lu_huong', 'tea_stool',
+    /* Đợt bí cảnh (02/11): cổng hang (khối đá + vòm hang tối, ghép từ
+       chính rock_l_a) và cửa đá tàn tích trong sảnh tháp (bia đá lớn) —
+       trước đây hai loại này không có trong PROP_TYPES nên cổng vô hình
+       dù vẫn tương tác được. */
+    'bc_gate', 'cua_tan_tich', 'kiem_cum'];
   var ASSETS = { bgByMap: {}, chars: {}, portraits: {}, props: {}, mons: {}, monsWhite: {}, monsBad: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
@@ -532,6 +544,15 @@
   ASSETS.bgByMap.thanh_van_tong = loadImg('assets/bg-thanh_van_tong.png');
   ASSETS.bgByMap.hb_valley = loadImg('assets/bg-hb_valley.png');
   ASSETS.bgByMap.thien_co_lau = loadImg('assets/bg-thien_co_lau.png');
+  // Tranh nền 5 bản đồ bí cảnh (làn C đăng ký đúng tên tệp của làn B:
+  // bg-bc_thuyliem/bg-bc_tapha đã có; bg-bc_tapsau/bg-bc_kiemtrung/
+  // bg-bc_hoiphong_mo chưa có lúc làn C kiểm — bản đồ chưa có tranh thì
+  // engine vẽ lưới ô dự phòng như mọi bản đồ chưa có tranh nền).
+  ASSETS.bgByMap.bc_thuyliem = loadImg('assets/bg-bc_thuyliem.png');
+  ASSETS.bgByMap.bc_tapha = loadImg('assets/bg-bc_tapha.png');
+  ASSETS.bgByMap.bc_tapsau = loadImg('assets/bg-bc_tapsau.png');
+  ASSETS.bgByMap.bc_kiemtrung = loadImg('assets/bg-bc_kiemtrung.png');
+  ASSETS.bgByMap.bc_hoiphong_mo = loadImg('assets/bg-bc_hoiphong_mo.png');
   CHAR_LOOKS.forEach(function (id) { ASSETS.chars[id] = loadImg('assets/chars/' + id + '.png'); });
   // Chân dung thoại (gói phụ 4): cắt từ khung mặt trước của chính tấm
   // hình từng look (assets/portraits) — nạp trước cùng đợt để đổi người
@@ -540,7 +561,9 @@
   // Hình quái/boss của làn chạm trán (assets/monsters): sheet 6 cột x 4
   // hàng (chờ/di chuyển/tấn công/trúng đòn+chết). Loài nào chưa có hình
   // đạt chuẩn thì KHÔNG được sinh vào thế giới (xem spawnMonstersForMap).
-  var MONSTER_LOOKS = ['son_lang', 'doc_vu_xa', 'thiet_giap_tru', 'phong_ung', 'lang_vuong', 'son_chu'];
+  var MONSTER_LOOKS = ['son_lang', 'doc_vu_xa', 'thiet_giap_tru', 'phong_ung', 'lang_vuong', 'son_chu',
+    // Quái bí cảnh (làn C): cùng quy tắc ASSETS.monsBad — loài nào nạp hỏng thì loại khỏi diện sinh.
+    'dong_xa', 'thuy_xa_tinh', 'thach_tuong', 'thach_tuong_thu_ve', 'tan_anh_vo_cuc', 'kiem_linh', 'kiem_y_tan_hon', 'oan_binh', 'oan_hon_chien_truong'];
   MONSTER_LOOKS.forEach(function (id) {
     var im = loadImg('assets/monsters/' + id + '.png');
     im.onerror = function () { ASSETS.monsBad[id] = true; }; // tệp hình lỗi/không có -> loài bị loại khỏi diện săn
@@ -748,6 +771,11 @@
     if (SET) {
       SET.loadFor(currentUser, localStorage, isTouchDevice());
       questMinimized = SET.current.questStart === 'min'; // cài đặt "ô nhiệm vụ khi vào game"
+    }
+    // Tải lại giữa phiên bí cảnh: hủy phiên, đưa người chơi ra cổng ngoài.
+    if (state.map && state.map.indexOf('bc_') === 0) {
+      var bcPo = L.MAPS[state.map] && L.MAPS[state.map].portals[0];
+      if (bcPo) { state.map = bcPo.to; state.x = bcPo.toX; state.y = bcPo.toY; state.dir = 'down'; }
     }
     L.setActiveMap(state.map || 'tran');
     resizeCanvas();
@@ -1083,7 +1111,7 @@
       mmCtx.fillRect(tx * ms, ty * msY, Math.ceil(ms), Math.ceil(msY));
     }
     mmCtx.fillStyle = 'rgba(30,24,16,0.85)';
-    def.props.forEach(function (p) { mmCtx.fillRect(Math.round((p.x + p.w / 2) * ms) - 1, Math.round((p.y + p.h / 2) * msY) - 1, 2, 2); });
+    def.props.forEach(function (p) { if (L.isSessionHidden(state.map, p.id)) return; mmCtx.fillRect(Math.round((p.x + p.w / 2) * ms) - 1, Math.round((p.y + p.h / 2) * msY) - 1, 2, 2); });
     mmCtx.fillStyle = '#ffd94e';
     npcsLive.forEach(function (n) { mmCtx.fillRect(n.x * ms + ms / 4, n.y * msY + msY / 4, 2, 2); });
     var pcx = Math.floor((px + 16) / TILE) * ms + ms / 2, pcy = Math.floor((py + 16) / TILE) * msY + msY / 2;
@@ -1232,7 +1260,7 @@
     drops.forEach(function (dr) { if (dr.phase !== 'fly') drawGroundDrop(dr); });
     // danh sách vẽ theo chiều sâu (vật thể thật + trang trí thị giác + NPC + biển + người chơi)
     var draws = [];
-    defR.props.forEach(function (p) { draws.push({ depth: (p.y + p.h) * TILE, kind: 'prop', p: p }); });
+    defR.props.forEach(function (p) { if (L.isSessionHidden(state.map, p.id)) return; draws.push({ depth: (p.y + p.h) * TILE, kind: 'prop', p: p }); });
     if (state.map === 'tran') VISUAL_DECOR.forEach(function (d2) { draws.push({ depth: d2.depth, kind: 'decor', dc: d2 }); });
     npcsLive.forEach(function (n) { draws.push({ depth: (n.y + 1) * TILE, kind: 'npc', n: n }); });
     mons.forEach(function (mn) { if (mn.state !== 'gone') draws.push({ depth: mn.y + TILE, kind: 'mon', m: mn }); });
@@ -1399,19 +1427,24 @@
     // Cài đặt showNames tắt nhãn tên + danh hiệu thì bong bóng cũng không có neo để bám.
     var placedLabels = (!SET || SET.current.showNames) ? drawLabels(labels) : [];
     drawBubble(placedLabels);
-    // chỉ đường nhiệm vụ (chỉ khi điểm gợi ý ở cùng bản đồ hiện tại)
-    var q = L.questById(state.quest);
-    if (q && q.hint && (q.hint.map || 'tran') === state.map && !dlg) {
-      var hx = q.hint.x * TILE + 16, hy = q.hint.y * TILE - 18 + Math.sin(tNow / 250) * 4;
-      ctx.fillStyle = '#ffd94e';
-      ctx.beginPath(); ctx.moveTo(hx, hy + 12); ctx.lineTo(hx - 8, hy); ctx.lineTo(hx + 8, hy); ctx.closePath(); ctx.fill();
-    }
+    // Dẫn đường nhiệm vụ (gói phụ H): dấu "!" trên vật/NPC/điểm đích của
+    // bước hiện tại + mũi tên quanh nhân vật chỉ mục tiêu hiển thị (mục
+    // tiêu khác bản đồ thì chỉ cổng đầu tiên trên đường cổng). Lớp này vẽ
+    // SAU nhãn/bong bóng và TRƯỚC vòng sóng/chữ bay, thuần trình diễn —
+    // không nhận thao tác, không che thao tác. Tam giác vàng tại ô hint
+    // của bản cũ được thay bằng dấu "!" neo trên VẬT (xem
+    // resolveQuestTarget): neo theo ô hint cũ khiến dấu chỉ ô đứng kề
+    // chứ không chỉ vật phải tương tác.
+    guideFrame = guideCompute();
+    if (guideFrame.bang && guideFrame.display) drawGuideBang(guideFrame.display.ax, guideFrame.display.ay);
+    if (guideFrame.arrow && guideFrame.display) drawGuideArrow(guideFrame.display);
     // vòng sóng âm Ngôn Linh (cài đặt fxRings chỉ tắt phần VẼ, vòng đời vòng vẫn chạy như cũ)
     rings = rings.filter(function (r) { return r.a > 0; });
     if (!SET || SET.current.fxRings) rings.forEach(function (r) {
       ctx.strokeStyle = 'rgba(255,240,190,' + r.a + ')'; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
     });
+    bcDrawOverlays(); // lớp phủ bí cảnh: bẫy kiếm trận, vòng trấn, điểm hái
     // chữ bay (sát thương, thông báo nhỏ): cỡ chữ theo hạng đòn; chí mạng
     // phóng 1,0 -> 1,3 trong 70ms rồi về trong 110ms (hiệu ứng "pop").
     floats = floats.filter(function (f) { return f.a > 0; });
@@ -1907,6 +1940,10 @@
         if (rbM.ok) { sfxQuest(); toast('Đã ghi 60 điểm cống hiến và luyện lại Trúc Cơ Đan. Lên Đài Trúc Cơ để vận công.', 4200); }
         refreshHUD(); saveNow();
       }
+    } else if (action.indexOf('grind_') === 0) {
+      grindChoiceAction(action);
+    } else if (action.indexOf('bc_') === 0) {
+      bcChoiceAction(action);
     } else if (action === 'ambush_silent') {
       say(ST.SCENE_AMBUSH_SILENT, function () { state.quest = 'q2_cong_thanh'; refreshHUD(); saveNow(); });
     } else if (action === 'ambush_chan') {
@@ -1982,13 +2019,13 @@
         if (nearStele) { faceTowardTile(steleP.x, steleP.y + steleP.h - 1); return touchStele(); }
       }
     }
-    var npc = npcsLive.filter(function (n) { return n.x === ft.x && n.y === ft.y; })[0];
+    var npc = npcsLive.filter(function (n) { return n.id !== 'de_tu_ho_tong' && n.x === ft.x && n.y === ft.y; })[0];
     if (!npc) {
       // NPC đứng kề ở BẤT KỲ hướng nào cũng bắt được, không chỉ hướng đang
       // quay mặt: người chơi đi bằng chạm thường dừng lại với hướng mặt bất
       // kỳ, và một lần ấn E im lặng hoàn toàn là đúng lỗi chặn chơi đã gặp
       // ở chơi thử live 1.1.0. Bắt được thì tự quay mặt về phía NPC.
-      npc = npcsLive.filter(function (n) { return Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y) === 1; })[0];
+      npc = npcsLive.filter(function (n) { return n.id !== 'de_tu_ho_tong' && Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y) === 1; })[0];
       if (npc) faceTowardTile(npc.x, npc.y);
     }
     if (npc) return talkTo(npc);
@@ -2032,6 +2069,7 @@
       for (var pn = 0; pn < propsNear.length; pn++) {
         var cp = propsNear[pn];
         if (!cp.interact) continue;
+        if (L.isSessionHidden(state.map, cp.id)) continue; // vật thể đã mở trong phiên bí cảnh: không còn tương tác
         var cfY0 = cp.y + cp.h - cp.fy, cfY1 = cp.y + cp.h - 1;
         var cnx = Math.max(cp.x, Math.min(pt.x, cp.x + cp.fx - 1));
         var cny = Math.max(cfY0, Math.min(pt.y, cfY1));
@@ -2056,7 +2094,14 @@
       if (state.quest === 'q4_dieu_tra' && state.flags.clueKho) return say([{ who: 'narrate', text: 'Sổ kho đã nằm trong tay ngươi. Thêm lời của một nhân chứng nữa, vụ việc sẽ không còn đường chối.' }]);
       return say([{ who: 'narrate', text: 'Kho Hứa gia: gạo, vải, và mấy rương linh thảo khô khóa kín. Mọi thứ ngăn nắp — ngăn nắp tới mức bất thường.' }]);
     }
-    if (p && (p.id === 'viec_go' || p.id === 'viec_nuoc' || p.id === 'viec_bao')) return doChore(p);
+    if (p && (p.id === 'viec_go' || p.id === 'viec_nuoc' || p.id === 'viec_bao')) {
+      // Việc tông dùng chung vật thể, theo thứ tự: (a) cốt truyện đang mở -> doChore,
+      // (b) instance luân phiên active khớp vật thể -> grindSectStepDone, (c) doChore thường trú.
+      var sectIns = grindSectActiveForProp(p.id);
+      var storyOpen = state.quest === 'q7_tap_dich' || (state.flags.sectJobRound && state.flags.sectJobRound === L.chapterOfQuest(state));
+      if (sectIns && !storyOpen) return grindSectStepDone(sectIns);
+      return doChore(p);
+    }
     if (p && p.id === 'thang_long_dai') return touchThangLong();
     if (p && p.id === 'linh_chi') return touchLinhChi();
     if (p && p.id === 'vuon_duoc') return touchVuonDuoc();
@@ -2067,7 +2112,20 @@
     // (việc tạp dịch, hai đài và linh chi của chương 7-8 đều đã có nhánh
     // riêng ở ngay trên): vẫn đáp lại bằng một câu xem xét để chạm/E không
     // bao giờ "chết lặng".
+    // 9 prop bí cảnh: nhánh riêng trước nhánh fallback chung (cổng giọng).
+    if (p && p.id === 'bc_gate_thuyliem') return bcGateInteract('bc_thuyliem');
+    if (p && p.id === 'cua_tan_tich') return bcTanTichInteract();
+    if (p && p.id === 'bc_gate_kiemtrung') return bcGateInteract('bc_kiemtrung');
+    if (p && p.id === 'bc_gate_hoiphong') return bcGateInteract('bc_hoiphong_mo');
+    if (p && p.id === 'vach_nut') return bcVachInteract();
+    if (p && p.id === 'cua_phe_thuoc') return bcPheInteract();
+    if (p && p.id === 'tinh_mac_tran') return bcTranInteract();
+    if (p && p.id === 'cua_mo_that') return bcMoThatInteract();
+    if (p && p.id === 'thu_trong_mo') return bcLetterInteract();
     if (p && p.interact) return say([{ who: 'narrate', text: 'Ngươi xem xét ' + (p.name || 'vật này') + ' — lúc này chưa có việc gì với nó.' }]);
+    // Cuối interact(): điểm hái kề (Chebyshev <= 1, kể cả ô thân cây trang trí).
+    var nd = grindNearestNode();
+    if (nd) return grindHarvest(nd);
   }
   /* Quay mặt (4 hướng) về phía một ô — dùng cho chạm-để-tương-tác. */
   function faceTowardTile(tx, ty) {
@@ -2246,6 +2304,215 @@
     if (!navIssuePath(preDest)) { var lm3 = questNav.lockMsg; questNav = null; toast(lm3, 4200); }
   }
 
+  /* ---------- Dẫn đường nhiệm vụ (gói phụ H — lệnh Bui 16:39 ngày 2026-11-02) ----------
+     Mũi tên quanh nhân vật chỉ hướng tới mục tiêu của BƯỚC nhiệm vụ hiện
+     tại + dấu "!" ngay trên vật/NPC mục tiêu. Đây là dẫn đường ĐI TAY, bổ
+     sung cho nút "Tự tìm đường" ở trên (không đổi hành vi của nút đó, dùng
+     chung đồ thị cổng navRouteMaps của nó).
+     Nguồn mục tiêu — chỉ dữ kiện SẴN CÓ, không bịa tọa độ:
+       (a) trường hint của QUESTS (js/logic.js): ô đứng gợi ý của bước;
+       (b) vật tương tác / NPC của chính bước đó: hint luôn là ô đứng KỀ
+           vật/NPC đích (khoảng cách 1 ô theo dữ kiện bản đồ), nên phân
+           giải "bám" (snap) hint vào vật có cờ interact hoặc NPC có
+           khoảng cách tới hint <= 1 ô trong ĐÚNG bản đồ của hint — dấu
+           "!" neo trên VẬT, không neo trên ô gợi ý (tiền lệ q2_vet_tich:
+           hint (53,24), bao tải vet_tich footprint hàng 23, thân vẽ từ
+           hàng 22 — neo "!" theo rect vẽ của bao tải, không theo (53,24));
+       (c) các bước nhiều pha đọc cờ/pha của chính bước (guidePhaseTarget).
+     Bước có hint = null (q_break, q_done, các mốc *_done, q10_lo_than_phan)
+     là bước không có đích không gian cụ thể -> phân giải trả null, ẩn cả
+     mũi tên lẫn dấu "!".
+     Quy ước trình diễn — theo ĐÚNG quy ước sẵn có của mốc nhiệm vụ trên
+     canvas (khối "chỉ đường nhiệm vụ" cũ trong render) và của panel nhiệm
+     vụ: panel #hud-quest (DOM) không bao giờ bị ẩn bởi thoại hay trận;
+     mốc canvas cũ chỉ ẩn khi ĐANG THOẠI (!dlg) và vẫn vẽ khi đang trận
+     (enc là giao chiến thời gian thực ngay trên bản đồ, người chơi vẫn
+     phải di chuyển). Dẫn đường mới theo cùng quy ước: ẩn khi dlg mở,
+     hiện khi đang trận. Lớp vẽ này thuần canvas, không nhận thao tác. */
+  var GUIDE_HIDE_TILES = 3; // mục tiêu hiển thị đã trong khung hình VÀ cách nhân vật <= 3 ô (Chebyshev) thì ẩn mũi tên
+  var guideFrame = null;    // khung dẫn đường vừa vẽ gần nhất (trạng thái phiên — resetPresentationState dọn)
+  function guidePropById(mapId, propId) {
+    var def = L.MAPS[mapId]; if (!def) return null;
+    for (var i = 0; i < def.props.length; i++) if (def.props[i].id === propId) return def.props[i];
+    return null;
+  }
+  function guideNpcDefById(mapId, npcId) {
+    var def = L.MAPS[mapId]; if (!def) return null;
+    for (var i = 0; i < def.npcs.length; i++) if (def.npcs[i].id === npcId) return def.npcs[i];
+    return null;
+  }
+  // Vị trí hiệu lực của NPC trên bản đồ đích: bản đồ hiện tại thì lấy vị
+  // trí SỐNG (npcsLive — NPC có thể bị cảnh ghim lệch), bản đồ khác thì
+  // lấy vị trí theo pha nhiệm vụ từ dữ kiện tĩnh qua L.npcPosFor.
+  function guideNpcPos(mapId, npcDef) {
+    if (state && mapId === state.map) {
+      for (var i = 0; i < npcsLive.length; i++) if (npcsLive[i].id === npcDef.id) return { x: npcsLive[i].x, y: npcsLive[i].y, name: npcsLive[i].name };
+    }
+    var pp = L.npcPosFor ? L.npcPosFor(state, npcDef) : npcDef;
+    return { x: pp.x, y: pp.y, name: npcDef.name };
+  }
+  function guideMkNpcTarget(mapId, npcDef) {
+    var pos = guideNpcPos(mapId, npcDef);
+    return { map: mapId, x: pos.x, y: pos.y, kind: 'npc', targetId: npcDef.id, name: pos.name || npcDef.name || npcDef.id,
+             ax: pos.x * TILE + 16, ay: (pos.y + 1) * TILE - 80 };
+  }
+  function guideMkPropTarget(mapId, p) {
+    var footCx = p.x + Math.floor((p.fx - 1) / 2), footY = p.y + p.h - 1;
+    return { map: mapId, x: footCx, y: footY, kind: 'prop', targetId: p.id, name: p.name || p.id,
+             ax: (p.x + p.w / 2) * TILE, ay: p.y * TILE };
+  }
+  /* Pha con của các bước nhiều mục tiêu: mỗi nhánh lấy tọa độ từ ĐÚNG vật
+     / NPC của pha đó trong dữ kiện bản đồ, không qua hint. Trả null khi
+     bước không có pha con (đi tiếp đường hint chung ở dưới). */
+  function guidePhaseTarget(q) {
+    var f = state.flags || {}, p, n;
+    if (q.id === 'q4_thien_co') {
+      // Sứ giả Thiên Cơ Các (Trần Chính Đạo) đứng tại sân phủ theo pha —
+      // vị trí pha (17,33) trong NPC_PHASE_POS, cách hint (16,37) tới 4 ô
+      // nên đường bám <= 1 ô không với tới; lấy thẳng NPC của bước.
+      n = guideNpcDefById('co_chau', 'tran_chinh_dao');
+      return n ? guideMkNpcTarget('co_chau', n) : null;
+    }
+    if (q.id === 'q4_dieu_tra') {
+      // Ba pha nối tiếp trong interact/talkTo: sổ kho -> nhân chứng Lão
+      // Ngô -> đối chất Lục Tranh (thứ tự khóa bởi clueKho/clueWitness).
+      if (!f.clueKho) { p = guidePropById('co_chau', 'kho_hua'); return p ? guideMkPropTarget('co_chau', p) : null; }
+      if (!f.clueWitness) { n = guideNpcDefById('co_chau', 'dan_thanh_a'); return n ? guideMkNpcTarget('co_chau', n) : null; }
+      n = guideNpcDefById('co_chau', 'luc_tranh');
+      return n ? guideMkNpcTarget('co_chau', n) : null;
+    }
+    if (q.id === 'q7_tap_dich') {
+      // Ba việc tạp dịch theo CHORE_DEFS (cờ choreGo/choreNuoc/choreBao),
+      // xong cả ba thì về quản sự tạp dịch (đúng hint của bước).
+      if (!f.choreGo) { p = guidePropById('thanh_van_tong', 'viec_go'); return p ? guideMkPropTarget('thanh_van_tong', p) : null; }
+      if (!f.choreNuoc) { p = guidePropById('thanh_van_tong', 'viec_nuoc'); return p ? guideMkPropTarget('thanh_van_tong', p) : null; }
+      if (!f.choreBao) { p = guidePropById('thanh_van_tong', 'viec_bao'); return p ? guideMkPropTarget('thanh_van_tong', p) : null; }
+      return null;
+    }
+    if (q.id === 'q8_chuan_bi' && f.chuanBiSeen && !f.chiGathered) {
+      // Đã nghe công thức ở đại điện: đích con tiếp theo là cụm Linh Chi
+      // Sau Núi (touchLinhChi chỉ nhận hái ở đúng pha này).
+      p = guidePropById('thanh_van_tong', 'linh_chi');
+      return p ? guideMkPropTarget('thanh_van_tong', p) : null;
+    }
+    if (q.id === 'q11_u_nhan' && f.uNhanCityMet && !f.uNhanChoice) {
+      // Đã gặp ở Cô Châu: U Nhàn lên Thanh Vân Tông chờ ở đại điện (chính
+      // toast của pha đầu dặn vậy) — đích đổi BẢN ĐỒ theo cờ.
+      n = guideNpcDefById('thanh_van_tong', 'u_nhan');
+      return n ? guideMkNpcTarget('thanh_van_tong', n) : null;
+    }
+    return null;
+  }
+  /* Phân giải mục tiêu của bước nhiệm vụ hiện tại:
+     { map, x, y, kind, targetId, name, ax, ay, hx, hy } hoặc null.
+     x/y = ô neo của VẬT/NPC đích (ô đứng của NPC; ô footprint giữa-đáy
+     của vật) — với kind 'point' thì x/y chính là ô hint (điểm đến không
+     có vật/NPC đi kèm: miệng cổng, vùng kích hoạt, quảng trường).
+     hx/hy = ô hint gốc của bước (ô đứng tương tác), giữ để đối chiếu.
+     ax/ay = điểm neo VẼ (pixel thế giới) của dấu "!": tâm-trên của rect
+     vẽ vật, đỉnh đầu sprite NPC, tâm ô với điểm đến. */
+  function resolveQuestTarget() {
+    if (!state) return null;
+    var q = L.questById(state.quest);
+    if (!q || !q.hint) return null;
+    var phased = guidePhaseTarget(q);
+    if (phased) { phased.quest = q.id; phased.hx = q.hint.x; phased.hy = q.hint.y; return phased; }
+    var mapId = q.hint.map || 'tran';
+    var def = L.MAPS[mapId];
+    if (!def) return null;
+    var hx = q.hint.x, hy = q.hint.y;
+    // Bám vật tương tác: khoảng cách từ hint tới FOOTPRINT của vật (kề
+    // footprint = 1) — chỉ vật có cờ interact mới là ứng viên.
+    var bestProp = null, bestPropD = 1e9, i, p;
+    for (i = 0; i < def.props.length; i++) {
+      p = def.props[i];
+      if (!p.interact) continue;
+      if (L.isSessionHidden && L.isSessionHidden(mapId, p.id)) continue;
+      var fx0 = p.x, fx1 = p.x + p.fx - 1, fy0 = p.y + p.h - p.fy, fy1 = p.y + p.h - 1;
+      var pdx = Math.max(fx0 - hx, 0, hx - fx1), pdy = Math.max(fy0 - hy, 0, hy - fy1);
+      var pd = pdx + pdy;
+      if (pd < bestPropD) { bestPropD = pd; bestProp = p; }
+    }
+    // Bám NPC: khoảng cách Manhattan từ hint tới ô đứng hiệu lực của NPC.
+    var npcDefs = (mapId === state.map && npcsLive.length)
+      ? npcsLive.map(function (ln) { return { id: ln.id, name: ln.name, x: ln.x, y: ln.y, dir: ln.dir }; })
+      : def.npcs;
+    var bestNpc = null, bestNpcD = 1e9;
+    for (i = 0; i < npcDefs.length; i++) {
+      var nd = Math.abs(npcDefs[i].x - hx) + Math.abs(npcDefs[i].y - hy);
+      if (nd < bestNpcD) { bestNpcD = nd; bestNpc = npcDefs[i]; }
+    }
+    var t = null;
+    if (bestProp && bestPropD <= 1 && bestPropD <= bestNpcD) t = guideMkPropTarget(mapId, bestProp);
+    else if (bestNpc && bestNpcD <= 1) t = guideMkNpcTarget(mapId, bestNpc);
+    if (!t) t = { map: mapId, x: hx, y: hy, kind: 'point', targetId: null, name: q.name, ax: hx * TILE + 16, ay: hy * TILE };
+    t.quest = q.id; t.hx = hx; t.hy = hy;
+    return t;
+  }
+  /* Mục tiêu HIỂN THỊ trên bản đồ hiện tại: cùng bản đồ thì là chính mục
+     tiêu nhiệm vụ; khác bản đồ thì là cổng đầu tiên trên đường BFS qua đồ
+     thị cổng của nút Tự tìm đường (navRouteMaps) — mũi tên chỉ cổng đó,
+     dấu "!" không hiện (việc của mũi tên). Không có đường cổng -> null. */
+  function guideDisplayTarget(t) {
+    if (!t || !state) return null;
+    if (t.map === state.map) return t;
+    var route = navRouteMaps(state.map, t.map);
+    if (!route || route.length < 2) return null;
+    var def = L.activeMap(), po = null, i;
+    for (i = 0; i < def.portals.length; i++) if (def.portals[i].to === route[1]) { po = def.portals[i]; break; }
+    if (!po) return null;
+    return { map: state.map, x: po.x + Math.floor(po.w / 2), y: po.y + Math.floor(po.h / 2), kind: 'portal',
+             targetId: null, name: po.label || po.to, portalTo: route[1], finalMap: t.map,
+             ax: (po.x + po.w / 2) * TILE, ay: (po.y + po.h / 2) * TILE };
+  }
+  /* Trạng thái dẫn đường của khung hiện tại — hàm THUẦN duy nhất mà cả
+     render() lẫn tay nắm VSLC_GUIDE cùng đọc, nên số kiểm chứng và hình
+     vẽ không bao giờ lệch nhau. Không giữ trạng thái phiên nào khác
+     ngoài guideFrame (bản sao của khung vừa vẽ, phục vụ đọc lại). */
+  function guideCompute() {
+    var out = { quest: state ? state.quest : null, target: null, display: null,
+                arrow: false, bang: false, angle: null, distTiles: null, inView: false, dlgHidden: !!dlg };
+    if (!state) return out;
+    var t = resolveQuestTarget();
+    out.target = t;
+    if (!t) return out;
+    var d = guideDisplayTarget(t);
+    out.display = d;
+    if (!d) return out;
+    var pt = playerTile();
+    out.distTiles = Math.max(Math.abs(d.x - pt.x), Math.abs(d.y - pt.y));
+    var effW = viewW / zoom, effH = viewH / zoom;
+    out.inView = d.ax >= camX - 4 && d.ax <= camX + effW + 4 && d.ay >= camY - 4 && d.ay <= camY + effH + 4;
+    out.angle = Math.atan2(d.ay - (py + 16), d.ax - (px + 16));
+    if (dlg) return out; // đang thoại: ẩn cả hai (quy ước mốc canvas cũ)
+    out.bang = d === t; // dấu "!" chỉ khi mục tiêu hiển thị là chính vật/NPC/điểm của bước (cùng bản đồ)
+    out.arrow = !(out.inView && out.distTiles <= GUIDE_HIDE_TILES);
+    return out;
+  }
+  function drawGuideBang(ax, ay) {
+    var bob = Math.sin(tNow / 250) * 4;
+    var pulse = 0.5 + 0.5 * Math.sin(tNow / 300);
+    ctx.fillStyle = 'rgba(255,217,78,' + (0.16 + 0.12 * pulse).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(ax, ay - 13 + bob, 15 + 2 * pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(32,22,4,0.92)';
+    ctx.strokeText('!', ax, ay - 3 + bob);
+    ctx.fillStyle = '#ffd94e';
+    ctx.fillText('!', ax, ay - 3 + bob);
+  }
+  function drawGuideArrow(d) {
+    var cx = px + 16, cy = py + 16;
+    var ang = Math.atan2(d.ay - cy, d.ax - cx);
+    var r = 46, axp = cx + Math.cos(ang) * r, ayp = cy + Math.sin(ang) * r;
+    var pulse = 0.72 + 0.28 * Math.sin(tNow / 180);
+    ctx.save();
+    ctx.translate(axp, ayp); ctx.rotate(ang);
+    ctx.fillStyle = 'rgba(255,217,78,' + pulse.toFixed(3) + ')';
+    ctx.strokeStyle = 'rgba(32,22,4,0.9)'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(-8, -8.5); ctx.lineTo(-4.5, 0); ctx.lineTo(-8, 8.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
   /* Tu vi sự kiện của phần 3: cộng dồn có trần theo đúng bảng phân bổ đã
      duyệt (không đặt thẳng lên trần như các mốc khóa cứng của phần 1-2). */
   function addTuvi(n) {
@@ -2263,7 +2530,15 @@
     // Điểm chạm theo nhiệm vụ/cửa hàng của chương 3 (ưu tiên hơn thoại thường).
     if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q3_cong_phap') return receiveManuals();
     if (npc.id === 'chu_quan' && (state.flags.innWork || 0) < 2 && L.walletOpen(state)) return say(ST.SCENE_INN);
-    if (npc.id === 'duoc_su') return say(ST.SCENE_PHARMACY);
+    if (npc.id === 'duoc_su') {
+      var delDuoc = grindDeliveryForNpc('duoc_su');
+      if (delDuoc) return grindCompleteDelivery(npc, delDuoc);
+      if (state.flags.bagUnlocked) return say([{ who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Xem danh sách thu thập', action: 'grind_open_gather' },
+        { label: 'Vào hiệu thuốc', action: 'grind_pharmacy' }
+      ] }]);
+      return say(ST.SCENE_PHARMACY);
+    }
     if (npc.id === 'phap_khi_chu') return say(ST.SCENE_FASHOP);
     // Chương 4: các điểm chạm trong sân phủ Hứa và Thiên Cơ Các phân đà.
     if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_vu_cao') return say(ST.SCENE_ACCUSE);
@@ -2490,6 +2765,27 @@
     }
     if (npc.id === 'cho_a' && state.map === 'co_chau' && state.flags.ch9SayRescue && !state.flags.benhSeen && L.chapterOfQuest(state) >= 11) {
       return say(ST.SCENE_CH11_BENH, function () { state.flags.benhSeen = true; refreshHUD(); saveNow(); });
+    }
+    // Hệ cày (sau mọi nhánh cốt truyện, trước thoại thường trú): giao
+    // hàng việc tông qua NPC, rồi bảng qua NPC hiện có (không có vật
+    // thể bảng vật lý — báo điều phối viên, không tự bịa vật thể).
+    var delNpc = grindDeliveryForNpc(npc.id);
+    if (delNpc) return grindCompleteDelivery(npc, delNpc);
+    if (npc.id === 'cho_a' && state.map === 'co_chau' && huntUnlocked()) {
+      grindTalkNpcId = npc.id; grindTalkNpcName = npc.name;
+      return say([{ who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Xem bảng treo thưởng', action: 'grind_open_hunt' },
+        { label: 'Trò chuyện', action: 'grind_idle' }
+      ] }]);
+    }
+    if (npc.id === 'tap_dich_truong' && state.map === 'thanh_van_tong') {
+      grindTalkNpcId = npc.id; grindTalkNpcName = npc.name;
+      var sectOpts = [];
+      if (huntUnlocked()) sectOpts.push({ label: 'Bảng treo thưởng (săn)', action: 'grind_open_hunt' });
+      if (state.flags.bagUnlocked) sectOpts.push({ label: 'Danh sách thu thập', action: 'grind_open_gather' });
+      if (L.questReached(state, 'q7_done')) sectOpts.push({ label: 'Việc tông môn', action: 'grind_open_sect' });
+      sectOpts.push({ label: 'Trò chuyện', action: 'grind_idle' });
+      return say([{ who: 'choice', text: 'Ngươi sẽ…', options: sectOpts }]);
     }
     var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
     if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
@@ -3313,10 +3609,18 @@
   var comboN = 0, comboT = 0, huntSession = null;
   var summaryShownAt = 0, summaryMoveT = 0, bossPillar = null, encStance = false, lairToastAt = 0;
   var hitVariantIdx = 0, dropSeq = 0, orbBatchSeq = 0;
+  /* ----- Trạng thái phiên của làn C (chỉ sống trong bộ nhớ) -----
+     bcSession: phiên bí cảnh đang mở (vào qua cổng, thoát/chết/tải lại
+     là hủy; chỉ kết quả — firstClear, lượt kho, thưởng — ghi vào save).
+     bcColorSort: trò xếp chín mảnh sắc đang dở. escortT: nhịp bước của
+     bạn hộ tống việc tông. grindBoardOpen: bảng cày đang mở (panel DOM). */
+  var bcSession = null, bcColorSort = null, escortT = 0, grindBoardOpen = null;
   var HIT_VARIANTS = [0.94, 1.0, 1.06]; // biến thể cao độ tiếng chạm đích: xoay vòng xác định theo thứ tự đòn, không ngẫu nhiên
   var PENTA_NOTES = [523, 587, 659, 784, 880];
-  var MON_SHEET = { son_lang: 76, doc_vu_xa: 72, thiet_giap_tru: 92, phong_ung: 88, lang_vuong: 124, son_chu: 136 }; // cỡ vẽ điểm ảnh theo loài
-  var MON_PARTS = { son_lang: '150,160,170', doc_vu_xa: '110,190,120', thiet_giap_tru: '120,110,105', phong_ung: '140,220,210', lang_vuong: '190,200,215', son_chu: '150,130,110' };
+  var MON_SHEET = { son_lang: 76, doc_vu_xa: 72, thiet_giap_tru: 92, phong_ung: 88, lang_vuong: 124, son_chu: 136,
+    dong_xa: 76, thuy_xa_tinh: 124, thach_tuong: 92, thach_tuong_thu_ve: 124, tan_anh_vo_cuc: 136, kiem_linh: 88, kiem_y_tan_hon: 136, oan_binh: 92, oan_hon_chien_truong: 136 }; // cỡ vẽ điểm ảnh theo loài
+  var MON_PARTS = { son_lang: '150,160,170', doc_vu_xa: '110,190,120', thiet_giap_tru: '120,110,105', phong_ung: '140,220,210', lang_vuong: '190,200,215', son_chu: '150,130,110',
+    dong_xa: '90,160,140', thuy_xa_tinh: '80,170,190', thach_tuong: '150,150,150', thach_tuong_thu_ve: '160,155,140', tan_anh_vo_cuc: '200,210,255', kiem_linh: '170,220,255', kiem_y_tan_hon: '190,210,255', oan_binh: '120,140,160', oan_hon_chien_truong: '110,130,170' };
   var ZONE_IDS_SORTED = Object.keys(L.HUNT_ZONES).sort(function (a, b) {
     var za = L.HUNT_ZONES[a], zb = L.HUNT_ZONES[b];
     return (za.x1 - za.x0 + 1) * (za.y1 - za.y0 + 1) - (zb.x1 - zb.x0 + 1) * (zb.y1 - zb.y0 + 1);
@@ -3341,6 +3645,20 @@
     if (!short) setTimeout(function () { beep(46, 0.3, 'sawtooth', 0.04, 'skill'); }, 420);
   }
   function sfxHurt() { beep(110, 0.09, 'triangle', 0.05, 'skill'); }
+  /* ----- Âm thanh đợt bí cảnh + hệ cày (làn C, danh mục effects-catalog
+     mục 9 — đúng 12 tên chốt, qua cổng beep như các họ tiếng hiện có) ----- */
+  function sfxBoardAccept() { beep(520, 0.09, 'sine', 0.04, 'ui'); setTimeout(function () { beep(780, 0.12, 'sine', 0.04, 'ui'); }, 80); }
+  function sfxClaimDone() { [523, 659, 784].forEach(function (f, i) { setTimeout(function () { beep(f, 0.14, 'sine', 0.04, 'ui'); }, i * 70); }); }
+  function sfxHarvest() { beep(880, 0.08, 'triangle', 0.035, 'ui'); setTimeout(function () { beep(1174, 0.1, 'sine', 0.03, 'ui'); }, 70); }
+  function sfxRealmEntry() { beep(130, 0.7, 'sine', 0.05, 'skill'); setTimeout(function () { beep(1046, 0.9, 'sine', 0.04, 'skill'); }, 250); }
+  function sfxWaveClear() { [659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.12, 'sine', 0.035, 'skill'); }, i * 60); }); }
+  function sfxFirstClear() { beep(392, 0.25, 'triangle', 0.05, 'skill'); setTimeout(function () { beep(523, 0.25, 'triangle', 0.05, 'skill'); }, 180); setTimeout(function () { beep(784, 0.5, 'sine', 0.05, 'skill'); }, 360); }
+  function sfxChimeSmall() { beep(1568, 0.7, 'sine', 0.04, 'skill'); }
+  function sfxSealBreak() { sfxCrack(true); beep(65, 0.5, 'sawtooth', 0.06, 'skill'); }
+  function sfxTranFade() { beep(660, 0.5, 'sine', 0.03, 'skill'); setTimeout(function () { beep(520, 0.7, 'sine', 0.03, 'skill'); }, 300); setTimeout(function () { beep(392, 0.9, 'sine', 0.025, 'skill'); }, 600); }
+  function sfxHazardHit() { beep(220, 0.12, 'square', 0.05, 'skill'); beep(160, 0.14, 'sawtooth', 0.04, 'skill'); }
+  function sfxGhostWail() { beep(700, 0.4, 'sine', 0.03, 'skill'); setTimeout(function () { beep(520, 0.5, 'sine', 0.03, 'skill'); }, 300); setTimeout(function () { beep(340, 0.8, 'sine', 0.025, 'skill'); }, 650); }
+  function sfxNameCall() { beep(1046, 0.5, 'sine', 0.05, 'skill'); setTimeout(function () { beep(1318, 0.6, 'sine', 0.035, 'skill'); }, 200); }
   function nextHitVariant() { var v = HIT_VARIANTS[hitVariantIdx % 3]; hitVariantIdx++; return v; }
 
   /* ----- Tiện ích ----- */
@@ -3451,7 +3769,7 @@
     if (m.slideT > 0) m.slideT = Math.max(0, m.slideT - dt);
     if (m.state === 'dying') { m.deathT += dt; if (m.deathT > 1.1) m.state = 'gone'; return; }
     if (m.state === 'gone') {
-      if (!m.bossId) { m.respawnT -= dt; if (m.respawnT <= 0 && !enc) { var fresh = makeMonster(m.species, m.zoneId, m.lairX, m.lairY, null); for (var k in fresh) m[k] = fresh[k]; } }
+      if (!m.bossId && !m.bcRealm) { m.respawnT -= dt; if (m.respawnT <= 0 && !enc) { var fresh = makeMonster(m.species, m.zoneId, m.lairX, m.lairY, null); for (var k in fresh) m[k] = fresh[k]; } } // quái bí cảnh không hồi sinh trong phiên
       return;
     }
     if (m.state !== 'alive' || dt <= 0) { m.movingNow = false; return; }
@@ -3523,9 +3841,22 @@
     m.aggroT = 0;
     if (!huntSession) huntSession = { kills: { normal: 0, elite: 0, boss: 0 }, tuvi: 0, lt: 0, items: {} };
     if (m.bossId) { showBossBanner(m); sfxRoar(false); shakeWorld(0.35); musicBoss(true); }
+    if (m.bcBoss) {
+      var bb = $('boss-banner');
+      if (bb) {
+        $('boss-name').textContent = m.name;
+        $('boss-title').textContent = 'Boss bí cảnh';
+        $('boss-phase').textContent = 'Đợt ' + bossPhaseOf(m) + '/4';
+        bb.classList.remove('hidden', 'compact', 'fading');
+        updateBossBar(m);
+      }
+      sfxRoar(false); shakeWorld(0.35); musicBoss(true);
+      if (bcSession && bcSession.realm === 'bc_kiemtrung' && bcSession.speechUsed) { monsterStrike(m); toast('Kiếm ý đã nhớ lấy tiếng người — nó ra đòn mở màn ngay khi trận bắt đầu!', 4200); }
+    }
+    if (bcSession && bcSession.realm === 'bc_kiemtrung') bcSession.tranT = 0; // bắt đầu trận: đặt lại bộ đếm tĩnh mặc trấn
   }
   function endEncounterCleanup() {
-    if (enc && enc.mon && enc.mon.bossId) { hideBossBanner(); musicBoss(false); }
+    if (enc && enc.mon && (enc.mon.bossId || enc.mon.bcBoss)) { hideBossBanner(); musicBoss(false); }
     if (state && state.flags) { state.flags.lenDinhHold = 0; state.flags.lenPhongSeal = 0; }
     enc = null; encStance = false;
   }
@@ -3567,7 +3898,7 @@
       toast('Quái đã lùi về ổ — trận tan, không thắng không thua.', 2600);
       return;
     }
-    if (m.bossId) updateBossBar(m);
+    if (m.bossId || m.bcBoss) updateBossBar(m);
   }
   function monsterStrike(m) {
     enc.hitN += 1;
@@ -3591,6 +3922,7 @@
      người chơi tỉnh lại ở điểm an toàn gần nhất (điểm thổ nạp của bản
      đồ) với 25% máu, quái thắng trở về ổ với máu đầy. */
   function defeatInBattle() {
+    if (state.map && state.map.indexOf('bc_') === 0) { bcDefeat(); return; }
     var m = enc ? enc.mon : null;
     endEncounterCleanup();
     if (m) { m.hp = m.hpMax; m.holdT = 0; m.sealT = 0; m.mode = 'return'; }
@@ -4346,6 +4678,20 @@
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.9 });
       applyHitToMonster(m, r.power, { kind: 'word', skill: 'phong' });
     }
+    // Móc Kiếm Trủng: lời thành công đầu tiên trong bí cảnh này, trước
+    // khi cửa mở, thì cửa mở ngay theo đường lời nói.
+    if (r.ok && bcSession && bcSession.realm === 'bc_kiemtrung' && !bcSession.speechUsed && !L.isSessionHidden('bc_kiemtrung', 'cua_mo_that')) {
+      bcSession.speechUsed = true;
+      L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_kiemtrung', []);
+      L.hideSessionProp('bc_kiemtrung', 'cua_mo_that');
+      /* SỬA LỖI do làn G phát hiện (mục 53-DEFECT-KIEMTRUNG): footprint
+         của tinh_mac_tran (22–25, hàng y=9) lấp kín khe duy nhất của
+         vách y=9, nên chỉ ẩn cửa thì phòng boss vẫn không vào được.
+         Trấn tan thì cả trấn lẫn cửa đều phải mở. */
+      L.hideSessionProp('bc_kiemtrung', 'tinh_mac_tran');
+      sfxSealBreak();
+      say([{ who: 'narrate', text: BC_SUCCESS_LINES.wordDoor }]);
+    }
     refreshHUD(); saveNow();
   }
   function applyHitToMonster(m, power, opts) {
@@ -4353,6 +4699,7 @@
     if (!enc || m.state !== 'alive') return;
     var crit = enc.critRng() < CRIT_CHANCE;
     var dmg = crit ? Math.round(power * CRIT_MULT) : power;
+    if (opts.kind === 'word' && m.def && m.def.wordResist) dmg = Math.max(1, Math.round(dmg * m.def.wordResist)); // kháng Ngôn Linh: chỉ kiem_y_tan_hon 0.5
     if (opts.kind === 'sword') { // vệt kiếm quang lam lướt qua quái (gói phụ 10)
       var sang = Math.atan2((m.y + 16) - (py + 16), (m.x + 16) - (px + 16)) + (Math.random() - 0.5) * 0.7;
       spawnStreak(m.x + 16, m.y + 4, sang, crit ? '255,226,150' : '170,230,255', crit);
@@ -4393,6 +4740,15 @@
     if (m.hp <= 0) killMonster(m, opts);
   }
   function killMonster(m, killOpts) {
+    // Boss bí cảnh: nhánh TRƯỚC nhánh bossId (boss bí cảnh không có bossId).
+    if (m.bcBoss) {
+      var bcr = bcBossKillRewards(m);
+      if (bcr === 'bag_full') {
+        m.hp = Math.max(1, Math.round(m.hpMax * 0.05));
+        updateBossBar(m);
+        return;
+      }
+    }
     // Boss: phải qua cửa trả thưởng TRƯỚC khi tính là hạ — túi đầy thì
     // chu kỳ không bị tiêu, boss gượng dậy với 5% máu và trận còn tiếp.
     if (m.bossId) {
@@ -4415,8 +4771,10 @@
     spawnParts(m.x + 16, m.y + 20, m.rank === 'normal' ? 10 : 16, MON_PARTS[m.species] || '200,200,200', 30, false);
     if (m.rank !== 'normal' && (!SET || SET.current.fxRings)) rings.push({ x: m.x + 16, y: m.y + 16, r: 6, a: 0.8 });
     comboN++; comboT = 6; updateComboBox();
-    if (huntSession) huntSession.kills[m.rank]++;
-    if (!m.bossId) normalKillDrops(m);
+    if (huntSession && !m.bcRealm) huntSession.kills[m.rank]++; // quái bí cảnh không tính vào phiên săn dã ngoại
+    if (!m.bossId && !m.bcBoss) normalKillDrops(m); // boss bí cảnh không rơi qua đường thường (thưởng riêng trong bcBossKillRewards)
+    grindHuntCredit(m);
+    if (m.bcRealm) bcCheckWave(m);
     if (enc && enc.mon === m) endEncounterCleanup();
     m.respawnT = 20; // quái thường hồi ổ sau 20 giây (bộ nhớ phiên); boss hồi theo chu kỳ ngày
     refreshHUD(); saveNow();
@@ -4424,6 +4782,20 @@
   function normalKillDrops(m) {
     var z = L.HUNT_ZONES[m.zoneId];
     var lvl = z ? z.yeuDanLevel : 1;
+    /* Tu vi theo mạng cho quái DÃ NGOẠI (quyết định của Bui 16:36 ngày
+       2026-11-02, thay luật cũ "ngoài phiếu trả 0 tu vi"): qua cửa trả
+       thưởng duy nhất grantReward với hồ sơ profile:kill:normal (2%
+       tuviNext) / profile:kill:elite (5%), chảy qua bể trần mềm tu
+       vi/ngày. Quái bí cảnh (m.bcRealm) KHÔNG qua đây — đã có thưởng
+       đợt 5%/đợt, tránh trả trùng; boss không chạy hàm này. Số trả
+       thật (sau trần mềm + kẹp trần thanh) cộng vào tổng kết phiên. */
+    if (!m.bcRealm && m.zoneId && (m.rank === 'normal' || m.rank === 'elite')) {
+      var kr = L.grantReward(state, m.rank === 'elite' ? 'profile:kill:elite' : 'profile:kill:normal', { sourceId: 'kill:' + m.species });
+      if (kr.ok && kr.granted.tuvi > 0) {
+        if (huntSession) huntSession.tuvi += kr.granted.tuvi;
+        spawnOrbs(m.rank === 'elite' ? 5 : 3, m.x + 16, m.y + 16, kr.granted.tuvi);
+      }
+    }
     var chance = m.rank === 'elite' ? L.YEU_DAN_DROP_ELITE : L.YEU_DAN_DROP_NORMAL;
     // Rút theo id phiên: nạp lại giữa phiên không quay lại được kết quả khác.
     if (L.yeuDanDropFor(enc.sessionId, chance)) spawnDrop('yeu_dan_' + lvl, 1, m.x + 16, m.y + 16);
@@ -5509,6 +5881,7 @@
       // cùng nhịp thế giới (đóng băng theo dừng hình qua dtW, đứng yên
       // khi thoại mở vì cả khối này nằm trong nhánh !dlg).
       huntUpdate(dt, dtW);
+      grindSectTick(dtW); bcTick(dtW);
       updateDuel(dtW); // trận tỉ thí kịch bản (gói phụ 7) — cùng nhịp thế giới, đóng băng theo dừng hình
       if (tlFight) updateTlFight(dtW); // ải Thăng Long thật (gói phụ 13)
       checkPortalsAndZones();
@@ -5561,7 +5934,9 @@
   /* ---------- Cổng bản đồ + vùng sự kiện chương 2 ---------- */
   var portalToastAt = 0;
   function switchMap(po) {
+    var prevMap = state ? state.map : null;
     fadeTransition(function () {
+      if (prevMap && prevMap.indexOf('bc_') === 0) { if (bcSession && bcSession.realm === prevMap) bcSession = null; bcColorSort = null; if (L.clearSessionHiddenProps) L.clearSessionHiddenProps(prevMap); } // rời bí cảnh: hủy phiên + xóa vật thể đã mở của bản đồ đó
       state.map = po.to; state.x = po.toX; state.y = po.toY;
       // Vừa đặt chân lên tông mà save còn dừng ở cuối chương 6 thì nâng
       // nhiệm vụ ngay trong cùng phiên (di trú lúc nạp vẫn giữ cho save cũ).
@@ -5674,6 +6049,11 @@
         refreshHUD(); saveNow();
         toast('Sự thật đã bị kẻ khác tung ra theo cách xấu nhất. Tu vi còn thiếu một đoạn cuối — thổ nạp ở sân sau Tĩnh Quan Lâu, rồi gặp lại Bạch Kính Đường để khép việc ở lầu.', 5200);
       });
+      return;
+    }
+    if (state.map === 'kiem_trac_thap' && !state.flags.bcTapsauInviteSeen && L.questReached(state, 'q8_done')) {
+      // Thư mời tầng sâu: vào tháp lần đầu sau Trúc Cơ (cờ đặt trong callback).
+      say(ST.SCENE_BC_TAPSAU_INVITE, function () { state.flags.bcTapsauInviteSeen = true; refreshHUD(); saveNow(); });
       return;
     }
     if (state.map !== 'duong_mon') return;
@@ -6136,6 +6516,890 @@
   $('sk-break').addEventListener('click', function () { doBreakthrough(); });
   $('sk-interact').addEventListener('click', function () { sfxUi(); interact(); });
 
+  /* ================= LÀN C — HỆ CÀY + BÍ CẢNH =================
+     Hợp đồng làn A (js/logic.js, qua VSLC) được dùng đúng tên; số đã
+     duyệt không đổi; canon và tọa độ chức năng bản đồ cũ không đổi.
+     Mọi trạng thái phiên (bcSession, bcColorSort, bạn hộ tống) chỉ sống
+     trong bộ nhớ và bị xóa trong resetPresentationState. */
+  var BC_LOCK_LINES = {
+    bc_thuyliem: 'Sau màn thác là một hang tối phả hơi lạnh. Ngươi còn việc chưa xong ở cổng thành — hãy khép lại chuyện đường mòn rồi quay lại đây.',
+    bc_tapha: 'Cầu thang đá dẫn xuống tối sâu dưới sảnh tháp. Người giữ tháp chưa cho phép — chỉ ai đã đo xong thước của mình mới được xuống xem tàn tích.',
+    bc_tapsau: 'Tầng sâu hơn nữa vẫn im lìm sau lớp đá. Người giữ tháp từng nói: chỉ khi ngươi đã đứng ở Trúc Cơ, phế tích dưới này mới chịu mở mắt.',
+    bc_kiemtrung: 'Cửa động bị kiếm cắm chắn kín, kiếm ý sắc đến mức đứng gần đã thấy da thịt rin rít. Với tu vi hiện tại, bước vào chỉ tổ làm mồi cho kiếm khí.',
+    bc_hoiphong_mo: 'Nền mộ vừa lộ sau trận sạt đất, oán khí đặc quánh như sương. Nơi này chỉ mở khi chuyện thung lũng đã đi tới hồi đối đầu.',
+    pool: 'Linh khí trong các bí cảnh quanh vùng hôm nay đã bị ngươi khuấy động cạn kiệt. Hãy chờ sang ngày game mới — khí đất cần một đêm để lắng lại.'
+  };
+  var BC_HINT_LINES = {
+    vach: 'Một vách đá nứt chéo chắn ngang lối tắt. Các vết nứt đã sâu — một lời PHÁ đủ làm nó sập, nhưng tiếng động trong hang này sẽ vọng rất xa.',
+    phe: "Cửa phế thước khắc chín vạch màu và một dòng chữ: 'Xếp lại trật tự cửu phẩm, cửa tự mở.'",
+    tran: "Tĩnh mặc trấn phong cửa mộ thất. Chữ khắc trên trấn viết: 'Người giữ được im lặng lâu như tiền bối thì là đồng đạo.' — và một dòng nhỏ hơn: 'Trấn này nhớ tiếng người.'"
+  };
+  var BC_SUCCESS_LINES = {
+    phe: 'Chín mảnh sắc vào đúng thứ tự. Một tiếng chuông nhỏ ngân lên từ lòng đá — cửa phế thước lặng lẽ trượt mở.',
+    tran: 'Hai mươi hơi thở đều đặn. Tĩnh mặc trấn cảm được sự kiên nhẫn ấy — vòng sáng mờ dần, cửa mộ thất tự mở, không một tiếng động.',
+    wordDoor: 'Tiếng nói vừa dứt, tĩnh mặc trấn rung lên như ghi nhớ. Cửa mộ thất mở ra — nhưng sâu trong động, kiếm ý cũng đã nhớ lấy tiếng người.',
+    soothe: 'Ngươi không nói một lời. Hồn lực tỏa ra như làn khói ấm, phủ lấy oán khí đang cuộn xoáy. Oán hồn khựng lại… rồi tan dần vào lòng đất, yên nghỉ trong im lặng.',
+    reread: 'Bức thư chưa gửi vẫn nằm trên bệ đá. Tên người chết — Thạch Vạn Quân — ngươi đã ghi nhớ.'
+  };
+  var BC_INTRO_SCENE = { bc_thuyliem: 'SCENE_BC_THUYLIEM_INTRO', bc_tapha: 'SCENE_BC_TAPHA_INTRO', bc_tapsau: 'SCENE_BC_TAPSAU_INTRO', bc_kiemtrung: 'SCENE_BC_KIEMTRUNG_INTRO', bc_hoiphong_mo: 'SCENE_BC_HOIPHONG_INTRO' };
+  // Đợt quái theo khoang (làn C): mỗi khoang một đợt quái thường đi lại
+  // tự do trong khoang (tường X chặn di chuyển nên quái không tràn khoang);
+  // boss ở khoang cuối, sinh cùng lượt vào nhưng bị tường/vách chặn lại.
+  var BC_WAVES = {
+    bc_thuyliem: { zone: 'zone_bc_thuyliem', waves: [
+      [{ species: 'dong_xa', x: 14, y: 28 }, { species: 'dong_xa', x: 30, y: 28 }],
+      /* (32,19) thay (33,19): ô cũ trùng đúng vật thể da_suoi_b nên quái
+         đứng trên ô không đi được, người chơi không chạm trán được. */
+      [{ species: 'dong_xa', x: 10, y: 18 }, { species: 'dong_xa', x: 32, y: 19 }] ] },
+    bc_tapha: { zone: 'zone_bc_tapha', waves: [
+      [{ species: 'thach_tuong', x: 14, y: 26 }, { species: 'thach_tuong', x: 30, y: 26 }],
+      [{ species: 'thach_tuong', x: 10, y: 14 }, { species: 'thach_tuong', x: 28, y: 17 }] ] },
+    bc_tapsau: { zone: 'zone_bc_tapsau', waves: [
+      [{ species: 'thach_tuong', x: 14, y: 26 }, { species: 'thach_tuong', x: 30, y: 26 }],
+      [{ species: 'thach_tuong', x: 10, y: 14 }, { species: 'thach_tuong', x: 28, y: 17 }] ] },
+    bc_kiemtrung: { zone: 'zone_bc_kiemtrung', waves: [
+      [{ species: 'kiem_linh', x: 14, y: 29 }, { species: 'kiem_linh', x: 32, y: 29 }],
+      [{ species: 'kiem_linh', x: 14, y: 12 }, { species: 'kiem_linh', x: 30, y: 12 }] ] },
+    bc_hoiphong_mo: { zone: 'zone_bc_hoiphong_mo', waves: [
+      [{ species: 'oan_binh', x: 16, y: 33 }, { species: 'oan_binh', x: 38, y: 33 }],
+      [{ species: 'oan_binh', x: 16, y: 14 }, { species: 'oan_binh', x: 38, y: 14 }] ] }
+  };
+  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 } };
+  // Thưởng LẦN ĐẦU (ngoài hồ trần, cờ firstClear chống trùng — đúng hồ sơ
+  // đã duyệt; ti_loi_phu là thưởng lần đầu đã duyệt, KHÔNG phải Dẫn Lôi
+  // Pháp và không bao giờ phát dan_loi_phap trong bí cảnh).
+  var BC_FIRST_REWARDS = {
+    bc_thuyliem: { lt: 15, items: { yeu_dan_1: 1, hoi_xuan_dan: 1 }, tech: null, story: [] },
+    bc_tapha: { lt: 20, items: { ti_loi_phu: 1 }, tech: null, story: [] },
+    bc_tapsau: { lt: 30, items: { ti_loi_phu: 1 }, tech: { id: 'that_tinh', pts: 60 }, story: [] },
+    bc_kiemtrung: { lt: 25, items: { yeu_dan_2: 1 }, tech: { id: 'that_tinh', pts: 120 }, story: [] },
+    bc_hoiphong_mo: { lt: 25, items: { ti_loi_phu: 1, yeu_dan_2: 1 }, tech: null, story: ['thu_trong_mo', 'ngoc_boi_nua'] }
+  };
+  var ZONE_SHORT = { zone_duong_mon_rung: 'rừng đường mòn', zone_duong_mon_phuc_kich: 'bãi phục kích', zone_tong_sau_nui: 'rừng sau núi tông', zone_hb_rung: 'rừng thung lũng', zone_hb_bac: 'bãi bắc thung lũng' };
+  var SECT_JOB_LABEL = { cleanup: 'Dọn dẹp', delivery: 'Giao hàng', patrol: 'Tuần tra', escort: 'Hộ tống' };
+  var grindTalkNpcId = null, grindTalkNpcName = '';
+  function grindTemplateById(boardId, templateId) {
+    var list = L.templatesForBoard(boardId), t = null;
+    list.forEach(function (x) { if (x.templateId === templateId) t = x; });
+    return t;
+  }
+  function grindHeldInstances(boardId, kind) {
+    var g = L.ensureGrind(state), out = [];
+    for (var id in g.instances) {
+      var ins = g.instances[id];
+      if (ins && ins.boardId === boardId && ins.kind === kind && (ins.status === 'active' || ins.status === 'ready')) out.push(ins);
+    }
+    out.sort(function (a, b) { return a.acceptedSeq - b.acceptedSeq; });
+    return out;
+  }
+  function grindSlotText(kind, t, target) {
+    if (!t) return 'Ô trống';
+    if (kind === 'hunt') {
+      var sp = L.MONSTER_DEFS[t.speciesId];
+      return 'Săn ' + (sp ? sp.name : t.speciesId) + ' ×' + target + ' (' + (ZONE_SHORT[t.zoneId] || t.zoneId) + ')';
+    }
+    if (kind === 'gather') {
+      var it = L.ITEM_DEFS[t.itemId];
+      return 'Thu thập ' + (it ? it.name : t.itemId) + ' ×' + target;
+    }
+    return (SECT_JOB_LABEL[t.jobType] || t.jobType) + ' — tầng ' + (t.tier === 'truc_co' ? 'Trúc Cơ' : 'tạp dịch');
+  }
+  function grindInstanceText(kind, t, ins) {
+    if (!t) return ins.instanceId;
+    if (kind === 'hunt') {
+      var sp = L.MONSTER_DEFS[t.speciesId];
+      return 'Săn ' + (sp ? sp.name : t.speciesId) + ': ' + ins.progress + '/' + ins.target + (ins.status === 'ready' ? ' — đã xong, chờ trả' : '');
+    }
+    if (kind === 'gather') {
+      var it = L.ITEM_DEFS[t.itemId];
+      return 'Thu thập ' + (it ? it.name : t.itemId) + ': trong túi ' + L.bagCount(state, t.itemId) + '/' + ins.target;
+    }
+    var label = SECT_JOB_LABEL[t.jobType] || t.jobType;
+    if (t.jobType === 'patrol') {
+      var n = (t.checkpoints || []).length;
+      return label + ': điểm kiểm ' + (ins.cpIndex || 0) + '/' + n + (ins.status === 'ready' ? ' — đã xong, chờ trả' : '');
+    }
+    if (t.jobType === 'escort') return label + (ins.status === 'ready' ? ' — đã tới nơi, chờ trả' : ': đang hộ tống');
+    if (t.jobType === 'delivery') return label + (ins.status === 'ready' ? ' — đã giao, chờ trả' : ': chưa giao');
+    return label + (ins.status === 'ready' ? ' — đã làm xong, chờ trả' : ': chưa làm');
+  }
+  function grindGrantedText(r) {
+    if (!r || !r.granted) return '';
+    var parts = [];
+    if (r.granted.lt > 0) parts.push('+' + fmtAmt(r.granted.lt) + ' Linh Thạch');
+    if (r.granted.tuvi > 0) parts.push('+' + fmtAmt(r.granted.tuvi) + ' tu vi');
+    if (r.granted.merit > 0) parts.push('+' + fmtAmt(r.granted.merit) + ' cống hiến');
+    for (var id in r.granted.items) parts.push((L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : id) + ' ×' + r.granted.items[id]);
+    return parts.join(' · ');
+  }
+  function grindBtn(label, fn) {
+    var b = document.createElement('button');
+    b.className = 'btn wood'; b.type = 'button'; b.textContent = label;
+    b.style.marginRight = '6px'; b.style.marginBottom = '6px';
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function openGrindBoard(boardId) {
+    if (!state) return;
+    grindBoardOpen = boardId;
+    renderGrindBoard();
+    var p = $('grind-panel'); if (p) p.classList.remove('hidden');
+  }
+  function closeGrindBoard() {
+    grindBoardOpen = null;
+    var p = $('grind-panel'); if (p) p.classList.add('hidden');
+  }
+  var grindCloseEl = $('grind-close');
+  if (grindCloseEl) grindCloseEl.addEventListener('click', closeGrindBoard);
+  function renderGrindBoard() {
+    if (!state || !grindBoardOpen) return;
+    var boardId = grindBoardOpen;
+    var title = $('grind-title'), info = $('grind-info'), list = $('grind-list');
+    var def = L.BOARD_DEFS[boardId];
+    if (title) title.textContent = def ? def.name : 'Bảng nhiệm vụ cày';
+    var kind = boardId === 'board_hunt_daily' ? 'hunt' : (boardId === 'board_gather_daily' ? 'gather' : 'sect');
+    if (info) info.textContent = 'Ngày game ' + state.dayCount + ' — Bảng làm mới theo ngày game; ngày chỉ trôi khi đồng hồ chạy theo chu kỳ (ghim Luôn ngày/Luôn đêm thì hệ cày đứng yên theo ngày).';
+    if (!list) return;
+    list.innerHTML = '';
+    var board = L.generateBoard(state, boardId);
+    var g = L.ensureGrind(state);
+    function row(text) {
+      var d = document.createElement('div');
+      d.style.margin = '8px 0'; d.style.padding = '8px 10px'; d.style.border = '1px solid #77683c';
+      d.style.borderRadius = '8px'; d.style.background = 'rgba(24,17,10,0.55)';
+      d.textContent = text;
+      return d;
+    }
+    if (!board.slots.length) {
+      var empty = document.createElement('div');
+      empty.textContent = def ? def.lockedHint : 'Chưa mở.';
+      list.appendChild(empty);
+    }
+    board.slots.forEach(function (s, idx) {
+      var t = grindTemplateById(boardId, s.templateId);
+      var iid = L.grindInstanceId(kind, boardId, state.dayCount, idx);
+      var ins = g.instances[iid];
+      var txt = 'Ô ' + (idx + 1) + ': ' + grindSlotText(kind, t, s.target);
+      if (ins) txt += ins.status === 'active' ? ' — đang làm' : (ins.status === 'ready' ? ' — đã xong, chờ trả' : (ins.status === 'claimed' ? ' — đã trả' : ' — đã hết lượt'));
+      else txt += ' — còn trống';
+      var r = row(txt);
+      if (!ins && L.countHeldGrind(state, kind) < (L.GRIND_ACTIVE_MAX[kind] || 2)) {
+        r.appendChild(grindBtn('Nhận', (function (b, sl) { return function () { grindAcceptSlot(b, sl); }; })(boardId, idx)));
+      }
+      list.appendChild(r);
+    });
+    var held = grindHeldInstances(boardId, kind);
+    if (held.length) {
+      var hTitle = document.createElement('div');
+      hTitle.textContent = 'Phiếu đang giữ (phiếu ready không hết hạn theo ngày):';
+      hTitle.style.marginTop = '10px'; hTitle.style.color = '#ffe9a8';
+      list.appendChild(hTitle);
+      held.forEach(function (ins) {
+        var t2 = grindTemplateById(boardId, ins.templateId);
+        var r2 = row(grindInstanceText(kind, t2, ins));
+        if (ins.status === 'ready' && kind !== 'gather') {
+          r2.appendChild(grindBtn('Trả thưởng', (function (x) { return function () { grindClaimInstance(x); }; })(ins)));
+        } else if (ins.status === 'active' && kind === 'gather') {
+          if (L.bagCount(state, t2.itemId) >= ins.target) {
+            r2.appendChild(grindBtn('Nộp lấy tu vi', (function (x) { return function () { grindClaimGather(x, false); }; })(ins)));
+            r2.appendChild(grindBtn('Nộp lấy đan', (function (x) { return function () { grindClaimGather(x, true); }; })(ins)));
+          }
+        }
+        if (ins.status === 'active' || ins.status === 'ready') {
+          r2.appendChild(grindBtn('Hủy', (function (x) { return function () { grindAbandonInstance(x); }; })(ins)));
+        }
+        list.appendChild(r2);
+      });
+    }
+  }
+  function grindAcceptSlot(boardId, slot) {
+    var kind = boardId === 'board_hunt_daily' ? 'hunt' : (boardId === 'board_gather_daily' ? 'gather' : 'sect');
+    var r = L.acceptBoardInstance(state, kind, boardId, slot);
+    if (!r.ok) {
+      toast(r.reason === 'held_limit' ? 'Đang giữ tối đa phiếu/việc rồi — trả hoặc hủy bớt rồi nhận tiếp.' : (r.reason === 'already_taken' ? 'Ô này đã nhận rồi trong ngày.' : 'Không nhận được ô này.'), 3600);
+      return;
+    }
+    sfxBoardAccept();
+    toast('Đã nhận phiếu/việc mới.', 3000);
+    refreshHUD(); saveNow(); renderGrindBoard();
+  }
+  function grindClaimInstance(ins) {
+    var t = grindTemplateById(ins.boardId, ins.templateId);
+    var profile = ins.resolvedProfileId || (t && t.profileId);
+    var r = L.grantReward(state, profile, { claimKey: ins.instanceId, sourceId: ins.boardId });
+    if (r.ok) {
+      ins.status = 'claimed';
+      if (ins.kind === 'sect') grindEscortClear();
+      sfxClaimDone();
+      toast('Đã trả thưởng: ' + grindGrantedText(r) + '.', 4600);
+      refreshHUD(); saveNow(); renderGrindBoard();
+      return;
+    }
+    if (r.duplicate) { ins.status = 'claimed'; refreshHUD(); saveNow(); renderGrindBoard(); return; }
+    toast(r.reason === 'bag_full' ? 'Túi đã đầy — dọn túi rồi trả lại, công không mất.' : (r.reason || 'Chưa trả được.'), 4200);
+  }
+  // Nộp thu thập NGUYÊN TỬ: trừ nguyên liệu trước, trả thưởng sau; nếu
+  // cửa thưởng lỗi giữa chừng thì hoàn nguyên liệu, lượt giữ nguyên.
+  function grindClaimGather(ins, useDan) {
+    var t = grindTemplateById(ins.boardId, ins.templateId);
+    if (!t) return;
+    if (L.bagCount(state, t.itemId) < ins.target) { toast('Chưa đủ nguyên liệu trong túi.', 3600); return; }
+    var profile = useDan ? L.gatherDanProfileForOrdinal(L.realmOrdinal(state)) : 'profile:gat:tuvi';
+    var rm = L.bagRemove(state, t.itemId, ins.target);
+    if (!rm.ok) { toast(rm.reason, 3600); return; }
+    var r = L.grantReward(state, profile, { claimKey: ins.instanceId, sourceId: ins.boardId });
+    if (!r.ok) {
+      L.bagAdd(state, t.itemId, ins.target); // hoàn nguyên liệu
+      toast(r.reason === 'bag_full' ? 'Túi không đủ chỗ nhận đan — nguyên liệu đã hoàn lại.' : (r.reason || 'Chưa nộp được, nguyên liệu đã hoàn lại.'), 4200);
+      refreshHUD(); saveNow(); renderGrindBoard();
+      return;
+    }
+    ins.status = 'claimed';
+    sfxClaimDone();
+    toast('Đã nộp thu thập: ' + grindGrantedText(r) + '.', 4600);
+    refreshHUD(); saveNow(); renderGrindBoard();
+  }
+  function grindAbandonInstance(ins) {
+    ins.status = 'abandoned';
+    if (ins.kind === 'sect') grindEscortClear();
+    toast('Đã hủy phiếu/việc (ô này không nhận lại được trong ngày).', 3600);
+    refreshHUD(); saveNow(); renderGrindBoard();
+  }
+  function grindCloseDlg() {
+    dlg = null; dlgQueue = []; dlgCb = null;
+    var dEl = $('dialogue'); if (dEl) dEl.classList.add('hidden');
+    var chEl = $('dlg-choices'); if (chEl) chEl.innerHTML = '';
+    updateDlgPortrait(null);
+  }
+  function grindIdleTalk() {
+    var id = grindTalkNpcId;
+    var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[id] || ST.IDLE_AFTER[id] || ST.IDLE_BEFORE[id];
+    if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : id, mode: ln.mode, text: ln.text }; })); return; }
+    say([{ who: 'narrate', text: grindTalkNpcName + ' nhìn ngươi một lúc, khẽ gật đầu. Lúc này chưa có chuyện gì cần nói.' }]);
+  }
+  function grindChoiceAction(action) {
+    if (action === 'grind_open_hunt') { grindCloseDlg(); openGrindBoard('board_hunt_daily'); }
+    else if (action === 'grind_open_gather') { grindCloseDlg(); openGrindBoard('board_gather_daily'); }
+    else if (action === 'grind_open_sect') { grindCloseDlg(); openGrindBoard('board_sect_daily'); }
+    else if (action === 'grind_pharmacy') { say(ST.SCENE_PHARMACY); }
+    else if (action === 'grind_idle') { grindIdleTalk(); }
+  }
+  // Giao hàng việc tông qua NPC (ưu tiên sau nhánh cốt truyện trong talkTo).
+  function grindDeliveryForNpc(npcId) {
+    if (!state) return null;
+    var g = L.ensureGrind(state);
+    for (var id in g.instances) {
+      var ins = g.instances[id];
+      if (!ins || ins.kind !== 'sect' || ins.status !== 'active') continue;
+      var t = null;
+      L.SECT_JOB_TEMPLATES.forEach(function (x) { if (x.templateId === ins.templateId) t = x; });
+      if (t && t.jobType === 'delivery' && t.deliverNpc === npcId && t.deliverMap === state.map) return ins;
+    }
+    return null;
+  }
+  function grindCompleteDelivery(npc, ins) {
+    ins.progress = ins.target; ins.status = 'ready';
+    toast('Đã giao hàng cho ' + npc.name + ' — về gặp Quản Sự Tạp Dịch để trả việc.', 4200);
+    refreshHUD(); saveNow();
+    return say([{ who: 'narrate', text: 'Ngươi giao xong hàng cho ' + npc.name + '. Việc đã xong bước giao — còn bước về tông trả việc.' }]);
+  }
+  function grindSectActiveForProp(propId) {
+    if (!state) return null;
+    var g = L.ensureGrind(state);
+    for (var id in g.instances) {
+      var ins = g.instances[id];
+      if (!ins || ins.kind !== 'sect' || ins.status !== 'active') continue;
+      var t = null;
+      L.SECT_JOB_TEMPLATES.forEach(function (x) { if (x.templateId === ins.templateId) t = x; });
+      if (t && t.interactProp === propId && t.interactAt && t.interactAt.map === state.map) return ins;
+    }
+    return null;
+  }
+  function grindSectStepDone(ins) {
+    ins.progress = ins.target; ins.status = 'ready';
+    toast('Đã làm xong việc tông luân phiên — về gặp Quản Sự Tạp Dịch để trả việc.', 4200);
+    refreshHUD(); saveNow();
+    return say([{ who: 'narrate', text: 'Ngươi làm xong việc này. Về gặp Quản Sự Tạp Dịch ở sân đông nam để trả việc.' }]);
+  }
+  function grindEscortClear() {
+    for (var i = npcsLive.length - 1; i >= 0; i--) if (npcsLive[i].id === 'de_tu_ho_tong') npcsLive.splice(i, 1);
+  }
+  // Việc tông luân phiên chạy theo nhịp thế giới: tuần tra theo thứ tự
+  // điểm kiểm (bán kính Chebyshev ≤ 1); hộ tống có bạn đi theo trên bản
+  // đồ tông, rời bản đồ thì tạm dừng (bạn biến khỏi npcsLive, tiến độ giữ).
+  function grindSectTick(dt) {
+    if (!state) return;
+    var g = L.ensureGrind(state), ins = null, id;
+    for (id in g.instances) {
+      var o = g.instances[id];
+      if (o && o.kind === 'sect' && o.status === 'active') { ins = o; break; }
+    }
+    if (!ins || ins.templateId !== 'sect_escort_rot' || state.map !== 'thanh_van_tong') grindEscortClear();
+    if (!ins) return;
+    var t = null;
+    L.SECT_JOB_TEMPLATES.forEach(function (x) { if (x.templateId === ins.templateId) t = x; });
+    if (!t) return;
+    if (t.jobType === 'patrol') {
+      var cps = t.checkpoints || [], cp = cps[ins.cpIndex || 0];
+      if (!cp) { ins.status = 'ready'; refreshHUD(); saveNow(); return; }
+      if (state.map === cp.map) {
+        var pt = playerTile();
+        if (Math.max(Math.abs(pt.x - cp.x), Math.abs(pt.y - cp.y)) <= 1) {
+          ins.cpIndex = (ins.cpIndex || 0) + 1;
+          if (ins.cpIndex >= cps.length) { ins.status = 'ready'; toast('Đã tuần tra xong mọi điểm kiểm — về gặp Quản Sự Tạp Dịch để trả việc.', 4200); }
+          else toast('Đã qua điểm kiểm ' + ins.cpIndex + '/' + cps.length + ' của việc tuần tra.', 3000);
+          refreshHUD(); saveNow();
+        }
+      }
+      return;
+    }
+    if (t.jobType === 'escort') {
+      if (state.map !== 'thanh_van_tong') return;
+      var fol = null;
+      npcsLive.forEach(function (n) { if (n.id === 'de_tu_ho_tong') fol = n; });
+      if (!fol) {
+        fol = { id: 'de_tu_ho_tong', name: 'Đệ tử đi cùng', look: 'villager_m', x: playerTile().x, y: playerTile().y, dir: 'down' };
+        npcsLive.push(fol);
+      }
+      var pt2 = playerTile();
+      escortT += dt;
+      if (escortT >= 0.35) {
+        escortT = 0;
+        var dx = pt2.x - fol.x, dy = pt2.y - fol.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) {
+          var sx = dx === 0 ? 0 : (dx > 0 ? 1 : -1), sy = dy === 0 ? 0 : (dy > 0 ? 1 : -1);
+          var others = npcsLive.filter(function (n) { return n.id !== 'de_tu_ho_tong'; });
+          if (L.isWalkable(fol.x + sx, fol.y + sy, others)) { fol.x += sx; fol.y += sy; }
+          else if (L.isWalkable(fol.x + sx, fol.y, others)) fol.x += sx;
+          else if (L.isWalkable(fol.x, fol.y + sy, others)) fol.y += sy;
+        }
+      }
+      var to = t.escortTo;
+      if (to && Math.max(Math.abs(pt2.x - to.x), Math.abs(pt2.y - to.y)) <= 1) {
+        ins.status = 'ready'; ins.progress = 1;
+        grindEscortClear();
+        toast('Đã hộ tống đệ tử mới tới nơi — về gặp Quản Sự Tạp Dịch để trả việc.', 4200);
+        refreshHUD(); saveNow();
+      }
+    }
+  }
+  // Ghi công hạ quái vào phiếu săn đang giữ: khớp loài + vùng, instance
+  // có acceptedSeq nhỏ nhất, đủ target → ready. Quái ngoài vé KHÔNG đổi
+  // hành vi normalKillDrops (chỉ yêu đan + bí tịch, không cộng tu vi).
+  function grindHuntCredit(m) {
+    if (!state) return;
+    var g = L.ensureGrind(state), best = null;
+    for (var id in g.instances) {
+      var ins = g.instances[id];
+      if (!ins || ins.kind !== 'hunt' || ins.status !== 'active') continue;
+      var t = null;
+      L.HUNT_TEMPLATES.forEach(function (x) { if (x.templateId === ins.templateId) t = x; });
+      if (!t || t.speciesId !== m.species || t.zoneId !== m.zoneId) continue;
+      if (!best || ins.acceptedSeq < best.acceptedSeq) best = ins;
+    }
+    if (!best) return;
+    best.progress = Math.min(best.target, best.progress + 1);
+    if (best.progress >= best.target) { best.status = 'ready'; toast('Phiếu săn đã đủ số — về đúng bảng treo thưởng để trả.', 4200); }
+    refreshHUD(); saveNow();
+  }
+  // Điểm hái: tương tác theo nodeStatus, ô đứng kề Chebyshev ≤ 1 (điểm
+  // nằm trên ô thân cây trang trí vẫn hái được từ ô kề, không dời tọa
+  // độ đăng ký); túi đầy thì điểm không tiêu.
+  function grindNearestNode() {
+    if (!state) return null;
+    var pt = playerTile(), best = null, bestD = 99;
+    L.RESOURCE_NODES.forEach(function (nd) {
+      if (nd.mapId !== state.map) return;
+      var d = Math.max(Math.abs(pt.x - nd.x), Math.abs(pt.y - nd.y));
+      if (d <= 1 && d < bestD) { best = nd; bestD = d; }
+    });
+    return best;
+  }
+  function grindHarvest(nd) {
+    if (!state.flags.bagUnlocked) return toast('Cần mở Túi Trữ Vật trước (chương 3) mới hái được dược liệu cày.', 3600);
+    var st = L.nodeStatus(state, nd.nodeId);
+    if (!st.ready) return toast('Điểm hái này cần ' + st.daysLeft + ' ngày game nữa mới hồi.', 3600);
+    var chk = L.bagCanAdd(state, nd.itemId, nd.yield);
+    if (!chk.ok) return toast(chk.reason, 4200);
+    var g = L.ensureGrind(state);
+    g.nodes[nd.nodeId] = { lastDay: state.dayCount };
+    L.bagAdd(state, nd.itemId, nd.yield);
+    sfxHarvest();
+    toast('Đã hái ' + (L.ITEM_DEFS[nd.itemId] ? L.ITEM_DEFS[nd.itemId].name : nd.itemId) + ' ×' + nd.yield + '.', 3200);
+    refreshHUD(); saveNow();
+  }
+
+  /* ---------- Bí cảnh (phiên chỉ sống trong bộ nhớ) ----------
+     Vào qua cổng -> kiểm mở khóa -> cảnh lần đầu (nếu chưa firstClear)
+     hoặc tiêu lượt kho -> sinh đợt quái theo khoang + boss khoang cuối.
+     Kết quả duy nhất ghi vào save: firstClear, lượt kho, thưởng, cờ
+     soulLoopIntro (C-10), unlockKey vật chứng. Phiên bị hủy khi thoát
+     qua cổng ra, chết trong bí cảnh, đổi bản đồ, hoặc tải lại giữa phiên. */
+  function bcRealmRec(realmId) {
+    var sr = L.ensureSecretRealms(state);
+    return sr.realms[realmId] || null;
+  }
+  function bcGateInteract(realmId) {
+    if (enc) { toast('Đang giao chiến — thoát trận rồi hãy vào bí cảnh.'); return; }
+    if (bcSession) return;
+    if (!L.secretRealmUnlocked(state, realmId)) return say([{ who: 'narrate', text: BC_LOCK_LINES[realmId] }]);
+    bcEnterWithIntro(realmId);
+  }
+  function bcEnterWithIntro(realmId) {
+    var rec = bcRealmRec(realmId);
+    if (rec && !rec.firstClear) {
+      var scene = ST[BC_INTRO_SCENE[realmId]];
+      if (scene) return say(scene, function () { bcEnter(realmId); });
+    }
+    bcEnter(realmId);
+  }
+  function bcEnter(realmId) {
+    if (enc || bcSession) return;
+    var entry = L.bcConsumeEntry(state, realmId);
+    if (!entry.ok) {
+      if (entry.reason === 'pool_empty') return say([{ who: 'narrate', text: BC_LOCK_LINES.pool }]);
+      if (entry.reason === 'locked') return say([{ who: 'narrate', text: BC_LOCK_LINES[realmId] }]);
+      return toast('Chưa vào được bí cảnh lúc này.', 3600);
+    }
+    var g = L.ensureGrind(state);
+    var seq = g.seq; g.seq = seq + 1;
+    bcSession = { realm: realmId, key: 'gr:bc:' + realmId + ':d' + state.dayCount + ':n' + seq,
+      wavesCleared: {}, bossChoiceShown: false, letterRead: false, speechUsed: false,
+      tranT: 0, hazardT: 0, hazardCd: 0 };
+    bcColorSort = null;
+    // Linh Thạch chờ ví của lần qua ải trước (ví khi đó chưa mở): trả
+    // ngay ở lần vào sau, nếu ví vẫn khóa thì giữ lại cho lần sau nữa.
+    var rec = bcRealmRec(realmId);
+    if (rec && (rec.pendingLt || 0) > 0) {
+      var pr = L.addLinhThach(state, rec.pendingLt);
+      if (pr.ok) rec.pendingLt = 0;
+    }
+    grindCloseDlg();
+    var dest = L.MAPS[realmId];
+    fadeTransition(function () {
+      state.map = realmId; state.x = dest.spawn.x; state.y = dest.spawn.y; state.dir = 'down';
+      L.setActiveMap(realmId);
+      px = dest.spawn.x * TILE; py = dest.spawn.y * TILE; facing = 'down';
+      dir8 = DIR8_ROW4.down || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
+      npcsLive = [];
+      spawnMonstersForMap();
+      bcSpawnMonsters();
+      setMinimapLabel();
+      clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy();
+      var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
+      sfxRealmEntry();
+      saveNow(); refreshHUD();
+      toast('Đã vào: ' + dest.name + '. Lượt kho chung còn lại hôm nay: ' + L.bcPoolLeft(state) + '.', 4200);
+    });
+  }
+  function bcSpawnMonsters() {
+    if (!bcSession) return;
+    var realmId = bcSession.realm, wdef = BC_WAVES[realmId];
+    if (!wdef) return;
+    wdef.waves.forEach(function (wave, wi) {
+      wave.forEach(function (sp) {
+        if (!monsterHasArt(sp.species)) return;
+        var m = makeMonster(sp.species, wdef.zone, sp.x, sp.y, null);
+        m.bcRealm = realmId; m.bcWave = wi; m.bcSession = bcSession.key;
+        mons.push(m);
+      });
+    });
+    var bossSpecies = L.SECRET_REALM_DEFS[realmId] ? L.SECRET_REALM_DEFS[realmId].boss : null;
+    var bp = BC_BOSS_POS[realmId];
+    if (bossSpecies && bp && monsterHasArt(bossSpecies)) {
+      var boss = makeMonster(bossSpecies, wdef.zone, bp.x, bp.y, null);
+      boss.bcRealm = realmId; boss.bcWave = -1; boss.bcBoss = true; boss.bcSession = bcSession.key;
+      mons.push(boss);
+    }
+  }
+  // Một đợt dọn xong (không còn quái sống của đợt đó) -> thưởng đợt qua
+  // grantReward, khóa theo phiên + chỉ số đợt. Yêu đan đợt đã chạy qua
+  // đường rơi hiện hữu normalKillDrops (2% thường / 25% tinh anh).
+  function bcCheckWave(m) {
+    if (!bcSession || !m || m.bcRealm !== bcSession.realm || m.bcWave == null || m.bcWave < 0) return;
+    if (bcSession.wavesCleared[m.bcWave]) return;
+    for (var i = 0; i < mons.length; i++) {
+      var o = mons[i];
+      if (o.bcRealm === bcSession.realm && o.bcWave === m.bcWave && o.state === 'alive') return;
+    }
+    bcSession.wavesCleared[m.bcWave] = true;
+    var def = L.SECRET_REALM_DEFS[bcSession.realm];
+    var r = L.grantReward(state, def.waveProfileId, { claimKey: bcSession.key + ':w' + m.bcWave, sourceId: bcSession.realm });
+    if (r.ok) {
+      sfxWaveClear();
+      if (r.granted.tuvi > 0) spawnOrbs(9, m.x + 16, m.y + 16, r.granted.tuvi);
+      toast('Đã dọn xong một đợt quái bí cảnh: +' + fmtAmt(r.granted.tuvi) + ' tu vi.', 4200);
+    } else if (!r.duplicate) {
+      toast('Thưởng đợt bí cảnh chưa nhận được: ' + (r.reason || 'lỗi không rõ') + '.', 4200);
+    }
+    refreshHUD(); saveNow();
+  }
+  // Thưởng boss bí cảnh. Lần đầu: ngoài hồ trần, kiểm túi nguyên tử
+  // trước (không đủ chỗ -> 'bag_full', boss gượng dậy 5% máu, KHÔNG đặt
+  // firstClear). Lặp: qua grantReward + yêu đan boss lặp rút 25% riêng
+  // (không nằm trong hồ sơ phẳng).
+  function bcBossKillRewards(m) {
+    var realmId = bcSession ? bcSession.realm : m.bcRealm;
+    var def = L.SECRET_REALM_DEFS[realmId];
+    var rec = bcRealmRec(realmId);
+    if (!def || !rec) return 'claimed';
+    if (!rec.firstClear) {
+      var fw = BC_FIRST_REWARDS[realmId];
+      var total = 0, id;
+      for (id in fw.items) total += fw.items[id];
+      var fits = L.bagUsed(state) + total <= L.bagCap(state);
+      if (fits) for (id in fw.items) if (!L.bagCanAdd(state, id, fw.items[id]).ok) fits = false;
+      if (!fits) {
+        toast('Túi đã đầy — boss bí cảnh chưa gục hẳn đã gượng dậy. Hãy dọn túi rồi quay lại đánh tiếp; lần đầu này chưa bị tính là đã qua.', 5200);
+        return 'bag_full';
+      }
+      for (id in fw.items) L.bagAdd(state, id, fw.items[id]);
+      if (fw.tech) L.techniqueGain(state, fw.tech.id, fw.tech.pts);
+      (fw.story || []).forEach(function (k) { if (state.unlocked.indexOf(k) < 0) state.unlocked.push(k); });
+      if (fw.lt > 0) {
+        var lr = L.addLinhThach(state, fw.lt);
+        if (!lr.ok) rec.pendingLt = (rec.pendingLt || 0) + fw.lt; // ví khóa: trả ở lần vào sau
+      }
+      L.bcRecordClear(state, realmId);
+      sfxFirstClear();
+      var parts = [];
+      if (fw.lt > 0) parts.push('+' + fmtAmt(fw.lt) + ' Linh Thạch');
+      if (fw.tech) parts.push('+' + fw.tech.pts + ' điểm lĩnh ngộ ' + (L.TECHNIQUE_DEFS[fw.tech.id] ? L.TECHNIQUE_DEFS[fw.tech.id].name : fw.tech.id));
+      for (id in fw.items) parts.push((L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : id) + ' ×' + fw.items[id]);
+      toast('Lần đầu qua ải ' + def.name + '! ' + parts.join(' · '), 5600);
+      refreshHUD(); saveNow();
+      return 'claimed';
+    }
+    var r = L.grantReward(state, def.bossProfileId, { claimKey: bcSession.key + ':boss', sourceId: realmId, boss: true });
+    if (!r.ok) {
+      if (r.reason === 'bag_full') {
+        toast('Túi đã đầy — boss bí cảnh chưa gục hẳn đã gượng dậy. Hãy dọn túi rồi quay lại đánh tiếp; lượt này chưa bị tính là đã hạ.', 5200);
+        return 'bag_full';
+      }
+      if (r.duplicate) return 'claimed';
+      toast('Thưởng boss bí cảnh chưa nhận được: ' + (r.reason || 'lỗi không rõ') + '.', 4200);
+      return 'claimed';
+    }
+    if (huntSession) {
+      huntSession.tuvi += r.granted.tuvi;
+      for (var gid in r.granted.items) huntSession.items[gid] = (huntSession.items[gid] || 0) + r.granted.items[gid];
+    }
+    if (r.granted.tuvi > 0) spawnOrbs(9, m.x + 16, m.y + 16, r.granted.tuvi);
+    var sid = (enc && enc.sessionId) || bcSession.key;
+    if (L.yeuDanDropFor(sid, 0.25)) spawnDrop('yeu_dan_' + def.yeuDanLevel, 1, m.x + 16, m.y + 16);
+    toast('Hạ ' + m.name + '! ' + grindGrantedText(r) + '.', 5200);
+    refreshHUD(); saveNow();
+    return 'claimed';
+  }
+  // Cửa Tàn Tích: một vật thể cho cả hai tầng + móc C-10 (luyện hồn).
+  function bcTanTichInteract() {
+    if (enc) { toast('Đang giao chiến — thoát trận rồi hãy vào tàn tích.'); return; }
+    var rec = bcRealmRec('bc_tapsau');
+    if (rec && L.questReached(state, 'q10_done') && rec.firstClear && !rec.soulLoopIntro) {
+      var scene = ST[state.flags.soulPublic ? 'SCENE_C10_SOUL_A' : 'SCENE_C10_SOUL_B'];
+      return say(scene, function () {
+        rec.soulLoopIntro = true;
+        refreshHUD(); saveNow();
+        bcGateFloorChoice();
+      });
+    }
+    bcGateFloorChoice();
+  }
+  function bcGateFloorChoice() {
+    if (bcSession) return;
+    var out = L.secretRealmUnlocked(state, 'bc_tapha');
+    var deep = L.secretRealmUnlocked(state, 'bc_tapsau');
+    if (out && deep) {
+      return say([{ who: 'choice', text: 'Ngươi sẽ xuống tầng nào?', options: [
+        { label: 'Tầng Ngoài — tàn tích dưới sảnh tháp', action: 'bc_floor_tapha' },
+        { label: 'Tầng Sâu — phế tích dưới tầng ngoài', action: 'bc_floor_tapsau' }
+      ] }]);
+    }
+    if (deep) return bcEnterWithIntro('bc_tapsau');
+    if (out) return bcEnterWithIntro('bc_tapha');
+    return say([{ who: 'narrate', text: BC_LOCK_LINES.bc_tapha }]);
+  }
+  // Các nhánh prop trong bí cảnh (đủ 9 prop cho cổng giọng).
+  function bcVachInteract() {
+    return say([{ who: 'narrate', text: BC_HINT_LINES.vach },
+      { who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Dùng một lời PHÁ làm sập vách', action: 'bc_vach_pha' },
+        { label: 'Đi đường vòng, tránh gây tiếng động', action: 'bc_vach_round' }
+      ] }]);
+  }
+  function bcPheInteract() {
+    return say([{ who: 'narrate', text: BC_HINT_LINES.phe },
+      { who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Xếp lại chín mảnh sắc theo thứ tự cửu phẩm', action: 'bc_phe_sort' },
+        { label: 'Dùng một lời CHẤN mở cửa', action: 'bc_phe_chan' },
+        { label: 'Để cửa này lại, quay lại sau', action: 'bc_phe_later' }
+      ] }]);
+  }
+  function bcTranInteract() {
+    if (L.isSessionHidden('bc_kiemtrung', 'cua_mo_that')) {
+      return say([{ who: 'narrate', text: 'Tĩnh mặc trấn đã tan — cửa mộ thất phía bắc đã mở, không còn gì phong lại nữa.' }]);
+    }
+    return say([{ who: 'narrate', text: BC_HINT_LINES.tran }]);
+  }
+  function bcMoThatInteract() {
+    return say([{ who: 'narrate', text: BC_HINT_LINES.tran }]);
+  }
+  function bcLetterInteract() {
+    if (bcSession && bcSession.letterRead) {
+      return say([{ who: 'narrate', text: BC_SUCCESS_LINES.reread }]);
+    }
+    return say(ST.SCENE_BC_HOIPHONG_THU, function () {
+      if (bcSession) bcSession.letterRead = true;
+      if (state.unlocked.indexOf('thu_trong_mo') < 0) state.unlocked.push('thu_trong_mo');
+      refreshHUD(); saveNow();
+    });
+  }
+  // Trò xếp sắc: chọn đúng mảnh kế tiếp theo PHE_THUOC_COLOR_ORDER; chọn
+  // sai thì xếp lại từ đầu, không phạt. Nhãn lựa chọn chỉ là tên màu
+  // (không lồng tiếng), gợi ý qua toast.
+  function bcPresentColorChoice() {
+    if (!bcColorSort) bcColorSort = { idx: 0 };
+    var order = L.PHE_THUOC_COLOR_ORDER;
+    var opts = order.map(function (c) { return { label: c, action: 'bc_phe_pick:' + c }; });
+    toast('Xếp mảnh sắc thứ ' + (bcColorSort.idx + 1) + '/9 theo thứ tự cửu phẩm — chọn sai thì xếp lại từ đầu.', 3600);
+    say([{ who: 'choice', text: '', options: opts }]);
+  }
+  function bcHoiphongBossAlive() {
+    for (var i = 0; i < mons.length; i++) if (mons[i].bcBoss && mons[i].bcRealm === 'bc_hoiphong_mo' && mons[i].state === 'alive') return mons[i];
+    return null;
+  }
+  function bcPresentHoiphongChoice() {
+    if (!bcSession) return;
+    bcSession.bossChoiceShown = true;
+    say([{ who: 'narrate', text: 'Oán Hồn Chiến Trường cuộn xoáy giữa mộ thất, oán khí đặc quánh như sương. Ngươi sẽ đối mặt với nó bằng cách nào?' },
+      { who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Gọi tên người chết trong thư', action: 'bc_hb_namecall' },
+        { label: 'Trấn an oán hồn bằng hồn lực', action: 'bc_hb_soothe' },
+        { label: 'Đánh thẳng — rút kiếm nghênh chiến', action: 'bc_hb_fight' },
+        { label: 'Khoan đã — lùi lại suy tính', action: 'bc_hb_wait' }
+      ] }]);
+  }
+  // Hai đường không-đánh của Cổ Mộ: qua ải qua cùng hồ sơ thưởng lần
+  // đầu / lặp của bcBossKillRewards; túi đầy thì boss ở lại, lựa chọn
+  // được trình lại khi người chơi quay lại khoang boss.
+  function bcHoiphongClear() {
+    var boss = bcHoiphongBossAlive();
+    if (!boss) return;
+    var r = bcBossKillRewards(boss);
+    if (r === 'bag_full') { bcSession.bossChoiceShown = false; return; }
+    boss.state = 'gone';
+    refreshHUD(); saveNow();
+  }
+  function bcChoiceAction(action) {
+    if (action === 'bc_floor_tapha') { grindCloseDlg(); return bcEnterWithIntro('bc_tapha'); }
+    if (action === 'bc_floor_tapsau') { grindCloseDlg(); return bcEnterWithIntro('bc_tapsau'); }
+    if (action === 'bc_vach_pha') {
+      var rv = L.castWord(state, 'pha');
+      if (!rv.ok) return say([{ who: 'narrate', text: BC_HINT_LINES.vach }]); // thiếu Tĩnh Mặc: hiện lại gợi ý, không trừ gì
+      L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_thuyliem', []);
+      L.hideSessionProp('bc_thuyliem', 'vach_nut');
+      sfxSealBreak();
+      toast('Vách đá nứt sập xuống — lối tắt đã mở.', 3600);
+      return refreshHUD(), saveNow();
+    }
+    if (action === 'bc_vach_round') {
+      grindCloseDlg();
+      return toast('Ngươi đi đường vòng, tránh gây tiếng động trong hang.', 3600);
+    }
+    if (action === 'bc_phe_sort') { bcColorSort = { idx: 0 }; return bcPresentColorChoice(); }
+    if (action.indexOf('bc_phe_pick:') === 0) {
+      var pick = action.slice('bc_phe_pick:'.length);
+      var order = L.PHE_THUOC_COLOR_ORDER;
+      if (!bcColorSort) bcColorSort = { idx: 0 };
+      if (pick === order[bcColorSort.idx]) {
+        bcColorSort.idx++;
+        if (bcColorSort.idx >= order.length) {
+          bcColorSort = null;
+          L.hideSessionProp('bc_tapsau', 'cua_phe_thuoc');
+          sfxChimeSmall();
+          return say([{ who: 'narrate', text: BC_SUCCESS_LINES.phe }], function () { refreshHUD(); saveNow(); });
+        }
+        return bcPresentColorChoice();
+      }
+      bcColorSort.idx = 0;
+      toast('Mảnh sắc này chưa đúng vị trí — xếp lại từ đầu.', 3600);
+      return bcPresentColorChoice();
+    }
+    if (action === 'bc_phe_chan') {
+      var rc = L.castWord(state, 'chan');
+      if (!rc.ok) return say([{ who: 'narrate', text: BC_HINT_LINES.phe }]); // thiếu Tĩnh Mặc: hiện lại gợi ý, không trừ gì
+      L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_tapsau', 'thap_chu');
+      L.hideSessionProp('bc_tapsau', 'cua_phe_thuoc');
+      sfxSealBreak();
+      toast('Tiếng CHẤN rung chuyển cửa phế thước — cửa đã mở.', 3600);
+      return refreshHUD(), saveNow();
+    }
+    if (action === 'bc_phe_later') {
+      grindCloseDlg();
+      return toast('Ngươi để cửa phế thước đó lại, quay lại sau.', 3600);
+    }
+    if (action === 'bc_hb_namecall') {
+      if (!bcSession || !bcSession.letterRead) {
+        toast('Ngươi chưa đọc bức thư trong mộ — tên người chết vẫn còn là ẩn số. Hãy tìm bức thư trên đường vào mộ thất trước.', 4200);
+        return bcPresentHoiphongChoice();
+      }
+      if (state.silence < 40) {
+        toast('Tĩnh Mặc chưa đủ 40 để gọi tên — hãy im lặng tích lũy thêm rồi quay lại.', 4200);
+        return bcPresentHoiphongChoice();
+      }
+      state.silence -= 40; // trừ trực tiếp, KHÔNG qua castWord (không vào WORD_SKILLS toàn cục)
+      L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_hoiphong_mo', 'de_tu_ho_tong');
+      sfxNameCall();
+      refreshHUD(); saveNow();
+      return say(ST.SCENE_BC_HOIPHONG_TRANTOI, function () {
+        sfxGhostWail();
+        bcHoiphongClear();
+      });
+    }
+    if (action === 'bc_hb_soothe') {
+      if ((state.soulRank || 0) < 2) {
+        toast('Hồn lực của ngươi chưa đủ phẩm để trấn an oán hồn này.', 4200);
+        return bcPresentHoiphongChoice();
+      }
+      if ((state.soulPower || 0) < 10) {
+        toast('Hồn lực chưa đủ 10 để trấn an — hãy hồi phục rồi quay lại.', 4200);
+        return bcPresentHoiphongChoice();
+      }
+      state.soulPower -= 10; // không ghi sổ, không sfxGhostWail — yên nghỉ lặng lẽ
+      refreshHUD(); saveNow();
+      return say([{ who: 'narrate', text: BC_SUCCESS_LINES.soothe }], function () { bcHoiphongClear(); });
+    }
+    if (action === 'bc_hb_fight') {
+      grindCloseDlg();
+      return toast('Ngươi rút kiếm, nghênh chiến với Oán Hồn Chiến Trường.', 3600);
+    }
+    if (action === 'bc_hb_wait') {
+      grindCloseDlg();
+      return toast('Ngươi chưa quyết — lựa chọn vẫn còn đó khi ngươi quay lại khoang boss.', 3600);
+    }
+  }
+  // Nhịp phiên bí cảnh: bẫy hành lang Kiếm Trủng, tĩnh mặc trấn 20 giây,
+  // và lựa chọn boss Cổ Mộ khi vào khoang boss lần đầu trong phiên.
+  function bcTick(dt) {
+    if (!bcSession || !state || dlg) return;
+    var realmId = bcSession.realm;
+    if (realmId === 'bc_kiemtrung' && !enc) {
+      // Bẫy hành lang: ô P y=20 và y=22, x 10-36; chu kỳ 3 giây (1 giây
+      // báo trước -> 1 giây kích hoạt -> 1 giây lặng), hồi bẫy 1,5 giây.
+      bcSession.hazardT += dt;
+      if (bcSession.hazardCd > 0) bcSession.hazardCd -= dt;
+      var cycle = bcSession.hazardT % 3;
+      var active = cycle >= 1 && cycle < 2;
+      var pt = playerTile();
+      if (active && bcSession.hazardCd <= 0 && (pt.y === 20 || pt.y === 22) && pt.x >= 10 && pt.x <= 36) {
+        var dmg = Math.max(1, Math.floor(state.hpMax * 0.05));
+        state.hp = Math.max(1, state.hp - dmg); // kẹp tối thiểu 1 — bẫy không giết được
+        px = 23 * TILE; py = 24 * TILE; state.x = 23; state.y = 24; // đẩy về đầu hành lang
+        bcSession.hazardCd = 1.5;
+        sfxHazardHit();
+        addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 15, targetKey: '__player' });
+        toast('Kiếm khí quét qua hành lang — ngươi bị đẩy về đầu hành lang.', 3600);
+        refreshHUD(); saveNow();
+        return;
+      }
+      // Tĩnh mặc trấn: chỉ tích khi không có trận, đứng trong vòng bán
+      // kính ~1,5 ô quanh trấn (tâm giữa footprint 22-25, hàng y=9); rời
+      // vòng hoặc vào trận thì bộ đếm về 0. Đủ 20 giây liên tục -> tan.
+      if (!L.isSessionHidden('bc_kiemtrung', 'cua_mo_that')) {
+        var dx = pt.x - 23.5, dy = pt.y - 9;
+        if (Math.hypot(dx, dy) <= 1.5) {
+          bcSession.tranT += dt;
+          if (bcSession.tranT >= 20) {
+            bcSession.tranT = 0;
+            L.hideSessionProp('bc_kiemtrung', 'cua_mo_that');
+            /* Như đường lời nói: trấn tan phải dọn cả footprint trấn ở
+               khe vách y=9, nếu không cửa mở mà đường vẫn bịt kín. */
+            L.hideSessionProp('bc_kiemtrung', 'tinh_mac_tran');
+            sfxTranFade();
+            say([{ who: 'narrate', text: BC_SUCCESS_LINES.tran }], function () { refreshHUD(); saveNow(); });
+            return;
+          }
+        } else bcSession.tranT = 0;
+      }
+    }
+    if (realmId === 'bc_hoiphong_mo' && !enc && !bcSession.bossChoiceShown) {
+      var pt2 = playerTile();
+      if (pt2.y <= 9 && bcHoiphongBossAlive()) bcPresentHoiphongChoice();
+    }
+  }
+  // Chết trong bí cảnh: hủy phiên, tỉnh ở cổng ngoài (điểm đến của
+  // portal[0] của bản đồ bí cảnh) với 25% máu.
+  function bcDefeat() {
+    var oldMap = state.map;
+    endEncounterCleanup();
+    bcSession = null; bcColorSort = null;
+    if (L.clearSessionHiddenProps) L.clearSessionHiddenProps(oldMap);
+    state.hp = Math.round(state.hpMax * 0.25);
+    defeatGraceT = 3;
+    var po = L.MAPS[oldMap] && L.MAPS[oldMap].portals[0];
+    if (po) {
+      fadeTransition(function () {
+        state.map = po.to; state.x = po.toX; state.y = po.toY; state.dir = 'down';
+        L.setActiveMap(po.to);
+        px = po.toX * TILE; py = po.toY * TILE; facing = 'down';
+        dir8 = DIR8_ROW4.down || 0;
+        npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; });
+        spawnMonstersForMap();
+        setMinimapLabel();
+        refreshHUD(); saveNow();
+      });
+    }
+    toast('Ngươi gục trong bí cảnh... Khi tỉnh lại, ngươi đã ở cổng ngoài với 25% máu. Mọi thứ đã nhận trong chuyến này vẫn còn.', 5600);
+    refreshHUD(); saveNow();
+  }
+  // Lớp phủ bí cảnh: ô bẫy kiếm trận theo pha, vòng trấn + cung tiến độ,
+  // điểm hái (sẵn sáng / hết lượt mờ). Vẽ trong hệ tọa độ thế giới của render().
+  function bcDrawOverlays() {
+    if (!state) return;
+    if (state.map === 'bc_kiemtrung' && bcSession) {
+      var cycle = bcSession.hazardT % 3;
+      var warn = cycle < 1, active = cycle >= 1 && cycle < 2;
+      if (warn || active) {
+        ctx.strokeStyle = active ? 'rgba(255,60,40,0.9)' : 'rgba(255,210,80,0.7)';
+        ctx.fillStyle = active ? 'rgba(255,60,40,0.22)' : 'rgba(255,210,80,0.10)';
+        ctx.lineWidth = 2;
+        for (var hx = 10; hx <= 36; hx++) [20, 22].forEach(function (hy) {
+          ctx.fillRect(hx * TILE, hy * TILE, TILE, TILE);
+          ctx.strokeRect(hx * TILE + 1, hy * TILE + 1, TILE - 2, TILE - 2);
+        });
+      }
+      if (!L.isSessionHidden('bc_kiemtrung', 'cua_mo_that')) {
+        var cx = 24 * TILE, cy = 9 * TILE + 16, rr = Math.round(1.5 * TILE);
+        ctx.strokeStyle = 'rgba(170,220,255,0.8)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.stroke();
+        if (bcSession.tranT > 0) {
+          ctx.strokeStyle = 'rgba(255,240,190,0.95)'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(cx, cy, rr - 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, bcSession.tranT / 20)); ctx.stroke();
+        }
+      }
+    }
+    // Điểm hái trên bản đồ hiện tại: sẵn thì sáng, hết lượt thì mờ.
+    L.RESOURCE_NODES.forEach(function (nd) {
+      if (nd.mapId !== state.map) return;
+      var st = L.nodeStatus(state, nd.nodeId);
+      var nx = nd.x * TILE + 16, ny = nd.y * TILE + 16;
+      ctx.fillStyle = st.ready ? 'rgba(140,235,170,0.9)' : 'rgba(140,235,170,0.25)';
+      ctx.beginPath();
+      ctx.moveTo(nx, ny - 8); ctx.lineTo(nx + 8, ny); ctx.lineTo(nx, ny + 8); ctx.lineTo(nx - 8, ny);
+      ctx.closePath(); ctx.fill();
+    });
+  }
+
+  /* Tay nắm kiểm chứng cho hệ cày + bí cảnh (chỉ đọc, trừ board mở panel). */
+  window.VSLC_GRIND = {
+    session: function () { return bcSession ? { realm: bcSession.realm, key: bcSession.key, wavesCleared: JSON.parse(JSON.stringify(bcSession.wavesCleared)), tranT: bcSession.tranT, speechUsed: bcSession.speechUsed, letterRead: bcSession.letterRead, bossChoiceShown: bcSession.bossChoiceShown } : null; },
+    poolLeft: function () { return state ? L.bcPoolLeft(state) : 0; },
+    board: function (boardId) { return state ? L.generateBoard(state, boardId) : null; },
+    instances: function () { if (!state) return {}; var g = L.ensureGrind(state); return JSON.parse(JSON.stringify(g.instances)); },
+    colorSort: function () { return bcColorSort ? { idx: bcColorSort.idx } : null; },
+    openBoard: openGrindBoard
+  };
+
   /* ---------- Túi Trữ Vật (mở khóa ở chương 3) ---------- */
   function renderBag() {
     var info = $('bag-info'), grid = $('bag-grid'), up = $('bag-upgrade');
@@ -6279,6 +7543,32 @@
       return questNav ? { targetMap: questNav.targetMap, hx: questNav.hx, hy: questNav.hy, leg: questNav.leg ? questNav.leg.kind : null, legMap: questNav.leg ? questNav.leg.map : null } : null;
     },
     route: navRouteMaps
+  };
+
+  /* Tay nắm kiểm chứng cho dẫn đường nhiệm vụ (gói phụ H, chỉ đọc):
+     target() = mục tiêu phân giải của bước hiện tại; display() = trạng
+     thái hiển thị tính bằng CÙNG hàm guideCompute mà render() dùng
+     (mục tiêu hiển thị sau khi đã chiếu qua đồ thị cổng, cờ hiện mũi
+     tên / dấu "!", góc chỉ, khoảng cách ô); frame() = bản sao khung vừa
+     vẽ thật gần nhất (null ngay sau resetPresentationState). */
+  function guidePublicTarget(t) {
+    return t ? { quest: t.quest || null, map: t.map, x: t.x, y: t.y, kind: t.kind, targetId: t.targetId || null,
+                 name: t.name || null, hx: (t.hx != null ? t.hx : null), hy: (t.hy != null ? t.hy : null), ax: t.ax, ay: t.ay } : null;
+  }
+  function guidePublicDisplay(d) {
+    return d ? { map: d.map, x: d.x, y: d.y, kind: d.kind, targetId: d.targetId || null, name: d.name || null,
+                 portalTo: d.portalTo || null, finalMap: d.finalMap || null, ax: d.ax, ay: d.ay } : null;
+  }
+  function guidePublicFrame(g) {
+    return g ? { quest: g.quest, target: guidePublicTarget(g.target), display: guidePublicDisplay(g.display),
+                 arrow: g.arrow, bang: g.bang, angle: g.angle, distTiles: g.distTiles, inView: g.inView, dlgHidden: g.dlgHidden } : null;
+  }
+  window.VSLC_GUIDE = {
+    HIDE_TILES: GUIDE_HIDE_TILES,
+    target: function () { return guidePublicTarget(resolveQuestTarget()); },
+    display: function () { return guidePublicFrame(guideCompute()); },
+    frame: function () { return guidePublicFrame(guideFrame); },
+    resolve: resolveQuestTarget
   };
 
   /* Tay nắm kiểm chứng cho làn chạm trán: đọc trạng thái thuần túy của

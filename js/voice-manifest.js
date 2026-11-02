@@ -178,6 +178,11 @@ window.VSLC_VOICE = {
    "speed": 84,
    "label": "Mạc Cửu U — tả sứ Huyết Bạc Cung, trầm lạnh (giọng khói trà, chậm)"
   },
+  "oan_hon": {
+   "voice": "avocado_v2:vd2_smoky_teacup",
+   "speed": 72,
+   "label": "Oán hồn Thạch Vạn Quân — giọng khói trà, chậm nhất, trầm lạnh như tàn hơi (chung giọng Mạc Cửu U, chậm hơn)"
+  },
   "huyet_de": {
    "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
    "speed": 106,
@@ -2510,6 +2515,391 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
+  "5834fc920592": {
+   "f": "v5834fc920592.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "930e6069dc42": {
+   "f": "v930e6069dc42.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8ec74bb6ad88": {
+   "f": "v8ec74bb6ad88.mp3",
+   "k": "inner",
+   "s": "narrate"
+  },
+  "cc9f39f41039": {
+   "f": "vcc9f39f41039.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "d10a2d177749": {
+   "f": "vd10a2d177749.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "1c305ecfe601": {
+   "f": "v1c305ecfe601.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "fcedcc801f9c": {
+   "f": "vfcedcc801f9c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8cf698215760": {
+   "f": "v8cf698215760.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f04e1f98e196": {
+   "f": "vf04e1f98e196.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "4e86a1036e7d": {
+   "f": "v4e86a1036e7d.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "0b04cda01224": {
+   "f": "v0b04cda01224.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "d00df80a0526": {
+   "f": "vd00df80a0526.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "3eaa2dd5b871": {
+   "f": "v3eaa2dd5b871.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "3718b05443e7": {
+   "f": "v3718b05443e7.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f4cfdf92ee7f": {
+   "f": "vf4cfdf92ee7f.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "80dd495c2e12": {
+   "f": "v80dd495c2e12.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "70c913db6209": {
+   "f": "v70c913db6209.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "234cb1707b9c": {
+   "f": "v234cb1707b9c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "dbbc8a9200ea": {
+   "f": "vdbbc8a9200ea.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ffe186e5e22c": {
+   "f": "vffe186e5e22c.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "71c0cdc16e21": {
+   "f": "v71c0cdc16e21.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "5621cd0fd86b": {
+   "f": "v5621cd0fd86b.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "ef0137479515": {
+   "f": "vef0137479515.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c73aeb33a139": {
+   "f": "vc73aeb33a139.mp3",
+   "k": "say",
+   "s": "thap_chu"
+  },
+  "4d23782b5a2a": {
+   "f": "v4d23782b5a2a.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b29a7ff90d03": {
+   "f": "vb29a7ff90d03.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f2b39ef359a0": {
+   "f": "vf2b39ef359a0.mp3",
+   "k": "inner",
+   "s": "narrate"
+  },
+  "3baa45e8a435": {
+   "f": "v3baa45e8a435.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b9bb9ba64668": {
+   "f": "vb9bb9ba64668.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "94b6b996aee1": {
+   "f": "v94b6b996aee1.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "5a752a5ff9b0": {
+   "f": "v5a752a5ff9b0.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "bd1beb7dad70": {
+   "f": "vbd1beb7dad70.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ce36807696c4": {
+   "f": "vce36807696c4.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "92d203ca998e": {
+   "f": "v92d203ca998e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "caf54d44f56e": {
+   "f": "vcaf54d44f56e.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "455c79b8cef6": {
+   "f": "v455c79b8cef6.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "b769d4b0eaa4": {
+   "f": "vb769d4b0eaa4.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "871b4f3d5bce": {
+   "f": "v871b4f3d5bce.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "45d944a1c75e": {
+   "f": "v45d944a1c75e.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "9eeb1341827d": {
+   "f": "v9eeb1341827d.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "bb1f9dcb89bf": {
+   "f": "vbb1f9dcb89bf.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "1e29bc5d32be": {
+   "f": "v1e29bc5d32be.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "2b3d2af4f48a": {
+   "f": "v2b3d2af4f48a.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "43e0a81ea059": {
+   "f": "v43e0a81ea059.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "2123b98a9f5c": {
+   "f": "v2123b98a9f5c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "16cfb0af8524": {
+   "f": "v16cfb0af8524.mp3",
+   "k": "say",
+   "s": "de_tu_ho_tong"
+  },
+  "5374fe7e9b42": {
+   "f": "v5374fe7e9b42.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "04ce546040bb": {
+   "f": "v04ce546040bb.mp3",
+   "k": "say",
+   "s": "de_tu_ho_tong"
+  },
+  "eb8b9ac91ae9": {
+   "f": "veb8b9ac91ae9.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ff169ab17c61": {
+   "f": "vff169ab17c61.mp3",
+   "k": "say",
+   "s": "de_tu_ho_tong"
+  },
+  "7ec8997b7c3a": {
+   "f": "v7ec8997b7c3a.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "4a2b3e9e5a01": {
+   "f": "v4a2b3e9e5a01.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e4b109e5c5b0": {
+   "f": "ve4b109e5c5b0.mp3",
+   "k": "inner",
+   "s": "narrate"
+  },
+  "565db3d47d93": {
+   "f": "v565db3d47d93.mp3",
+   "k": "say",
+   "s": "de_tu_ho_tong"
+  },
+  "097554529738": {
+   "f": "v097554529738.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8ba7d1e09d07": {
+   "f": "v8ba7d1e09d07.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "df52e86ffe29": {
+   "f": "vdf52e86ffe29.mp3",
+   "k": "say",
+   "s": "de_tu_ho_tong"
+  },
+  "d1018b245c71": {
+   "f": "vd1018b245c71.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "561a6d7ed1a1": {
+   "f": "v561a6d7ed1a1.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c80f53afdc24": {
+   "f": "vc80f53afdc24.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c47aa7de2337": {
+   "f": "vc47aa7de2337.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ff221bb7be43": {
+   "f": "vff221bb7be43.mp3",
+   "k": "say",
+   "s": "oan_hon"
+  },
+  "b4136f24d0e4": {
+   "f": "vb4136f24d0e4.mp3",
+   "k": "say",
+   "s": "oan_hon"
+  },
+  "c0ece9d747e7": {
+   "f": "vc0ece9d747e7.mp3",
+   "k": "say",
+   "s": "oan_hon"
+  },
+  "a8f996d74754": {
+   "f": "va8f996d74754.mp3",
+   "k": "say",
+   "s": "oan_hon"
+  },
+  "ac7d05d0710f": {
+   "f": "vac7d05d0710f.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "73b489b35dd1": {
+   "f": "v73b489b35dd1.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "27ba5be2236d": {
+   "f": "v27ba5be2236d.mp3",
+   "k": "inner",
+   "s": "narrate"
+  },
+  "2a2a51595a16": {
+   "f": "v2a2a51595a16.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "8392e0ea76d2": {
+   "f": "v8392e0ea76d2.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e6b2d136244a": {
+   "f": "ve6b2d136244a.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "7eba72603bef": {
+   "f": "v7eba72603bef.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f031c01f3f61": {
+   "f": "vf031c01f3f61.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "3c36517fc071": {
+   "f": "v3c36517fc071.mp3",
+   "k": "inner",
+   "s": "narrate"
+  },
+  "f6d18446bbab": {
+   "f": "vf6d18446bbab.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ed0d4bb8230b": {
+   "f": "ved0d4bb8230b.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "f6a153cb7dcc": {
+   "f": "vf6a153cb7dcc.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
   "8c1724625ba9": {
    "f": "v8c1724625ba9.mp3",
    "k": "say",
@@ -3497,6 +3887,76 @@ window.VSLC_VOICE = {
   },
   "b642b2070c6e": {
    "f": "vb642b2070c6e.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "ec23a0f771a4": {
+   "f": "vec23a0f771a4.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b7e96c793519": {
+   "f": "vb7e96c793519.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "23847624e8ff": {
+   "f": "v23847624e8ff.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e1aa6dadd7d6": {
+   "f": "ve1aa6dadd7d6.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "d335fda819f2": {
+   "f": "vd335fda819f2.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "9a24825a7793": {
+   "f": "v9a24825a7793.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "52fa920a68db": {
+   "f": "v52fa920a68db.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "46b199edd3dc": {
+   "f": "v46b199edd3dc.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c74b338fdb03": {
+   "f": "vc74b338fdb03.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "6cfb6d04d140": {
+   "f": "v6cfb6d04d140.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "523d5001f229": {
+   "f": "v523d5001f229.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "02e3b21693c5": {
+   "f": "v02e3b21693c5.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "18dca1211849": {
+   "f": "v18dca1211849.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "52ac4f36eea8": {
+   "f": "v52ac4f36eea8.mp3",
    "k": "narrate",
    "s": "narrate"
   },
