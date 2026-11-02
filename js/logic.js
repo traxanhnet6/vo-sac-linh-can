@@ -127,6 +127,12 @@
     { id: 'nha_nam', type: 'house_b', x: 41, y: 34, w: 5, h: 3, fx: 5, fy: 1, name: 'Nhà dân thôn' },
     { id: 'nha_dong_nam', type: 'house', x: 51, y: 33, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân thôn' },
     { id: 'bia_trac_linh', type: 'stele', x: 29, y: 16, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia đá trắc linh', interact: true },
+    /* Bộ bàn trà sân Hứa Gia Trấn (gói phụ 5, rà cùng họ lệch hình–chữ):
+       lời dẫn cảnh cất lời đầu tiên SCENE_VOICE viết "chén trà trên bàn
+       nảy khỏi mặt bàn" ngay tại sân này nhưng sân chưa từng có bàn —
+       bày hai bàn đá liền nhau phía nam nhóm gia đình (hàng 19–20). */
+    { id: 'ban_tra_tran_a', type: 'table_stone', x: 27, y: 22, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân Hứa gia' },
+    { id: 'ban_tra_tran_b', type: 'table_stone', x: 28, y: 22, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân Hứa gia' },
     { id: 'gieng', type: 'well', x: 51, y: 19, w: 2, h: 2, fx: 2, fy: 1, name: 'Giếng nước đầu trấn', interact: true },
     { id: 'coc_go', type: 'dummy', x: 36, y: 30, w: 1, h: 2, fx: 1, fy: 1, name: 'Cọc gỗ luyện công', interact: true },
     { id: 'sap_cho_1', type: 'stall', x: 22, y: 38, w: 4, h: 2, fx: 4, fy: 1, name: 'Sạp hàng' },
@@ -348,6 +354,24 @@
       if (h % 37 !== 0) continue;
       props.push({ id: 'cay_r' + x + '_' + y, type: h % 2 ? 'tree' : 'pine', x: x, y: y, w: 1, h: 2, fx: 1, fy: 1 });
     }
+    // Lớp phủ mặt đất vùng săn đường mòn (chỉ đạo 08:42 ngày 02/11):
+    // bụi cỏ/bụi cây/hoa/đá rải trong rừng; giữ trống đường mòn (2 ô mỗi
+    // bên), quảng trường nam, bãi phục kích, trạm nghỉ và quanh 3 ổ quái.
+    var avoidDecorR = makeAvoid(
+      [{ x: 20, y: 20, r: 3 }, { x: 74, y: 58, r: 3 }, { x: 68, y: 14, r: 3 }, { x: roadCX(20) + 2, y: 21, r: 2 }],
+      propRects(props).concat([
+        { x: 38, y: 48, w: 12, h: 9, pad: 1 },
+        { x: roadCX(20) - 6, y: 16, w: 13, h: 9, pad: 1 }
+      ]));
+    var avoidRoadDecor = function (x, y) {
+      if (Math.abs(x - roadCX(y)) <= 2) return true;
+      if (y >= 64) return true;
+      return avoidDecorR(x, y);
+    };
+    props = props.concat(scatterGroundDecor(ROAD_GRID, ROAD_W, ROAD_H, 'phu_r', 19, { x0: 2, y0: 2, x1: ROAD_W - 3, y1: 71 }, avoidRoadDecor));
+    // Cây điểm nhấn mẫu video (08:48): lớn/vừa/nhỏ + tối đa 2 anh đào.
+    props = props.concat(scatterAccentTrees(ROAD_GRID, ROAD_W, ROAD_H, 'cayv_r', { x0: 2, y0: 2, x1: ROAD_W - 3, y1: 71 }, avoidRoadDecor, footTilesOf(props),
+      { bigMod: 380, sakuraMod: 800, sakuraMax: 2, midMod: 120, smallMod: 80 }));
     return props;
   })();
   var ROAD_NPCS = [
@@ -605,7 +629,78 @@
     }
     return props;
   }
+  // Rải lớp phủ mặt đất cho vùng săn (chỉ đạo Bui 08:42 ngày 02/11 theo
+  // video Nhân Du Giang Hồ): bụi cỏ, bụi cây, hoa và đá nhỏ cỡ 1x1 nằm
+  // rải xác định theo hàm băm trên ô cỏ trong vùng, tôn trọng vùng tránh
+  // (ổ quái, điểm thổ nạp, cổng, điểm truyện, đường đi) để đồng cỏ sống
+  // động mà quái và người chơi vẫn cơ động thoải mái. Mảng loại khai báo
+  // ngay trong thân hàm vì các builder bản đồ chạy trước điểm này.
+  function scatterGroundDecor(grid, w, h, prefix, mod, region, avoid) {
+    var types = ['grass_clump', 'grass_clump', 'grass_clump', 'bush1', 'bush2', 'flower_bush', 'rock_s', 'grass_clump'];
+    var props = [];
+    for (var y = 2; y < h - 2; y++) for (var x = 2; x < w - 2; x++) {
+      if (region && (x < region.x0 || x > region.x1 || y < region.y0 || y > region.y1)) continue;
+      var c = grid[y].charAt(x);
+      if (c !== '.' && c !== ',') continue;
+      if (avoid && avoid(x, y)) continue;
+      var hh = hashRoad(x * 7 + 31, y * 3 + 17);
+      if (hh % mod !== 0) continue;
+      // Loại vật thể chọn bằng hàm băm RIÊNG lấy BIT CAO: bit thấp của
+      // hashRoad tương quan mạnh với cổng mật độ (đo thực tế: 344/346 vật
+      // rơi vào cùng một loại), bit cao phân bố đều.
+      var ht = hashRoad(x * 13 + 7, y * 11 + 3) >>> 16;
+      props.push({ id: prefix + x + '_' + y, type: types[ht % types.length], x: x, y: y, w: 1, h: 1, fx: 1, fy: 1 });
+    }
+    return props;
+  }
+  // Tập ô chân đế đã có vật (khớp propAt) — cây điểm nhấn không trồng
+  // chồng lên vật khác.
+  function footTilesOf(props) {
+    var set = {};
+    props.forEach(function (p) {
+      var fy = p.y + p.h - p.fy;
+      for (var yy = fy; yy < fy + p.fy; yy++) for (var xx = p.x; xx < p.x + p.fx; xx++) set[xx + ',' + yy] = true;
+    });
+    return set;
+  }
+  // Rải cây điểm nhấn mẫu video (chỉ đạo Bui 08:48 ngày 02/11): cây lớn
+  // tán tròn nhiều thùy và anh đào lớn (chân đế 2 ô), cây vừa/nhỏ (chân
+  // đế 1 ô) — đặt xác định theo hàm băm trên ô cỏ trống, tôn trọng vùng
+  // tránh (ổ quái/cổng/đường/điểm truyện) truyền vào.
+  function scatterAccentTrees(grid, w, h, prefix, region, avoid, occupied, cfg) {
+    var props = [], sakura = 0;
+    function grassFree(x, y) {
+      if (x < 2 || y < 2 || x >= w - 2 || y >= h - 2) return false;
+      if (region && (x < region.x0 || x > region.x1 || y < region.y0 || y > region.y1)) return false;
+      var c = grid[y].charAt(x);
+      if (c !== '.' && c !== ',') return false;
+      if (occupied[x + ',' + y]) return false;
+      if (avoid && avoid(x, y)) return false;
+      return true;
+    }
+    for (var y = 2; y < h - 3; y++) for (var x = 2; x < w - 3; x++) {
+      var hh = hashRoad(x * 19 + 5, y * 23 + 11) >>> 16;
+      var kind = null, pw = 1, ph = 2;
+      if (hh % cfg.bigMod === 0) { kind = 'tree_big'; pw = 2; ph = 3; }
+      else if (cfg.sakuraMax > 0 && hh % cfg.sakuraMod === 0 && sakura < cfg.sakuraMax) { kind = 'sakura_big'; pw = 2; ph = 3; }
+      else if (hh % cfg.midMod === 0) kind = 'tree_mid';
+      else if (hh % cfg.smallMod === 0) kind = 'tree_small';
+      if (!kind) continue;
+      var okA = true;
+      for (var fxi = 0; fxi < pw; fxi++) if (!grassFree(x + fxi, y + ph - 1)) { okA = false; break; }
+      if (!okA) continue;
+      if (pw === 2 && !grassFree(x + 1, y + ph - 2)) continue; // ô thân trên của cây lớn cũng phải là cỏ trống
+      props.push({ id: prefix + kind + '_' + x + '_' + y, type: kind, x: x, y: y, w: pw, h: ph, fx: pw, fy: 1 });
+      if (kind === 'sakura_big') sakura++;
+      for (var fxj = 0; fxj < pw; fxj++) occupied[(x + fxj) + ',' + (y + ph - 1)] = true;
+    }
+    return props;
+  }
   function propRects(props) { return props.map(function (p) { return { x: p.x, y: p.y, w: p.w, h: p.h, pad: 1 }; }); }
+  // Vùng chân đế THẬT của vật thể (khớp propAt) — dùng khi vùng tránh
+  // không được phình ra (rừng tông dày: đệm 1 ô quanh mỗi cây sẽ khóa
+  // gần hết mặt đất, lớp phủ không còn chỗ mọc).
+  function footRects(props) { return props.map(function (p) { return { x: p.x, y: p.y + p.h - p.fy, w: p.fx, h: p.fy, pad: 0 }; }); }
   function npcPoints(npcs) { return npcs.map(function (n) { return { x: n.x, y: n.y, r: 2 }; }); }
   function signPoints(signs) { return (signs || []).map(function (s) { return { x: s.x, y: s.y, r: 1 }; }); }
 
@@ -626,13 +721,15 @@
     rectCh(g, 50, 77, 53, 77, 'G');         // cổng nam (về đường mòn)
     rectCh(g, 48, 0, 55, 0, 'G');           // cổng tháp (bắc): mở rộng 8 ô khớp dải cổng dữ liệu — khe qua thật nằm giữa biển tháp (48,7) và bia (48,3), người chơi đi lệch trục theo các mốc thị giác vẫn bước lên được hàng 0
     rectCh(g, 96, 0, 99, 0, 'G');           // đường lên tông (đông bắc)
+    rectCh(g, 95, 1, 100, 3, 'S');          // sân đá cổng lên tông (gói phụ 9): dải cổng vô hình trước đây — nay lát đá từ đường ngang hàng 4 lên tận miệng cổng hàng 0, khớp dải kích hoạt x95–100 hàng 0–3
     return gridStrings(g);
   }
   var CITY_GRID = buildCityGrid();
   var CITY_SIGNS = [
     { x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' },
     { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' },
-    { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }
+    { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' },
+    { x: 98, y: 4, text: 'Thanh Vân Tông' }
   ];
   var CITY_NPCS = [
     { id: 'chinh_ngon', name: 'Hứa Chính Ngôn', look: 'chinh_ngon', x: 13, y: 34, dir: 'down' },
@@ -657,6 +754,13 @@
       { id: 'phu_hua_chinh', type: 'house_big', x: 6, y: 25, w: 8, h: 5, fx: 8, fy: 2, name: 'Hứa Phủ Chính Đường' },
       { id: 'phu_hua_dong', type: 'house_b', x: 18, y: 25, w: 5, h: 3, fx: 5, fy: 1, name: 'Đông Sương Hứa Phủ' },
       { id: 'kho_hua', type: 'house', x: 25, y: 36, w: 4, h: 3, fx: 4, fy: 1, name: 'Kho Hứa Gia', interact: true },
+      /* Bộ bàn trà sân phủ Hứa (gói phụ 5): lời dẫn chương 4 viết "chén
+         trà trên bàn" (SCENE_CHAN_QUELL) và Lục Tranh mời "vào trong
+         uống chén trà" (SCENE_THIENCO) nhưng sân chưa từng có bàn — bày
+         hai bàn đá liền nhau ở phía bắc hàng đứng của gia đình (hàng 34),
+         trên sân đá hàng 32, không đè ô NPC/cổng/vùng kích hoạt cảnh. */
+      { id: 'ban_tra_phu_a', type: 'table_stone', x: 18, y: 32, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân phủ' },
+      { id: 'ban_tra_phu_b', type: 'table_stone', x: 19, y: 32, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân phủ' },
       { id: 'phu_tran', type: 'house_big', x: 80, y: 7, w: 8, h: 5, fx: 8, fy: 2, name: 'Trần Gia Đại Trạch' },
       { id: 'thien_co', type: 'inn', x: 58, y: 62, w: 6, h: 4, fx: 6, fy: 1, name: 'Thiên Cơ Các Phân Đà' },
       { id: 'khach_diem', type: 'inn', x: 67, y: 23, w: 6, h: 4, fx: 6, fy: 1, name: 'Vọng Châu Khách Điếm' },
@@ -669,6 +773,15 @@
       { id: 'thap_bia', type: 'stele', x: 48, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Kiểm Trắc' },
       { id: 'den_thap_a', type: 'lantern', x: 46, y: 6, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_thap_b', type: 'lantern', x: 56, y: 6, w: 1, h: 2, fx: 1, fy: 1 },
+      /* Cổng lên Thanh Vân Tông (gói phụ 9 — Bui báo "không có cổng"):
+         bộ dấu hiệu theo đúng khuôn cổng tháp (bia + đèn đá hai bên +
+         biển trong danh sách biển + sân đá trong buildCityGrid). Mọi
+         footprint nằm NGOÀI dải cổng x95–100 hàng 0–3 và ngoài trục
+         tiếp cận cột 97–98: bia ở sườn tây (92,1), hai đèn đá ôm hai
+         sườn miệng sân (94,2) và (101,2). */
+      { id: 'bia_tong', type: 'stele', x: 92, y: 1, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Đường Lên Tông' },
+      { id: 'den_tong_a', type: 'lantern', x: 94, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_tong_b', type: 'lantern', x: 101, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_tinh_a', type: 'lantern', x: 10, y: 57, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_tinh_b', type: 'lantern', x: 13, y: 57, w: 1, h: 2, fx: 1, fy: 1 }
     ];
@@ -757,13 +870,47 @@
     rectCh(g, 96, 12, 106, 18, 'D');        // bãi trống rừng sau núi
     rectCh(g, 88, 66, 112, 82, 'S');        // sân khu tạp dịch (đông nam)
     rectCh(g, 59, 91, 64, 91, 'G');         // sơn môn (nam)
+    rectCh(g, 100, 2, 103, 2, 'G');         // miệng đường vào thung lũng (đông bắc) — cùng họ cổng vô hình với cổng lên tông ở thành (gói phụ 9): trước đây là bãi cỏ trơ
+    rectCh(g, 101, 3, 102, 9, 'D');         // đường mòn từ miệng thung lũng xuống đường đài Trúc Cơ (gói phụ 9)
+    // === GÓI PHỤ 12: địa hình núi theo logic cao độ (sơn SAU MỌI lớp
+    // chức năng ở trên, CHỈ sơn vùng không chức năng; kiểm liên thông ở
+    // mục kiểm 47) — thấp nam → cao bắc, thềm giữa, ba đỉnh riêng. ===
+    rectCh(g, 1, 1, 44, 4, 'X');            // vành vực bắc của đỉnh Thăng Long
+    rectCh(g, 1, 5, 3, 43, 'X');            // vành vực tây (chừa phố ngang 44–45)
+    rectCh(g, 1, 46, 3, 50, 'X');
+    rectCh(g, 52, 16, 68, 27, 'P');         // thềm ĐỈNH CHÍNH: đại điện trên thềm đá cao nhất (trục qua thềm thành bậc đá)
+    rectCh(g, 44, 14, 50, 30, 'X');         // vai vách tây của đỉnh chính
+    rectCh(g, 70, 14, 82, 30, 'X');         // vai vách đông của đỉnh chính
+    rectCh(g, 31, 29, 81, 41, 'S');         // thềm đệ tử xá ở sườn giữa (trục thành bậc đá qua thềm)
+    rectCh(g, 60, 46, 63, 51, 'S');         // CẦU ĐÁ trên trục bắc–nam, bắc qua hõm mây giữa quảng trường và thềm giữa
+    rectCh(g, 54, 46, 59, 51, 'X');         // sườn vực tây của cầu đá
+    rectCh(g, 64, 46, 69, 51, 'X');         // sườn vực đông của cầu đá
+    rectCh(g, 60, 12, 63, 15, 'S');         // bậc đá trục lên Đài Trúc Cơ
+    rectCh(g, 52, 12, 59, 15, 'X');         // sườn vực tây bậc Trúc Cơ
+    rectCh(g, 64, 12, 71, 15, 'X');         // sườn vực đông bậc Trúc Cơ
+    rectCh(g, 26, 16, 29, 17, 'W');         // THÁC sườn tây: nguồn trên mỏm đá cao
+    rectCh(g, 27, 18, 28, 29, 'W');         // thân thác đổ thẳng xuống
+    rectCh(g, 25, 30, 31, 33, 'W');         // hồ thác ở sườn thấp
+    rectCh(g, 25, 29, 31, 29, 'w');         // bờ hồ đi lại được
+    rectCh(g, 20, 79, 44, 90, 'X');         // vách chân núi nam, tây quảng trường vào
+    rectCh(g, 79, 79, 86, 90, 'X');         // vách chân núi nam, đông quảng trường vào
+    rectCh(g, 4, 52, 22, 54, 'X');          // vách tây dưới quảng trường
+    rectCh(g, 4, 55, 26, 76, 'X');          // vách tây sườn nam (chừa chân bậc thang chéo)
+    rectCh(g, 84, 34, 110, 43, 'X');        // hõm vực đông trên phố ngang giữa
+    rectCh(g, 84, 46, 110, 50, 'X');        // hõm vực đông dưới phố ngang giữa
+    rectCh(g, 44, 1, 50, 11, 'X');          // vai vách tây đỉnh Trúc Cơ
+    rectCh(g, 73, 1, 82, 11, 'X');          // vai vách đông đỉnh Trúc Cơ
+    rectCh(g, 51, 1, 72, 2, 'X');           // môi vách bắc đỉnh Trúc Cơ
+    rectCh(g, 84, 1, 99, 1, 'X');           // vành sau núi phía bắc (chừa miệng thung lũng 100–103)
+    rectCh(g, 104, 1, 119, 1, 'X');
+    rectCh(g, 121, 1, 122, 30, 'X');        // vành đông sau núi
     return gridStrings(g);
   }
   var SECT_GRID = buildSectGrid();
   var SECT_SIGNS = [
     { x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' },
     { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' },
-    { x: 50, y: 55, text: 'Quảng Trường' }
+    { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }
   ];
   var SECT_NPCS = [
     { id: 'truong_lao_tong', name: 'Trưởng Lão Thanh Vân Tông', look: 'elder', x: 60, y: 26, dir: 'down' },
@@ -789,6 +936,18 @@
       { id: 'dai_truc_co', type: 'stele', x: 60, y: 4, w: 2, h: 2, fx: 2, fy: 1, name: 'Đài Trúc Cơ', interact: true },
       { id: 'den_dai_tc_a', type: 'lantern', x: 53, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_dai_tc_b', type: 'lantern', x: 69, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_hb_tong', type: 'lantern', x: 99, y: 1, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn đá miệng thung lũng' },
+      // Gói phụ 12: sơn môn ở chân núi nam — hai bia đá ôm điểm rơi vào
+      // (61,88), hai đèn đá ôm dải cổng về thành (59–64,91); đèn đá hai
+      // đầu Đài Thăng Long; thông tay trên mỏm đá khô cao.
+      { id: 'son_mon_bia_a', type: 'stele', x: 56, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Sơn Môn Thanh Vân' },
+      { id: 'son_mon_bia_b', type: 'stele', x: 65, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Sơn Môn Thanh Vân' },
+      { id: 'den_son_mon_a', type: 'lantern', x: 58, y: 89, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_son_mon_b', type: 'lantern', x: 64, y: 89, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_thang_long_a', type: 'lantern', x: 11, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_thang_long_b', type: 'lantern', x: 19, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'thong_dai_dien', type: 'pine', x: 85, y: 32, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông trên mỏm đá' },
+      { id: 'thong_ho_thac', type: 'pine', x: 34, y: 34, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông bờ hồ thác' },
       { id: 'linh_chi', type: 'sacks', x: 100, y: 13, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Linh Chi Sau Núi', interact: true },
       { id: 'vuon_duoc', type: 'sacks', x: 104, y: 16, w: 2, h: 2, fx: 2, fy: 1, name: 'Vườn Dược Sau Núi', interact: true },
       { id: 'tap_dich_a', type: 'house', x: 90, y: 60, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà Tạp Dịch' },
@@ -801,7 +960,28 @@
       .concat(npcPoints(SECT_NPCS)).concat(signPoints(SECT_SIGNS));
     var rects = propRects(props).concat([{ x: 95, y: 8, w: 12, h: 12, pad: 0 }]); // hành lang vào bãi trống sau núi
     var forest = { x0: 84, y0: 3, x1: 119, y1: 30 };
-    return props.concat(scatterTrees(SECT_GRID, SECT_W, SECT_H, 'cay_s', 37, forest, 6, makeAvoid(pts, rects)));
+    var treesS = scatterTrees(SECT_GRID, SECT_W, SECT_H, 'cay_s', 37, forest, 6, makeAvoid(pts, rects));
+    // Lớp phủ mặt đất vùng săn sau núi (chỉ đạo 08:42 ngày 02/11): giữ
+    // trống quanh 3 ổ quái và trên mọi vật thể/cây đã có.
+    var avoidS = makeAvoid(pts.concat([{ x: 90, y: 8, r: 3 }, { x: 112, y: 24, r: 3 }, { x: 104, y: 6, r: 3 }]),
+      rects.concat(footRects(treesS)));
+    var decorS = scatterGroundDecor(SECT_GRID, SECT_W, SECT_H, 'phu_s', 12, forest, avoidS);
+    // Cây điểm nhấn mẫu video (08:48): rừng tông dày cây sẵn nên mật độ
+    // thưa hơn, anh đào tối đa 1 cây làm điểm nhấn.
+    var allS = props.concat(treesS).concat(decorS);
+    var accentS = scatterAccentTrees(SECT_GRID, SECT_W, SECT_H, 'cayv_s', forest, avoidS, footTilesOf(allS),
+      { bigMod: 60, sakuraMod: 250, sakuraMax: 1, midMod: 45, smallMod: 35 });
+    // Rừng tông quá dày cây cũ (436 cây) nên cổng băm không lọt được cây
+    // lớn nào — đặt tay 4 cây neo tại các cặp ô trống đã kiểm chứng
+    // (xa ổ quái, ngoài hành lang Linh Chi, chân đế không chồng vật nào):
+    // 3 cây lớn ở đông-bắc, đông và nam rừng; 1 anh đào ở phía tây.
+    var anchorS = [
+      { id: 'cayv_s_lon_113_4', type: 'tree_big', x: 113, y: 4, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'cayv_s_lon_112_11', type: 'tree_big', x: 112, y: 11, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'cayv_s_lon_90_27', type: 'tree_big', x: 90, y: 27, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'cayv_s_dao_88_20', type: 'sakura_big', x: 88, y: 20, w: 2, h: 3, fx: 2, fy: 1 }
+    ];
+    return allS.concat(accentS).concat(anchorS);
   })();
 
   /* ---- Thung Lũng Hồi Phong 96x74 (phần 3, chương 9 + 11) ----
@@ -896,7 +1076,19 @@
       { x: 44, y: 16, w: 14, h: 58, pad: 1 },   // hành lang hẻm + đường trục + bãi bắc: không mọc cây
       { x: 38, y: 62, w: 22, h: 11, pad: 1 }    // bãi đáp: không mọc cây
     ]);
-    return props.concat(scatterValleyTrees(VALLEY_GRID, VALLEY_W, VALLEY_H, makeAvoid(pts, rects)));
+    var treesV = scatterValleyTrees(VALLEY_GRID, VALLEY_W, VALLEY_H, makeAvoid(pts, rects));
+    // Lớp phủ mặt đất cho thung lũng (chỉ đạo 08:42 ngày 02/11): đồng cỏ
+    // và bãi bắc thêm bụi cỏ/bụi cây/hoa/đá; giữ trống quanh 4 ổ quái,
+    // hành lang hẻm, bãi đáp và trên mọi vật thể/cây đã có.
+    var avoidV = makeAvoid(pts.concat([{ x: 25, y: 40, r: 3 }, { x: 70, y: 50, r: 3 }, { x: 30, y: 25, r: 3 }, { x: 52, y: 17, r: 3 }]),
+      rects.concat(footRects(treesV)));
+    var decorV = scatterGroundDecor(VALLEY_GRID, VALLEY_W, VALLEY_H, 'phu_v', 17, null, avoidV);
+    // Cây điểm nhấn mẫu video (08:48): lớn/vừa/nhỏ + tối đa 2 anh đào
+    // (cộng cây anh đào cổ thụ đặt tay sẵn ở bãi đáp).
+    var allV = props.concat(treesV).concat(decorV);
+    var accentV = scatterAccentTrees(VALLEY_GRID, VALLEY_W, VALLEY_H, 'cayv_v', null, avoidV, footTilesOf(allV),
+      { bigMod: 380, sakuraMod: 800, sakuraMax: 2, midMod: 120, smallMod: 85 });
+    return allV.concat(accentV);
   })();
 
   /* ---- Tĩnh Quan Lâu 64x48 (phần 3, chương 10) ----
@@ -928,7 +1120,7 @@
     return gridStrings(g);
   }
   var LOU_GRID = buildLouGrid();
-  var LOU_SIGNS = [{ x: 35, y: 38, text: 'Tĩnh Quan Lâu' }];
+  var LOU_SIGNS = [{ x: 35, y: 38, text: 'Tĩnh Quan Lâu' }, { x: 31, y: 45, text: 'Về Cô Châu Thành' }];
   var LOU_NPCS = [
     { id: 'tiep_khach', name: 'Người Tiếp Khách Phân Đà', look: 'villager_f', x: 28, y: 30, dir: 'down' },
     { id: 'bach_kinh_duong', name: 'Bạch Kính Đường', look: 'elder', x: 32, y: 7, dir: 'down' },
@@ -988,11 +1180,11 @@
     co_chau: {
       name: 'Cô Châu Thành', w: 104, h: 78, grid: CITY_GRID, props: CITY_PROPS, npcs: CITY_NPCS,
       meditate: { x: 11, y: 59 },
-      signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }],
+      signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }, { x: 98, y: 4, text: 'Thanh Vân Tông' }],
       portals: [
         { x: 50, y: 77, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 70, label: 'Về Đường Mòn Xuyên Rừng' },
         { x: 48, y: 0, w: 8, h: 4, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
-        { x: 96, y: 0, w: 4, h: 3, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' },
+        { x: 95, y: 0, w: 6, h: 4, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' },
         { x: 57, y: 66, w: 3, h: 1, to: 'thien_co_lau', toX: 32, toY: 45, label: 'Vào Tĩnh Quan Lâu', cond: 'quest:q10_loi_moi', lockMsg: 'Phân đà chỉ tiếp người có thiệp mời.' }
       ]
     },
@@ -1008,7 +1200,7 @@
     thap_noi: {
       name: 'Sảnh Kiểm Trắc Tháp', w: 40, h: 30, grid: HALL_GRID, props: HALL_PROPS, npcs: HALL_NPCS,
       meditate: null,
-      signs: [],
+      signs: [{ x: 19, y: 27, text: 'Ra Sân Tháp' }],
       portals: [
         { x: 18, y: 29, w: 4, h: 1, to: 'kiem_trac_thap', toX: 35, toY: 13, label: 'Ra Sân Tháp' }
       ]
@@ -1016,7 +1208,7 @@
     thanh_van_tong: {
       name: 'Thanh Vân Tông', w: 124, h: 92, grid: SECT_GRID, props: SECT_PROPS, npcs: SECT_NPCS,
       meditate: { x: 31, y: 61 },
-      signs: [{ x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }],
+      signs: [{ x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }],
       portals: [
         { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' },
         { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' }
@@ -1160,6 +1352,10 @@
       quest: 'q_trac',
       map: 'tran',               // bản đồ hiện tại (đa bản đồ từ chương 2)
       dayMinutes: DAY_DEFAULT_MINUTES, // đồng hồ thế giới: phút-trong-ngày, bắt đầu 08:00 sáng
+      dayCount: 0,               // số ngày game đã trôi (hệ cày: trần mềm ngày, chu kỳ boss — docs/grind-prep)
+      techniques: {},            // lớp công pháp theo tầng (docs/congphap-prep): chỉ có mục khi đã học theo truyện
+      activeMethod: null,        // tâm pháp đang vận hành ('thanh_phong' sau khi nhận ở tháp)
+      grind: defaultGrind(),     // trạng thái hệ cày: hồ trần ngày, khóa chống trùng, sổ trả thưởng
       spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
@@ -1177,16 +1373,30 @@
   // Tốc độ gốc 10/giây; Thanh Phong Chân Kinh (chương 3) +2/giây và pháp bảo
   // Tụ Linh Ngọc +5/giây — cộng dồn, chỉ tính khi đã sở hữu thật.
   function meditateRate(state) {
-    var r = 10;
-    if (state.unlocked && state.unlocked.indexOf('thanh_phong') >= 0) r += 2;
+    var r = 10 + techniqueMethodBonus(state);
     if (state.gear && state.gear.indexOf('ngoc_tu_linh') >= 0) r += 5;
     return r;
+  }
+  // Cộng tốc độ thổ nạp của tâm pháp Thanh Phong theo TẦNG (lớp techniques
+  // của đợt công pháp): tầng 1 cho đúng +2 như bản live trước khi có lớp
+  // tầng; save chưa di trú (chưa có mục techniques) thì đọc khóa unlocked
+  // như cũ. Tầng cao hơn: +4/+6/+8 (docs/congphap-prep mục 14.2).
+  function techniqueMethodBonus(state) {
+    if (!state) return 0;
+    var t = techniqueOf(state, 'thanh_phong');
+    if (t) return TECHNIQUE_DEFS.thanh_phong.rateBonus[t.tier] || 0;
+    if (state.unlocked && state.unlocked.indexOf('thanh_phong') >= 0) return 2;
+    return 0;
   }
   function meditateTick(state, seconds) {
     if (state.unlocked.indexOf('voice') < 0) return state;
     var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
     if (cap) state.tuvi = Math.min(cap, state.tuvi + meditateRate(state) * seconds);
     state.silence = silenceGain('meditate', seconds, state.silence);
+    // Ba trục độc lập (luật ranh giới của đợt công pháp): thổ nạp đồng
+    // thời nuôi điểm tu luyện của tâm pháp đang vận hành, +2 điểm/giây —
+    // điểm chỉ sinh từ hành động lặp, đầy trục này không chặn hai trục kia.
+    if (state.activeMethod) techniqueGain(state, state.activeMethod, 2 * seconds);
     return state;
   }
   /* ---------------- Kiếm quyết (chương 3) ---------------- */
@@ -1198,9 +1408,33 @@
     if (state.gear && state.gear.indexOf('kiem_phong') >= 0) base += 8;
     return base;
   }
-  function castSword(state) {
+  /* Chiêu kiếm theo tầng kiếm quyết (docs/congphap-prep mục 4/14.3):
+     Trảm gốc (tầng 1) -> Liên Hoàn 2 đòn x 60% (tầng 2) -> Phá Quân 170%
+     (tầng 3) -> Quy Nhất 250% (tầng 4). castSword KHÔNG truyền chiêu thì
+     luôn là chiêu gốc với đúng uy lực cũ — mọi resolver kịch bản đã cài
+     giữ nguyên hành vi, và bộ đếm chiêu của chúng đếm LẦN GỌI, không đếm
+     số đòn (Liên Hoàn vẫn là một lần gọi). */
+  var SWORD_MOVES = [
+    { id: 'tram', name: 'Thất Tinh Trảm', tier: 1, mult: 1, hits: 1 },
+    { id: 'lien_hoan', name: 'Thất Tinh Liên Hoàn', tier: 2, mult: 0.6, hits: 2 },
+    { id: 'pha_quan', name: 'Thất Tinh Phá Quân', tier: 3, mult: 1.7, hits: 1 },
+    { id: 'quy_nhat', name: 'Thất Tinh Quy Nhất', tier: 4, mult: 2.5, hits: 1 }
+  ];
+  function swordMoveById(id) {
+    for (var i = 0; i < SWORD_MOVES.length; i++) if (SWORD_MOVES[i].id === id) return SWORD_MOVES[i];
+    return null;
+  }
+  function castSword(state, moveId) {
     if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
-    return { ok: true, power: swordPower(state) };
+    var move = SWORD_MOVES[0];
+    if (moveId) {
+      move = swordMoveById(moveId);
+      if (!move) return { ok: false, reason: 'Chiêu kiếm không tồn tại.' };
+      var tech = techniqueOf(state, 'that_tinh');
+      var tier = tech ? tech.tier : 1; // save chưa di trú: coi như tầng 1 (chỉ chiêu gốc chắc chắn mở)
+      if (tier < move.tier) return { ok: false, reason: 'Kiếm quyết mới tầng ' + tier + ' — chưa lĩnh ngộ được ' + move.name + '.' };
+    }
+    return { ok: true, power: Math.round(swordPower(state) * move.mult), hits: move.hits, move: move.id, moveName: move.name };
   }
   /* ---------------- Hồn Sư — trục thứ hai, giấu kín (chương 5) ----------------
      Giang Phàm là Hồn Sư nhị phẩm nhưng giấu kín thân phận (theo truyện).
@@ -1239,6 +1473,17 @@
     tu_linh_dan: { name: 'Tụ Linh Đan', type: 'dan', stack: true, glyph: 'Tụ' },
     ket_dan_duoc: { name: 'Dược Dẫn Kết Đan', type: 'nguyen_lieu', stack: true, glyph: 'Dẫn' },
     ket_dan_dan: { name: 'Vật Dẫn Kết Đan', type: 'dan', stack: true, glyph: 'Dẫn' },
+    /* Đan thưởng của hệ cày (docs/grind-prep/grind-design.md mục 8): đan
+       theo dải cảnh giới — Hồi Xuân Đan cho dải Luyện Khí, Phục Linh Đan
+       cho dải Trúc Cơ. Tên ở mức [ĐỀ XUẤT] đã duyệt trong tài liệu cày. */
+    hoi_xuan_dan: { name: 'Hồi Xuân Đan', type: 'dan', stack: true, glyph: 'Xuân' },
+    phuc_linh_dan: { name: 'Phục Linh Đan', type: 'dan', stack: true, glyph: 'Linh' },
+    /* Bí tịch (lệnh Bui 22:21 ngày 2026-11-01): sách tàn thiên — vật phẩm
+       túi THƯỜNG, chỉ cho ĐIỂM tu luyện của công pháp ĐÃ học theo truyện
+       (trường teaches), không mở công pháp mới, không cho tầng trực tiếp,
+       không có giá — xem useBiTich và hai luật khóa ở khối công pháp. */
+    bi_tich_that_tinh: { name: 'Bí Tịch Thất Tinh (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'that_tinh' },
+    bi_tich_thanh_phong: { name: 'Bí Tịch Thanh Phong (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'thanh_phong' },
     song_ngu_ngoc_boi: { name: 'Song Ngư Ngọc Bội', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Ngọc', unlockKey: 'song_ngu' },
     thien_co_ngoc_gian: { name: 'Thiên Cơ Ngọc Giản', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Giản', unlockKey: 'thien_co_gian' },
     thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh', unlockKey: 'thanh_phong' },
@@ -1501,6 +1746,13 @@
     if (!state || typeof state !== 'object') return state;
     state.linhThach = linhBalance(state);
     state.dayMinutes = normalizeDayMinutes(state.dayMinutes); // save cũ chưa có đồng hồ -> 08:00 mặc định, không lỗi
+    // Hệ cày + lớp công pháp (làn chạm trán): save cũ không có các trường
+    // này -> dựng mặc định an toàn, suy công pháp đã học từ unlocked như
+    // thiết kế di trú của docs/congphap-prep mục 2.3; không mất dữ kiện cũ.
+    if (typeof state.dayCount !== 'number' || !isFinite(state.dayCount) || state.dayCount < 0) state.dayCount = 0;
+    else state.dayCount = Math.floor(state.dayCount);
+    ensureGrind(state);
+    ensureTechniques(state);
     if (!state.flags || typeof state.flags !== 'object') state.flags = { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false };
     if (typeof state.flags.ltGift !== 'boolean') state.flags.ltGift = false;
     if (typeof state.flags.dummyBroken !== 'boolean') state.flags.dummyBroken = false;
@@ -1756,6 +2008,438 @@
     return main;
   }
 
+  /* ================= HỆ CÀY — NỀN THUẦN (docs/grind-prep) =================
+     Cửa trả thưởng duy nhất cho MỌI khoản lặp là grantReward. Số lấy đúng
+     economy-math (trần mềm ba hồ riêng, tách bậc, sàn boss) và systems-data
+     (khóa chống trùng, sổ ledger, nguyên tử túi). Thưởng cốt truyện KHÔNG
+     qua cửa này và không vào hồ nào. Không hồ sơ nào được chứa soul. */
+  var GRIND_LEDGER_MAX = 100;
+  var GRIND_INSTANCE_KEEP_DAYS = 7;
+  function defaultGrind() {
+    return { v: 1, seq: 0, boards: {}, instances: {}, claimed: {}, ledger: [], nodes: {}, boss: {},
+             pools: { day: 0, lt: 0, tuvi: 0, merit: 0 }, frac: { lt: 0, merit: 0 } };
+  }
+  function ensureGrind(state) {
+    if (!state || typeof state !== 'object') return defaultGrind();
+    if (!state.grind || typeof state.grind !== 'object') state.grind = defaultGrind();
+    var g = state.grind;
+    if (typeof g.seq !== 'number' || !isFinite(g.seq) || g.seq < 0) g.seq = 0; else g.seq = Math.floor(g.seq);
+    ['boards', 'instances', 'claimed', 'nodes', 'boss'].forEach(function (k) { if (!g[k] || typeof g[k] !== 'object') g[k] = {}; });
+    if (!Array.isArray(g.ledger)) g.ledger = [];
+    if (!g.pools || typeof g.pools !== 'object') g.pools = { day: 0, lt: 0, tuvi: 0, merit: 0 };
+    ['day', 'lt', 'tuvi', 'merit'].forEach(function (k) { if (typeof g.pools[k] !== 'number' || !isFinite(g.pools[k]) || g.pools[k] < 0) g.pools[k] = 0; });
+    if (!g.frac || typeof g.frac !== 'object') g.frac = { lt: 0, merit: 0 };
+    ['lt', 'merit'].forEach(function (k) { if (typeof g.frac[k] !== 'number' || !isFinite(g.frac[k]) || g.frac[k] < 0) g.frac[k] = 0; });
+    g.v = 1;
+    return g;
+  }
+  // Thứ hạng tuyến tính của cảnh giới: realm*100 + stage (Luyện Khí tầng 1
+  // = 100, Trúc Cơ Sơ Kỳ = 200...). Save hỏng (realm không phải số) -> 0.
+  function realmOrdinal(state) {
+    if (!state || typeof state.realm !== 'number' || typeof state.stage !== 'number' || !isFinite(state.realm) || !isFinite(state.stage)) return 0;
+    return Math.floor(state.realm) * 100 + Math.floor(state.stage);
+  }
+  function questIndexOf(id) {
+    for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return i;
+    return -1;
+  }
+  /* Vị trí NPC theo PHA NHIỆM VỤ (gói phụ 5 — lỗi hình–cảnh chương 4):
+     Trần Chính Đạo nói suốt các cảnh sân phủ Hứa (SCENE_THIENCO /
+     SCENE_ACCUSE / SCENE_CHAN_QUELL) nhưng vị trí cố định của ông là
+     (56,66) cạnh phân đà Thiên Cơ Các. Trong hai pha sân phủ
+     (q4_thien_co, q4_vu_cao) ông đứng TẠI sân, ở đầu bộ bàn trà phía
+     bắc nhóm gia đình, quay mặt về phía gia đình; từ q4_doi_chat trở
+     đi ông trở lại (56,66) — nhiệm vụ đối chất và chương 10 dùng đúng
+     vị trí đó. npcPosFor trả vị trí HIỆU LỰC (pha nếu khớp, mặc định
+     nếu không) để mọi điểm dựng NPC sống đều dùng chung một nguồn. */
+  var NPC_PHASE_POS = {
+    tran_chinh_dao: [
+      { quests: ['q4_thien_co', 'q4_vu_cao'], x: 17, y: 33, dir: 'down' }
+    ]
+  };
+  function npcPosFor(state, npc) {
+    var list = npc && NPC_PHASE_POS[npc.id];
+    if (list && state && state.quest) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].quests.indexOf(state.quest) >= 0) return list[i];
+      }
+    }
+    return { x: npc.x, y: npc.y, dir: npc.dir };
+  }
+  function questReached(state, id) {
+    if (!state || !state.quest) return false;
+    var cur = questIndexOf(state.quest), tgt = questIndexOf(id);
+    if (cur < 0 || tgt < 0) return false;
+    return cur >= tgt;
+  }
+  // FNV-1a 32-bit trên byte UTF-8 (vectơ khóa ở systems-data mục 2.4).
+  function grindHash32(s) {
+    var h = 2166136261;
+    s = String(s);
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 0x80) h = Math.imul(h ^ c, 16777619);
+      else if (c < 0x800) { h = Math.imul(h ^ (0xC0 | (c >> 6)), 16777619); h = Math.imul(h ^ (0x80 | (c & 0x3F)), 16777619); }
+      else { h = Math.imul(h ^ (0xE0 | (c >> 12)), 16777619); h = Math.imul(h ^ (0x80 | ((c >> 6) & 0x3F)), 16777619); h = Math.imul(h ^ (0x80 | (c & 0x3F)), 16777619); }
+    }
+    return h >>> 0;
+  }
+  // mulberry32 — dòng ngẫu nhiên XÁC ĐỊNH theo hạt giống (nạp lại không
+  // quay lại được kết quả khác: cùng hạt giống -> cùng dòng).
+  function grindRng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  // Ngân sách đầy-tốc B của từng hồ (economy-math mục 4.2): LT/merit theo
+  // dải cảnh giới (chỉ số 0/1/2 = Luyện Khí/Trúc Cơ/Kim Đan), tu vi = 40%
+  // trần thanh hiện tại.
+  var GRIND_POOL_BASE = { lt: [6, 10, 16], merit: [8, 12, 16] };
+  function grindPoolBase(state, kind) {
+    if (kind === 'tuvi') {
+      var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+      return cap ? cap * 0.4 : 0;
+    }
+    var table = GRIND_POOL_BASE[kind];
+    if (!table) return 0;
+    var idx = Math.min(2, Math.max(0, (typeof state.realm === 'number' ? state.realm : 1) - 1));
+    return table[idx];
+  }
+  // Số một khoản CƠ SỐ được trả sau trần mềm: tách theo bậc dựa trên tích
+  // lũy cơ số TRƯỚC khoản này trong hồ của ngày (0->B: x1, B->2B: x0,5,
+  // trên 2B: x0,25); khoản boss có sàn hệ số 0,5 cho từng phần. Hàm thuần
+  // theo hồ hiện tại — KHÔNG tự cộng hồ; grantReward cộng cơ số vào hồ
+  // chỉ sau khi khoản đã áp thành công.
+  function grindSoftCapAmount(state, kind, base, opts) {
+    opts = opts || {};
+    if (!(base > 0)) return 0;
+    var g = ensureGrind(state);
+    var B = grindPoolBase(state, kind);
+    if (!(B > 0)) return base;
+    var pool = (g.pools.day === state.dayCount) ? (g.pools[kind] || 0) : 0;
+    var remain = base, out = 0, pos = pool, guard = 0;
+    while (remain > 0 && guard++ < 8) {
+      var edge = pos < B ? B : (pos < 2 * B ? 2 * B : Infinity);
+      var take = Math.min(remain, edge - pos);
+      var f = pos < B ? 1 : (pos < 2 * B ? 0.5 : 0.25);
+      if (opts.boss && f < 0.5) f = 0.5;
+      out += take * f; pos += take; remain -= take;
+    }
+    return out;
+  }
+  var REWARD_PROFILES = {
+    // Hồ sơ boss dã ngoại (grind-design mục 8): đan theo dải + yêu đan
+    // bắt buộc đúng guaranteedYeuDan của boss — "chắc chắn rơi" nằm ở chỗ
+    // hồ sơ luôn có mục này và cửa trả là nguyên tử.
+    'profile:boss_dm_lang_vuong': { lt: 12, tuviPct: 30, merit: 5, items: { hoi_xuan_dan: 1, yeu_dan_1: 1 } },
+    'profile:boss_hb_son_chu': { lt: 20, tuviPct: 30, merit: 8, items: { phuc_linh_dan: 1, yeu_dan_2: 1 } }
+  };
+  /* grantReward(state, spec, opts) — spec: id hồ sơ trong REWARD_PROFILES
+     hoặc đối tượng hồ sơ phẳng { lt?, tuvi?, tuviPct?, merit?, items? }.
+     opts: { claimKey, sourceId, boss, factorFn } — factorFn là điểm móc
+     kiểm thử của systems-data mục 2.5 (mặc định dùng trần mềm thật).
+     Thứ tự chốt: khóa trùng -> hồ sơ -> trần mềm -> ví -> túi nguyên tử
+     -> áp thật -> ghi khóa + sổ. Mọi đường thất bại đều không đổi gì. */
+  function grantReward(state, spec, opts) {
+    opts = opts || {};
+    if (!state || typeof state !== 'object') return { ok: false, reason: 'invalid_state' };
+    var g = ensureGrind(state);
+    if (g.pools.day !== state.dayCount) { g.pools.day = state.dayCount; g.pools.lt = 0; g.pools.tuvi = 0; g.pools.merit = 0; }
+    var profile = null, profileId = null;
+    if (typeof spec === 'string') { profileId = spec; profile = REWARD_PROFILES[spec] || null; }
+    else if (spec && typeof spec === 'object') { profile = spec; profileId = spec.profileId || 'inline'; }
+    if (!profile) return { ok: false, reason: 'profile_missing' };
+    if (profile.soul) return { ok: false, reason: 'profile_soul_forbidden' }; // trục hồn không bao giờ đi qua cửa cày
+    var claimKey = opts.claimKey || null;
+    if (claimKey && g.claimed[claimKey] != null) return { ok: false, reason: 'duplicate', duplicate: true };
+    var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+    var baseTuvi = 0;
+    if (typeof profile.tuviPct === 'number') baseTuvi = cap ? profile.tuviPct / 100 * cap : 0;
+    else if (typeof profile.tuvi === 'number') baseTuvi = profile.tuvi;
+    var base = { lt: profile.lt || 0, tuvi: baseTuvi, merit: profile.merit || 0 };
+    var amt = { lt: 0, tuvi: 0, merit: 0 };
+    ['lt', 'tuvi', 'merit'].forEach(function (kind) {
+      if (!(base[kind] > 0)) return;
+      if (opts.factorFn) amt[kind] = Math.floor(base[kind] * opts.factorFn(state, kind, { profileId: profileId, sourceId: opts.sourceId || null }));
+      else amt[kind] = grindSoftCapAmount(state, kind, base[kind], { boss: !!opts.boss });
+    });
+    if (amt.lt > 0 && !walletOpen(state)) return { ok: false, reason: 'wallet_locked' };
+    // Vật phẩm của hồ sơ chấp nhận CẢ HAI dạng: dạng mảng [{id, n}] là
+    // dạng chuẩn trong systems-data (mục mô tả grantReward), dạng bản đồ
+    // {id: n} là dạng các hồ sơ boss đang dùng — chuẩn hóa về bản đồ
+    // trước khi kiểm túi để hai dạng cho cùng một kết quả.
+    var items = {};
+    if (Array.isArray(profile.items)) {
+      profile.items.forEach(function (it) { if (it && it.id) items[it.id] = (items[it.id] || 0) + (it.n || 1); });
+    } else if (profile.items) {
+      for (var ik in profile.items) items[ik] = profile.items[ik];
+    }
+    for (var id in items) {
+      if (!bagCanAdd(state, id, items[id]).ok) return { ok: false, reason: 'bag_full' };
+    }
+    var granted = { lt: 0, tuvi: 0, merit: 0, items: {} };
+    for (var id2 in items) { if (bagAdd(state, id2, items[id2]).ok) granted.items[id2] = items[id2]; }
+    if (amt.tuvi > 0) {
+      var applied = cap ? Math.min(amt.tuvi, Math.max(0, cap - state.tuvi)) : amt.tuvi;
+      state.tuvi += applied; granted.tuvi = applied;
+    }
+    // LT/merit vào ví qua HỒ PHÂN SỐ: ví chỉ nhận phần nguyên của lũy kế
+    // (addLinhThach/addSectMerit vốn làm tròn xuống), phần lẻ giữ ở
+    // grind.frac cộng dồn sang khoản sau trong ngày — nhờ vậy tổng ngày
+    // khớp đúng các ví dụ khóa của economy-math (10 LT / 9 merit ở ví dụ
+    // 2; 16 LT + 0,5 lẻ giữ lại / 14 merit ở ví dụ 3) trong khi granted
+    // báo đúng số trần mềm đã duyệt cho từng khoản.
+    if (amt.merit > 0) {
+      var mTot = g.frac.merit + amt.merit, mInt = Math.floor(mTot);
+      g.frac.merit = mTot - mInt;
+      if (mInt > 0) addSectMerit(state, mInt);
+      granted.merit = amt.merit;
+    }
+    if (amt.lt > 0) {
+      var lTot = g.frac.lt + amt.lt, lInt = Math.floor(lTot);
+      g.frac.lt = lTot - lInt;
+      if (lInt > 0) addLinhThach(state, lInt);
+      granted.lt = amt.lt;
+    }
+    g.pools.lt += base.lt; g.pools.tuvi += base.tuvi; g.pools.merit += base.merit;
+    g.seq += 1;
+    if (claimKey) g.claimed[claimKey] = state.dayCount;
+    g.ledger.push({ seq: g.seq, day: state.dayCount, sourceId: opts.sourceId || null, claimKey: claimKey, profileId: profileId,
+                    granted: { lt: granted.lt, tuvi: granted.tuvi, merit: granted.merit, items: granted.items } });
+    while (g.ledger.length > GRIND_LEDGER_MAX) g.ledger.shift();
+    return { ok: true, granted: granted };
+  }
+  // Qua nửa đêm game: chạy đúng MỘT lần theo ngày đích (kể cả nhảy nhiều
+  // ngày) — instance active cũ hết hạn, dọn instance đã kết thúc quá hạn
+  // giữ, khóa boss chỉ giữ chu kỳ hiện tại + liền trước, hồ trần về 0.
+  function grindDayRollover(state) {
+    var g = ensureGrind(state);
+    var day = state.dayCount, id;
+    for (id in g.instances) {
+      var ins = g.instances[id];
+      if (ins && typeof ins === 'object' && ins.status === 'active' && typeof ins.day === 'number' && ins.day < day) ins.status = 'expired';
+    }
+    for (id in g.instances) {
+      var ins2 = g.instances[id];
+      if (ins2 && typeof ins2 === 'object' && (ins2.status === 'claimed' || ins2.status === 'expired' || ins2.status === 'abandoned') &&
+          typeof ins2.day === 'number' && ins2.day < day - GRIND_INSTANCE_KEEP_DAYS) delete g.instances[id];
+    }
+    for (var key in g.claimed) {
+      var m = /^gr:boss:(.+):c(\d+)$/.exec(key);
+      if (m && BOSS_DEFS[m[1]]) {
+        var cur = Math.floor(day / BOSS_DEFS[m[1]].cycleDays);
+        if (parseInt(m[2], 10) < cur - 1) delete g.claimed[key];
+      }
+    }
+    g.pools.day = day; g.pools.lt = 0; g.pools.tuvi = 0; g.pools.merit = 0;
+    return state;
+  }
+  // Hàm bọc quanh advanceDayClock tại điểm vòng lặp game vẫn gọi: đếm số
+  // vòng qua 0:00 rồi tăng dayCount + rollover đúng một lần cho ngày đích.
+  // Chế độ ghim ngày/đêm thì vòng lặp không gọi hàm tiến đồng hồ nào cả —
+  // dayCount đứng yên và mọi chu kỳ đứng theo (hành vi đã chốt).
+  function advanceGrindClock(state, dtSec, speedKey) {
+    if (!state) return 0;
+    if (typeof state.dayCount !== 'number' || !isFinite(state.dayCount) || state.dayCount < 0) state.dayCount = 0;
+    if (typeof state.dayMinutes !== 'number' || !isFinite(state.dayMinutes)) state.dayMinutes = normalizeDayMinutes(state.dayMinutes);
+    var rate = DAYNIGHT_MIN_PER_SEC[speedKey] || DAYNIGHT_MIN_PER_SEC.normal;
+    var dt = (typeof dtSec === 'number' && isFinite(dtSec) && dtSec > 0) ? dtSec : 0;
+    var wraps = Math.floor((state.dayMinutes + rate * dt) / 1440);
+    advanceDayClock(state, dtSec, speedKey);
+    if (wraps > 0) { state.dayCount += wraps; grindDayRollover(state); }
+    return state.dayCount;
+  }
+  /* ================= CÔNG PHÁP — LỚP TẦNG (docs/congphap-prep) =================
+     Lớp techniques nằm TRÊN lớp unlocked: unlocked vẫn quyết mọi hành vi
+     cũ (thổ nạp, xuất kiếm, ngăn cốt truyện); techniques chỉ ghi TẦNG và
+     ĐIỂM của công pháp đã học theo truyện. Lên tầng cần đủ ba thành phần:
+     điểm lũy kế + sàn cảnh giới + mốc lĩnh ngộ (ở tầng có chỉ định).
+     HAI LUẬT KHÓA VĨNH VIỄN: (1) tầng công pháp không bao giờ là điều
+     kiện đột phá hay cổng truyện — không hàm cổng nào đọc techniques;
+     (2) công pháp/chiêu không có giá — điểm chỉ sinh từ hành động lặp
+     (thổ nạp +2/giây, xuất kiếm trong trận +2/lần gọi, bí tịch tàn thiên),
+     không đường nào đổi Linh Thạch/cống hiến lấy điểm hay tầng. */
+  var TECHNIQUE_DEFS = {
+    thanh_phong: { name: 'Thanh Phong Chân Kinh', kind: 'tam_phap', unlockKey: 'thanh_phong',
+      rateBonus: [0, 2, 4, 6, 8], // cộng tốc độ thổ nạp theo tầng 0..4 (tầng 1 = +2 như bản live cũ)
+      tiers: [null,
+        { xp: 0 },
+        { xp: 240, realm: 1, stage: 4 },                                   // Luyện Khí tầng 5
+        { xp: 720, realm: 2, stage: 0, insightQuest: 'q8_ho_phap' },       // Trúc Cơ + đã qua hộ pháp chương 8
+        { xp: 1800, realm: 3, stage: 0 }] },                               // Kim Đan
+    that_tinh: { name: 'Thất Tinh Kiếm Quyết', kind: 'kiem_quyet', unlockKey: 'that_tinh',
+      tiers: [null,
+        { xp: 0 },
+        { xp: 200, realm: 1, stage: 6, insightQuest: 'q7_thang_long' },    // Luyện Khí tầng 7 + đã thắng Thăng Long Đạo
+        { xp: 600, realm: 2, stage: 0 },                                   // Trúc Cơ
+        { xp: 1500, realm: 3, stage: 0 }] },                               // Kim Đan
+    // Hai dòng chỉ ĐĂNG KÝ để ánh xạ, không có mục trong state.techniques:
+    // luyện hồn tiến theo phẩm soulRank sẵn có; ngự kiếm theo cờ bay của
+    // đợt ngự kiếm. Không bịa kinh thư luyện hồn (truyện không có).
+    luyen_hon: { name: 'Luyện Hồn', kind: 'luyen_hon', tiersBy: 'soulRank' },
+    ngu_kiem: { name: 'Ngự Kiếm', kind: 'than_phap', tiersBy: 'flags.fly' }
+  };
+  function techniqueOf(state, id) {
+    if (!state || !state.techniques || typeof state.techniques !== 'object') return null;
+    var t = state.techniques[id];
+    return (t && typeof t === 'object') ? t : null;
+  }
+  function techniqueTier(state, id) { var t = techniqueOf(state, id); return t ? t.tier : 0; }
+  function techniqueTierUpReady(state, id) {
+    var def = TECHNIQUE_DEFS[id];
+    if (!def || !def.tiers) return false;
+    var t = techniqueOf(state, id);
+    if (!t || t.tier >= 4) return false;
+    var next = def.tiers[t.tier + 1];
+    if (!next) return false;
+    if ((typeof t.xp === 'number' ? t.xp : 0) < next.xp) return false;
+    if (realmOrdinal(state) < next.realm * 100 + next.stage) return false;
+    // Mốc lĩnh ngộ = đã QUA nhiệm vụ đó (chỉ số nhiệm vụ hiện tại lớn hơn hẳn).
+    if (next.insightQuest && !(questIndexOf(state.quest) > questIndexOf(next.insightQuest))) return false;
+    return true;
+  }
+  function techniqueGain(state, id, pts) {
+    var t = techniqueOf(state, id);
+    if (!t || !(pts > 0)) return { ok: false, tierUps: [] };
+    t.xp = (typeof t.xp === 'number' && isFinite(t.xp) ? t.xp : 0) + pts;
+    var ups = [];
+    while (techniqueTierUpReady(state, id)) { t.tier += 1; ups.push(t.tier); }
+    return { ok: true, xp: t.xp, tier: t.tier, tierUps: ups };
+  }
+  // Di trú lớp công pháp (congphap-prep mục 2.3): suy từ unlocked, giữ
+  // bất biến hai lớp không lệch — unlocked có khóa khi và chỉ khi
+  // techniques có mục tương ứng. Tự vệ khi unlocked thiếu/không phải mảng.
+  function ensureTechniques(state) {
+    if (!state || typeof state !== 'object') return {};
+    if (!state.techniques || typeof state.techniques !== 'object') state.techniques = {};
+    var unlocked = Array.isArray(state.unlocked) ? state.unlocked : [];
+    ['thanh_phong', 'that_tinh'].forEach(function (id) {
+      var has = unlocked.indexOf(id) >= 0, t = state.techniques[id];
+      if (has && !t) state.techniques[id] = { tier: 1, xp: 0 };
+      else if (!has && t) delete state.techniques[id];
+      else if (t) {
+        if (typeof t.tier !== 'number' || !isFinite(t.tier)) t.tier = 1;
+        t.tier = Math.min(4, Math.max(1, Math.floor(t.tier)));
+        if (typeof t.xp !== 'number' || !isFinite(t.xp) || t.xp < 0) t.xp = 0;
+      }
+    });
+    if (state.activeMethod !== 'thanh_phong') state.activeMethod = state.techniques.thanh_phong ? 'thanh_phong' : null;
+    return state.techniques;
+  }
+  /* Bí tịch tàn thiên: +100 điểm tu luyện [ĐỀ XUẤT SỐ của làn chạm trán —
+     ngang một mốc lĩnh ngộ lớn] cho công pháp ĐÃ học. Sách KHÔNG mở công
+     pháp mới (chưa học theo truyện thì từ chối sạch, sách còn nguyên) và
+     KHÔNG cho tầng trực tiếp: điểm vẫn phải qua sàn cảnh giới + mốc lĩnh
+     ngộ mới thành tầng, đúng hai luật khóa. */
+  var BI_TICH_POINTS = 100;
+  function useBiTich(state, itemId) {
+    var def = ITEM_DEFS[itemId];
+    if (!def || !def.teaches) return { ok: false, reason: 'not_bi_tich' };
+    if (!techniqueOf(state, def.teaches)) return { ok: false, reason: 'not_learned' };
+    if (bagCount(state, itemId) < 1) return { ok: false, reason: 'no_item' };
+    bagRemove(state, itemId, 1);
+    var r = techniqueGain(state, def.teaches, BI_TICH_POINTS);
+    return { ok: true, technique: def.teaches, points: BI_TICH_POINTS, tier: r.tier, tierUps: r.tierUps };
+  }
+
+  /* ================= QUÁI / VÙNG SĂN / BOSS DÃ NGOẠI =================
+     Đăng ký loài theo docs/grind-prep (quyết định P-4 của đợt cày). Số
+     máu/tấn công/tốc độ của quái là [ĐỀ XUẤT SỐ] của làn chạm trán (tài
+     liệu cày chỉ khóa kinh tế, không khóa số chiến đấu): neo vào uy lực
+     kiếm hiện có (Luyện Khí ~31-55/nhát) để quái thường ngã trong 2-4
+     nhát, tinh anh 6-10 nhát, boss là trận dài có bốn đợt máu. Cấp yêu
+     đan rơi tính theo VÙNG, không theo loài (cùng một loài ở vùng Trúc
+     Cơ cho yêu đan cấp 2). */
+  var MONSTER_DEFS = {
+    son_lang: { name: 'Sơn Lang', rank: 'normal', hp: 90, atk: 7, atkInterval: 1.6, speed: 46, cry: 420 },
+    doc_vu_xa: { name: 'Độc Vũ Xà', rank: 'normal', hp: 70, atk: 9, atkInterval: 1.4, speed: 40, cry: 640 },
+    thiet_giap_tru: { name: 'Thiết Giáp Trư', rank: 'elite', hp: 300, atk: 13, atkInterval: 1.5, speed: 38, cry: 300, biTich: 'bi_tich_thanh_phong', biTichChance: 0.18 },
+    phong_ung: { name: 'Phong Ưng', rank: 'elite', hp: 220, atk: 15, atkInterval: 1.3, speed: 62, cry: 700, biTich: 'bi_tich_that_tinh', biTichChance: 0.18 },
+    lang_vuong: { name: 'Lang Vương', rank: 'boss', hp: 560, atk: 16, atkInterval: 1.3, speed: 52, cry: 340 },
+    son_chu: { name: 'Sơn Chủ', rank: 'boss', hp: 1500, atk: 20, atkInterval: 1.4, speed: 40, cry: 280 }
+  };
+  var HUNT_ZONES = {
+    zone_duong_mon_rung: { map: 'duong_mon', x0: 2, y0: 2, x1: 93, y1: 71, grassOnly: true, yeuDanLevel: 1 },
+    zone_duong_mon_phuc_kich: { map: 'duong_mon', x0: 40, y0: 50, x1: 46, y1: 54, yeuDanLevel: 1 },
+    zone_tong_sau_nui: { map: 'thanh_van_tong', x0: 84, y0: 3, x1: 119, y1: 30, yeuDanLevel: 1 },
+    zone_hb_rung: { map: 'hb_valley', x0: 10, y0: 18, x1: 86, y1: 66, yeuDanLevel: 2 },
+    zone_hb_bac: { map: 'hb_valley', x0: 43, y0: 8, x1: 55, y1: 20, yeuDanLevel: 2 }
+  };
+  // Ổ (lair) của từng vùng: điểm sinh xác định, xa điểm cốt truyện/đường
+  // chính — quái chỉ đi lại quanh ổ trong vùng của mình.
+  var HUNT_LAIRS = [
+    { zoneId: 'zone_duong_mon_rung', species: 'son_lang', x: 20, y: 20 },
+    { zoneId: 'zone_duong_mon_rung', species: 'doc_vu_xa', x: 74, y: 58 },
+    { zoneId: 'zone_duong_mon_rung', species: 'son_lang', x: 68, y: 14 },
+    { zoneId: 'zone_tong_sau_nui', species: 'thiet_giap_tru', x: 90, y: 8 },
+    { zoneId: 'zone_tong_sau_nui', species: 'phong_ung', x: 112, y: 24 },
+    { zoneId: 'zone_tong_sau_nui', species: 'son_lang', x: 104, y: 6 },
+    { zoneId: 'zone_hb_rung', species: 'son_lang', x: 25, y: 40 },
+    { zoneId: 'zone_hb_rung', species: 'doc_vu_xa', x: 70, y: 50 },
+    { zoneId: 'zone_hb_rung', species: 'thiet_giap_tru', x: 30, y: 25 },
+    { zoneId: 'zone_hb_bac', species: 'phong_ung', x: 52, y: 17 }
+  ];
+  var BOSS_DEFS = {
+    boss_dm_lang_vuong: { name: 'Lang Vương Bãi Phục Kích', title: 'Chúa tể bãi phục kích', species: 'lang_vuong',
+      zoneId: 'zone_duong_mon_phuc_kich', map: 'duong_mon', lair: { x: 43, y: 52 }, cycleDays: 3,
+      profileId: 'profile:boss_dm_lang_vuong', guaranteedYeuDan: 'yeu_dan_1',
+      requiresQuest: 'q2_cong_thanh', minOrdinal: 100, biTich: 'bi_tich_that_tinh' },
+    boss_hb_son_chu: { name: 'Sơn Chủ Hồi Phong', title: 'Chúa tể Hồi Phong', species: 'son_chu',
+      zoneId: 'zone_hb_bac', map: 'hb_valley', lair: { x: 49, y: 14 }, cycleDays: 4,
+      profileId: 'profile:boss_hb_son_chu', guaranteedYeuDan: 'yeu_dan_2',
+      requiresQuest: 'q9_tin_du', minOrdinal: 200, biTich: 'bi_tich_thanh_phong' }
+  };
+  function bossClaimKey(bossId, cycleId) { return 'gr:boss:' + bossId + ':c' + cycleId; }
+  // Trạng thái boss là HÀM THUẦN DUY NHẤT của dayCount + khóa chu kỳ +
+  // cổng (systems-data mục 6.2) — lớp hiển thị cấm tự tính ngày.
+  function bossStatus(state, bossId) {
+    var def = BOSS_DEFS[bossId];
+    if (!def) return { state: 'locked', cycleId: 0, daysLeft: 0 };
+    var day = (state && typeof state.dayCount === 'number' && isFinite(state.dayCount) && state.dayCount > 0) ? Math.floor(state.dayCount) : 0;
+    var cycleId = Math.floor(day / def.cycleDays);
+    var out = { state: 'locked', cycleId: cycleId, daysLeft: (cycleId + 1) * def.cycleDays - day };
+    if (!questReached(state, def.requiresQuest) || realmOrdinal(state) < def.minOrdinal) return out;
+    var g = ensureGrind(state);
+    out.state = (g.claimed[bossClaimKey(bossId, cycleId)] != null) ? 'claimed' : 'alive';
+    return out;
+  }
+  // Rút xác định theo id phiên: giá trị rút đầu tiên của dòng hạt giống
+  // phiên — nạp lại giữa phiên cho cùng kết quả (khẳng định G-YD-02).
+  var YEU_DAN_DROP_NORMAL = 0.02, YEU_DAN_DROP_ELITE = 0.25;
+  function rollSessionValue(sessionId, salt) {
+    var rng = grindRng(grindHash32(String(sessionId) + (salt || '')));
+    return rng();
+  }
+  function yeuDanDropFor(sessionId, chance) { return rollSessionValue(sessionId) < chance; }
+  function newEncounterSessionId(state) {
+    var g = ensureGrind(state);
+    g.seq += 1;
+    return 'gr:enc:d' + state.dayCount + ':n' + g.seq;
+  }
+  /* Đổi yêu đan -> tu vi: van xả DUY NHẤT của yêu đan (30% thanh/viên,
+     qua cửa grantReward để trần mềm ngày áp như mọi khoản cày). Kênh yêu
+     đan -> Linh Thạch CẤM vĩnh viễn: không hồ sơ nào, không đường nào
+     trong hệ đổi yêu đan ra Linh Thạch. */
+  var YEU_DAN_EXCHANGE_PCT = 30;
+  function exchangeYeuDan(state, level) {
+    var id = 'yeu_dan_' + level;
+    if (!ITEM_DEFS[id]) return { ok: false, reason: 'unknown_item' };
+    var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+    if (!cap) return { ok: false, reason: 'tuvi_cap_none' };
+    if (bagCount(state, id) < 1) return { ok: false, reason: 'no_item' };
+    var g = ensureGrind(state);
+    g.seq += 1;
+    var r = grantReward(state, { tuviPct: YEU_DAN_EXCHANGE_PCT }, { claimKey: 'gr:exc:d' + state.dayCount + ':n' + g.seq, sourceId: 'yeuDanExchange:' + level });
+    if (!r.ok) return r;
+    bagRemove(state, id, 1);
+    return { ok: true, granted: r.granted, item: id };
+  }
+
   var VSLC = {
     REALMS: REALMS, realmName: realmName,
     SILENCE_MAX: SILENCE_MAX, SILENCE_RATES: SILENCE_RATES, WORD_SKILLS: WORD_SKILLS,
@@ -1765,7 +2449,19 @@
     tileAt: tileAt, propAt: propAt, tapTargetAt: tapTargetAt, standTilesFor: standTilesFor, isWalkable: isWalkable, reachable: reachable, findPath: findPath,
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, meditateRate: meditateRate, tryBreakthrough: tryBreakthrough,
-    swordPower: swordPower, castSword: castSword,
+    swordPower: swordPower, castSword: castSword, SWORD_MOVES: SWORD_MOVES, swordMoveById: swordMoveById,
+    TECHNIQUE_DEFS: TECHNIQUE_DEFS, techniqueOf: techniqueOf, techniqueTier: techniqueTier,
+    techniqueTierUpReady: techniqueTierUpReady, techniqueGain: techniqueGain, ensureTechniques: ensureTechniques,
+    BI_TICH_POINTS: BI_TICH_POINTS, useBiTich: useBiTich,
+    GRIND_LEDGER_MAX: GRIND_LEDGER_MAX, defaultGrind: defaultGrind, ensureGrind: ensureGrind,
+    realmOrdinal: realmOrdinal, questIndexOf: questIndexOf, questReached: questReached, npcPosFor: npcPosFor,
+    grindHash32: grindHash32, grindRng: grindRng, grindPoolBase: grindPoolBase, grindSoftCapAmount: grindSoftCapAmount,
+    REWARD_PROFILES: REWARD_PROFILES, grantReward: grantReward, grindDayRollover: grindDayRollover, advanceGrindClock: advanceGrindClock,
+    MONSTER_DEFS: MONSTER_DEFS, HUNT_ZONES: HUNT_ZONES, HUNT_LAIRS: HUNT_LAIRS, BOSS_DEFS: BOSS_DEFS,
+    bossClaimKey: bossClaimKey, bossStatus: bossStatus,
+    YEU_DAN_DROP_NORMAL: YEU_DAN_DROP_NORMAL, YEU_DAN_DROP_ELITE: YEU_DAN_DROP_ELITE,
+    rollSessionValue: rollSessionValue, yeuDanDropFor: yeuDanDropFor, newEncounterSessionId: newEncounterSessionId,
+    YEU_DAN_EXCHANGE_PCT: YEU_DAN_EXCHANGE_PCT, exchangeYeuDan: exchangeYeuDan,
     chapterOfQuest: chapterOfQuest, soulServiceDue: soulServiceDue, healSoul: healSoul,
     ITEM_DEFS: ITEM_DEFS, BAG_TIERS: BAG_TIERS, bagOf: bagOf, bagCount: bagCount, bagHas: bagHas,
     bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors, storyItemsOwned: storyItemsOwned,

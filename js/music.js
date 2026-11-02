@@ -27,9 +27,19 @@
   var DUCK_AMBIENCE = 0.45;       // hệ số hạ môi trường khi thoại đang phát
   var MUSIC_DEFAULT_VOL = 0.7;    // mặc định — khớp hợp đồng cài đặt đề xuất
   var AMB_DEFAULT_VOL = 0.6;
-  var STREAM_MAX = 0.55;          // trần lớp suối (x âm lượng môi trường x khoảng cách)
-  var WIND_MAX = 0.30;            // trần lớp gió
-  var MARKET_MAX = 0.35;          // trần lớp chợ lao xao
+  /* Gói phụ 6 (Bui báo chơi thật 10:12 ngày 2026-11-02: "sau khi nói
+     chuyện xong, tiếng suối chảy rất ồn"; bản ghi của Bui đo được lớp
+     ồn nước LIÊN TỤC RMS khoảng −29,5 dB không ngắt, không nghe thấy
+     nhạc): các lớp ồn liên tục (suối/gió/chợ) vốn đặt trần 0,55/0,30/
+     0,35 nhân âm lượng môi trường 0,6 = 0,33/0,18/0,21 tuyệt đối PHÁT
+     KHÔNG NGẮT, trong khi nốt nhạc chỉ ở mức 0,055–0,075 trước bus và
+     có khoảng lặng — ồn nền nuốt hẳn nhạc, và cú thả nén sau thoại
+     (×0,45 -> ×1) làm nó nổi lên đột ngột. Hạ cả ba lớp xuống vai trò
+     nền êm dưới nhạc: suối 0,55 -> 0,20 (tuyệt đối tối đa 0,12 ở mức
+     mặc định), chợ 0,35 -> 0,16, gió 0,30 -> 0,15. */
+  var STREAM_MAX = 0.20;          // trần lớp suối (x âm lượng môi trường x khoảng cách)
+  var WIND_MAX = 0.15;            // trần lớp gió
+  var MARKET_MAX = 0.16;          // trần lớp chợ lao xao
   var PAD_LEVEL = 0.055;          // gain mỗi nốt đệm hợp âm (trước deck x bus)
   var MOTIF_LEVEL = 0.075;        // gain nốt giai điệu
   var BASS_LEVEL = 0.06;          // gain nốt trầm đầu nhịp
@@ -183,7 +193,7 @@
     co_chau: { birds: false, crickets: false, stream: false, wind: false, market: true },
     kiem_trac_thap: { birds: false, crickets: false, stream: false, wind: false, market: false },
     thap_noi: { birds: false, crickets: false, stream: false, wind: false, market: false },
-    thanh_van_tong: { birds: false, crickets: false, stream: false, wind: true, market: false },
+    thanh_van_tong: { birds: false, crickets: false, stream: true, wind: true, market: false }, // gói phụ 12: tông có thác + hồ thật ở sườn tây — tiếng nước chỉ nổi trong bán kính tiệm cận 7 ô quanh ô nước
     hb_valley: { birds: true, crickets: true, stream: true, wind: true, market: false },
     thien_co_lau: { birds: false, crickets: false, stream: false, wind: false, market: false }
   };
@@ -236,6 +246,7 @@
     musicOn: true, musicVol: MUSIC_DEFAULT_VOL,
     ambOn: true, ambVol: AMB_DEFAULT_VOL,
     proximity: 0, duck: false,
+    boss: false, nextDrumAt: 0, scheduledDrums: 0, // chế độ trận boss (làn chạm trán): hạ nhạc + trống trận
     decks: [],            // [{variant, gainNode, gain, ramp, step, nextTime, active, seed}]
     lastCrossfade: null,  // {fromVariant, toVariant, durationSec, kind}
     timer: null,
@@ -263,9 +274,10 @@
 
   /* Mức ra THUẦN (không chạm WebAudio) — nguồn sự thật cho kiểm thử và
      cho applyGains(). Trước unlock hoặc sau stop: im lặng tuyệt đối. */
+  var BOSS_MUSIC_FACTOR = 0.5;   // nhạc nền trong trận boss hạ còn một nửa (thiết kế cảm giác cày, mục boss)
   function musicBusLevel() {
     if (!S.unlocked || !S.running || S.suspended) return 0;
-    return (S.musicOn ? S.musicVol : 0) * (S.duck ? DUCK_MUSIC : 1);
+    return (S.musicOn ? S.musicVol : 0) * (S.duck ? DUCK_MUSIC : 1) * (S.boss ? BOSS_MUSIC_FACTOR : 1);
   }
   function ambBusLevel() {
     if (!S.unlocked || !S.running || S.suspended) return 0;
@@ -472,6 +484,22 @@
     }
     S.scheduledChirps++;
   }
+  /* Trống trận boss: một tiếng trống trầm mỗi giây (60 nhịp/phút) vào
+     tuyến nhạc — sine rơi 64 -> 40 Hz, biên độ vừa phải để nằm DƯỚI nhạc
+     đã hạ một nửa. Chỉ chạy khi chế độ boss bật và nhạc đang bật. */
+  function scheduleDrum(t) {
+    if (!S.ctx || !S.musicBus) return;
+    var o = S.ctx.createOscillator(), g = S.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(64, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.28);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    o.connect(g); g.connect(S.musicBus);
+    o.start(t); o.stop(t + 0.4);
+    S.scheduledDrums++;
+  }
   function schedulerTick() {
     if (!S.ctx || !S.running || S.suspended) return;
     updateDeckGains();
@@ -486,6 +514,12 @@
         d.step++;
         d.nextTime += stepDur;
       }
+    }
+    // Trống trận boss 60 nhịp/phút khi chế độ boss đang bật.
+    if (S.boss && S.musicOn) {
+      var td = nowSec();
+      if (S.nextDrumAt <= 0) S.nextDrumAt = td + 0.05;
+      while (S.nextDrumAt < horizon) { scheduleDrum(S.nextDrumAt); S.nextDrumAt += 1.0; }
     }
     // Môi trường rời rạc: chim ngày / dế đêm theo lịch riêng.
     var f = ambFlags(), t = nowSec();
@@ -590,6 +624,7 @@
     if (S.ctx && S.musicBus) rampParam(S.musicBus.gain, 0, nowSec(), STOP_FADE_SEC);
     if (S.ctx && S.ambBus) rampParam(S.ambBus.gain, 0, nowSec(), STOP_FADE_SEC);
     S.running = false;
+    S.boss = false; S.nextDrumAt = 0; // dừng máy là thoát hẳn chế độ boss — phiên sau không dính trống trận cũ
     S.decks = [];
     stopLayers();
     if (S.timer) { clearInterval(S.timer); S.timer = null; }
@@ -638,6 +673,15 @@
     applyGains();
     return getState();
   }
+  /* setBoss(on): trận boss dã ngoại — nhạc nền hạ x0,5 (musicBusLevel)
+     và trống trầm 60 nhịp/phút chạy trong bộ lập lịch. Tắt thì nhạc về
+     mức thường theo ramp sẵn có (crossfade mềm, không cắt đột ngột). */
+  function setBoss(on) {
+    S.boss = !!on;
+    if (S.boss) S.nextDrumAt = 0; // trống đầu tiên gõ ngay khi vào trận
+    applyGains();
+    return getState();
+  }
   function getState() {
     var variant = buildVariant(S.mapId, S.phase);
     return {
@@ -649,7 +693,7 @@
       variant: { id: variant.id, bpm: variant.bpm, noteCount: variant.noteCount, density: variant.density },
       musicOn: S.musicOn, musicVol: S.musicVol,
       ambienceOn: S.ambOn, ambienceVol: S.ambVol,
-      proximity: S.proximity, duck: S.duck,
+      proximity: S.proximity, duck: S.duck, boss: S.boss, scheduledDrums: S.scheduledDrums,
       effectiveMusicGain: musicBusLevel(),
       effectiveAmbienceGain: ambBusLevel(),
       streamGain: streamLevel(), windGain: windLevel(), marketGain: marketLevel(),
@@ -683,7 +727,7 @@
     /* Hằng số */
     CROSSFADE_SEC: CROSSFADE_SEC, STOP_FADE_SEC: STOP_FADE_SEC, FADE_IN_SEC: FADE_IN_SEC,
     SCHED_LOOKAHEAD_SEC: SCHED_LOOKAHEAD_SEC, SCHED_INTERVAL_MS: SCHED_INTERVAL_MS,
-    DUCK_MUSIC: DUCK_MUSIC, DUCK_AMBIENCE: DUCK_AMBIENCE,
+    DUCK_MUSIC: DUCK_MUSIC, DUCK_AMBIENCE: DUCK_AMBIENCE, BOSS_MUSIC_FACTOR: BOSS_MUSIC_FACTOR,
     STREAM_MAX: STREAM_MAX, WIND_MAX: WIND_MAX, MARKET_MAX: MARKET_MAX,
     MUSIC_DEFAULT_VOL: MUSIC_DEFAULT_VOL, AMB_DEFAULT_VOL: AMB_DEFAULT_VOL,
     MAP_IDS: MAP_IDS, TRACKS: TRACKS, AMBIENCE_DEFS: AMBIENCE_DEFS,
@@ -695,7 +739,7 @@
     /* API máy */
     unlock: unlock, resume: resume, suspend: suspend, stop: stop,
     setScene: setScene, setMusic: setMusic, setAmbience: setAmbience,
-    setProximity: setProximity, setDuck: setDuck,
+    setProximity: setProximity, setDuck: setDuck, setBoss: setBoss,
     getState: getState,
     _tick: schedulerTick /* móc kiểm thử: chạy một vòng lập lịch bằng tay */
   };

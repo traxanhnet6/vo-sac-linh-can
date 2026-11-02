@@ -58,7 +58,7 @@
         <div class="hud-name" id="hud-name">Giang Phàm</div>
         <div class="hud-realm" id="hud-realm">Phàm Nhân</div>
         <div class="bar-row"><span>HP</span>
-          <div class="bar"><div id="hud-hp-bar" class="bar-fill hp"></div></div>
+          <div class="bar"><div id="hud-hp-ghost"></div><div id="hud-hp-bar" class="bar-fill hp"></div></div>
           <b id="hud-hp">100 / 100</b>
         </div>
         <div class="bar-row"><span>Tu vi</span>
@@ -102,6 +102,22 @@
       <button id="quest-nav-btn" type="button">Tự tìm đường</button>
     </div>
     <button id="quest-tab" type="button" class="hidden">! Nhiệm vụ</button>
+
+    <!-- Băng rôn boss dã ngoại (làn chạm trán): phần tử NGOÀI canvas theo
+         thiết kế cảm giác cày — tên + danh xưng hiện 2,2 giây rồi thu về
+         thanh máu boss gọn cho tới hết trận. -->
+    <div id="boss-banner" class="hidden">
+      <div id="boss-name"></div>
+      <div id="boss-title"></div>
+      <div class="boss-bar"><div id="boss-hp-fill"></div></div>
+      <div id="boss-phase"></div>
+    </div>
+
+    <!-- Đếm liên trảm (trình bày thuần, không thưởng) + nhãn vật phẩm rơi
+         đậu vào túi + tổng kết phiên săn trong bộ nhớ. -->
+    <div id="combo-box" class="hidden">Liên trảm ×<span id="combo-n">0</span></div>
+    <div id="drop-label" class="hidden"></div>
+    <div id="hunt-summary" class="hidden"></div>
 
     <!-- Thanh kỹ năng gọn ở góc dưới phải: một hàng 5 nút -->
     <div id="skillbar">
@@ -203,9 +219,11 @@
     </div>
     <button id="settings-tab" type="button" class="hidden">Cài đặt</button>
 
+    <div id="atk-panel" style="display:none"><img id="atk-panel-img" src="assets/panels/atk_gate.png" alt="Tranh phân cảnh: cổng phủ Hứa trong đêm bị tấn công"></div>
+    <div id="tl-sub" class="hidden"></div>
     <div id="dialogue" class="hidden">
       <div id="dlg-result" class="hidden"><span id="dlg-result-name"></span><span id="dlg-result-grade"></span></div>
-      <div id="dlg-name"></div>
+      <div id="dlg-head"><img id="dlg-portrait" class="hidden" alt=""><div id="dlg-name"></div></div>
       <div id="dlg-text"></div>
       <div id="dlg-choices"></div>
       <div class="dlg-next">E / Space / bấm để tiếp ▸</div>

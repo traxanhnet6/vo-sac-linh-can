@@ -56,11 +56,58 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .bar-row { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-bottom: 3px; }
 .bar-row span { width: 44px; color: #d8c9a3; }
 .bar-row b { min-width: 50px; font-weight: normal; color: #f0e8d2; font-size: 11px; }
-.bar { flex: 1; height: 7px; background: #171208; border: 1px solid #5d4a26; border-radius: 4px; overflow: hidden; }
-.bar-fill { height: 100%; width: 0%; transition: width 0.25s; }
+.bar { flex: 1; height: 7px; background: #171208; border: 1px solid #5d4a26; border-radius: 4px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; width: 0%; transition: width 0.25s; position: relative; z-index: 2; }
 .bar-fill.hp { background: linear-gradient(90deg, #a03a30, #e0704e); }
 .bar-fill.tuvi { background: linear-gradient(90deg, #4e7fa0, #7fb2d9); }
 .bar-fill.silence { background: linear-gradient(90deg, #c9a227, #f3d94e); }
+/* "Máu ma": vệt sáng nằm dưới thanh máu thật, rút chậm hơn 500ms sau mỗi
+   lần mất máu để mắt đọc được lượng vừa mất (cảm giác cày GF-05). */
+#hud-hp-ghost { position: absolute; top: 0; left: 0; height: 100%; width: 0%; z-index: 1;
+  background: rgba(255, 176, 166, 0.75); }
+/* Thanh tu vi chớp sáng khi tinh tu vi bay về / qua mốc phần tư (GF-07). */
+.bar-flash { filter: brightness(1.65); }
+
+/* Băng rôn boss dã ngoại: giữa-trên khung game, mờ vào/ra 300ms; khi thu
+   gọn chỉ còn tên nhỏ + thanh máu boss (lớp .compact do engine gắn). */
+#boss-banner { position: absolute; top: 54px; left: 50%; transform: translateX(-50%); z-index: 6;
+  min-width: 260px; max-width: 72%; text-align: center; pointer-events: none;
+  background: rgba(24, 14, 8, 0.78); border: 1px solid #a8832f; border-radius: 10px;
+  padding: 8px 18px 10px; opacity: 1; transition: opacity 0.3s; }
+#boss-banner.fading { opacity: 0; }
+#boss-name { font-size: 19px; font-weight: bold; color: #ffd98a; letter-spacing: 1px; }
+#boss-title { font-size: 12px; color: #e8dcc0; margin: 1px 0 6px; }
+#boss-banner.compact { padding: 5px 14px 7px; }
+#boss-banner.compact #boss-name { font-size: 13px; }
+#boss-banner.compact #boss-title, #boss-banner.compact #boss-phase { display: none; }
+.boss-bar { height: 8px; background: #171208; border: 1px solid #77683c; border-radius: 4px; overflow: hidden; }
+#boss-hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #8e2f24, #d8552f); transition: width 0.18s; }
+#boss-hp-fill.phase-flash { filter: brightness(1.8); }
+#boss-phase { font-size: 11.5px; color: #ffb27a; margin-top: 3px; min-height: 14px; }
+
+/* Liên trảm: góc dưới trái vùng chiến đấu; 2 giây cuối cửa sổ thì nhấp nháy. */
+#combo-box { position: absolute; left: 16px; bottom: 118px; z-index: 6; pointer-events: none;
+  font-size: 17px; font-weight: bold; color: #ffd94e; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+#combo-box.warn { animation: comboBlink 0.4s steps(2) infinite; }
+@keyframes comboBlink { 50% { opacity: 0.25; } }
+
+/* Nhãn tên vật phẩm khi rơi đậu vào túi (hiện 1,2 giây cạnh nút Túi). */
+#drop-label { position: absolute; right: 14px; top: 118px; z-index: 6; pointer-events: none;
+  font-size: 11px; color: #ffe9a8; background: rgba(24, 18, 8, 0.82); border: 1px solid #77683c;
+  border-radius: 6px; padding: 3px 8px; }
+
+/* Tổng kết phiên săn (chỉ trong bộ nhớ): thẻ giữa-dưới, tự đóng khi đi. */
+#hunt-summary { position: absolute; left: 50%; bottom: 108px; transform: translateX(-50%); z-index: 6;
+  pointer-events: none; text-align: center; font-size: 13px; line-height: 1.5; color: #f0e8d2;
+  background: rgba(20, 16, 8, 0.85); border: 1px solid #77683c; border-radius: 10px; padding: 8px 16px; }
+#hunt-summary .hs-title { color: #ffd94e; font-weight: bold; }
+
+/* Nút Dùng trong ô vật phẩm túi (đổi yêu đan, đọc bí tịch). */
+.bag-use { margin-top: 3px; font-size: 10px; padding: 2px 8px; border-radius: 5px; cursor: pointer;
+  background: #4a3a1c; color: #ffe9a8; border: 1px solid #a8832f; }
+.bag-use:hover { background: #5d4a26; }
+#btn-bag.bag-bounce { animation: bagBounce 0.22s ease-out; }
+@keyframes bagBounce { 40% { transform: scale(1.18); } }
 
 /* Hàng nút chức năng phía trên giữa */
 #func-row { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 4;
@@ -119,12 +166,37 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 #dialogue { position: absolute; left: 2%; right: 2%; bottom: 8px; z-index: 5; max-height: 32dvh; overflow-y: auto;
   background: rgba(16, 19, 15, 0.94); border: 1px solid #77683c; border-radius: 8px;
   padding: 10px 14px 7px; cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+/* Tranh phân cảnh (gói phụ 8): khung tranh nổi giữa-trên khung game,
+   hiện cùng dòng lời kể của nhịp không diễn được trên bản đồ; không
+   chặn chạm (pointer-events: none) và nhường diện tích cho khung game. */
+#atk-panel { position: absolute; left: 50%; top: 9%; transform: translateX(-50%); z-index: 4;
+  width: min(540px, 88%); pointer-events: none;
+  border: 1px solid #77683c; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.62); }
+#atk-panel img { display: block; width: 100%; height: auto; }
+/* Phụ đề giữa trận của ải Thăng Long (gói phụ 13): lời dẫn gốc hiện
+   thành dòng chữ giữa-dưới khung game trong lúc trận chạy, không mở hộp
+   thoại dừng trận; không chặn chạm. */
+#tl-sub { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); z-index: 5;
+  width: min(620px, 92%); pointer-events: none; text-align: center;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(190,170,110,0.55);
+  background: rgba(12,14,20,0.78); color: #f2ead2; font-size: 15px; line-height: 1.45;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 #dlg-result { text-align: center; margin-bottom: 6px; padding: 5px 8px; border-radius: 8px; background: rgba(0,0,0,0.35); }
 #dlg-result-name { display: block; font-size: 13px; letter-spacing: 2px; color: #cfc4a5; text-transform: uppercase; }
 #dlg-result-grade { display: block; font-size: 21px; font-weight: bold; line-height: 1.25; }
 #dlg-result.tone-gold #dlg-result-grade { color: #ffd94e; text-shadow: 0 0 14px rgba(255,217,78,0.65); }
 #dlg-result.tone-dim #dlg-result-grade { color: #9a958a; }
 #dlg-name { color: #ffd94e; font-size: 14.5px; font-weight: bold; margin-bottom: 4px; min-height: 17px; }
+/* Gói phụ 4 (lệnh Bui 10:02 ngày 2026-11-02): chân dung người nói ở phía
+   trên câu thoại, cạnh tên người nói. Kích thước khiêm tốn 64px (56px ở
+   màn hẹp) để nhường diện tích cho khung game; lời dẫn không người nói
+   thì ảnh ẩn hẳn, hàng đầu thu về hàng tên như cũ. */
+#dlg-head { display: flex; align-items: center; gap: 10px; }
+#dlg-head #dlg-name { margin-bottom: 0; }
+#dlg-portrait { width: 64px; height: 64px; flex: 0 0 auto; object-fit: cover; border-radius: 10px; border: 2px solid rgba(255, 217, 78, 0.55); background: #efe3c2; }
+#dlg-portrait.hidden { display: none; }
+@media (max-width: 560px) { #dlg-portrait { width: 56px; height: 56px; } }
 #dlg-text { font-size: 15.5px; line-height: 1.55; color: #f0e8d2; white-space: pre-wrap; }
 #dialogue.dlg-write { background: rgba(238, 230, 205, 0.97); }
 #dialogue.dlg-write #dlg-text { color: #33302a; font-style: italic; }

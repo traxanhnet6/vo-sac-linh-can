@@ -190,7 +190,12 @@
     { who: 'anh_phung', text: 'U Nhàn, im ngay! Hôn sự này, Hứa gia ta không gả nữa! Một tên câm phế căn, đừng hòng bước qua cửa nhà ta!' },
     { who: 'narrate', text: 'Mười tám năm. Mười tám năm ngươi chưa từng cất tiếng. Trong ngực, có thứ gì đó tích lũy mười tám năm đang sôi lên — chỉ chờ một lời.' },
     {
-      who: 'choice', text: 'Ngươi sẽ…',
+      // commitTest: tới dòng này là phần ĐO đã khép (cả hai kết quả đã
+      // công bố) — engine ghi cờ tested + tiến nhiệm vụ ngay khi dòng
+      // lựa chọn HIỆN, vì lựa chọn thuộc nhịp nhiệm vụ kế tiếp (q_voice)
+      // và nhánh được chọn sẽ thay hàng đợi thoại bằng cảnh riêng. Thoát
+      // TRƯỚC dòng này (giữa phần đo) thì cảnh chưa tính là xong.
+      who: 'choice', text: 'Ngươi sẽ…', commitTest: true,
       options: [
         { label: 'Viết chữ đáp lại (tiếp tục im lặng)', action: 'write' },
         { label: '[Mở miệng] "…Đủ rồi."', action: 'voice' }
