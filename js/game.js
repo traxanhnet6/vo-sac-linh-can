@@ -515,7 +515,10 @@
     'tree_big', 'tree_mid', 'tree_small', 'sakura_big',
     'grass_clump', 'flower_bush', 'reeds', 'lantern2', 'lantern_low', 'stele_small', 'signpost',
     'fence_post', 'bench_stone', 'table_stone', 'stone_platform', 'flower_pot', 'jar_big', 'basket',
-    'bones', 'stake_cluster'];
+    'bones', 'stake_cluster',
+    /* Đợt làm giàu hình ảnh tông môn + gói phụ bàn trà (02/11): trụ và
+       xà cổng sơn môn, lư hương đại điện, đôn đá bàn trà. */
+    'gate_pillar', 'gate_beam', 'lu_huong', 'tea_stool'];
   var ASSETS = { bgByMap: {}, chars: {}, portraits: {}, props: {}, mons: {}, monsWhite: {}, monsBad: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
@@ -635,7 +638,7 @@
   function resetJoy() {
     joy.state = 'idle'; joy.id = null; joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
   }
-  var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1, tree2: 1, pine2: 1, tree_sakura: 1, tree_big: 1, tree_mid: 1, tree_small: 1, sakura_big: 1 };
+  var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1, tree2: 1, pine2: 1, tree_sakura: 1, tree_big: 1, tree_mid: 1, tree_small: 1, sakura_big: 1, gate_pillar: 1, gate_beam: 1 };
   // Vật thể trang trí thị giác: CHỈ vẽ, không vào logic, không chặn đường.
   // PHẢI GIỮ ĐỒNG BỘ với VISUAL_DECOR trong tools/dump-scene.js.
   var VISUAL_DECOR = [
@@ -1137,8 +1140,15 @@
         var ca = CLOUD_SEA[ci];
         var cxx = ca[0] * TILE + 16 + Math.sin(tNow / 9000 + ci * 1.7) * 14;
         var cyy = ca[1] * TILE + 16 + Math.cos(tNow / 11000 + ci * 2.3) * 6;
+        // Lớp đệm mây rộng và mờ dưới các cụm chính (đợt làm giàu
+        // hình tông môn 02/11): hõm mây đọc thành một biển liền mạch
+        // thay vì ba vệt rời; alpha vẫn giữ thấp để không che lối đi.
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        ctx.beginPath();
+        ctx.ellipse(cxx, cyy + 2, 84, 21, 0, 0, Math.PI * 2);
+        ctx.fill();
         for (var cj = 0; cj < 3; cj++) {
-          ctx.fillStyle = 'rgba(255,255,255,' + (0.13 + cj * 0.05) + ')';
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.15 + cj * 0.05) + ')';
           ctx.beginPath();
           ctx.ellipse(cxx + (cj - 1) * 26, cyy + (cj % 2) * 7 - 3, 44 - cj * 8, 13 - cj * 2, 0, 0, Math.PI * 2);
           ctx.fill();

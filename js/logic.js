@@ -761,6 +761,8 @@
          trên sân đá hàng 32, không đè ô NPC/cổng/vùng kích hoạt cảnh. */
       { id: 'ban_tra_phu_a', type: 'table_stone', x: 18, y: 32, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân phủ' },
       { id: 'ban_tra_phu_b', type: 'table_stone', x: 19, y: 32, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân phủ' },
+      { id: 'don_tra_phu_a', type: 'tea_stool', x: 18, y: 33, w: 1, h: 1, fx: 1, fy: 1, name: 'Đôn đá bàn trà' },
+      { id: 'don_tra_phu_b', type: 'tea_stool', x: 19, y: 33, w: 1, h: 1, fx: 1, fy: 1, name: 'Đôn đá bàn trà' },
       { id: 'phu_tran', type: 'house_big', x: 80, y: 7, w: 8, h: 5, fx: 8, fy: 2, name: 'Trần Gia Đại Trạch' },
       { id: 'thien_co', type: 'inn', x: 58, y: 62, w: 6, h: 4, fx: 6, fy: 1, name: 'Thiên Cơ Các Phân Đà' },
       { id: 'khach_diem', type: 'inn', x: 67, y: 23, w: 6, h: 4, fx: 6, fy: 1, name: 'Vọng Châu Khách Điếm' },
@@ -908,7 +910,7 @@
   }
   var SECT_GRID = buildSectGrid();
   var SECT_SIGNS = [
-    { x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' },
+    { x: 95, y: 64, text: 'Khu Tạp Dịch' },
     { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' },
     { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }
   ];
@@ -940,8 +942,8 @@
       // Gói phụ 12: sơn môn ở chân núi nam — hai bia đá ôm điểm rơi vào
       // (61,88), hai đèn đá ôm dải cổng về thành (59–64,91); đèn đá hai
       // đầu Đài Thăng Long; thông tay trên mỏm đá khô cao.
-      { id: 'son_mon_bia_a', type: 'stele', x: 56, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Sơn Môn Thanh Vân' },
-      { id: 'son_mon_bia_b', type: 'stele', x: 65, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Sơn Môn Thanh Vân' },
+      { id: 'son_mon_bia_a', type: 'gate_pillar', x: 56, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Trụ Sơn Môn Thanh Vân' },
+      { id: 'son_mon_bia_b', type: 'gate_pillar', x: 65, y: 87, w: 2, h: 2, fx: 2, fy: 1, name: 'Trụ Sơn Môn Thanh Vân' },
       { id: 'den_son_mon_a', type: 'lantern', x: 58, y: 89, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_son_mon_b', type: 'lantern', x: 64, y: 89, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_thang_long_a', type: 'lantern', x: 11, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
@@ -981,7 +983,35 @@
       { id: 'cayv_s_lon_90_27', type: 'tree_big', x: 90, y: 27, w: 2, h: 3, fx: 2, fy: 1 },
       { id: 'cayv_s_dao_88_20', type: 'sakura_big', x: 88, y: 20, w: 2, h: 3, fx: 2, fy: 1 }
     ];
-    return allS.concat(accentS).concat(anchorS);
+    // Đợt làm giàu hình ảnh tông môn (02/11): lớp TRÌNH DIỄN đặt tay —
+    // chỉ thêm vật trang trí, không đổi bất kỳ tọa độ chức năng nào.
+    // Xà cổng sơn môn bắc qua hai trụ tại (56,87)/(65,87) (không chặn
+    // đường trong engine: fx 0); lư hương + đèn đá + thông cổ thụ làm
+    // trang nghiêm thềm đại điện; thông mỏm đá ôm hai đài cao; đèn đá
+    // và cây tán lớn cho quảng trường, sân đáp và khu tạp dịch.
+    var visualS = [
+      { id: 'cong_son_mon_xa', type: 'gate_beam', x: 60, y: 85, w: 3, h: 3, fx: 0, fy: 1, name: 'Xà Cổng Sơn Môn Thanh Vân' },
+      { id: 'lu_huong_dai_dien_a', type: 'lu_huong', x: 57, y: 25, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đại Điện' },
+      { id: 'lu_huong_dai_dien_b', type: 'lu_huong', x: 64, y: 25, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đại Điện' },
+      { id: 'den_truc_dai_dien_a', type: 'lantern', x: 58, y: 28, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_truc_dai_dien_b', type: 'lantern', x: 65, y: 28, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'thong_co_dai_dien_a', type: 'pine2', x: 53, y: 20, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Cổ Thụ Đại Điện' },
+      { id: 'thong_co_dai_dien_b', type: 'pine2', x: 67, y: 20, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Cổ Thụ Đại Điện' },
+      { id: 'thong_mom_thang_long_a', type: 'pine', x: 4, y: 9, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Mỏm Đá' },
+      { id: 'thong_mom_thang_long_b', type: 'pine', x: 26, y: 9, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Mỏm Đá' },
+      { id: 'da_chan_bac_thang_long', type: 'rock_l_a', x: 5, y: 16, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_nguon_thac', type: 'rock_l_b', x: 25, y: 17, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'thong_co_dai_tc_a', type: 'pine2', x: 52, y: 10, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Cổ Thụ Đài Trúc Cơ' },
+      { id: 'thong_co_dai_tc_b', type: 'pine2', x: 70, y: 10, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Cổ Thụ Đài Trúc Cơ' },
+      { id: 'den_quang_truong_a', type: 'lantern', x: 57, y: 57, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_quang_truong_b', type: 'lantern', x: 66, y: 57, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cay_lon_quang_truong_a', type: 'tree_big', x: 45, y: 66, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'cay_lon_quang_truong_b', type: 'tree_big', x: 78, y: 66, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'cay_lon_san_vao', type: 'tree_big', x: 47, y: 81, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'dao_san_vao', type: 'sakura_big', x: 75, y: 81, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'dao_tap_dich', type: 'sakura_big', x: 111, y: 66, w: 2, h: 3, fx: 2, fy: 1 }
+    ];
+    return allS.concat(accentS).concat(anchorS).concat(visualS);
   })();
 
   /* ---- Thung Lũng Hồi Phong 96x74 (phần 3, chương 9 + 11) ----
@@ -1208,7 +1238,10 @@
     thanh_van_tong: {
       name: 'Thanh Vân Tông', w: 124, h: 92, grid: SECT_GRID, props: SECT_PROPS, npcs: SECT_NPCS,
       meditate: { x: 31, y: 61 },
-      signs: [{ x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }],
+      // Biển tên tại (58,87) đã gỡ ở đợt làm giàu hình ảnh tông môn:
+      // trụ cổng sơn môn mới che khuất nó, và tên tông môn nay nằm trên
+      // bảng chữ của xà cổng (prop gate_beam) — giữ một nguồn tên duy nhất.
+      signs: [{ x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }],
       portals: [
         { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' },
         { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' }
