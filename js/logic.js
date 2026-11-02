@@ -34,7 +34,13 @@
   };
   var WORD_SKILLS = [
     { id: 'pha', word: 'PHÁ', cost: 30, basePower: 10, unlock: 'voice' },
-    { id: 'chan', word: 'CHẤN', cost: 50, basePower: 26, unlock: 'luyenkhi1' }
+    { id: 'chan', word: 'CHẤN', cost: 50, basePower: 26, unlock: 'luyenkhi1' },
+    /* LỆNH — bậc cao của Ngôn Linh, chỉ mở khi Kết Đan (phần 3, chương 12):
+       ĐỊNH định thân giữ địch một nhịp, PHONG phong ấn hai nhịp. Khóa mở
+       'kimdan' chỉ được cấp tại MỘT điểm duy nhất: tryBreakthrough khi đạt
+       Kim Đan Sơ Kỳ (và hồi tố trong normalizeSave cho save đã qua mốc). */
+    { id: 'dinh', word: 'ĐỊNH', cost: 60, basePower: 20, unlock: 'kimdan' },
+    { id: 'phong', word: 'PHONG', cost: 80, basePower: 34, unlock: 'kimdan' }
   ];
   function silenceGain(mode, seconds, cur) {
     var rate = SILENCE_RATES[mode] || 0;
@@ -544,7 +550,8 @@
     { id: 'tap_dich_truong', name: 'Quản Sự Tạp Dịch', look: 'villager_old', x: 97, y: 68, dir: 'down' },
     { id: 'de_tu_a', name: 'Đệ Tử Trần Văn', look: 'villager_m', x: 57, y: 62, dir: 'right' },
     { id: 'de_tu_b', name: 'Đệ Tử Triệu Minh', look: 'player_nam', x: 67, y: 60, dir: 'left' },
-    { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' }
+    { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' },
+    { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 64, y: 29, dir: 'left' }
   ];
 
   /* ---------------- Bản đồ phần 2 (docs/part2-design.md mục 2) ---------------- */
@@ -642,7 +649,8 @@
     { id: 'duoc_su', name: 'Dược Sư Hồi Xuân', look: 'villager_f', x: 45, y: 51, dir: 'down' },
     { id: 'phap_khi_chu', name: 'Chủ Tụ Bảo Các', look: 'villager_m', x: 58, y: 51, dir: 'down' },
     { id: 'dan_thanh_a', name: 'Dân thành', look: 'villager_m', x: 49, y: 28, dir: 'down' },
-    { id: 'dan_thanh_b', name: 'Dân thành', look: 'villager_f', x: 60, y: 50, dir: 'left' }
+    { id: 'dan_thanh_b', name: 'Dân thành', look: 'villager_f', x: 60, y: 50, dir: 'left' },
+    { id: 'gia_nhan', name: 'Gia Nhân Hứa Gia', look: 'villager_m', x: 18, y: 38, dir: 'down' }
   ];
   var CITY_PROPS = (function () {
     var props = [
@@ -763,7 +771,9 @@
     { id: 'tap_dich_truong', name: 'Quản Sự Tạp Dịch', look: 'villager_old', x: 97, y: 68, dir: 'down' },
     { id: 'de_tu_a', name: 'Đệ tử Thanh Vân', look: 'villager_m', x: 57, y: 62, dir: 'right' },
     { id: 'de_tu_b', name: 'Đệ tử Thanh Vân', look: 'player_nam', x: 67, y: 60, dir: 'left' },
-    { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' }
+    { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' },
+    { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 64, y: 29, dir: 'left' },
+    { id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 57, y: 29, dir: 'right' }
   ];
   var SECT_PROPS = (function () {
     var props = [
@@ -780,6 +790,7 @@
       { id: 'den_dai_tc_a', type: 'lantern', x: 53, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_dai_tc_b', type: 'lantern', x: 69, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'linh_chi', type: 'sacks', x: 100, y: 13, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Linh Chi Sau Núi', interact: true },
+      { id: 'vuon_duoc', type: 'sacks', x: 104, y: 16, w: 2, h: 2, fx: 2, fy: 1, name: 'Vườn Dược Sau Núi', interact: true },
       { id: 'tap_dich_a', type: 'house', x: 90, y: 60, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà Tạp Dịch' },
       { id: 'tap_dich_b', type: 'house_b', x: 102, y: 60, w: 5, h: 3, fx: 5, fy: 1, name: 'Nhà Tạp Dịch' },
       { id: 'viec_go', type: 'woodpile', x: 95, y: 70, w: 2, h: 2, fx: 2, fy: 1, name: 'Đống Củi Cần Bổ', interact: true },
@@ -792,6 +803,163 @@
     var forest = { x0: 84, y0: 3, x1: 119, y1: 30 };
     return props.concat(scatterTrees(SECT_GRID, SECT_W, SECT_H, 'cay_s', 37, forest, 6, makeAvoid(pts, rects)));
   })();
+
+  /* ---- Thung Lũng Hồi Phong 96x74 (phần 3, chương 9 + 11) ----
+     Trục nam -> bắc một tuyến: cổng nam về tông -> bãi đáp (anh đào cổ thụ
+     là điểm đặt chân) -> đồng hoa dọc suối -> một điểm qua suối -> miệng
+     hẻm -> hành lang hẻm giữa hai vách đá -> bãi trống bắc (điểm hái dược
+     dẫn Kết Đan của chương 11 ở rìa đông bãi). */
+  var VALLEY_W = 96, VALLEY_H = 74;
+  function buildValleyGrid() {
+    var g = blankGrid(VALLEY_W, VALLEY_H);
+    rectCh(g, 40, 64, 57, 72, 'S');         // bãi đáp đầu thung lũng
+    rectCh(g, 46, 73, 49, 73, 'G');         // cổng nam (về Thanh Vân Tông)
+    rectCh(g, 6, 40, 90, 43, ',');          // đồng hoa bờ nam suối
+    rectCh(g, 6, 46, 90, 49, ',');          // đồng hoa bờ bắc suối
+    rectCh(g, 1, 44, 94, 45, 'W');          // suối cắt ngang nửa nam
+    rectCh(g, 47, 43, 50, 43, 'w'); rectCh(g, 47, 46, 50, 46, 'w'); // bờ cát quanh điểm qua
+    rectCh(g, 48, 43, 49, 46, 'D');         // điểm qua suối (đoạn cạn) — điểm qua DUY NHẤT
+    rectCh(g, 48, 47, 49, 72, 'D');         // đường bãi đáp -> điểm qua suối
+    rectCh(g, 48, 22, 49, 42, 'D');         // đường bờ bắc suối -> miệng hẻm
+    rectCh(g, 46, 18, 53, 41, 'S');         // hành lang hẻm (sàn đá)
+    rectCh(g, 44, 39, 55, 41, 'S');         // miệng hẻm loe rộng
+    rectCh(g, 40, 18, 45, 41, 'X');         // vách đá tây
+    rectCh(g, 54, 18, 59, 41, 'X');         // vách đá đông
+    rectCh(g, 34, 4, 65, 19, 'S');          // vành bãi trống bắc
+    rectCh(g, 36, 6, 62, 17, 'P');          // bãi trống bắc
+    return gridStrings(g);
+  }
+  var VALLEY_GRID = buildValleyGrid();
+  var VALLEY_SIGNS = [
+    { x: 44, y: 69, text: 'Thung Lũng Hồi Phong' }, { x: 51, y: 21, text: 'Hẻm Hồi Phong' }
+  ];
+  var VALLEY_NPCS = [
+    { id: 'de_tu_ho_tong', name: 'Đệ Tử Hộ Tống', look: 'villager_m', x: 52, y: 66, dir: 'down' },
+    { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 54, y: 63, dir: 'left' },
+    { id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 43, y: 60, dir: 'right' },
+    { id: 'chinh_ngon', name: 'Hứa Chính Ngôn', look: 'chinh_ngon', x: 52, y: 59, dir: 'down' },
+    { id: 'gia_nhan', name: 'Gia Nhân Hứa Gia', look: 'villager_m', x: 49, y: 62, dir: 'down' },
+    { id: 'huyet_de', name: 'Đệ Tử Huyết Bạc Bị Trói', look: 'villager_m', x: 41, y: 66, dir: 'down' },
+    { id: 'mo_cuu_u', name: 'Người Lạ Dưới Gốc Anh Đào', look: 'luc_tranh', x: 43, y: 55, dir: 'down' },
+    { id: 'tran_tu_linh', name: 'Trần Tư Linh', look: 'tu_linh', x: 56, y: 60, dir: 'left' }
+  ];
+  // Rải cây cho thung lũng: dùng thêm hai loại cây mới của thư viện vật thể
+  // (tree2, pine2) bên cạnh cây cũ; bụi cây đặt tay ở phần vật thể tĩnh.
+  function scatterValleyTrees(grid, w, h, avoid) {
+    var props = [], types = ['tree', 'pine', 'tree2', 'pine2'];
+    for (var y = 2; y < h - 2; y++) for (var x = 2; x < w - 2; x++) {
+      var top = grid[y].charAt(x), foot = grid[y + 1].charAt(x);
+      if ((top !== '.' && top !== ',') || (foot !== '.' && foot !== ',')) continue;
+      if (avoid && (avoid(x, y) || avoid(x, y + 1))) continue;
+      var hh = hashRoad(x, y);
+      var inMeadow = (y >= 38 && y <= 51);
+      if (hh % (inMeadow ? 61 : 13) !== 0) continue;
+      props.push({ id: 'cay_v' + x + '_' + y, type: types[hh % 4], x: x, y: y, w: 1, h: 2, fx: 1, fy: 1 });
+    }
+    return props;
+  }
+  var VALLEY_PROPS = (function () {
+    var props = [
+      { id: 'cong_hb', type: 'gate', x: 44, y: 70, w: 3, h: 2, fx: 3, fy: 1, name: 'Cổng Vào Thung Lũng' },
+      { id: 'bia_hb', type: 'stele', x: 52, y: 68, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Tên Thung Lũng' },
+      { id: 'bia_hb_nho', type: 'stele_small', x: 55, y: 69, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Nhỏ Khắc Năm Tháng' },
+      { id: 'anh_dao_co', type: 'tree_sakura', x: 45, y: 55, w: 1, h: 2, fx: 1, fy: 1, name: 'Anh Đào Cổ Thụ' },
+      { id: 'vet_tich_hb', type: 'sacks', x: 47, y: 57, w: 2, h: 2, fx: 2, fy: 1, name: 'Dấu Vết Dưới Gốc Anh Đào', interact: true },
+      { id: 'duoc_dan_diem', type: 'sacks', x: 59, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Dược Dẫn Kết Đan', interact: true },
+      { id: 'den_hem_a', type: 'lantern2', x: 46, y: 36, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Bên Hẻm' },
+      { id: 'den_hem_b', type: 'lantern2', x: 53, y: 30, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Bên Hẻm' },
+      { id: 'den_hem_c', type: 'lantern2', x: 46, y: 24, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Bên Hẻm' },
+      { id: 'lau_say_a', type: 'reeds', x: 40, y: 43, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'lau_say_b', type: 'reeds', x: 58, y: 46, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'lau_say_c', type: 'reeds', x: 44, y: 46, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_chan_a', type: 'rock_l_a', x: 37, y: 30, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_chan_b', type: 'rock_l_b', x: 61, y: 34, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_chan_c', type: 'rock_m', x: 42, y: 20, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_chan_d', type: 'rock_m', x: 57, y: 40, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'xuong_hem', type: 'bones', x: 50, y: 28, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'xuong_bac', type: 'bones', x: 44, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'coc_can', type: 'stake_cluster', x: 53, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hang_rao_a', type: 'fence_post', x: 41, y: 65, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hang_rao_b', type: 'fence_post', x: 56, y: 65, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'ghe_da_hb', type: 'bench_stone', x: 42, y: 63, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bien_chi_hb', type: 'signpost', x: 51, y: 63, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_buoi_a', type: 'flower_bush', x: 30, y: 42, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_buoi_b', type: 'flower_bush', x: 66, y: 47, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'co_cum_a', type: 'grass_clump', x: 24, y: 48, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'co_cum_b', type: 'grass_clump', x: 72, y: 41, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bui_hb_a', type: 'bush1', x: 36, y: 60, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bui_hb_b', type: 'bush2', x: 60, y: 58, w: 1, h: 1, fx: 1, fy: 1 }
+    ];
+    var pts = [{ x: 49, y: 71, r: 3 }, { x: 49, y: 42, r: 3 }, { x: 49, y: 45, r: 3 }]
+      .concat(npcPoints(VALLEY_NPCS)).concat(signPoints(VALLEY_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 44, y: 16, w: 14, h: 58, pad: 1 },   // hành lang hẻm + đường trục + bãi bắc: không mọc cây
+      { x: 38, y: 62, w: 22, h: 11, pad: 1 }    // bãi đáp: không mọc cây
+    ]);
+    return props.concat(scatterValleyTrees(VALLEY_GRID, VALLEY_W, VALLEY_H, makeAvoid(pts, rects)));
+  })();
+
+  /* ---- Tĩnh Quan Lâu 64x48 (phần 3, chương 10) ----
+     Nội thất lớn của Thiên Cơ Các: phòng kín phía bắc (nơi thẩm vấn), sảnh
+     chính ở giữa, phòng kho phía tây, hành lang phía nam và sân sau là vùng
+     cỏ duy nhất của bản đồ. */
+  var LOU_W = 64, LOU_H = 48;
+  function buildLouGrid() {
+    var g = blankGrid(LOU_W, LOU_H);
+    rectCh(g, 1, 1, 62, 46, 'S');           // sàn toàn lầu
+    rectCh(g, 1, 1, 23, 11, 'X');           // khối kín tây bắc (phòng không vào được)
+    rectCh(g, 40, 1, 62, 11, 'X');          // khối kín đông bắc
+    rectCh(g, 24, 2, 39, 11, 'S');          // phòng kín phía bắc
+    rectCh(g, 29, 5, 34, 9, 'P');           // vùng đứng thẩm vấn trong phòng kín
+    rectCh(g, 1, 12, 62, 12, 'X');          // vách ngang dưới phòng kín
+    rectCh(g, 30, 12, 33, 12, 'S');         // cửa phòng kín
+    rectCh(g, 22, 13, 41, 33, 'P');         // sảnh chính
+    rectCh(g, 20, 13, 21, 33, 'X');         // vách tây sảnh
+    rectCh(g, 20, 22, 21, 23, 'S');         // cửa phòng kho
+    rectCh(g, 42, 13, 43, 33, 'X');         // vách đông sảnh
+    rectCh(g, 42, 22, 43, 23, 'S');         // cửa phòng khách chờ
+    rectCh(g, 1, 40, 62, 40, 'X');          // vách ngang trên sân sau
+    rectCh(g, 30, 40, 33, 47, 'D');         // lối ra sân sau + cổng về thành
+    rectCh(g, 1, 41, 29, 46, '.');          // sân sau phía tây
+    rectCh(g, 34, 41, 62, 46, '.');         // sân sau phía đông
+    rectCh(g, 14, 42, 22, 45, ',');         // thảm hoa sân sau tây
+    rectCh(g, 42, 42, 50, 45, ',');         // thảm hoa sân sau đông
+    rectCh(g, 30, 47, 33, 47, 'G');         // cổng nam (về Cô Châu Thành)
+    return gridStrings(g);
+  }
+  var LOU_GRID = buildLouGrid();
+  var LOU_SIGNS = [{ x: 35, y: 38, text: 'Tĩnh Quan Lâu' }];
+  var LOU_NPCS = [
+    { id: 'tiep_khach', name: 'Người Tiếp Khách Phân Đà', look: 'villager_f', x: 28, y: 30, dir: 'down' },
+    { id: 'bach_kinh_duong', name: 'Bạch Kính Đường', look: 'elder', x: 32, y: 7, dir: 'down' },
+    { id: 'ky_luc_quan', name: 'Ký Lục Quan', look: 'villager_f', x: 36, y: 8, dir: 'left' },
+    { id: 'gac_kho', name: 'Người Gác Kho', look: 'villager_m', x: 10, y: 20, dir: 'down' },
+    { id: 'tran_chinh_dao', name: 'Trần Chính Đạo', look: 'elder', x: 26, y: 16, dir: 'down' }
+  ];
+  var LOU_PROPS = [
+    { id: 'den_lau_a', type: 'lantern', x: 24, y: 15, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_lau_b', type: 'lantern', x: 39, y: 15, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_lau_thap_a', type: 'lantern_low', x: 27, y: 31, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'den_lau_thap_b', type: 'lantern_low', x: 36, y: 31, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'gia_kho', type: 'rack', x: 4, y: 15, w: 3, h: 2, fx: 3, fy: 1, name: 'Giá Để Hồ Sơ' },
+    { id: 'bao_kho', type: 'sacks', x: 8, y: 17, w: 2, h: 2, fx: 2, fy: 1, name: 'Bao Tài Liệu' },
+    { id: 'chum_kho', type: 'jars', x: 14, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Chum Đựng Cuộn Giấy' },
+    { id: 'chum_lon_kho', type: 'jar_big', x: 17, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'gio_kho', type: 'basket', x: 6, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'ghe_lau_a', type: 'bench_stone', x: 24, y: 28, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'ghe_lau_b', type: 'bench_stone', x: 39, y: 28, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'ban_lau', type: 'table_stone', x: 32, y: 30, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'chau_hoa_a', type: 'flower_pot', x: 23, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'chau_hoa_b', type: 'flower_pot', x: 40, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'chau_hoa_c', type: 'flower_pot', x: 31, y: 4, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bia_lau', type: 'stele_small', x: 30, y: 36, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Nhỏ Giữa Hành Lang' },
+    { id: 'nen_da_san', type: 'stone_platform', x: 37, y: 41, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bui_lau_a', type: 'bush1', x: 20, y: 43, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bui_lau_b', type: 'bush2', x: 44, y: 44, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'hoa_lau', type: 'flower_bush', x: 26, y: 44, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'co_lau_a', type: 'grass_clump', x: 48, y: 42, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'co_lau_b', type: 'grass_clump', x: 16, y: 45, w: 1, h: 1, fx: 1, fy: 1 }
+  ];
 
   /* ---------------- Đăng ký bản đồ + cổng ---------------- */
   var MAPS = {
@@ -824,7 +992,8 @@
       portals: [
         { x: 50, y: 77, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 70, label: 'Về Đường Mòn Xuyên Rừng' },
         { x: 48, y: 0, w: 8, h: 4, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },
-        { x: 96, y: 0, w: 4, h: 3, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' }
+        { x: 96, y: 0, w: 4, h: 3, to: 'thanh_van_tong', toX: 61, toY: 88, label: 'Đường Lên Thanh Vân Tông', cond: 'flag:invited', lockMsg: 'Đường lên Thanh Vân Tông chỉ mở cho người mang thư mời của tông môn.' },
+        { x: 57, y: 66, w: 3, h: 1, to: 'thien_co_lau', toX: 32, toY: 45, label: 'Vào Tĩnh Quan Lâu', cond: 'quest:q10_loi_moi', lockMsg: 'Phân đà chỉ tiếp người có thiệp mời.' }
       ]
     },
     kiem_trac_thap: {
@@ -849,7 +1018,24 @@
       meditate: { x: 31, y: 61 },
       signs: [{ x: 58, y: 87, text: 'Thanh Vân Tông' }, { x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }],
       portals: [
-        { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' }
+        { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' },
+        { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' }
+      ]
+    },
+    hb_valley: {
+      name: 'Thung Lũng Hồi Phong', w: VALLEY_W, h: VALLEY_H, grid: VALLEY_GRID, props: VALLEY_PROPS, npcs: VALLEY_NPCS,
+      meditate: { x: 49, y: 42 },
+      signs: VALLEY_SIGNS,
+      portals: [
+        { x: 46, y: 73, w: 4, h: 1, to: 'thanh_van_tong', toX: 101, toY: 4, label: 'Về Thanh Vân Tông' }
+      ]
+    },
+    thien_co_lau: {
+      name: 'Tĩnh Quan Lâu', w: LOU_W, h: LOU_H, grid: LOU_GRID, props: LOU_PROPS, npcs: LOU_NPCS,
+      meditate: { x: 35, y: 43 },
+      signs: LOU_SIGNS,
+      portals: [
+        { x: 30, y: 47, w: 4, h: 1, to: 'co_chau', toX: 57, toY: 68, label: 'Về Cô Châu Thành' }
       ]
     }
   };
@@ -922,11 +1108,35 @@
     { id: 'q7_hoa_huong_than', name: 'Hoa Hướng Thần', desc: 'Gặp đại đệ tử Hoa Hướng Thần ở quảng trường tông.', hint: { map: 'thanh_van_tong', x: 62, y: 56 } },
     { id: 'q7_done', name: 'Chương 8: Chuẩn bị Trúc Cơ', desc: 'Vị thế trong tông đã đổi. Kỳ Trúc Cơ của tông đang tới gần.', hint: null },
     /* Chương 8 — Trúc Cơ: lời nói đầu tiên ở tầm cao mới */
-    { id: 'q8_chuan_bi', name: 'Chuẩn bị Trúc Cơ', desc: 'Gặp trưởng lão tông nhận điều kiện lên đài: mang về Linh Chi Sau Núi làm thuốc dẫn cho Trúc Cơ Đan.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q8_chuan_bi', name: 'Chuẩn bị Trúc Cơ', desc: 'Gặp trưởng lão tông nhận công thức Trúc Cơ Đan: Linh Chi Sau Núi một cây, Yêu Đan cấp 1 một viên, Thanh Tâm Thảo ba cây và 30 Linh Thạch — trưởng lão sẽ luyện đan cho ngươi.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q8_ho_phap', name: 'Hộ pháp trong im lặng', desc: 'Lên Đài Trúc Cơ ở phía bắc tông bắt đầu vận công; trong lúc đột phá, tuyệt đối không được cất tiếng.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q8_truc_co', name: 'Trúc Cơ', desc: 'Vận công đã tới điểm cuối. Nuốt Trúc Cơ Đan và đột phá tại Đài Trúc Cơ.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q8_thu_tieng', name: 'Gạch bỏ hai chữ vô linh căn', desc: 'Về đại điện gặp trưởng lão tông.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
-    { id: 'q8_done', name: 'Trúc Cơ Sơ Kỳ', desc: 'Ngươi đã đứng ở Trúc Cơ Sơ Kỳ. Những món nợ cũ vẫn còn đó: Huyết Bạc Cung chưa dứt, thân phận Hồn Sư còn giấu kín, Thiên Cơ Các còn theo dõi, và Liễu Khuynh Tiên vẫn là một ẩn số.', hint: null }
+    { id: 'q8_done', name: 'Trúc Cơ Sơ Kỳ', desc: 'Ngươi đã đứng ở Trúc Cơ Sơ Kỳ. Những món nợ cũ vẫn còn đó: Huyết Bạc Cung chưa dứt, thân phận Hồn Sư còn giấu kín, Thiên Cơ Các còn theo dõi, và Liễu Khuynh Tiên vẫn là một ẩn số.', hint: null },
+    /* Chương 9 — Tin dữ từ Thung Lũng Hồi Phong: đoàn xe Hứa gia bị phục kích */
+    { id: 'q9_tin_du', name: 'Tin dữ từ sau núi', desc: 'Người đưa tin của Hứa gia đang chờ ở Thanh Vân Đại Điện — đoàn xe thuốc của nhà họ Hứa gặp nạn ở Thung Lũng Hồi Phong, sau núi tông môn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q9_truy_vet', name: 'Truy vết ở thung lũng', desc: 'Qua cổng sau núi vào Thung Lũng Hồi Phong, tới gốc anh đào cổ thụ ở bãi đáp đầu thung lũng, xem xét dấu vết đoàn xe để lại.', hint: { map: 'hb_valley', x: 47, y: 59 } },
+    { id: 'q9_phuc_kich', name: 'Phục kích trong hẻm núi', desc: 'Lần theo dấu vết vào hẻm núi giữa thung lũng — Huyết Bạc Cung đang chờ sẵn trong đó.', hint: { map: 'hb_valley', x: 49, y: 36 } },
+    { id: 'q9_doi_dau', name: 'Đối đầu dưới gốc anh đào', desc: 'Đoàn xe đã an toàn. Trở lại gốc anh đào cổ thụ ở bãi đáp — người của Huyết Bạc Cung còn điều muốn nói với ngươi.', hint: { map: 'hb_valley', x: 47, y: 59 } },
+    { id: 'q9_done', name: 'Trúc Cơ Trung Kỳ', desc: 'Ngươi đã đứng ở Trúc Cơ Trung Kỳ. Cái tên Giang Trường Không và vụ bến đò năm xưa vừa được gieo xuống như hai hạt giống — chúng sẽ nảy mầm ở nơi ngươi không ngờ nhất.', hint: null },
+    /* Chương 10 — Tĩnh Quan Lâu: Thiên Cơ Các siết bí mật */
+    { id: 'q10_loi_moi', name: 'Lời mời của Thiên Cơ Các', desc: 'Thư mời của Trần Chính Đạo đã tới: phân đà Thiên Cơ Các ở phía nam Cô Châu Thành chờ ngươi tại Tĩnh Quan Lâu.', hint: { map: 'co_chau', x: 56, y: 67 } },
+    { id: 'q10_vao_lau', name: 'Vào Tĩnh Quan Lâu', desc: 'Vào Tĩnh Quan Lâu, lên phòng kín phía bắc gặp người của Thiên Cơ Các.', hint: { map: 'thien_co_lau', x: 32, y: 8 } },
+    { id: 'q10_siet_bi_mat', name: 'Hồ sơ xếp theo năm tháng', desc: 'Người của Thiên Cơ Các đã bày sẵn hồ sơ về ngươi. Nghe họ nói hết — và liệu mà giữ mình.', hint: { map: 'thien_co_lau', x: 32, y: 12 } },
+    { id: 'q10_lo_than_phan', name: 'Điều không thể giấu mãi', desc: 'Bí mật về thần hồn không thể giấu thêm được nữa. Dù bằng cách nào, nó cũng sẽ lộ ra trong hôm nay.', hint: null },
+    { id: 'q10_done', name: 'Trúc Cơ Hậu Kỳ', desc: 'Ngươi đã đứng ở Trúc Cơ Hậu Kỳ. Thân phận Hồn Sư không còn là bí mật tuyệt đối — từ nay, sống cùng nó thế nào là lựa chọn của ngươi.', hint: null },
+    /* Chương 11 — Hệ quả và lựa chọn của Hứa U Nhàn */
+    { id: 'q11_he_qua', name: 'Sống cùng sự thật', desc: 'Về Thanh Vân Đại Điện gặp trưởng lão tông: tông môn cần biết ngươi đứng ở đâu sau khi thân phận Hồn Sư lộ ra.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q11_u_nhan', name: 'Người tới từ Hứa gia', desc: 'Hứa U Nhàn đang ở sân phủ Hứa tại Cô Châu Thành — nàng có chuyện của riêng nàng muốn nói.', hint: { map: 'co_chau', x: 16, y: 36 } },
+    { id: 'q11_chuan_bi_ket_dan', name: 'Chuẩn bị Kết Đan', desc: 'Trưởng lão tông giao việc chuẩn bị Kết Đan: hái dược dẫn ở bãi bắc Thung Lũng Hồi Phong và tích đủ tu vi Trúc Cơ Viên Mãn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q11_vat_dan', name: 'Luyện vật dẫn Kết Đan', desc: 'Mang dược dẫn và Yêu Đan cấp 2 về đại điện: trưởng lão sẽ luyện vật dẫn Kết Đan cho ngươi.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q11_done', name: 'Sẵn sàng Kết Đan', desc: 'Vật dẫn đã trong tay, tu vi đã đầy. Chỉ còn chờ ngày lên đài.', hint: null },
+    /* Chương 12 — Kết Đan: Ngôn Linh thành LỆNH */
+    { id: 'q12_len_dai', name: 'Lên Đài Trúc Cơ lần nữa', desc: 'Lên Đài Trúc Cơ ở phía bắc tông — lần này là để Kết Đan.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q12_ho_phap', name: 'Hộ pháp lúc Kết Đan', desc: 'Địch sẽ tới đúng thời khắc quyết định. Những người hộ pháp cho ngươi đang giữ các hướng quanh đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q12_ket_dan', name: 'Kết Đan', desc: 'Vận công đã chín. Nuốt vật dẫn và Kết Đan tại đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q12_lenh_dau_tien', name: 'Lệnh đầu tiên', desc: 'Kim Đan đã thành, Ngôn Linh đã thành LỆNH. Thử tiếng nói mới của ngươi ngay tại đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q12_done', name: 'Kim Đan Sơ Kỳ', desc: 'Ngươi đã đứng ở Kim Đan Sơ Kỳ. Lời nói của ngươi từ nay là lệnh — và món nợ mười hai năm bắt đầu được tính từ đây.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -959,7 +1169,7 @@
       bag: { tier: 1, items: {} }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3)
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0 },
       hp: 100, hpMax: 100
     };
   }
@@ -998,7 +1208,7 @@
      đáo qua Trần Tư Linh cho một nguồn Linh Thạch đều: 25 viên, tối đa MỘT
      lần mỗi chương truyện (theo số chương rút từ id nhiệm vụ hiện tại). */
   function chapterOfQuest(state) {
-    var m = /^q(\d)/.exec(state.quest || '');
+    var m = /^q(\d+)/.exec(state.quest || '');
     return m ? parseInt(m[1], 10) : 1;
   }
   /* ---------------- Túi Trữ Vật — nền dữ liệu vật phẩm dùng chung ----------------
@@ -1018,6 +1228,19 @@
     ngoc_tu_linh: { name: 'Tụ Linh Ngọc', type: 'phap_khi', stack: false, glyph: 'Ngọc' },
     linh_chi: { name: 'Linh Chi Sau Núi', type: 'nguyen_lieu', stack: true, glyph: 'Chi' },
     truc_co_dan: { name: 'Trúc Cơ Đan', type: 'dan', stack: true, glyph: 'Cơ' },
+    /* Yêu Đan — nguyên liệu theo cấp quái (lệnh của Bui 15:28 ngày
+       2026-11-01). Cấp 1 dùng cho công thức Trúc Cơ Đan (chương 8), cấp 2
+       là thành phần vật chất bắt buộc của vật dẫn Kết Đan (chương 11). */
+    yeu_dan_1: { name: 'Yêu Đan Cấp 1', type: 'nguyen_lieu', stack: true, glyph: 'Yêu' },
+    yeu_dan_2: { name: 'Yêu Đan Cấp 2', type: 'nguyen_lieu', stack: true, glyph: 'Yêu' },
+    yeu_dan_3: { name: 'Yêu Đan Cấp 3', type: 'nguyen_lieu', stack: true, glyph: 'Yêu' },
+    yeu_dan_4: { name: 'Yêu Đan Cấp 4', type: 'nguyen_lieu', stack: true, glyph: 'Yêu' },
+    thanh_tam_thao: { name: 'Thanh Tâm Thảo', type: 'nguyen_lieu', stack: true, glyph: 'Thảo' },
+    tu_linh_dan: { name: 'Tụ Linh Đan', type: 'dan', stack: true, glyph: 'Tụ' },
+    ket_dan_duoc: { name: 'Dược Dẫn Kết Đan', type: 'nguyen_lieu', stack: true, glyph: 'Dẫn' },
+    ket_dan_dan: { name: 'Vật Dẫn Kết Đan', type: 'dan', stack: true, glyph: 'Dẫn' },
+    song_ngu_ngoc_boi: { name: 'Song Ngư Ngọc Bội', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Ngọc', unlockKey: 'song_ngu' },
+    thien_co_ngoc_gian: { name: 'Thiên Cơ Ngọc Giản', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Giản', unlockKey: 'thien_co_gian' },
     thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh', unlockKey: 'thanh_phong' },
     that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết', unlockKey: 'that_tinh' }
   };
@@ -1098,7 +1321,9 @@
     state.gear = gear;
   }
   function soulServiceDue(state) {
-    return !!(state.flags && state.flags.soulSecret) && (state.flags.soulPaidFor || 0) < chapterOfQuest(state);
+    // Dịch vụ luyện hồn KÍN đóng hẳn từ chương 10 (q10_loi_moi): khi thân
+    // phận Hồn Sư sắp lộ, đường kín không còn an toàn nữa (phần 3, chương 10).
+    return !!(state.flags && state.flags.soulSecret) && chapterOfQuest(state) < 10 && (state.flags.soulPaidFor || 0) < chapterOfQuest(state);
   }
   function healSoul(state) {
     // Lần chữa hồn đầu tiên ở Trần gia: thân phận Hồn Sư nhị phẩm thức tỉnh.
@@ -1127,6 +1352,9 @@
     state.tuvi = 0;
     state.hpMax += 20; state.hp = state.hpMax;
     if (state.realm === 1 && state.stage === 0 && state.unlocked.indexOf('luyenkhi1') < 0) state.unlocked.push('luyenkhi1');
+    // Đạt Kim Đan Sơ Kỳ: Ngôn Linh thành LỆNH — mở khóa ĐỊNH và PHONG.
+    // Đây là điểm cấp khóa 'kimdan' DUY NHẤT trong luồng chơi thường.
+    if (state.realm === 3 && state.stage === 0 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     // Đạt Luyện Khí tầng 1 = bắt đầu tu tiên chính thức: mở ví Linh Thạch —
     // tiền tệ của giới tu tiên (phàm nhân chỉ dùng lượng bạc trong lời thoại).
     if (state.realm === 1 && state.stage === 0) state.linhUnlocked = true;
@@ -1317,6 +1545,54 @@
     if (typeof state.flags.guardWave !== 'number') state.flags.guardWave = 0;
     if (typeof state.flags.guardBroken !== 'number') state.flags.guardBroken = 0;
     if (typeof state.flags.sectReward !== 'boolean') state.flags.sectReward = false;
+    // Phần 3 (chương 9–12): cờ mới — save cũ thiếu thì dựng mặc định an toàn.
+    if (typeof state.flags.herbGathered !== 'boolean') state.flags.herbGathered = false;
+    if (typeof state.flags.pillMeritPaid !== 'boolean') state.flags.pillMeritPaid = false;
+    if (typeof state.flags.ch9TinDu !== 'boolean') state.flags.ch9TinDu = false;
+    if (typeof state.flags.ch9SayRescue !== 'boolean') state.flags.ch9SayRescue = false;
+    if (typeof state.flags.ch9SilentRoute !== 'boolean') state.flags.ch9SilentRoute = false;
+    if (typeof state.flags.ch9DoiDau !== 'boolean') state.flags.ch9DoiDau = false;
+    if (typeof state.flags.ch9HonDau !== 'boolean') state.flags.ch9HonDau = false;
+    if (typeof state.flags.ch9BreakReady !== 'boolean') state.flags.ch9BreakReady = false;
+    if (typeof state.flags.ch9Reward !== 'boolean') state.flags.ch9Reward = false;
+    if (typeof state.flags.hbDone !== 'boolean') state.flags.hbDone = false;
+    if (typeof state.flags.soulRevealed !== 'boolean') state.flags.soulRevealed = false;
+    if (typeof state.flags.soulPublic !== 'boolean') state.flags.soulPublic = false;
+    if (typeof state.flags.soulExposed !== 'boolean') state.flags.soulExposed = false;
+    // Bất biến phần 3: không bao giờ cả hai đường lộ thân phận cùng đúng.
+    if (state.flags.soulPublic && state.flags.soulExposed) state.flags.soulExposed = false;
+    if (typeof state.flags.soulClinicPaidFor !== 'number') state.flags.soulClinicPaidFor = 0;
+    if (typeof state.flags.soulSectPaidFor !== 'number') state.flags.soulSectPaidFor = 0;
+    if (typeof state.flags.sectJobPaidFor !== 'number') state.flags.sectJobPaidFor = 0;
+    if (typeof state.flags.thienCoFeePaid !== 'boolean') state.flags.thienCoFeePaid = false;
+    if (typeof state.flags.ch11HeQua !== 'boolean') state.flags.ch11HeQua = false;
+    if (typeof state.flags.uNhanChoice !== 'boolean') state.flags.uNhanChoice = false;
+    if (typeof state.flags.uNhanGift2 !== 'boolean') state.flags.uNhanGift2 = false;
+    if (typeof state.flags.ketDanHerb !== 'boolean') state.flags.ketDanHerb = false;
+    if (typeof state.flags.ketDanCoreGot !== 'boolean') state.flags.ketDanCoreGot = false;
+    if (typeof state.flags.ketDanCoreExtra !== 'number') state.flags.ketDanCoreExtra = 0;
+    if (typeof state.flags.ketDanRefined !== 'boolean') state.flags.ketDanRefined = false;
+    if (typeof state.flags.ketDanGuardWave !== 'number') state.flags.ketDanGuardWave = 0;
+    if (typeof state.flags.ketDanGuardBroken !== 'number') state.flags.ketDanGuardBroken = 0;
+    if (typeof state.flags.ketDanGuardDone !== 'boolean') state.flags.ketDanGuardDone = false;
+    if (typeof state.flags.ketDanSpokeSave !== 'boolean') state.flags.ketDanSpokeSave = false;
+    if (typeof state.flags.lenDinhHold !== 'number') state.flags.lenDinhHold = 0;
+    if (typeof state.flags.lenPhongSeal !== 'number') state.flags.lenPhongSeal = 0;
+    if (typeof state.flags.lenUsedDinh !== 'number') state.flags.lenUsedDinh = 0;
+    if (typeof state.flags.lenUsedPhong !== 'number') state.flags.lenUsedPhong = 0;
+    if (typeof state.flags.kimDanReward !== 'boolean') state.flags.kimDanReward = false;
+    if (typeof state.flags.sectJobRound !== 'number') state.flags.sectJobRound = 0;
+    if (typeof state.flags.ch10BreakReady !== 'boolean') state.flags.ch10BreakReady = false;
+    if (typeof state.flags.ch10RumorPending !== 'boolean') state.flags.ch10RumorPending = false;
+    if (typeof state.flags.uNhanCityMet !== 'boolean') state.flags.uNhanCityMet = false;
+    if (typeof state.flags.giaNhanHealed !== 'boolean') state.flags.giaNhanHealed = false;
+    if (typeof state.flags.lenDinhDone !== 'boolean') state.flags.lenDinhDone = false;
+    if (typeof state.flags.lenPhongDone !== 'boolean') state.flags.lenPhongDone = false;
+    if (typeof state.flags.benhSeen !== 'boolean') state.flags.benhSeen = false;
+    if (typeof state.flags.ch9PlanSeen !== 'boolean') state.flags.ch9PlanSeen = false;
+    if (typeof state.flags.kdBeastWave !== 'number') state.flags.kdBeastWave = 0;
+    // Hồi tố LỆNH: save đã qua mốc Kết Đan mà thiếu khóa 'kimdan' thì cấp lại.
+    if (state.unlocked && state.realm >= 3 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
     if (typeof state.items.dan !== 'number' || !(state.items.dan >= 0)) state.items.dan = 0;
     if (!Array.isArray(state.gear)) state.gear = [];
@@ -1353,6 +1629,8 @@
     if (state.quest === 'q6_done') state.quest = 'q7_nhap_tong';
     // Save cũ dừng ở mốc cuối chương 7: nối thẳng sang chương 8.
     if (state.quest === 'q7_done') state.quest = 'q8_chuan_bi';
+    // Save cũ dừng ở mốc cuối chương 8: nối thẳng sang chương 9 (phần 3).
+    if (state.quest === 'q8_done') state.quest = 'q9_tin_du';
     // Bù lộ phí trưởng lão NGAY trong khâu chuẩn hóa (đặt ở cuối hàm, sau
     // khi cờ mở ví linhUnlocked đã được suy ra): save đã hoàn tất bản v1
     // (đã phá cọc gỗ, ví đã mở) mà chưa nhận 50 Linh Thạch thì cộng luôn

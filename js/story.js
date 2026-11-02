@@ -728,8 +728,8 @@
   var SCENE_CHUAN_BI_1 = [
     { who: 'narrate', text: 'Đại điện Thanh Vân Tông. Sau trận ở quảng trường, trưởng lão gọi riêng ngươi lên, trên án là danh sách đệ tử được phép dự kỳ đột phá của tông kỳ này — và tên ngươi nằm trong đó.' },
     { who: 'truong_lao_tong', text: 'Giang Phàm, tông cho phép ngươi lên Đài Trúc Cơ ở phía bắc tông trong kỳ này. Luyện Khí tầng chín viên mãn, thắng Thăng Long Đạo, thắng cả đại đệ tử — điều kiện về thực lực, ngươi đã đủ.' },
-    { who: 'truong_lao_tong', text: 'Nhưng còn một điều kiện của tông phải làm cho đủ: đan phòng chỉ phát Trúc Cơ Đan khi đệ tử tự mang về vị thuốc dẫn tươi của chính mình. Vị thuốc dẫn của kỳ này là Linh Chi Sau Núi — hái ở bãi trống sau núi, phía đông bắc tông.' },
-    { who: 'truong_lao_tong', text: 'Thuốc dẫn phải tươi nguyên mới giữ được linh khí lúc xung kích cảnh giới. Hái xong, mang thẳng về đại điện này cho ta — đừng để qua đêm, đừng làm dập nát.' },
+    { who: 'truong_lao_tong', text: 'Nhưng lên đài cần một viên Trúc Cơ Đan, và đan ấy không phát không: lệ của tông là đệ tử tự gom đủ nguyên liệu, ta luyện cho. Công thức kỳ này gồm bốn thứ: Linh Chi Sau Núi một cây làm thuốc dẫn, Yêu Đan cấp 1 một viên, Thanh Tâm Thảo ba cây, và 30 Linh Thạch công luyện.' },
+    { who: 'truong_lao_tong', text: 'Linh chi hái ở bãi trống sau núi, phía đông bắc tông — thuốc dẫn phải tươi nguyên mới giữ được linh khí lúc xung kích cảnh giới. Thanh Tâm Thảo mọc ở vườn dược ngay cạnh bãi trống ấy, hái đủ ba cây trong cùng chuyến đi. Còn Yêu Đan cấp 1 nằm trong người yêu thú — sau núi có biến thì rất có thể chính kẻ tới gây sự mang nó theo người.' },
     { who: 'truong_lao_tong', text: 'Và nghe kỹ lời dặn này: sau núi mấy hôm nay có dấu vết người lạ qua lại. Huyết Bạc Cung chưa dứt — dư nghiệt của chúng vẫn dò la tin tức về một vị Hồn Sư thần bí. Đi nhanh, về nhanh, đừng nán lại.' },
     { who: 'hero', mode: 'write', text: '(viết) "Đệ tử đi ngay. Linh chi sẽ về tới đại điện nguyên vẹn."' },
     { who: 'narrate', text: 'Ngươi rời đại điện, men theo đường núi hướng về phía đông bắc. Sau lưng là tông môn vừa mới công nhận ngươi — trước mặt là rừng sau núi, nơi không ai dám chắc có gì đang chờ.' }
@@ -760,15 +760,26 @@
     { who: 'narrate', text: 'Màn đối đầu ở bãi trống khép lại. Kẻ địch không đạt được điều chúng muốn — chúng rút vào rừng sâu nhanh như lúc xuất hiện, để lại trên cỏ mấy vệt chân và một mùi khét lạ của tơ đen cháy dở.' },
     { who: 'narrate', text: 'Ngươi mở hộp ngọc kiểm lại: cụm Linh Chi Sau Núi vẫn nguyên vẹn, linh quang chưa tan một chút nào. Cái giá của chuyến đi này chỉ là thêm một lần nữa, Huyết Bạc Cung xác nhận được ngươi đang ở đâu.' },
     { who: 'narrate', text: 'Không nán lại thêm một khắc nào, ngươi theo đường núi quay về tông. Từ xa, mái đại điện đã hiện ra sau rặng cây — mang linh chi về đại điện, đúng như lời trưởng lão dặn.' },
-    { who: 'narrate', text: '(Đã mang Linh Chi Sau Núi về hướng đại điện. Việc chuẩn bị Trúc Cơ chỉ còn chờ đan phòng mở hộp.)' }
+    { who: 'narrate', text: '(Đã mang Linh Chi Sau Núi về hướng đại điện. Trong túi còn có Yêu Đan cấp 1 rơi ra từ toán phục kích ở sau núi — mang cả về cho trưởng lão xem.)' }
   ];
 
+  /* Cảnh trưởng lão kiểm công thức Trúc Cơ Đan — bản CHƯA ĐỦ nguyên liệu:
+     trưởng lão nói rõ còn thiếu gì; câu chỉ đích danh từng thứ còn thiếu do
+     lớp điều khiển nối thêm ngay sau cảnh này (theo đúng túi của người chơi). */
   var SCENE_CHUAN_BI_2 = [
-    { who: 'narrate', text: 'Đại điện. Trưởng lão tự tay mở hộp ngọc của ngươi ra xem, gật đầu khi thấy cụm linh chi còn nguyên linh quang, rồi cho người mang tới một chiếc hộp gỗ đàn từ đan phòng — niêm phong còn nguyên dấu của tông.' },
-    { who: 'truong_lao_tong', text: 'Linh chi tươi, đủ tuổi, không dập nát. Tốt. Đây — Trúc Cơ Đan của ngươi, đan phòng phát theo đúng lệ của tông, một viên duy nhất cho một kỳ đột phá.' },
-    { who: 'truong_lao_tong', text: 'Nghe rõ vai trò của vị thuốc dẫn ngươi vừa mang về: lúc xung kích Trúc Cơ, linh khí trong người sẽ dâng như triều vỡ bờ; linh chi tươi giữ cho dòng linh khí ấy không tán loạn, dẫn nó quy về đan điền mà kết nền. Thiếu vật dẫn, mười người đột phá thì chín người tán khí giữa chừng.' },
-    { who: 'truong_lao_tong', text: 'Còn điều quan trọng nhất, ta chỉ nói một lần: khi vận công đột phá, dù chuyện gì xảy ra quanh đài, ngươi cũng tuyệt đối KHÔNG được cất tiếng. Tiếng nói lúc đang vận công là tự phá kinh mạch của chính mình — nhẹ thì chu thiên vỡ, phải làm lại từ đầu; nặng thì tu vi tán hết.' },
-    { who: 'truong_lao_tong', text: 'Ngươi không phải lên đài một mình. Hứa U Nhàn đã lên tông theo đúng lời hứa của nàng, và Hoa Hướng Thần đã tự xin đứng hộ pháp. Hai người ấy cùng đệ tử gác đài sẽ giữ quanh Đài Trúc Cơ — việc quanh đài, để họ lo. Việc của ngươi chỉ có một: giữ miệng, giữ tâm, đi hết chu thiên.' },
+    { who: 'narrate', text: 'Đại điện. Trưởng lão mở hộp ngọc của ngươi ra xem, thấy linh chi còn nguyên linh quang thì gật đầu — rồi ông đặt tay lên mặt án, nhìn ngươi chậm rãi.' },
+    { who: 'truong_lao_tong', text: 'Linh chi đã có. Nhưng Trúc Cơ Đan không luyện bằng một mình linh chi được. Ta đã nói công thức ngay từ đầu: Linh Chi Sau Núi một cây, Yêu Đan cấp 1 một viên, Thanh Tâm Thảo ba cây, 30 Linh Thạch. Ngươi còn thiếu vài thứ — nghe cho rõ mà đi gom cho đủ.' }
+  ];
+  /* Cảnh trưởng lão luyện Trúc Cơ Đan — bản ĐÃ ĐỦ nguyên liệu theo công thức
+     đã được duyệt: Linh Chi Sau Núi ×1 + Yêu Đan cấp 1 ×1 + Thanh Tâm Thảo
+     ×3 + 30 Linh Thạch, trưởng lão luyện tại tông. */
+  var SCENE_CHUAN_BI_2_OK = [
+    { who: 'narrate', text: 'Đại điện. Trưởng lão bày những thứ ngươi mang về lên mặt án: linh chi còn nguyên linh quang, viên Yêu Đan cấp 1 đỏ sẫm, ba cây Thanh Tâm Thảo còn đọng sương, và 30 Linh Thạch đếm đủ không thiếu một viên.' },
+    { who: 'truong_lao_tong', text: 'Đủ cả. Ngồi xuống đây chờ ta một tuần trà — luyện Trúc Cơ Đan phải làm ngay lúc thuốc còn tươi.' },
+    { who: 'narrate', text: 'Lửa lò trong đại điện cháy xanh suốt một tuần trà. Khi nắp lò mở ra, một viên đan tròn trịa nằm giữa làn khói thuốc, mặt đan có một vân mây rất mảnh — dấu của một lò đan thành công trọn vẹn.' },
+    { who: 'truong_lao_tong', text: 'Đây — Trúc Cơ Đan của ngươi. Cầm lấy. Việc chuẩn bị đã xong; còn lại là lên đài, giữ miệng, giữ tâm, đi hết chu thiên.' },
+    { who: 'truong_lao_tong', text: 'Nhớ điều ta chỉ nói một lần: khi vận công đột phá, dù chuyện gì xảy ra quanh đài, ngươi cũng tuyệt đối KHÔNG được cất tiếng. Tiếng nói lúc đang vận công là tự phá kinh mạch của chính mình — nhẹ thì chu thiên vỡ, phải làm lại từ đầu; nặng thì tu vi tán hết.' },
+    { who: 'truong_lao_tong', text: 'Ngươi không phải lên đài một mình. Hứa U Nhàn đã lên tông theo đúng lời hứa của nàng, và Hoa Hướng Thần đã tự xin đứng hộ pháp. Hai người ấy cùng đệ tử gác đài sẽ giữ quanh Đài Trúc Cơ — việc quanh đài, để họ lo.' },
     { who: 'hero', mode: 'write', text: '(viết) "Đệ tử ghi nhớ. Lên đài rồi, dù trời có sập, đệ tử cũng không mở miệng."' }
   ];
 
@@ -848,6 +859,388 @@
     { who: 'narrate', text: 'Gió trên sơn môn vẫn thổi, mây vẫn trôi qua bậc đá. Câu chuyện của chàng trai từng bị cả trấn phán là phế căn — vẫn đang được viết tiếp, từng ngày, bằng chính đôi chân của chàng.' }
   ];
 
+  /* ================= PHẦN 3 — CHƯƠNG 9: TIN DỮ TỪ THUNG LŨNG HỒI PHONG ====
+     Toàn bộ chương là [GAME SÁNG TÁC] trên phác thảo đã duyệt. Kỷ luật
+     thoại: cả chương tối đa MỘT câu cất lời trong một lượt chơi — hoặc câu
+     cứu người ở điểm lựa chọn, hoặc câu ở cảnh đối đầu của nhánh im lặng. */
+  var SCENE_CH9_TIN_DU = [
+    { who: 'narrate', text: 'Ba ngày sau khi hồ sơ của ngươi được sửa lại, sơn môn Thanh Vân Tông đón một người khách không ai ngờ tới: một gia nhân Hứa gia, áo còn nguyên bụi đường, ngựa ngã quỵ ngay dưới bậc đá.' },
+    { who: 'tin_su', text: 'Giang… Giang công tử! Tiểu nhân chạy chết hai con ngựa mới lên được tới đây. Đoàn xe của Hứa gia… bị đánh úp rồi!' },
+    { who: 'truong_lao_tong', text: 'Nói cho rõ. Đoàn xe nào, đi đâu, bị đánh ở đâu?' },
+    { who: 'tin_su', text: 'Đoàn đưa gia chủ về Hứa Gia Trấn thăm mộ phần tổ tiên, mang theo thuốc và đồ tiếp tế cho trấn. Tới Thung Lũng Hồi Phong thì hai đầu thung lũng bị chặn cùng một lúc — đá lăn bịt cửa trước, người áo xám bịt cửa sau. Không phải cướp đường. Chúng làm việc như quân đội.' },
+    { who: 'tin_su', text: 'Đại tiểu thư U Nhàn đi cùng đoàn. Gia chủ… gia chủ bị thương ở vai, người của đoàn chạy thoát được có mỗi tiểu nhân, theo lệnh của đại tiểu thư.' },
+    { who: 'lieu_khuynh_tien', text: 'Bịt cả hai đầu thung lũng cùng một khắc, lại chọn đúng đoàn của Hứa gia, đúng lúc ngươi vừa Trúc Cơ và tiếng tăm đang lan. Đây không phải đánh cướp. Đây là một nước cờ có người bày sẵn.' },
+    { who: 'hoa_huong_than', text: 'Giang Phàm, ta đi cùng ngươi. Lần này không phải hộ pháp trên đài — lần này là xuống núi cứu người thật.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đi ngay. Trên đường, kể hết những gì ngươi nhớ: số người, hướng rút, dấu hiệu trên áo chúng."' },
+    { who: 'narrate', text: 'Trưởng lão không ngăn. Ông chỉ nhìn theo đoàn người xuống núi, rồi quay sang đệ tử trực điện, nói một câu rất khẽ: "Ghi lại giờ này. Và báo cho Thiên Cơ Các phân đà — không, khoan. Để xem chúng tự tìm tới hay không."' }
+  ];
+  var SCENE_CH9_UNHAN_PLAN = [
+    { who: 'narrate', text: 'Cùng lúc ấy, trong Thung Lũng Hồi Phong. Đoàn xe bị dồn vào một bãi trống giữa thung lũng, xe nối xe thành vòng, người bị thương nằm ở giữa.' },
+    { who: 'u_nhan', text: 'Nghe ta nói, và không ai được hoảng. Cha bị thương ở vai, mất máu thì nguy, nhưng đoàn này chưa thua. Chúng chặn hai đầu là muốn ta ngồi yên chờ chết dần — ta sẽ không ngồi yên.' },
+    { who: 'gia_nhan', text: 'Đại tiểu thư, chúng đông gấp ba ta, lại giữ cả hai cửa thung lũng…' },
+    { who: 'u_nhan', text: 'Đông thì phải ăn, phải ngủ, phải đổi gác. Ta cần ba việc. Một: cử người khỏe nhất trèo vách đá phía tây lúc chạng vạng, mang tin ra ngoài — đi một mình, không mang kiếm, chỉ mang giày vải.' },
+    { who: 'u_nhan', text: 'Hai: tháo hết đèn lồng trên xe, đổ dầu ra riêng. Đêm nay nếu chúng tràn vào, ta đốt một vòng lửa quanh vòng xe — chúng muốn bắt sống người, sẽ không dám xông qua lửa ngay.' },
+    { who: 'u_nhan', text: 'Ba: phần thuốc trong xe chia làm hai. Một nửa giữ ở xe giữa cho người bị thương. Một nửa… ta mang theo người. Nếu vòng xe vỡ, ta là người chúng muốn bắt nhất — ta sẽ chạy về phía cửa đông, kéo chúng đuổi theo ta, để cha và mọi người rút theo vách tây.' },
+    { who: 'chinh_ngon', text: 'U Nhàn. Con định lấy chính mình làm mồi.' },
+    { who: 'u_nhan', text: 'Không phải làm mồi, cha. Là làm người quyết định. Mười năm nay con nhìn người khác quyết thay con đủ rồi. Lần này, con tự quyết — và con sẽ tự chịu phần nguy hiểm nhất của quyết định ấy.' },
+    { who: 'narrate', text: 'Nàng nói xong thì tự tay xé vạt áo, băng lại vai cho cha, rồi đứng lên nóc xe giữa bãi, nhìn về phía cửa thung lũng đang bị bịt kín. Không một chút run sợ nào trong dáng đứng ấy.' }
+  ];
+  var SCENE_CH9_TRUY_VET = [
+    { who: 'narrate', text: 'Cửa tây Thung Lũng Hồi Phong. Một cây anh đào cổ thụ đứng ngay bên đường vào thung lũng, gốc to ba người ôm, hoa nở trái mùa rụng đầy trên những tảng đá lăn vừa bị đẩy xuống bịt kín lối đi.' },
+    { who: 'hoa_huong_than', text: 'Đá này không phải đá lở. Vết đục còn mới, đòn bẩy gác sẵn bên vách. Chúng chuẩn bị chỗ này từ nhiều ngày trước — có khi từ trước cả kỳ Trúc Cơ của ngươi.' },
+    { who: 'narrate', text: 'Dưới gốc anh đào, ngươi tìm thấy ba thứ: một vệt máu đã khô trên đá, một đoạn dây thừng bị cắt ngọt bằng kiếm, và một mũi tên gãy cắm trên thân cây — trên thân tên khắc một vệt đỏ thẫm như máu khô.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Huyết Bạc Cung. Nhưng lần này khác hai lần trước: chúng không đánh rồi rút. Chúng dựng cả một cái bẫy và ngồi chờ bên trong."' },
+    { who: 'lieu_khuynh_tien', text: 'Ta đi vòng lên sườn đông xem cửa bên kia. Nếu cả hai cửa đều bị bịt bằng đá đục sẵn, thì trong thung lũng phải có một lối thứ ba mà chỉ chúng biết — lối chúng dùng để ra vào. Tìm được lối ấy là tìm được đường cứu người.' },
+    { who: 'narrate', text: 'Từ sâu trong thung lũng, một tiếng tù và ngắn vang lên — rồi im bặt. Không phải tiếng tấn công. Là tiếng điểm danh đổi gác. Kẻ địch của ngươi có kỷ luật, có ca kíp, có người chỉ huy đang ngồi đâu đó giữa thung lũng này.' }
+  ];
+  var CH9_CHOICE = {
+    who: 'choice', text: 'Vòng vây còn hai mươi bước. Ngươi sẽ…',
+    options: [
+      { label: '[Cất lời] Hét xuống bãi trống — phá vòng vây ngay, cứu người ngay', action: 'ch9_say' },
+      { label: 'Im lặng — men vách đá phía tây, đi đường vòng vào sau lưng vòng xe', action: 'ch9_silent' }
+    ]
+  };
+  var SCENE_CH9_PHUC_KICH = [
+    { who: 'narrate', text: 'Ngươi theo lối mòn ven suối lách vào giữa thung lũng. Từ trên mỏm đá, bãi trống hiện ra phía dưới: vòng xe của Hứa gia, vòng lửa đã tắt từ lúc nào, và người của Huyết Bạc Cung đang khép vòng vây cuối cùng.' },
+    { who: 'narrate', text: 'Rồi ngươi thấy U Nhàn. Nàng đứng một mình ở khoảng trống phía đông vòng xe, kiếm trong tay, cố ý tách khỏi đoàn — đúng như kế của nàng: kéo toàn bộ sự chú ý về phía mình. Tên chỉ huy của địch đã mắc câu, nhưng theo cách tệ nhất: hắn ra lệnh bắt đầu siết vòng, và mũi nhọn của vòng vây đang chĩa thẳng vào nàng.' },
+    { who: 'mo_cuu_u', text: 'Hứa U Nhàn. Ngươi tự tách ra thì đừng trách bọn ta không khách khí. Bắt sống cô ta. Còn gia chủ của các ngươi — để ông ta xem con gái mình bị đưa đi, ông ta sẽ tự biết phải giao ra thứ gì.' },
+    { who: 'narrate', text: 'Vòng vây còn cách U Nhàn hai mươi bước. Ngươi đang ở trên mỏm đá, Tĩnh Mặc đầy ngực sau nhiều ngày im lặng — một lời từ đây sẽ dội xuống cả bãi trống như sấm, phá vòng vây ngay lập tức, nhưng cũng sẽ tuyên bố cho mọi kẻ có mặt ở đây biết: Giang Phàm đang ở trong thung lũng này, và lời nói của hắn là thứ vũ khí đó.' },
+    { who: 'narrate', text: 'Đường vòng cũng có: men theo vách đá phía tây, lặng lẽ tới sau lưng vòng xe, nhập vào đoàn của U Nhàn mà không một tiếng động — chậm hơn, và trong lúc ngươi đi vòng, vòng vây vẫn đang siết lại quanh nàng.' },
+    CH9_CHOICE
+  ];
+  var SCENE_CH9_SAY_RESCUE = [
+    { who: 'hero', mode: 'say', text: 'TRÁNH RA.' },
+    { who: 'narrate', text: 'Hai chữ từ mỏm đá dội xuống, sóng âm quét qua bãi trống như một bức tường vô hình. Hàng đầu của vòng vây bị hất ngã ngồi xuống đất, mấy tên ôm tai quỵ gối, vòng vây đang khép kín vỡ ra một khoảng trống lớn ngay trước mặt U Nhàn.' },
+    { who: 'u_nhan', text: 'Phàm ca! Muội biết huynh sẽ tới — nhưng huynh lại dùng tiếng nói rồi… Thôi, người an toàn trước đã. Đoàn xe, theo ta! Rút về phía mỏm đá, nhanh!' },
+    { who: 'mo_cuu_u', text: '(từ xa, lau máu ở khóe miệng) Tốt. Rất tốt. Cung chủ đoán không sai một chữ: chỉ cần động tới người của Hứa gia, con cá sẽ tự nhảy lên khỏi mặt nước. Giang Phàm — tiếng nói của ngươi, bọn ta đã nghe tận tai rồi.' },
+    { who: 'narrate', text: 'Người của đoàn Hứa gia thoát qua khoảng trống ấy, không ai mất mạng. Nhưng ngươi hiểu cái giá ngay khi nhìn thấy nụ cười của tên chỉ huy lúc rút lui: từ hôm nay, Huyết Bạc Cung không còn phải đoán nữa. Chúng biết chắc vũ khí của ngươi là gì — và chúng sẽ chuẩn bị cho nó.' }
+  ];
+  var SCENE_CH9_SILENT_ROUTE = [
+    { who: 'narrate', text: 'Ngươi quay lưng khỏi mỏm đá, ép mình vào vách đá phía tây và đi xuống từng tấc một. Mỗi bước là một lần nghe tiếng vòng vây siết lại gần U Nhàn hơn. Mười tám năm im lặng dạy ngươi đi không một tiếng động — nhưng chưa bao giờ việc im lặng lại nặng như lúc này.' },
+    { who: 'narrate', text: 'Ngươi vào tới sau lưng vòng xe khi vòng vây chỉ còn cách U Nhàn mười bước. Không ai hay biết ngươi đã tới — kể cả nàng. Ngươi chạm nhẹ vào vai gia nhân gác cuối đoàn, giơ ngón tay lên môi, rồi chỉ về phía khe đá phía tây mà Liễu Khuynh Tiên vừa tìm ra.' },
+    { who: 'gia_nhan', text: '(thì thầm) Giang… Giang công tử?! Người vào bằng đường nào… Vâng, vâng, tiểu nhân hiểu rồi. Đoàn xe rút theo khe tây, từng người một, không gây tiếng động.' },
+    { who: 'u_nhan', text: '(khi thấy ngươi xuất hiện ngay bên cạnh, khẽ tới mức chỉ hai người nghe) Huynh vào được tới đây mà không một tiếng động nào… Được. Vậy thì kế của muội đổi: muội ở lại sau cùng với huynh. Người của đoàn rút trước. Lần này, không ai phải làm mồi một mình nữa.' },
+    { who: 'narrate', text: 'Đoàn người thoát qua khe đá trong im lặng. Nhưng đường vòng tốn thời gian: tên gia nhân trẻ nhất của đoàn bị một mũi tên lạc sượt qua cánh tay lúc rút, và phần thuốc mang theo người của U Nhàn phải bỏ lại trên xe để đoàn đi cho nhẹ. Không ai mất mạng — nhưng không phải không ai phải trả giá cho những khắc ngươi chọn im lặng.' }
+  ];
+  var SCENE_CH9_UNHAN_ACT = [
+    { who: 'narrate', text: 'Đoàn người vừa rút khỏi bãi trống thì từ phía cửa đông, một toán Huyết Bạc Cung khác cắt ngang đường rút — toán dự phòng mà tên chỉ huy đã giấu sẵn từ đầu. Đường về khe đá bị chặn. Cả đoàn dồn lại dưới gốc anh đào cổ thụ ở cửa thung lũng.' },
+    { who: 'u_nhan', text: 'Đứng hết sau lưng ta. Nghe rõ đây: toán này ít người, chúng chỉ dám chặn vì tưởng ta đã kiệt sức sau một đêm. Chúng tính sai một việc — đêm qua ta không ngủ, nhưng ta cũng không ngồi không. Ta đã xem hết địa hình quanh gốc cây này rồi.' },
+    { who: 'narrate', text: 'Nàng lùi một bước, gót chân đạp đúng vào sợi dây thừng giấu trong lớp hoa rụng — sợi dây nàng tự tay giăng từ lúc đoàn mới bị dồn vào thung lũng, nối với chồng đá nhỏ và thùng dầu đèn treo trên cành thấp. Đá đổ, dầu tung, một bức tường lửa và khói dựng lên giữa đoàn người và toán chặn đường.' },
+    { who: 'u_nhan', text: 'Cái bẫy này ta giăng cho chính ta dùng, không chờ ai tới cứu mới có đất diễn. Phàm ca — phần còn lại, huynh lo phía sau. Phía trước, để muội mở đường.' },
+    { who: 'narrate', text: 'U Nhàn xông qua khoảng khói đầu tiên, kiếm đi gọn và dứt khoát. Nàng không chờ được cứu. Nàng đang tự mở đường cho cả đoàn — và cho cả ngươi.' }
+  ];
+  var SCENE_CH9_DOI_DAU = [
+    { who: 'narrate', text: 'Khói tan dần ở cửa thung lũng. Toán chặn đường đã bị đẩy lui — và từ sau gốc anh đào cổ thụ, tên chỉ huy bước ra một mình, áo xám không một vết bụi, tay không cầm kiếm. Hắn đứng cách ngươi mười bước, đúng khoảng cách của một người tới để nói chuyện, không phải để đánh.' },
+    { who: 'mo_cuu_u', text: 'Mạc Cửu U, tả sứ của Huyết Bạc Cung. Hôm nay ta không tới để thắng ngươi, Giang Phàm. Ta tới để nhìn tận mắt: đứa con của Giang Trường Không, lớn lên thành thứ gì rồi.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ngươi vừa nói tên ai?"' },
+    { who: 'mo_cuu_u', text: 'Phụ thân ngươi. Cái tên ấy, thiên hạ quên gần hết rồi — nhưng Huyết Bạc Cung thì không quên một chữ. Mười hai năm trước, ở bến đò ngang trên sông Bạc, có một vụ án mà mọi sổ sách của Cô Châu Thành đều ghi là tai nạn. Bọn ta gọi nó bằng tên khác.' },
+    { who: 'mo_cuu_u', text: 'Ta sẽ không kể hết hôm nay. Kể hết thì ngươi lại không mất ngủ. Ta chỉ để lại một thứ — thứ này vốn là của phụ thân ngươi, cung của ta giữ mười hai năm nay, chờ ngày trả cho đúng người.' },
+    { who: 'narrate', text: 'Hắn đặt xuống tảng đá dưới gốc anh đào một miếng ngọc bội hình hai con cá quấn nhau — Song Ngư Ngọc Bội. Một mặt ngọc khắc chữ "Giang" đã mòn, mặt còn lại là một vết nứt chạy dọc, như từng bị một lực rất mạnh đánh trúng.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ngọc bội này từ đâu tới? Ai đưa cho ngươi? Vụ án bến đò là vụ án gì?"' },
+    { who: 'mo_cuu_u', text: 'Ba câu hỏi. Ta trả lời một câu thôi: ngọc bội này nhặt được ở bến đò, trong đêm nước sông dâng đỏ. Hai câu còn lại — muốn biết, thì sống cho lâu, tu cho cao, rồi tự tới mà hỏi cung chủ của ta. Bà ấy chờ ngươi còn lâu hơn ta tưởng đấy.' },
+    { who: 'narrate', text: 'Hắn quay lưng đi thẳng, không hề đề phòng, như chắc chắn ngươi sẽ không ra tay với một người vừa trả lại di vật của cha mình. Dưới gốc anh đào, hoa rụng xuống mặt ngọc bội từng cánh một. Lần đầu tiên trong đời, ngươi cầm trên tay một thứ thuộc về phụ thân mình — và nó đến từ tay kẻ thù.' }
+  ];
+  /* Biến thể câu cất lời duy nhất ở cảnh đối đầu — chỉ chạy ở nhánh im lặng:
+     chèn giữa thân cảnh đối đầu, trước dòng hắn quay lưng rời đi. */
+  var SCENE_CH9_DOI_DAU_SAY = [
+    { who: 'hero', mode: 'say', text: 'Đủ rồi.' },
+    { who: 'narrate', text: 'Hai chữ ở cự ly mười bước. Mạc Cửu U khựng lại giữa bước chân, mặt đất dưới chân hắn nứt một đường mảnh, hoa anh đào trên cao rung xuống như mưa. Hắn đứng yên một lúc lâu, rồi bật cười — tiếng cười của một kẻ vừa xác nhận được điều mình lặn lội tới đây để xác nhận.' },
+    { who: 'mo_cuu_u', text: 'Đúng là con của ông ấy. Đến cả cách nói cũng giống: ít chữ, và không hề có ý định nói câu thứ hai. Được. Hôm nay ta đi. Nhưng Giang Phàm — từ giờ, mỗi lần ngươi cất tiếng, sẽ có người của bọn ta ở đâu đó lắng nghe và ghi lại. Nhớ lấy.' }
+  ];
+  var SCENE_CH9_HON_DAU = [
+    { who: 'narrate', text: 'Đêm đó, khi đoàn người đã an toàn về tới trạm nghỉ dưới chân núi, ngươi quay lại bãi trống một mình để kiểm tra lần cuối. Và ngươi thấy thứ khiến ngươi đứng yên rất lâu.' },
+    { who: 'narrate', text: 'Giữa bãi trống, ngay chỗ vòng vây bị phá tan, có một vệt sáng mờ hình sợi tơ còn sót lại trên mặt đá — hồn lực. Không phải của địch: là của chính ngươi. Trong khoảnh khắc hỗn loạn nhất của trận đánh, một tia hồn lực của ngươi đã tự thoát ra ngoài theo bản năng của một Hồn Sư — và chính ngươi cũng không kịp nhận ra.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi cho chính mình trong sổ tay) "Hồn lực đã lộ một tia. Trong thung lũng lúc ấy có bao nhiêu đôi mắt? Của địch — và còn của ai nữa?"' },
+    { who: 'narrate', text: 'Câu trả lời tới ngay trong đêm. Ở trạm nghỉ, một con chim ưng xám đáp xuống tay người gác trạm — chân buộc một ống thư nhỏ không đề tên người gửi, chỉ đóng một dấu triện mà ngươi đã từng thấy một lần: dấu của Thiên Cơ Các.' },
+    { who: 'tran_chinh_dao', text: '(trong thư) "Cậu Giang. Ở Thung Lũng Hồi Phong hôm nay, các này ghi được một vệt hồn lực không có trong bất kỳ danh sách Hồn Sư nào của thiên hạ. Ta không hỏi cậu là ai trong thư này. Ta chỉ báo trước một câu, vì kính trọng cách cậu xử sự ở Hứa gia ngày trước: ngày mai, người của các sẽ tới gặp cậu — và lần này, họ tới không phải vì Lục Tranh." — Trần Chính Đạo.' },
+    { who: 'narrate', text: 'Ngươi gấp thư lại. Bí mật ngươi giữ từ trước cả khi tới Hứa gia — bí mật mà cả Cô Châu Thành không một ai biết — vừa rò ra ánh sáng lần đầu tiên. Và nơi đang cầm đầu mối của nó, là nơi nắm mọi bí mật của thiên hạ.' }
+  ];
+  var SCENE_CH9_END = [
+    { who: 'narrate', text: 'Sáng hôm sau, đoàn Hứa gia lên đường về trấn trong sự hộ tống của đệ tử Thanh Vân Tông. Hứa Chính Ngôn, vai còn băng bó, nắm tay ngươi rất lâu trước khi lên xe.' },
+    { who: 'chinh_ngon', text: 'Phàm nhi. Cha con ngày xưa cứu ta một mạng ở nơi còn nguy hiểm hơn thung lũng này. Ta chưa từng kể cho con nghe chuyện ấy — vì có những phần, chính ta cũng chỉ biết một nửa. Ngọc bội kia… giữ cho kỹ. Đến ngày con biết hết, có lẽ nhà này nợ nhà con không chỉ một mạng.' },
+    { who: 'u_nhan', text: 'Phàm ca, muội về trấn lo cho cha và trấn an người trong nhà. Chuyện Thiên Cơ Các — huynh đừng đối mặt một mình. Khi nào huynh cần một người đứng cạnh, dù là đứng cạnh để im lặng cùng huynh, muội sẽ có mặt. Lần này muội nói trước, để huynh khỏi phải đoán.' },
+    { who: 'narrate', text: 'Huyết Bạc Cung đã từ bóng ma trong rừng thành một thế lực bày trận có tên, có người, có món nợ mười hai năm. Và ở phía chân trời, Thiên Cơ Các đang đi tới — vì bí mật thứ hai của ngươi.' }
+  ];
+  /* Cảnh gặp riêng ở thung lũng (bể theo bản đồ, không gộp vào bể chung). */
+  var SCENE_UNHAN_HOI_PHONG = [
+    { who: 'u_nhan', text: 'Phàm ca, đoàn đã an toàn. Phần còn lại trong thung lũng này — vết tích, người của chúng còn sót, và cả gốc anh đào kia — huynh xem cho kỹ rồi hãy đi. Muội chờ ở trạm nghỉ.' }
+  ];
+  var SCENE_TULINH_HOI_PHONG = [
+    { who: 'tran_tu_linh', text: 'Ta nghe tin đoàn Hứa gia bị vây là chạy tới ngay, nhưng tới nơi thì mọi chuyện đã xong. Giang công tử — có một việc lạ: dọc đường ta gặp một người của Thiên Cơ Các đi ngược chiều. Hắn không tới cứu ai cả. Hắn tới để ghi chép.' }
+  ];
+
+  /* ================= PHẦN 3 — CHƯƠNG 10: TĨNH QUAN LÂU =================
+     Phân nhánh trung tâm của phần: tự mình nói ra (đường A) hoặc giữ im
+     lặng để sự thật bị kẻ khác tung ra (đường B). Hai đường hội tụ ở cùng
+     mốc cảnh giới nhưng dư âm khác nhau sống tiếp sang chương 11. */
+  var SCENE_CH10_MOI = [
+    { who: 'narrate', text: 'Trước cửa phân đà Thiên Cơ Các, Trần Chính Đạo đã đứng chờ sẵn — như thể ông biết chính xác ngươi sẽ tới vào khắc này.' },
+    { who: 'tran_chinh_dao', text: 'Cậu Giang, thư của ta tới tay cậu rồi chứ. Hôm nay các mời cậu vào lầu, không phải để hỏi tội. Là để nói một chuyện mà nói ở ngoài đường thì nguy cho cả cậu lẫn các.' },
+    { who: 'tran_chinh_dao', text: 'Người tiếp cậu bên trong là Bạch Kính Đường, giám sát sứ của các — người giữ hồ sơ về mọi Hồn Sư trong thiên hạ suốt hai mươi năm. Ông ấy đã bay từ tổng đà tới chỉ vì một vệt hồn lực ở Thung Lũng Hồi Phong.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ông biết trước ta sẽ không từ chối."' },
+    { who: 'tran_chinh_dao', text: 'Ta biết cậu không có đường lui nào tốt hơn. Vào đi — cửa lầu hôm nay chỉ mở cho một mình cậu.' }
+  ];
+  var SCENE_CH10_VAO_LAU = [
+    { who: 'narrate', text: 'Phòng kín phía bắc Tĩnh Quan Lâu không có cửa sổ. Trên án dài, hồ sơ được xếp thành từng chồng theo năm tháng — và chồng trên cùng mang tên của ngươi.' },
+    { who: 'bach_kinh_duong', text: 'Ngồi đi, cậu Giang. Ta là Bạch Kính Đường. Hai mươi năm nay ta làm một việc duy nhất: ghi lại mọi Hồn Sư xuất hiện trong thiên hạ. Danh sách của ta có một trăm mười bảy cái tên. Cho tới tháng trước, tên của cậu không nằm trong đó.' },
+    { who: 'bach_kinh_duong', text: 'Đừng vội căng thẳng. Người của Thiên Cơ Các ngồi trong phòng này không mang theo kiếm. Ta chỉ mang theo giấy — và trí nhớ của một ông già đã xem quá nhiều hồ sơ bị người ta sửa.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ông muốn gì ở ta?"' },
+    { who: 'bach_kinh_duong', text: 'Muốn nghe cậu nói. Theo cách của cậu. — Ký lục quan, mở hồ sơ Hồi Phong. Ta sẽ đọc lại những gì các đã ghi được, và cậu sẽ thấy: có chỗ chúng ta biết chắc, có chỗ chúng ta chỉ đoán, và có một chỗ… chúng ta cố ý ghi sai, để xem cậu có sửa hay không.' }
+  ];
+  var SCENE_CH10_SIET = [
+    { who: 'bach_kinh_duong', text: 'Vòng thứ nhất trong hồ sơ: một đêm ở Trần gia, một người bệnh thần hồn nguy kịch được cứu mà không thầy thuốc nào vào phòng. Các ghi: có Hồn Sư ra tay, không rõ phẩm cấp. Chỗ này — chúng ta đoán.' },
+    { who: 'bach_kinh_duong', text: 'Vòng thứ hai: đêm phủ Hứa bị tấn công. Ba tên Huyết Bạc Cung chết không một vết thương ngoài, thần hồn tán loạn như bị ai rút ra khỏi xác. Các ghi: Hồn Sư nhị phẩm trở lên. Chỗ này — chúng ta gần như chắc.' },
+    { who: 'bach_kinh_duong', text: 'Vòng thứ ba: Thung Lũng Hồi Phong. Vệt hồn lực trên mặt đá, đo được, so được, không chối được. Và hồ sơ của ta ghi một câu thế này: "Giang Phàm chữa hồn cho Trần gia vào tháng ba, trước mặt mười hai nhân chứng."' },
+    { who: 'hero', mode: 'write', text: '(viết) "Sai hai chỗ. Không phải tháng ba. Và không có nhân chứng nào — đêm ấy trong phòng chỉ có người bệnh và ta."' },
+    { who: 'bach_kinh_duong', text: '(cười khẽ) Tốt. Cậu vừa tự sửa hồ sơ của chính mình — và vừa tự xác nhận hai vòng đầu đều là thật, chỉ sai chi tiết ta cố ý đặt. Cậu Giang, cậu thành thật hơn nhiều kẻ biết nói.' },
+    { who: 'narrate', text: 'Ký lục quan lặng lẽ gạch hai dòng trong hồ sơ, viết lại theo lời sửa của ngươi. Trong phòng kín bỗng yên tĩnh hẳn — phần đọc hồ sơ đã xong. Phần khó hơn bắt đầu bây giờ.' }
+  ];
+  var CH10_CHOICE = {
+    who: 'choice', text: 'Bạch Kính Đường chờ câu trả lời của ngươi.',
+    options: [
+      { label: 'Tự mình nói ra — viết rõ thân phận, rồi cất một lời làm chứng', action: 'ch10_tu_lo' },
+      { label: 'Giữ im lặng — không nhận, không chối, rời khỏi phòng này', action: 'ch10_im_lang' }
+    ]
+  };
+  var SCENE_CH10_LO_CHOICE = [
+    { who: 'bach_kinh_duong', text: 'Giờ ta hỏi thẳng, và cậu chỉ cần trả lời một lần. Thiên Cơ Các có hai cách xử lý một Hồn Sư không có trong danh sách. Cách một: ghi tên cậu vào, đóng dấu hợp tác — từ nay cậu là Hồn Sư được các công nhận, đổi lại các được biết cậu là ai, ở đâu, mạnh tới đâu.' },
+    { who: 'bach_kinh_duong', text: 'Cách hai: cậu không nhận gì cả. Vậy thì theo lệ, hồ sơ của cậu sẽ là "Hồn Sư lai lịch bất minh, chưa rõ thiện ác" — và cái tiếng ấy sẽ đi theo cậu tới mọi nơi có tai của Thiên Cơ Các. Cậu chọn cách nào — tự mình nói ra, hay để thiên hạ nói thay?' },
+    CH10_CHOICE
+  ];
+  var SCENE_CH10_TU_LO = [
+    { who: 'hero', mode: 'write', text: '(viết) "Ta là Giang Phàm. Hồn Sư nhị phẩm. Ta chữa hồn, không hại hồn. Viết vào hồ sơ của ông như thế — nguyên văn."' },
+    { who: 'hero', mode: 'say', text: 'Ta là Hồn Sư.' },
+    { who: 'narrate', text: 'Bốn chữ nói ra giữa phòng kín, không lớn, nhưng ký lục quan ngẩng phắt lên: bút của nàng dừng giữa trang giấy. Bạch Kính Đường nhìn ngươi rất lâu, rồi tự tay cầm bút, viết vào hồ sơ bốn chữ ấy, đóng triện của giám sát sứ ngay bên dưới.' },
+    { who: 'bach_kinh_duong', text: 'Hai mươi năm giữ hồ sơ, đây là lần đầu một Hồn Sư tự đọc cho ta ghi. Cậu Giang — Thiên Cơ Các nhận lời của cậu. Ngọc giản này là tín vật hợp tác: từ nay, tin tức của các về Huyết Bạc Cung, cậu được xem phần liên quan tới mình.' },
+    { who: 'bach_kinh_duong', text: 'Và một thứ nữa, ngoài lệ: trong hồ sơ cũ có một mảnh về vụ bến đò trên sông Bạc năm xưa. Cậu chưa nên xem hết hôm nay — nhưng hãy biết: các giữ nó, và nó chưa từng bị đốt.' }
+  ];
+  var SCENE_CH10_BI_LO_1 = [
+    { who: 'narrate', text: 'Ngươi đứng dậy, khẽ lắc đầu, và bước ra khỏi phòng kín mà không viết một chữ nào. Sau lưng, Bạch Kính Đường thở dài rất khẽ — tiếng thở của một người già vừa nhìn thấy một việc sắp hỏng mà không được phép ngăn.' },
+    { who: 'bach_kinh_duong', text: 'Vậy thì theo lệ. Ký lục quan — đóng hồ sơ này lại, ghi đúng một dòng: lai lịch bất minh. Và chuẩn bị tinh thần: khi các không nói, sẽ có kẻ khác nói thay, bằng cái miệng xấu nhất mà chúng tìm được.' }
+  ];
+  var SCENE_CH10_BI_LO_2 = [
+    { who: 'narrate', text: 'Ba ngày sau, chợ Cô Châu Thành. Tin đồn chạy nhanh hơn ngựa: "đệ tử Thanh Vân Tông họ Giang là Hồn Sư giấu mặt", "chữa hồn là vỏ, rút hồn người sống mới là thật" — mỗi người kể lại thêm một chút ác ý.' },
+    { who: 'narrate', text: 'Người kể to nhất ở giữa chợ là một kẻ lạ mặt mà ai tinh mắt cũng nhận ra vệt đỏ thẫm trên tay áo. Huyết Bạc Cung đã tung tin này ra — chúng biết chuyện ở Tĩnh Quan Lâu sớm tới mức chỉ có thể là có tai trong hàng ngũ nào đó của các, hoặc của tông.' },
+    { who: 'narrate', text: 'Ở sân phủ Hứa, Hứa U Nhàn nghe hết câu chuyện từ miệng một người bán hàng rong — trước khi ngươi kịp nói với nàng một lời nào. Nàng đứng rất lâu bên giếng, rồi chỉ nói với gia nhân một câu: "Khi nào chàng về, bảo chàng ta chờ ở sân sau."' }
+  ];
+  var SCENE_CH10_END_A = [
+    { who: 'narrate', text: 'Tối ấy, ở sân sau Tĩnh Quan Lâu, linh khí tụ về như sương xuống. Ngươi ngồi trên nền đá nhỏ, chu thiên vận hành trọn vẹn một vòng lớn — Trúc Cơ Hậu Kỳ, lặng lẽ như cách ngươi vẫn bước qua mọi ngưỡng của đời mình.' },
+    { who: 'tran_tu_linh', text: '(đứng ở cổng sân sau, nói rất khẽ) Ta không vào đâu. Chỉ đứng đây để nếu có ai hỏi, ta nói được rằng: đêm ấy cậu ấy đột phá đường hoàng, không giấu ai điều gì nữa.' }
+  ];
+  var SCENE_CH10_END_B = [
+    { who: 'narrate', text: 'Đêm ấy, ở sân sau Tĩnh Quan Lâu, ngươi ngồi thổ nạp một mình với đầy ngực những lời đồn chưa kịp dẹp. Chu thiên vẫn vận hành trọn vẹn — Trúc Cơ Hậu Kỳ. Sự thật có thể bị nói thay, nhưng cảnh giới thì không ai đột phá thay ngươi được.' }
+  ];
+
+  /* ================= PHẦN 3 — CHƯƠNG 11: HỆ QUẢ VÀ LỰA CHỌN ============= */
+  var SCENE_CH11_HE_QUA_A = [
+    { who: 'truong_lao_tong', text: 'Giang Phàm. Tin từ Thiên Cơ Các đã về tới tông trước cả ngươi: Hồn Sư nhị phẩm, hợp tác có đóng triện. Có đệ tử xì xào sau lưng ngươi hai hôm nay — ta đã phạt kẻ xì xào ấy đi quét sân, không phải vì ngươi, mà vì tông này không nuôi thói đồn nhảm.' },
+    { who: 'truong_lao_tong', text: 'Đứng thẳng mà đi. Từ nay ai hỏi, ngươi là đệ tử Thanh Vân Tông kiêm Hồn Sư được Thiên Cơ Các công nhận. Tông không giấu ngươi, ngươi cũng đừng tự giấu mình nữa.' },
+    { who: 'narrate', text: 'Cùng ngày, ủy thác đầu tiên của Thiên Cơ Các tới: một thương nhân ở Cô Châu Thành bị tổn thương thần hồn sau chuyến buôn qua sông Bạc. Người ta mời đích danh "Hồn Sư Giang Phàm" — lần đầu tiên trong đời, cái tên ấy được gọi công khai kèm hai chữ Hồn Sư.' }
+  ];
+  var SCENE_CH11_HE_QUA_B = [
+    { who: 'truong_lao_tong', text: 'Giang Phàm, ta nghe hết rồi — cả phần thật lẫn phần đồn thổi thêm. Ngồi xuống. Ta hỏi một câu thôi: chuyện Hồn Sư, là thật chứ?' },
+    { who: 'hero', mode: 'write', text: '(viết) "Thật. Đệ tử là Hồn Sư nhị phẩm. Giấu vì chưa tới lúc nói, không phải vì việc ấy xấu."' },
+    { who: 'truong_lao_tong', text: 'Đủ rồi. Giấu một việc không xấu vì chưa tới lúc — tông này chứa được. Nhưng từ nay, trong sân tông này, ngươi luyện hồn công khai cho ta xem một lần. Để tin đồn hết đất mà sống.' },
+    { who: 'narrate', text: 'Chiều ấy, ngươi chữa thần hồn cho một đệ tử bị thương khi luyện công, ngay giữa sân luyện, trước mặt bao nhiêu đồng môn. Không một ai quay đi. Tin đồn ngoài chợ vẫn còn — nhưng trong tông, nó chết từ chiều hôm đó.' }
+  ];
+  var SCENE_CH11_CLINIC_A = [
+    { who: 'tran_tu_linh', text: 'Ủy thác của Thiên Cơ Các lại tới, Giang công tử. Lần này người bệnh ở ngay Cô Châu Thành — họ chỉ đích danh cậu, và trả công khai theo giá của các: 40 Linh Thạch.' },
+    { who: 'narrate', text: 'Ngươi chữa xong trong một buổi. Lần đầu tiên, việc chữa hồn của ngươi diễn ra giữa ban ngày, có người ghi chép, có người trả công đàng hoàng — không còn là một bí mật phải giấu trong đêm nữa.' }
+  ];
+  var SCENE_CH11_SECT_SOUL_B = [
+    { who: 'hoa_huong_than', text: 'Giang Phàm, có một đệ tử luyện công bị tổn thương thần hồn nhẹ. Trưởng lão nói: để ngươi chữa, công khai, ở sân luyện — việc của tông, ghi công 20 Linh Thạch. Hắn còn nói thêm: chữa trước mặt mọi người một lần nữa, cho tin đồn hết đường quay lại.' },
+    { who: 'narrate', text: 'Ngươi chữa ngay tại sân luyện. Đệ tử kia tỉnh lại, việc xong trong nửa buổi — và không một đồng môn nào còn nhắc tới hai chữ "lai lịch bất minh" nữa.' }
+  ];
+  var SCENE_CH11_BENH = [
+    { who: 'cho_a', text: 'Cậu Giang! Lại có kẻ ở chợ này vừa kể chuyện "Hồn Sư rút hồn" đấy — ta đuổi nó đi rồi. Người đưa tin của Hứa gia hôm ở thung lũng kể khắp xóm ta nghe: hôm ấy chính mắt cậu ta thấy cậu cứu cả đoàn xe. Chợ này còn ai tin lời đồn, ta không bán hàng cho kẻ ấy nữa!' },
+    { who: 'narrate', text: 'Lời bênh vực đầu tiên ngươi nhận được sau khi thân phận lộ ra không đến từ tông môn hay Thiên Cơ Các — nó đến từ một người bán hàng rong ở chợ, và một người đưa tin chạy chết hai con ngựa.' }
+  ];
+  var SCENE_CH11_CHUA_GIA_NHAN = [
+    { who: 'gia_nhan', text: 'Giang công tử… cánh tay tiểu nhân từ hôm ở thung lũng cứ tê đi từng cơn, đêm về là mơ thấy tên bay. Đại tiểu thư bảo đó không phải vết thương ngoài da — bảo tiểu nhân chờ công tử về.' },
+    { who: 'narrate', text: 'Ngươi đặt tay lên trán cậu gia nhân trẻ. Vết tên sượt ngoài da đã lành từ lâu — thứ chưa lành là thần hồn bị chấn động trong khoảnh khắc sinh tử ấy, và phần thuốc đáng lẽ chữa được nó đã bị bỏ lại trên xe trong thung lũng, vì ngươi chọn im lặng. Ngươi chữa cho cậu ta trọn một buổi, chậm rãi và cẩn thận hơn mọi lần — như trả một món nợ mà chỉ mình ngươi biết.' },
+    { who: 'gia_nhan', text: 'Hết tê rồi! Đầu cũng nhẹ hẳn. Công tử — hôm ấy nếu không có công tử đi đường vòng vào, cả đoàn đã không ai về được. Vết này có ở lại suốt đời, tiểu nhân cũng không oán một lời.' }
+  ];
+  var SCENE_CH11_U_NHAN = [
+    { who: 'u_nhan', text: 'Phàm ca. Muội tới không phải để hỏi chuyện Hồn Sư — chuyện ấy, thiên hạ nói gì kệ thiên hạ. Muội tới để nói chuyện của muội, và muội cần huynh nghe hết, không chen vào — như mọi lần huynh vẫn nghe.' },
+    { who: 'u_nhan', text: 'Tờ hôn thư giữa hai nhà viết từ mười năm trước, khi cả hai ta còn chưa biết chữ "không" viết thế nào. Mười năm nay, nó nằm trong hòm của nhà muội như một tờ giấy nợ: nợ danh phận, nợ lời hứa của người lớn, nợ cả những năm huynh bị người ta chê cười vì nó.' },
+    { who: 'u_nhan', text: 'Ngày mai muội lên Thanh Vân Tông. Muội sẽ trao lại tờ hôn thư ấy trước mặt trưởng lão của huynh — và đặt cạnh nó một tờ khác, do chính tay muội viết. Không phải từ hôn. Là tự thư: từ nay, việc của Hứa U Nhàn và Giang Phàm, không do một tờ giấy mười năm quyết nữa. Do hai người tự quyết, mỗi ngày một lần, như người trưởng thành.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Việc ấy sẽ làm khó nàng ở Hứa gia. Phu nhân sẽ không để yên."' },
+    { who: 'u_nhan', text: 'Muội biết cái giá rồi, Phàm ca. Mẫu thân đã nói trước: nếu muội tự ý việc này, phần thừa kế trưởng nữ của muội sẽ bị cắt. Muội tính hết rồi — và muội vẫn đi. Huynh đừng cứu muội khỏi cái giá của chính lựa chọn của muội. Huynh chỉ cần có mặt ở đó, đứng cạnh muội. Thế là đủ.' }
+  ];
+  var SCENE_CH11_TU_THU = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện. Hứa U Nhàn bước vào giữa điện trong bộ áo giản dị nhất của nàng, tay cầm hai tờ giấy. Nàng không quỳ, chỉ cúi đầu chào trưởng lão đúng lễ của khách.' },
+    { who: 'u_nhan', text: 'Trưởng lão, đệ tử không phải người của tông, xin phép được nói một việc nhà trước điện. Tờ này là hôn thư mười năm của Hứa gia và Giang gia. Hôm nay, trước mặt tông môn của chàng, ta trao lại — không phải để cắt đứt, mà để trả nó về đúng chỗ: một kỷ vật, không phải một xiềng xích.' },
+    { who: 'u_nhan', text: 'Tờ này là tự thư của ta, viết đêm qua, chữ của ta, ý của ta. Từ nay đường của ta và Giang Phàm do hai chúng ta tự đi. Ai hỏi, cứ đọc tờ này.' },
+    { who: 'truong_lao_tong', text: 'Cô nương. Cô có biết đặt hai tờ giấy này xuống giữa điện của ta nghĩa là gì không? Nghĩa là từ nay, tông môn này là nhân chứng của cô. Hứa gia có đổi ý, cũng phải bước qua cửa điện này mà nói.' },
+    { who: 'u_nhan', text: '(quay sang ngươi, mỉm cười lần đầu trong ngày) Xong rồi, Phàm ca. Từ hôm nay, không ai trong hai ta nợ ai một tờ giấy nào nữa.' },
+    { who: 'narrate', text: 'Tin về tới Hứa gia ngay chiều ấy. Vương Ánh Phụng nổi giận đúng như dự đoán: phần thừa kế trưởng nữ của U Nhàn bị cắt ngay trong đêm. Nhưng Hứa Chính Ngôn chỉ giữ lại được cho con gái một câu, nhờ người nhắn lên núi: "Nhà này vẫn là nhà của con, khi nào con quay về."' },
+    { who: 'narrate', text: 'Trước khi xuống núi, gia nhân của Hứa gia trao cho ngươi một túi nhỏ: 35 Linh Thạch, kèm lời nhắn của gia chủ — "Không phải tiền mua sự im lặng, cũng không phải tiền mua lòng người. Là tiền tạ ơn của một người cha."' }
+  ];
+  var SCENE_CH11_CHUAN_BI = [
+    { who: 'truong_lao_tong', text: 'Trúc Cơ Viên Mãn đang tới gần, và Kết Đan không giống Trúc Cơ: ngươi cần một vật dẫn kết đan — thứ dẫn lối cho kim đan thành hình. Việc chuẩn bị này, ta giao ngươi tự lo một nửa.' },
+    { who: 'truong_lao_tong', text: 'Ở bãi bắc Thung Lũng Hồi Phong có một cụm dược dẫn mọc quanh vòng đá cũ — hái một phần về đây. Nhưng nghe kỹ: vật dẫn còn cần Yêu Đan cấp 2 làm tim đan; dược dẫn không tim thì chỉ là cỏ khô. Quanh cụm dược ấy gần đây có một con yêu thú lớn về giữ — cấp của nó vừa tầm ngươi bây giờ.' },
+    { who: 'truong_lao_tong', text: 'Việc thứ hai: tu vi phải đầy Trúc Cơ Viên Mãn mới tính chuyện luyện vật dẫn. Điểm thổ nạp của tông hay bờ suối Hồi Phong đều được. Đầy rồi, mang đủ đồ về đây — ta luyện vật dẫn cho ngươi ngay.' }
+  ];
+  var SCENE_CH11_VIEN_MAN = [
+    { who: 'narrate', text: 'Trưởng lão nhìn ngươi một lúc, rồi bỗng gật đầu: "Tu vi của ngươi đã đầy rồi đấy." Ông cho đóng cửa đại điện, tự tay thắp ba nén hương trầm.' },
+    { who: 'truong_lao_tong', text: 'Ngồi xuống, ngay tại điện này. Trúc Cơ Viên Mãn không cần đài cao, chỉ cần một người giữ cửa và một cái tâm yên. Ta giữ cửa cho ngươi.' },
+    { who: 'narrate', text: 'Chu thiên cuối cùng của Trúc Cơ khép lại êm như mặt nước. Khi ngươi mở mắt, linh khí quanh người đã đổi khác: dày hơn, trầm hơn — Trúc Cơ Viên Mãn. Ngưỡng tiếp theo là một cánh cửa mà cả đời tu sĩ chỉ gõ được một lần: Kết Đan.' }
+  ];
+  var SCENE_CH11_DUOC = [
+    { who: 'narrate', text: 'Bãi bắc Thung Lũng Hồi Phong. Quanh vòng đá cũ phủ rêu, cụm dược dẫn mọc thành vòng tròn kỳ lạ — lá tím sẫm, mặt lá có vân vàng chạy như mạch máu. Ngươi vừa hái được phần đầu tiên thì mặt đất dưới chân rung lên từng nhịp nặng nề.' },
+    { who: 'narrate', text: 'Từ sau vòng đá, một con yêu thú lớn bước ra: vai cao hơn người, bờm đá xám dựng đứng, hai mắt đỏ như than hồng. Nó giữ cụm dược này từ lâu — và nó không có ý định nhường cho ai, kể cả một đệ tử Trúc Cơ sắp Kết Đan.' }
+  ];
+  var KD_CHOICE = {
+    who: 'choice', text: 'Yêu thú gầm lên và lao tới. Ngươi sẽ…',
+    options: [
+      { label: 'Xuất kiếm nghênh địch', action: 'kd_sword' },
+      { label: 'Hét một tiếng CHẤN', action: 'kd_chan' },
+      { label: 'Lùi lại giữ thế, tích Tĩnh Mặc', action: 'kd_hold' }
+    ]
+  };
+  var SCENE_CH11_DUOC_FIGHT = [
+    { who: 'narrate', text: 'Con thú không đánh bừa: nó vòng quanh vòng đá, giữ khoảng cách, chờ ngươi bước vào giữa vòng mới lao tới — như thể nó cũng biết cụm dược sau lưng nó đáng giá nhường nào.' },
+    KD_CHOICE
+  ];
+  var SCENE_CH11_DUOC_END = [
+    { who: 'narrate', text: 'Con yêu thú gục xuống bên vòng đá, hơi thở cuối cùng phả vào mặt lá dược dẫn. Ngươi mổ lấy viên Yêu Đan cấp 2 còn ấm trong ngực nó, rồi hái nốt phần dược dẫn cần thiết, gói lại cẩn thận.' },
+    { who: 'narrate', text: 'Dược dẫn đã có, tim đan cũng đã có. Việc còn lại là mang cả về đại điện, để trưởng lão luyện thành vật dẫn Kết Đan.' }
+  ];
+  var KD_FEE_CHOICE = {
+    who: 'choice', text: 'Ngươi sẽ trả công luyện thế nào?',
+    options: [
+      { label: 'Trả 120 Linh Thạch công luyện', action: 'kd_pay' },
+      { label: 'Hái thêm hai phần dược dẫn ở thung lũng để thay công luyện', action: 'kd_herb_fee' }
+    ]
+  };
+  var SCENE_CH11_VAT_DAN = [
+    { who: 'truong_lao_tong', text: 'Dược dẫn còn tươi, Yêu Đan cấp 2 còn ấm — đủ tim, đủ dẫn. Ta luyện được. Nhưng nghe cho rõ: công luyện vật dẫn kết đan của tông là 120 Linh Thạch. Lò của tông không cháy bằng lời cảm ơn được.' },
+    { who: 'truong_lao_tong', text: 'Không muốn trả bằng Linh Thạch cũng có đường: hái thêm hai phần dược dẫn nữa ở thung lũng mang về cho đan phòng — dược ấy hiếm, tông đang cần. Chọn đi.' },
+    KD_FEE_CHOICE
+  ];
+  var SCENE_CH11_VAT_DAN_DONE = [
+    { who: 'narrate', text: 'Lửa lò đại điện cháy suốt ba canh giờ. Khi nắp lò mở, một vật tròn nhỏ bằng đầu ngón tay nằm giữa tro thuốc — bề mặt có vân xoáy chậm rãi như mây tụ. Vật dẫn Kết Đan.' },
+    { who: 'truong_lao_tong', text: 'Cầm cho chắc. Ngày lên đài, ta sẽ cho người báo. Từ giờ tới lúc đó, giữ tâm yên như mặt nước — và nhớ: địch của ngươi cũng đang đếm ngày giống ngươi đấy.' }
+  ];
+
+  /* ================= PHẦN 3 — CHƯƠNG 12: KẾT ĐAN ======================== */
+  var SCENE_CH12_LEN_DAI = [
+    { who: 'narrate', text: 'Đài Trúc Cơ, một buổi sớm trong veo. Lần này ngươi lên đài không phải để Trúc Cơ — mà để Kết Đan. Quanh đài, những người hộ pháp đã vào vị trí từ trước khi trời sáng.' },
+    { who: 'u_nhan', text: 'Phía đông để muội. Lần trước muội giữ phía đông cho huynh ở đài này — lần này cũng vậy. Có một thứ muội muốn nói trước khi huynh vận công: dù hôm nay có chuyện gì, đừng vì người ở dưới đài mà phá vận công của huynh. Bọn muội ở đây chính là để huynh không phải chọn.' },
+    { who: 'hoa_huong_than', text: 'Phía tây và bậc thang là của ta. Giang Phàm — sau hôm nay, có khi ta phải gọi ngươi là tiền bối rồi. Kết Đan cho đẹp vào.' },
+    { who: 'lieu_khuynh_tien', text: 'Phía bắc ta giữ. Còn một việc ngươi nên biết: tin ngươi Kết Đan hôm nay đã lọt ra ngoài từ hôm qua. Địch nếu tới, sẽ tới đúng lúc ngươi không thể dừng — như lần trước. Nhưng lần này, cả đài đều biết trước.' }
+  ];
+  var SCENE_CH12_HP_TCL = [
+    { who: 'tran_tu_linh', text: 'Phía nam, Thiên Cơ Các cử người giữ — là ta, theo lời dặn của cha ta. Giang công tử, hôm nay các đứng về phía cậu, công khai.' }
+  ];
+  var SCENE_CH12_HP_TONG = [
+    { who: 'de_tu_a', text: 'Phía nam do đệ tử gác đài của tông giữ, sư huynh yên tâm. Người ngoài không bước qua được vòng này đâu.' }
+  ];
+  var SCENE_CH12_GUARD_INTRO = [
+    { who: 'narrate', text: 'Chu thiên vừa vào vòng thứ hai thì từ bậc thang phía đông, tiếng hò hét vọng lên: dư nghiệt Huyết Bạc Cung đánh thẳng vào đài, dẫn đầu là một bóng áo xám quen thuộc — Mạc Cửu U. Hắn không hô giết. Hắn hô một câu rất lạ: "Đừng giết nó! Cứ để nó Kết Đan!"' },
+    { who: 'narrate', text: 'Lời ấy làm cả vòng hộ pháp khựng lại một nhịp. Nhưng địch vẫn đang leo lên đài — và ngươi, như lần Trúc Cơ, tuyệt đối không được cất tiếng cho tới khi vận công xong.' }
+  ];
+  var KDGUARD_CHOICE = {
+    who: 'choice', text: 'Vận công không thể dừng. Ngươi sẽ…',
+    options: [
+      { label: 'Ra hiệu cho U Nhàn giữ phía đông', action: 'kdguard_dong' },
+      { label: 'Để Hoa Hướng Thần đón đầu kẻ mạnh nhất', action: 'kdguard_hoa' },
+      { label: 'Ngồi yên giữ vững tâm thần, mặc kệ khiêu khích', action: 'kdguard_tam' },
+      { label: 'Cất tiếng phá vây — dù phải vỡ vận công', action: 'kdguard_voice' }
+    ]
+  };
+  var SCENE_KDGUARD1 = [
+    { who: 'narrate', text: 'Đợt thứ nhất: địch đánh thẳng vào bậc thang phía đông. Tiếng kiếm chạm nhau dội xuống mặt đá — phía đông mà sụp, vòng hộ pháp sẽ hở ra ngay trước mặt ngươi.' },
+    KDGUARD_CHOICE
+  ];
+  var SCENE_KDGUARD2 = [
+    { who: 'narrate', text: 'Đợt thứ hai: chúng đổi hướng, đánh vào phía tây nơi Hoa Hướng Thần đang đứng một mình, đồng thời phóng ám khí lên đài để ép ngươi phải mở mắt.' },
+    KDGUARD_CHOICE
+  ];
+  var SCENE_KDGUARD3 = [
+    { who: 'narrate', text: 'Đợt cuối: Mạc Cửu U tự mình bước lên ba bậc thang, dừng lại ở đúng tầm tiếng nói có thể chạm tới, và nói vọng lên đài: "Hét đi chứ, Hồn Sư. Hay là lần này, cái giá của một tiếng hét đã đắt hơn lần trước?"' },
+    KDGUARD_CHOICE
+  ];
+  var SCENE_KDGUARD_END = [
+    { who: 'narrate', text: 'Đợt cuối cùng bị đẩy xuống khỏi bậc thang. Mạc Cửu U đứng ở bậc dưới cùng, nhìn lên đài, bỗng thu kiếm. Hắn nói vọng lên, đủ cho mọi người quanh đài nghe: "Cung chủ có lời: cứ để nó Kết Đan. Đan thành rồi — món nợ mới tính được."' },
+    { who: 'narrate', text: 'Địch rút như nước rút. Vòng hộ pháp không ai bị thương nặng. Chu thiên của ngươi, sau ba đợt sóng gió, vẫn nguyên vẹn một vòng — vật dẫn trong tay đã ấm lên như có nhịp đập riêng.' }
+  ];
+  var SCENE_CH12_TAM_MA = [
+    { who: 'narrate', text: 'Vận công tới vòng cuối cùng. Trong tâm thần, kim đan đang thành hình — và đúng lúc ấy, tâm ma tới, mang hình dạng quen thuộc nhất: một thung lũng đầy hoa anh đào, một vòng vây đang siết lại, và tiếng của chính ngươi vang lên từ khắp nơi: "Nói đi. Một lời thôi là cứu được người. Ngươi đã im lặng mười tám năm — còn định im lặng tới bao giờ?"' },
+    { who: 'narrate', text: 'Ngoài đài, cùng lúc ấy, bậc thang phía nam bỗng nứt một mảng đá lớn — trận văn hộ đài đang rạn, và người giữ phía nam đang ở ngay dưới mảng đá ấy. Một lời của ngươi lúc này có thể giữ mảng đá lại. Nhưng vận công đang ở khắc cuối: cất lời, đan sẽ thành nhưng mang một vết. Im lặng, đan trọn vẹn — và người ở phía nam sẽ chịu mảng đá ấy.' }
+  ];
+  var KD_TAMMA_CHOICE = {
+    who: 'choice', text: 'Mảng đá đang rơi. Ngươi sẽ…',
+    options: [
+      { label: 'Cất lời — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
+      { label: 'Giữ im lặng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
+    ]
+  };
+  var SCENE_CH12_TAMMA_SAY = [
+    { who: 'hero', mode: 'say', text: 'LÙI LẠI!' },
+    { who: 'narrate', text: 'Tiếng hét phá vỡ chu thiên ở vòng cuối. Sóng âm hất mảng đá lệch đi nửa trượng — người giữ phía nam thoát trong gang tấc. Kim đan trong đan điền vẫn thành hình, nhưng trên mặt đan còn lại một vệt nứt mảnh như tóc — cái giá của một lời nói đúng lúc.' }
+  ];
+  var SCENE_CH12_TAMMA_SILENT = [
+    { who: 'narrate', text: 'Ngươi không mở miệng. Mảng đá rơi xuống phía nam đài trong tiếng rầm khô khốc — và từ trong bụi đá, người giữ đài bò ra được, vai đẫm máu nhưng còn sống, còn cười được một cái về phía đài: "Đan của sư huynh… đừng vì ta mà hỏng."' },
+    { who: 'narrate', text: 'Chu thiên khép lại trọn vẹn. Kim đan trong đan điền tròn trịa, sáng như một mặt trời nhỏ vừa được thắp lên — không một vết nứt.' }
+  ];
+  var SCENE_CH12_KET_DAN = [
+    { who: 'narrate', text: 'Bầu trời trên Thanh Vân Tông bỗng tối đi một khắc giữa ban ngày. Một cột sáng từ đài phóng thẳng lên, mây tụ thành vòng xoay chậm, và từng tiếng chuông không ai gõ tự vang lên khắp núi.' },
+    { who: 'narrate', text: 'Kim Đan Sơ Kỳ. Ngươi mở mắt ra — thế giới nghe rõ hơn, nhìn xa hơn, và tiếng nói trong ngực ngươi nặng hơn trước gấp bội: từ hôm nay, lời của ngươi không chỉ là tiếng. Nó là LỆNH.' }
+  ];
+  var SCENE_CH12_LENH_1 = [
+    { who: 'narrate', text: 'Trưởng lão cho dựng một tấm bia đá mới ở chân đài. Ông nói: "Kim Đan thành rồi, tiếng nói của ngươi đã đổi bậc. Thử đi — không phải hét. Ra lệnh, như ra lệnh cho chính thiên địa quanh ngươi."' },
+    { who: 'truong_lao_tong', text: 'Nói một chữ ĐỊNH vào tấm bia kia. Nếu bia đứng yên tuyệt đối, không rung một hạt bụi, trong khi mặt đất quanh nó nứt ra — là ngươi đã chạm được vào bậc lệnh. Dùng phím 4, như ngươi vẫn dùng các chiêu tiếng nói.' }
+  ];
+  var SCENE_CH12_LENH_2 = [
+    { who: 'truong_lao_tong', text: 'Bia đứng yên như bị đóng băng giữa trời — tốt. Giờ khó hơn: trận văn quanh đài này đang rạn từ trận đánh lúc nãy. Nói một chữ PHONG — phong ấn vết rạn ấy lại. Phong không phải phá, cũng không phải giữ: là khóa chặt một thứ đang chuyển động thành vĩnh viễn đứng yên. Dùng phím 5.' }
+  ];
+  var SCENE_CH12_LENH_DONE = [
+    { who: 'narrate', text: 'Vết rạn trên trận văn khép lại dưới một vòng ấn vàng, rồi đứng yên như chưa từng nứt. Cả đài im phăng phắc. Lần dùng lệnh đầu tiên của ngươi không nhắm vào kẻ thù nào — nó giữ yên một góc đài cho những người vừa giữ đài cho ngươi.' },
+    { who: 'truong_lao_tong', text: 'ĐỊNH giữ một nhịp. PHONG khóa hai nhịp. Nhớ lấy giới hạn của chúng — và nhớ cả cái giá: thiên hạ từ nay sẽ nghe lệnh của ngươi, và cũng sẽ sợ lệnh của ngươi. Dùng nó như ngươi đã dùng sự im lặng mười tám năm: chỉ khi thật cần.' },
+    { who: 'u_nhan', text: 'Phàm ca. Muội hỏi huynh một câu cuối của ngày hôm nay — huynh có hối hận lần nào đã mở miệng, hay lần nào đã im lặng không?' },
+    { who: 'hero', mode: 'write', text: '(viết) "Không. Lời nói không nặng vì nó hiếm. Nó nặng vì nói ra rồi, mình phải chịu trách nhiệm với nó mãi. Ta chỉ hối hận nếu một ngày ta nói mà không chịu trách nhiệm nữa."' },
+    { who: 'narrate', text: 'Nàng đọc xong, gấp tờ giấy lại rất cẩn thận và cất vào ngực áo — như cất một tờ tự thư khác. Trên đài, chuông tông ngân dài. Một phần đường đã khép lại bằng chữ viết, đúng như nó đã bắt đầu bằng chữ viết.' }
+  ];
+
+  /* ---------- Thoại thường trú của các nhân vật mới (phần 3) ---------- */
+  IDLE_AFTER.tin_su = [
+    { who: 'npc', text: 'Tiểu nhân chạy hai ngày một đêm không dám ngủ. Đại tiểu thư dặn: tin phải tới tay Giang công tử trước khi trời tối, trễ một khắc là mất một mạng.' },
+    { who: 'npc', text: 'Đoàn xe vẫn còn người sống trong thung lũng ấy. Công tử đi nhanh lên — tiểu nhân lạy công tử đấy.' }
+  ];
+  IDLE_AFTER.gia_nhan = [
+    { who: 'npc', text: 'Qua được cửa thung lũng rồi… Tiểu nhân tưởng đêm nay là đêm cuối của cả đoàn. Đại tiểu thư giữ mọi người bình tĩnh suốt từ lúc bị vây tới giờ.' },
+    { who: 'npc', text: 'Cậu gia nhân trẻ bị thương ở tay đã qua cơn nguy rồi. Nghe nói lúc nguy nhất, có một luồng sáng lạ giữ cho cậu ấy không mê đi… chắc tiểu nhân hoa mắt thôi.' }
+  ];
+  IDLE_AFTER.mo_cuu_u = [
+    { who: 'npc', text: 'Đứng ngắm hoa anh đào à? Cây này ở cửa thung lũng lâu hơn cả Huyết Bạc Cung của ta. Ngắm cho kỹ — lát nữa có khi không còn lúc nào thong thả thế này đâu.' },
+    { who: 'npc', text: 'Ta không thích giết người thừa. Việc của ta hôm nay chỉ có một: đưa người của Hứa gia đi, và xem ngươi sẽ làm gì.' }
+  ];
+  IDLE_AFTER.huyet_de = [
+    { who: 'npc', text: 'Đừng… đừng tới gần. Tả sứ dặn rồi: nhiệm vụ là bắt sống người Hứa gia, không phải giết ngươi. Bọn ta chỉ làm theo lệnh thôi…' },
+    { who: 'npc', text: 'Trong cung, người ta gọi ngươi là "đứa con của người ở bến đò". Bọn ta cũng chỉ biết có thế. Thật đấy.' }
+  ];
+  IDLE_AFTER.de_tu_ho_tong = [
+    { who: 'npc', text: 'Sư huynh, đệ được lệnh hộ tống đoàn Hứa gia về tới tận trấn. Đường về đệ thuộc từng ổ gà — huynh cứ yên tâm lo việc trong thung lũng.' },
+    { who: 'npc', text: 'Đệ gác ở bãi đáp này từ lúc vào thung lũng. Có động tĩnh gì lạ, đệ sẽ huýt sáo báo ngay.' }
+  ];
+  IDLE_AFTER.bach_kinh_duong = [
+    { who: 'npc', text: 'Hồ sơ không biết nói dối, cậu Giang. Chỉ có người ghi hồ sơ mới nói dối — vì thế ta mới tự tay ghi mọi dòng quan trọng suốt hai mươi năm.' },
+    { who: 'npc', text: 'Ngồi xuống uống chén trà đã. Người mang bí mật đi qua cửa lầu này, ra về nhẹ hơn lúc vào — hoặc không ra về được nữa. Cậu thuộc loại nào, lát nữa sẽ rõ.' }
+  ];
+  IDLE_AFTER.ky_luc_quan = [
+    { who: 'npc', text: 'Tiểu nhân chỉ ghi chép. Giám sát sứ đọc gì, tiểu nhân ghi nấy — không thêm một chữ, không bớt một chữ.' },
+    { who: 'npc', text: 'Hồ sơ của cậu là chồng giấy dày nhất phòng này tháng này đấy. Tiểu nhân phải thay bút hai lần rồi.' }
+  ];
+  IDLE_AFTER.tiep_khach = [
+    { who: 'npc', text: 'Khách có thiệp mời thì mời vào sảnh. Không có thiệp — lầu này không có gì để xem cả, thật đấy.' },
+    { who: 'npc', text: 'Trà trong lầu lúc nào cũng nóng. Việc của tiểu nhân là rót trà và nhớ mặt khách — mặt nào vào lầu, tiểu nhân nhớ hết.' }
+  ];
+  IDLE_AFTER.gac_kho = [
+    { who: 'npc', text: 'Kho này toàn hồ sơ và cuộn giấy của các, xếp theo năm. Cậu đừng chạm vào — giấy cũ hơn cả tuổi cậu đấy.' },
+    { who: 'npc', text: 'Người ngoài hay tưởng Thiên Cơ Các giấu vàng trong kho. Sai rồi: thứ các giấu là chuyện của thiên hạ — nặng hơn vàng nhiều.' }
+  ];
+
   var STORY = {
     IDLE_BEFORE: IDLE_BEFORE, IDLE_AFTER: IDLE_AFTER,
     SCENE_TEST: SCENE_TEST, SCENE_WRITE_BRANCH: SCENE_WRITE_BRANCH,
@@ -879,7 +1272,35 @@
     SCENE_CHI_AMBUSH: SCENE_CHI_AMBUSH, SCENE_CHI_END: SCENE_CHI_END, SCENE_CHUAN_BI_2: SCENE_CHUAN_BI_2,
     SCENE_GUARD_INTRO: SCENE_GUARD_INTRO, SCENE_GUARD1: SCENE_GUARD1, SCENE_GUARD2: SCENE_GUARD2, SCENE_GUARD3: SCENE_GUARD3,
     SCENE_GUARD_VOICE: SCENE_GUARD_VOICE, SCENE_GUARD_END: SCENE_GUARD_END,
-    SCENE_TRUC_CO: SCENE_TRUC_CO, SCENE_THU_TIENG: SCENE_THU_TIENG, SCENE_END_P2: SCENE_END_P2
+    SCENE_TRUC_CO: SCENE_TRUC_CO, SCENE_THU_TIENG: SCENE_THU_TIENG, SCENE_END_P2: SCENE_END_P2,
+    SCENE_CHUAN_BI_2_OK: SCENE_CHUAN_BI_2_OK,
+    SCENE_CH9_TIN_DU: SCENE_CH9_TIN_DU, SCENE_CH9_UNHAN_PLAN: SCENE_CH9_UNHAN_PLAN,
+    SCENE_CH9_TRUY_VET: SCENE_CH9_TRUY_VET, SCENE_CH9_PHUC_KICH: SCENE_CH9_PHUC_KICH,
+    SCENE_CH9_SAY_RESCUE: SCENE_CH9_SAY_RESCUE, SCENE_CH9_SILENT_ROUTE: SCENE_CH9_SILENT_ROUTE,
+    SCENE_CH9_UNHAN_ACT: SCENE_CH9_UNHAN_ACT, SCENE_CH9_DOI_DAU: SCENE_CH9_DOI_DAU,
+    SCENE_CH9_DOI_DAU_SAY: SCENE_CH9_DOI_DAU_SAY, SCENE_CH9_HON_DAU: SCENE_CH9_HON_DAU,
+    SCENE_CH9_END: SCENE_CH9_END, SCENE_UNHAN_HOI_PHONG: SCENE_UNHAN_HOI_PHONG,
+    SCENE_TULINH_HOI_PHONG: SCENE_TULINH_HOI_PHONG,
+    SCENE_CH10_MOI: SCENE_CH10_MOI, SCENE_CH10_VAO_LAU: SCENE_CH10_VAO_LAU,
+    SCENE_CH10_SIET: SCENE_CH10_SIET, SCENE_CH10_LO_CHOICE: SCENE_CH10_LO_CHOICE,
+    SCENE_CH10_TU_LO: SCENE_CH10_TU_LO, SCENE_CH10_BI_LO_1: SCENE_CH10_BI_LO_1,
+    SCENE_CH10_BI_LO_2: SCENE_CH10_BI_LO_2, SCENE_CH10_END_A: SCENE_CH10_END_A,
+    SCENE_CH10_END_B: SCENE_CH10_END_B,
+    SCENE_CH11_HE_QUA_A: SCENE_CH11_HE_QUA_A, SCENE_CH11_HE_QUA_B: SCENE_CH11_HE_QUA_B,
+    SCENE_CH11_CLINIC_A: SCENE_CH11_CLINIC_A, SCENE_CH11_SECT_SOUL_B: SCENE_CH11_SECT_SOUL_B,
+    SCENE_CH11_BENH: SCENE_CH11_BENH, SCENE_CH11_CHUA_GIA_NHAN: SCENE_CH11_CHUA_GIA_NHAN,
+    SCENE_CH11_U_NHAN: SCENE_CH11_U_NHAN, SCENE_CH11_TU_THU: SCENE_CH11_TU_THU,
+    SCENE_CH11_CHUAN_BI: SCENE_CH11_CHUAN_BI, SCENE_CH11_VIEN_MAN: SCENE_CH11_VIEN_MAN,
+    SCENE_CH11_DUOC: SCENE_CH11_DUOC, SCENE_CH11_DUOC_FIGHT: SCENE_CH11_DUOC_FIGHT,
+    SCENE_CH11_DUOC_END: SCENE_CH11_DUOC_END, SCENE_CH11_VAT_DAN: SCENE_CH11_VAT_DAN,
+    SCENE_CH11_VAT_DAN_DONE: SCENE_CH11_VAT_DAN_DONE,
+    SCENE_CH12_LEN_DAI: SCENE_CH12_LEN_DAI, SCENE_CH12_HP_TCL: SCENE_CH12_HP_TCL,
+    SCENE_CH12_HP_TONG: SCENE_CH12_HP_TONG, SCENE_CH12_GUARD_INTRO: SCENE_CH12_GUARD_INTRO,
+    SCENE_KDGUARD1: SCENE_KDGUARD1, SCENE_KDGUARD2: SCENE_KDGUARD2, SCENE_KDGUARD3: SCENE_KDGUARD3,
+    SCENE_KDGUARD_END: SCENE_KDGUARD_END, SCENE_CH12_TAM_MA: SCENE_CH12_TAM_MA,
+    SCENE_CH12_TAMMA_SAY: SCENE_CH12_TAMMA_SAY, SCENE_CH12_TAMMA_SILENT: SCENE_CH12_TAMMA_SILENT,
+    SCENE_CH12_KET_DAN: SCENE_CH12_KET_DAN, SCENE_CH12_LENH_1: SCENE_CH12_LENH_1,
+    SCENE_CH12_LENH_2: SCENE_CH12_LENH_2, SCENE_CH12_LENH_DONE: SCENE_CH12_LENH_DONE
   };
   global.VSLC_STORY = STORY;
   if (typeof module !== 'undefined' && module.exports) module.exports = STORY;

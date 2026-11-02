@@ -42,7 +42,7 @@
   var STEPS_PER_BAR = 8;          // 8 bước восьмым mỗi nhịp (ô nhịp = 4 phách)
   var MOTIF_STEPS = 16;           // mô-típ dài 2 nhịp, lặp theo vòng 4 nhịp hợp âm
 
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong'];
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau'];
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -158,6 +158,18 @@
       padWave: 'triangle', motifWave: 'triangle',
       chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
       motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
+    },
+    hb_valley: { /* Thung Lũng Hồi Phong — thung lũng có suối: thứ ngũ cung trầm, đệm 3 nốt */
+      root: 57, scale: SCALE_MIN_PENT, bpm: 76, density: 0.26,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[33, 45, 52], [31, 43, 50], [36, 48, 55], [29, 41, 48]],
+      motif: [2, -1, -1, 4, -1, -1, 1, -1, 0, -1, -1, -1, 2, -1, -1, -1]
+    },
+    thien_co_lau: { /* Tĩnh Quan Lâu — lầu kín: thấp, thưa và trầm nhất, đệm thấp 3 nốt */
+      root: 50, scale: SCALE_MIN_PENT, bpm: 46, density: 0.04,
+      padWave: 'sine', motifWave: 'sine',
+      chords: [[26, 38, 45], [24, 36, 43], [29, 41, 48], [27, 39, 46]],
+      motif: [2, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]
     }
   };
   /* Lớp môi trường theo bản đồ — tra dữ kiện bản đồ trong js/logic.js:
@@ -171,7 +183,9 @@
     co_chau: { birds: false, crickets: false, stream: false, wind: false, market: true },
     kiem_trac_thap: { birds: false, crickets: false, stream: false, wind: false, market: false },
     thap_noi: { birds: false, crickets: false, stream: false, wind: false, market: false },
-    thanh_van_tong: { birds: false, crickets: false, stream: false, wind: true, market: false }
+    thanh_van_tong: { birds: false, crickets: false, stream: false, wind: true, market: false },
+    hb_valley: { birds: true, crickets: true, stream: true, wind: true, market: false },
+    thien_co_lau: { birds: false, crickets: false, stream: false, wind: false, market: false }
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {

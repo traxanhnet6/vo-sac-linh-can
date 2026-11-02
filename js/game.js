@@ -433,7 +433,13 @@
   var questNav = null; // tự tìm đường làm nhiệm vụ: { targetMap, hx, hy, leg, replans, lastMap, lockMsg }
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
-  var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks'];
+  var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks',
+    /* Thư viện vật thể chi tiết (đợt chi tiết bản đồ + đợt cây cỏ phần 3):
+       tranh có sẵn trong assets/props, vẽ theo kích thước thật neo đáy. */
+    'tree2', 'pine2', 'tree_sakura', 'bush1', 'bush2', 'rock_s', 'rock_m', 'rock_l_a', 'rock_l_b',
+    'grass_clump', 'flower_bush', 'reeds', 'lantern2', 'lantern_low', 'stele_small', 'signpost',
+    'fence_post', 'bench_stone', 'table_stone', 'stone_platform', 'flower_pot', 'jar_big', 'basket',
+    'bones', 'stake_cluster'];
   var ASSETS = { bgByMap: {}, chars: {}, props: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
@@ -445,6 +451,8 @@
   ASSETS.bgByMap.kiem_trac_thap = loadImg('assets/bg-kiem_trac_thap.png');
   ASSETS.bgByMap.thap_noi = loadImg('assets/bg-thap_noi.png');
   ASSETS.bgByMap.thanh_van_tong = loadImg('assets/bg-thanh_van_tong.png');
+  ASSETS.bgByMap.hb_valley = loadImg('assets/bg-hb_valley.png');
+  ASSETS.bgByMap.thien_co_lau = loadImg('assets/bg-thien_co_lau.png');
   CHAR_LOOKS.forEach(function (id) { ASSETS.chars[id] = loadImg('assets/chars/' + id + '.png'); });
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
@@ -538,7 +546,7 @@
   function resetJoy() {
     joy.state = 'idle'; joy.id = null; joy.active = false; joy.ux = 0; joy.uy = 0; joy.speed = 0;
   }
-  var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1 };
+  var BIG_SHADOW = { house: 1, house_big: 1, house_b: 1, house_c: 1, inn: 1, stele: 1, well: 1, stall: 1, gate: 1, tree: 1, pine: 1, tree2: 1, pine2: 1, tree_sakura: 1 };
   // Vật thể trang trí thị giác: CHỈ vẽ, không vào logic, không chặn đường.
   // PHẢI GIỮ ĐỒNG BỘ với VISUAL_DECOR trong tools/dump-scene.js.
   var VISUAL_DECOR = [
@@ -565,7 +573,32 @@
     thap_chu: 'Chủ trì Kiểm Trắc Tháp', thi_sinh_a: 'Thí sinh kiểm trắc', thi_sinh_b: 'Thí sinh kiểm trắc',
     tap_dich_truong: 'Quản sự tạp dịch', truong_lao_tong: 'Trưởng lão Thanh Vân Tông',
     lieu_khuynh_tien: 'Con gái tông chủ Thanh Vân Tông', hoa_huong_than: 'Đại đệ tử Thanh Vân Tông',
-    de_tu_a: 'Đệ tử Thanh Vân Tông', de_tu_b: 'Đệ tử Thanh Vân Tông'
+    de_tu_a: 'Đệ tử Thanh Vân Tông', de_tu_b: 'Đệ tử Thanh Vân Tông',
+    tin_su: 'Người đưa tin của Hứa gia', gia_nhan: 'Gia nhân Hứa gia',
+    mo_cuu_u: 'Tả sứ Huyết Bạc Cung', huyet_de: 'Đệ tử Huyết Bạc Cung',
+    de_tu_ho_tong: 'Đệ tử Thanh Vân Tông', bach_kinh_duong: 'Giám sát sứ Thiên Cơ Các',
+    ky_luc_quan: 'Ký lục quan Thiên Cơ Các', tiep_khach: 'Người của phân đà Thiên Cơ Các',
+    gac_kho: 'Người của phân đà Thiên Cơ Các'
+  };
+  /* Tên hiển thị dự phòng cho người nói KHÔNG đứng trên bản đồ hiện tại
+     (cảnh cắt song song, thư từ, người ở nơi khác): tránh hiện nguyên khóa
+     kỹ thuật trên khung thoại. */
+  var SPEAKER_NAMES = {
+    narrate: '', hero: '', choice: '',
+    u_nhan: 'Hứa U Nhàn', di_ninh: 'Hứa Di Ninh', chinh_ngon: 'Hứa Chính Ngôn',
+    anh_phung: 'Vương Ánh Phụng', luc_tranh: 'Lục Tranh', truong_lao: 'Trưởng Lão Trắc Linh',
+    tran_tu_linh: 'Trần Tư Linh', tran_chinh_dao: 'Trần Chính Đạo',
+    truong_lao_tong: 'Trưởng Lão Thanh Vân Tông', lieu_khuynh_tien: 'Liễu Khuynh Tiên',
+    hoa_huong_than: 'Hoa Hướng Thần', tap_dich_truong: 'Quản Sự Tạp Dịch',
+    thap_chu: 'Chủ Trì Kiểm Trắc Tháp', chu_kien_tham: 'Chu Kiến Thâm',
+    tin_su: 'Người Đưa Tin Hứa Gia', gia_nhan: 'Gia Nhân Hứa Gia',
+    mo_cuu_u: 'Mạc Cửu U', huyet_de: 'Đệ Tử Huyết Bạc Cung',
+    bach_kinh_duong: 'Bạch Kính Đường', ky_luc_quan: 'Ký Lục Quan',
+    tiep_khach: 'Người Tiếp Khách Phân Đà', gac_kho: 'Người Gác Kho',
+    de_tu_ho_tong: 'Đệ Tử Hộ Tống', de_tu_a: 'Đệ tử Thanh Vân', de_tu_b: 'Đệ tử Thanh Vân',
+    cho_a: 'Chủ sạp chợ', cho_b: 'Chủ sạp chợ', duoc_su: 'Dược Sư Hồi Xuân',
+    phap_khi_chu: 'Chủ Tụ Bảo Các', chu_quan: 'Chủ Quán Vọng Châu',
+    dan_thanh_a: 'Lão Ngô', dan_thanh_b: 'Dân thành', xa_phu: 'Xa phu Lão Mã'
   };
 
 
@@ -1030,11 +1063,16 @@
           ctx.drawImage(pim, idx, idy);
         } else {
           var spr = propSprite(p), sc = PROP_SCALE[p.type] || 2;
-          var dw = spr.w * sc, dx = (p.x + p.w / 2) * TILE - dw / 2, dy = (p.y + p.h) * TILE - spr.h * sc;
-          drawSprite(spr, dx, dy, sc);
+          // Loại vật mới của đợt chi tiết bản đồ chỉ có ảnh thật, chưa có
+          // sprite điểm dự phòng: ảnh chưa nạp thì BỎ QUA lần vẽ này (ẩn hẳn
+          // cho tới khi ảnh sẵn sàng) thay vì sập vòng vẽ.
+          if (spr) {
+            var dw = spr.w * sc, dx = (p.x + p.w / 2) * TILE - dw / 2, dy = (p.y + p.h) * TILE - spr.h * sc;
+            drawSprite(spr, dx, dy, sc);
+          }
         }
         if (p.id === 'bia_trac_linh' && !state.flags.tested) drawMarker(p.x * TILE + TILE, p.y * TILE - 14);
-        if (p.type === 'lantern' && fxOn()) {
+        if ((p.type === 'lantern' || p.type === 'lantern2' || p.type === 'lantern_low') && fxOn()) {
           // Ánh đèn lồng nhấp nháy rất nhẹ (dao động nhỏ quanh mức nền).
           var fl = 0.1 + 0.045 * Math.sin(tNow / 110 + (p.x * 7 + p.y * 13)) + 0.02 * Math.sin(tNow / 47 + p.x);
           ctx.fillStyle = 'rgba(255,202,122,' + Math.max(0.04, fl) + ')';
@@ -1363,7 +1401,7 @@
     else if (dlg.who === 'choice') { nameEl.textContent = state.name; textEl.textContent = dlg.text; renderChoices(dlg); }
     else {
       var n = npcsLive.filter(function (x) { return x.id === dlg.who; })[0];
-      nameEl.textContent = n ? n.name : dlg.who; textEl.textContent = dlg.text;
+      nameEl.textContent = n ? n.name : (SPEAKER_NAMES[dlg.who] || dlg.who); textEl.textContent = dlg.text;
     }
     startDlgTyper(textEl);
   }
@@ -1502,6 +1540,30 @@
       resolveChiAmbush(action);
     } else if (action.indexOf('guard_') === 0) {
       resolveGuardWave(action);
+    } else if (action.indexOf('ch9_') === 0) {
+      resolveCh9Choice(action);
+    } else if (action.indexOf('ch10_') === 0) {
+      resolveCh10Choice(action);
+    } else if (action.indexOf('kdguard_') === 0) {
+      resolveKdGuard(action);
+    } else if (action.indexOf('kd_') === 0) {
+      if (action === 'kd_pay' || action === 'kd_herb_fee') resolveKdFee(action);
+      else resolveKdBeast(action);
+    } else if (action.indexOf('ketdan_') === 0) {
+      resolveKetDanChoice(action);
+    } else if (action === 'pill_again_formula') {
+      refineTrucCoDan(true);
+    } else if (action === 'pill_again_merit') {
+      var canM = L.bagCanAdd(state, 'truc_co_dan', 1);
+      if (!canM.ok) { toast(canM.reason, 4200); }
+      else if ((state.sectMerit || 0) < 60) { toast('Chưa đủ điểm cống hiến (đang có ' + L.fmtNum(state.sectMerit || 0) + ', cần 60). Hãy làm việc tông môn để tích thêm, hoặc gom nguyên liệu theo công thức.', 4600); }
+      else {
+        state.sectMerit -= 60;
+        if (!state.flags.pillMeritPaid) state.flags.pillMeritPaid = true;
+        var rbM = L.bagAdd(state, 'truc_co_dan', 1);
+        if (rbM.ok) { sfxQuest(); toast('Đã ghi 60 điểm cống hiến và luyện lại Trúc Cơ Đan. Lên Đài Trúc Cơ để vận công.', 4200); }
+        refreshHUD(); saveNow();
+      }
     } else if (action === 'ambush_silent') {
       say(ST.SCENE_AMBUSH_SILENT, function () { state.quest = 'q2_cong_thanh'; refreshHUD(); saveNow(); });
     } else if (action === 'ambush_chan') {
@@ -1557,6 +1619,25 @@
     if (dlg) { if (dlgTypeFinish()) return; if (dlg.who !== 'choice') nextLine(); return; }
     var ft = frontTile();
     var pt = playerTile();
+    // Chương 1 (gói phụ sau chơi thử live 02/11): khi chưa đo mà đang đứng
+    // KỀ bất kỳ ô đế nào của bia đá trắc linh, phím tương tác thuộc về bia
+    // đá — thắng cả NPC đứng kề (trưởng lão đứng ô kề nam của đế bia, U
+    // Nhàn hay bất kỳ ai khác cũng vậy), tránh cảnh đứng sát bia mà chỉ mở
+    // thoại thường trú. Đo xong thì tương tác trở lại bình thường.
+    if (!state.flags.tested && (state.quest === 'q_trac' || state.quest === 'q_voice')) {
+      var steleP = null;
+      var defSP = L.activeMap();
+      for (var spi = 0; spi < defSP.props.length; spi++) if (defSP.props[spi].id === 'bia_trac_linh') { steleP = defSP.props[spi]; break; }
+      if (steleP) {
+        var nearStele = false;
+        for (var sfx = steleP.x; sfx < steleP.x + steleP.fx && !nearStele; sfx++) {
+          for (var sfy = steleP.y + steleP.h - steleP.fy; sfy < steleP.y + steleP.h && !nearStele; sfy++) {
+            if (Math.abs(sfx - pt.x) + Math.abs(sfy - pt.y) <= 1) nearStele = true;
+          }
+        }
+        if (nearStele) { faceTowardTile(steleP.x, steleP.y + steleP.h - 1); return touchStele(); }
+      }
+    }
     var npc = npcsLive.filter(function (n) { return n.x === ft.x && n.y === ft.y; })[0];
     if (!npc) {
       // NPC đứng kề ở BẤT KỲ hướng nào cũng bắt được, không chỉ hướng đang
@@ -1619,6 +1700,9 @@
     if (p && (p.id === 'viec_go' || p.id === 'viec_nuoc' || p.id === 'viec_bao')) return doChore(p);
     if (p && p.id === 'thang_long_dai') return touchThangLong();
     if (p && p.id === 'linh_chi') return touchLinhChi();
+    if (p && p.id === 'vuon_duoc') return touchVuonDuoc();
+    if (p && p.id === 'vet_tich_hb') return touchVetTichHb();
+    if (p && p.id === 'duoc_dan_diem') return touchDuocDan();
     if (p && p.id === 'dai_truc_co') return touchDaiTrucCo();
     // Vật thể có cờ tương tác nhưng chưa có nhánh riêng ở các chương đã xây
     // (việc tạp dịch, hai đài và linh chi của chương 7-8 đều đã có nhánh
@@ -1803,7 +1887,20 @@
     if (!navIssuePath(preDest)) { var lm3 = questNav.lockMsg; questNav = null; toast(lm3, 4200); }
   }
 
+  /* Tu vi sự kiện của phần 3: cộng dồn có trần theo đúng bảng phân bổ đã
+     duyệt (không đặt thẳng lên trần như các mốc khóa cứng của phần 1-2). */
+  function addTuvi(n) {
+    var cap = L.REALMS[state.realm] && L.REALMS[state.realm].tuviNext;
+    if (cap) state.tuvi = Math.min(cap, (state.tuvi || 0) + n);
+    else state.tuvi = (state.tuvi || 0) + n;
+  }
   function talkTo(npc) {
+    // Chương 1 (gói phụ sau chơi thử live 02/11): trưởng lão trắc linh đứng
+    // đúng ô kề nam của đế bia đá nên người chơi đứng phía nam chỉ gặp được
+    // ông, không chạm được bia. Chưa đo (q_trac/q_voice, cờ tested chưa
+    // đặt) thì nói chuyện với trưởng lão cũng dẫn thẳng vào cảnh đo ở bia;
+    // đo xong rồi ông trở lại thoại thường trú như cũ.
+    if (npc.id === 'truong_lao' && !state.flags.tested && (state.quest === 'q_trac' || state.quest === 'q_voice')) return touchStele();
     // Điểm chạm theo nhiệm vụ/cửa hàng của chương 3 (ưu tiên hơn thoại thường).
     if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q3_cong_phap') return receiveManuals();
     if (npc.id === 'chu_quan' && (state.flags.innWork || 0) < 2 && L.walletOpen(state)) return say(ST.SCENE_INN);
@@ -1884,13 +1981,18 @@
       return say(ST.SCENE_CHUAN_BI_1, function () { state.flags.chuanBiSeen = true; refreshHUD(); saveNow(); });
     }
     if (npc.id === 'truong_lao_tong' && state.quest === 'q8_chuan_bi' && state.flags.chiGathered && !state.flags.pillGranted) {
-      return say(ST.SCENE_CHUAN_BI_2, function () {
-        var rb = L.bagAdd(state, 'truc_co_dan', 1);
-        if (!rb.ok) { toast(rb.reason + ' Hãy dọn túi rồi quay lại gặp trưởng lão.', 4200); refreshHUD(); return; }
-        state.flags.pillGranted = true;
-        state.quest = 'q8_ho_phap'; refreshHUD(); saveNow();
-        toast('Đã nhận Trúc Cơ Đan từ trưởng lão tông. Lên Đài Trúc Cơ ở phía bắc tông để bắt đầu vận công.', 4000);
-      });
+      return refineTrucCoDan(false);
+    }
+    if (npc.id === 'truong_lao_tong' && (state.quest === 'q8_ho_phap' || state.quest === 'q8_truc_co') && state.flags.pillGranted && !L.bagHas(state, 'truc_co_dan') && state.realm < 2) {
+      // Luyện lại Trúc Cơ Đan: cùng công thức, hoặc 60 điểm cống hiến thay
+      // cho toàn bộ nguyên liệu (đường đã duyệt trong thiết kế thiên kiếp).
+      return say([
+        { who: 'truong_lao_tong', text: 'Viên Trúc Cơ Đan trước không còn nữa sao? Luyện lại không phải không được — nhưng nguyên liệu không tự mọc ra. Hoặc gom lại đúng công thức cũ: Linh Chi Sau Núi một cây, Yêu Đan cấp 1 một viên, Thanh Tâm Thảo ba cây, 30 Linh Thạch. Hoặc ghi 60 điểm cống hiến tông môn thay cho tất cả.' },
+        { who: 'choice', text: 'Ngươi sẽ…', options: [
+          { label: 'Luyện lại theo công thức — trừ nguyên liệu và 30 Linh Thạch', action: 'pill_again_formula' },
+          { label: 'Luyện lại bằng 60 điểm cống hiến tông môn', action: 'pill_again_merit' }
+        ] }
+      ]);
     }
     if (npc.id === 'hoa_huong_than' && state.quest === 'q7_hoa_huong_than') {
       state.flags.hhtHits = 0;
@@ -1908,6 +2010,130 @@
           toast('Hoàn thành chương 8 — ngươi đã đứng ở Trúc Cơ Sơ Kỳ.', 4600);
         });
       });
+    }
+    /* ---------- Phần 3 (chương 9-12): các điểm chạm truyện ---------- */
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q9_tin_du') {
+      return say(ST.SCENE_CH9_TIN_DU, function () {
+        state.flags.ch9TinDu = true;
+        addTuvi(40);
+        state.quest = 'q9_truy_vet'; refreshHUD(); saveNow();
+        toast('Tin dữ đã rõ: vào Thung Lũng Hồi Phong qua cổng sau núi ở phía đông bắc tông (sau Đài Trúc Cơ), tới gốc anh đào cổ thụ ở bãi đáp.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q11_he_qua') {
+      return say(state.flags.soulPublic ? ST.SCENE_CH11_HE_QUA_A : ST.SCENE_CH11_HE_QUA_B, function () {
+        state.flags.ch11HeQua = true;
+        addTuvi(100);
+        state.quest = 'q11_u_nhan'; refreshHUD(); saveNow();
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q11_chuan_bi_ket_dan') {
+      if (!state.flags.ketDanCoreGot) {
+        return say(ST.SCENE_CH11_CHUAN_BI, function () {
+          state.flags.ketDanCoreGot = true;
+          addTuvi(150);
+          refreshHUD(); saveNow();
+          if (state.realm === 2 && state.stage === 2 && (L.REALMS[2].tuviNext || 0) > 0 && state.tuvi >= L.REALMS[2].tuviNext) return finishVienMan();
+          toast('Đã rõ việc chuẩn bị Kết Đan: hái dược dẫn ở bãi bắc Thung Lũng Hồi Phong, và tích tu vi cho đầy Trúc Cơ Viên Mãn.', 4600);
+        });
+      }
+      if (state.realm === 2 && state.stage === 2 && state.tuvi >= (L.REALMS[2].tuviNext || 0)) return finishVienMan();
+      return say([{ who: 'truong_lao_tong', text: 'Việc chuẩn bị ta đã giao rồi: dược dẫn ở bãi bắc Thung Lũng Hồi Phong, Yêu Đan cấp 2 trong tay con thú giữ dược, và tu vi phải đầy Trúc Cơ Viên Mãn. Thiếu thứ nào, lo cho đủ thứ ấy trước.' }]);
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q11_vat_dan') return refineKetDanDan();
+    if (npc.id === 'tap_dich_truong' && state.map === 'thanh_van_tong') {
+      var chNow = L.chapterOfQuest(state);
+      if ((chNow === 9 || chNow === 11) && (state.flags.sectJobPaidFor || 0) < chNow) {
+        if (state.flags.sectJobRound === chNow) {
+          if (state.flags.choreGo && state.flags.choreNuoc && state.flags.choreBao) {
+            return say([{ who: 'tap_dich_truong', text: 'Xong cả ba việc rồi à? Tay chân nhanh nhẹn hơn hẳn hồi mới vào tông. Đây — công của ngươi kỳ này.' }], function () {
+              var rj = L.addLinhThach(state, 45);
+              var mj = L.addSectMerit(state, 15);
+              state.flags.sectJobPaidFor = chNow;
+              state.flags.sectJobRound = 0;
+              toast('Quản sự trả công việc tông: +45 Linh Thạch' + (rj.ok ? ' (số dư: ' + L.fmtNum(rj.balance) + ')' : '') + ' và +15 điểm cống hiến (tổng: ' + L.fmtNum(mj) + ').', 4400);
+              refreshHUD(); saveNow();
+            });
+          }
+          var missJ = [];
+          if (!state.flags.choreGo) missJ.push('bổ củi ở đống củi phía nam sân');
+          if (!state.flags.choreNuoc) missJ.push('gánh nước ở giếng sau bếp');
+          if (!state.flags.choreBao) missJ.push('chuyển bao dược ở phía tây sân');
+          return say([{ who: 'tap_dich_truong', text: 'Việc kỳ này chưa xong đâu. Còn thiếu: ' + missJ.join('; ') + '. Làm xong cả ba rồi quay lại đây, ta trả công một thể.' }]);
+        }
+        return say([{ who: 'tap_dich_truong', text: 'Lại có việc cho ngươi đây — việc của tông kỳ này: bổ củi, gánh nước, chuyển bao dược ở khu tạp dịch. Làm xong cả ba, quay lại ta ghi công: 45 Linh Thạch và 15 điểm cống hiến.' }], function () {
+          state.flags.sectJobRound = chNow;
+          state.flags.choreGo = false; state.flags.choreNuoc = false; state.flags.choreBao = false;
+          refreshHUD(); saveNow();
+          toast('Đã nhận việc tông kỳ này: bổ củi, gánh nước, chuyển bao dược ở khu tạp dịch đông nam.', 4200);
+        });
+      }
+    }
+    if (npc.id === 'tran_chinh_dao' && state.map === 'co_chau' && state.quest === 'q10_loi_moi') {
+      return say(ST.SCENE_CH10_MOI, function () {
+        addTuvi(40);
+        state.quest = 'q10_vao_lau'; refreshHUD(); saveNow();
+        toast('Vào Tĩnh Quan Lâu qua cửa phân đà ngay phía sau — lên phòng kín phía bắc lầu.', 4200);
+      });
+    }
+    if (npc.id === 'bach_kinh_duong' && state.map === 'thien_co_lau') {
+      if (state.quest === 'q10_vao_lau') {
+        return say(ST.SCENE_CH10_VAO_LAU, function () { addTuvi(60); state.quest = 'q10_siet_bi_mat'; refreshHUD(); saveNow(); });
+      }
+      if (state.quest === 'q10_siet_bi_mat') {
+        return say(ST.SCENE_CH10_SIET, function () { addTuvi(80); state.quest = 'q10_lo_than_phan'; refreshHUD(); saveNow(); });
+      }
+      if (state.quest === 'q10_lo_than_phan' && !state.flags.ch10BreakReady) return say(ST.SCENE_CH10_LO_CHOICE);
+      if (state.flags.ch10BreakReady) return finishCh10Break();
+    }
+    if (npc.id === 'tran_tu_linh' && state.map === 'co_chau' && state.flags.soulPublic && L.chapterOfQuest(state) >= 11 && (state.flags.soulClinicPaidFor || 0) < L.chapterOfQuest(state)) {
+      return say(ST.SCENE_CH11_CLINIC_A, function () {
+        var rc2 = L.addLinhThach(state, 40);
+        state.flags.soulClinicPaidFor = L.chapterOfQuest(state);
+        state.soulPower = (state.soulPower || 0) + 10;
+        if (rc2.ok) toast('Thiên Cơ Các trả công luyện hồn công khai: +40 Linh Thạch (số dư: ' + L.fmtNum(rc2.balance) + ').', 4000);
+        refreshHUD(); saveNow();
+      });
+    }
+    if (npc.id === 'tran_tu_linh' && state.map === 'hb_valley') return say(ST.SCENE_TULINH_HOI_PHONG);
+    if (npc.id === 'hoa_huong_than' && state.map === 'thanh_van_tong' && state.flags.soulExposed && L.chapterOfQuest(state) >= 11 && (state.flags.soulSectPaidFor || 0) < L.chapterOfQuest(state)) {
+      return say(ST.SCENE_CH11_SECT_SOUL_B, function () {
+        var rs2 = L.addLinhThach(state, 20);
+        state.flags.soulSectPaidFor = L.chapterOfQuest(state);
+        state.soulPower = (state.soulPower || 0) + 10;
+        if (rs2.ok) toast('Tông ghi công luyện hồn công khai: +20 Linh Thạch (số dư: ' + L.fmtNum(rs2.balance) + ').', 4000);
+        refreshHUD(); saveNow();
+      });
+    }
+    if (npc.id === 'u_nhan' && state.map === 'hb_valley') return say(ST.SCENE_UNHAN_HOI_PHONG);
+    if (npc.id === 'u_nhan' && state.map === 'co_chau' && state.quest === 'q11_u_nhan' && !state.flags.uNhanCityMet) {
+      return say(ST.SCENE_CH11_U_NHAN, function () {
+        state.flags.uNhanCityMet = true;
+        refreshHUD(); saveNow();
+        toast('Hứa U Nhàn sẽ lên Thanh Vân Tông — tới Thanh Vân Đại Điện gặp nàng ở đó.', 4400);
+      });
+    }
+    if (npc.id === 'u_nhan' && state.map === 'thanh_van_tong' && state.quest === 'q11_u_nhan' && state.flags.uNhanCityMet && !state.flags.uNhanChoice) {
+      return say(ST.SCENE_CH11_TU_THU, function () {
+        state.flags.uNhanChoice = true;
+        addTuvi(150);
+        if (!state.flags.uNhanGift2) {
+          var rg = L.addLinhThach(state, 35);
+          if (rg.ok) { state.flags.uNhanGift2 = true; toast('Hứa gia tạ ơn: +35 Linh Thạch (số dư: ' + L.fmtNum(rg.balance) + ').', 4000); }
+        }
+        state.quest = 'q11_chuan_bi_ket_dan'; refreshHUD(); saveNow();
+      });
+    }
+    if (npc.id === 'gia_nhan' && state.map === 'co_chau' && state.flags.ch9SilentRoute && !state.flags.giaNhanHealed && L.chapterOfQuest(state) >= 11) {
+      return say(ST.SCENE_CH11_CHUA_GIA_NHAN, function () {
+        state.flags.giaNhanHealed = true;
+        state.soulPower = (state.soulPower || 0) + 10;
+        refreshHUD(); saveNow();
+        toast('Đã chữa lành thần hồn cho gia nhân trẻ của Hứa gia.', 3600);
+      });
+    }
+    if (npc.id === 'cho_a' && state.map === 'co_chau' && state.flags.ch9SayRescue && !state.flags.benhSeen && L.chapterOfQuest(state) >= 11) {
+      return say(ST.SCENE_CH11_BENH, function () { state.flags.benhSeen = true; refreshHUD(); saveNow(); });
     }
     var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
     if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
@@ -2035,7 +2261,10 @@
   function doChore(p) {
     var def = CHORE_DEFS[p.id];
     if (!def) return;
-    if (state.map === 'thanh_van_tong' && state.quest === 'q7_tap_dich' && !state.flags[def.flag]) {
+    // Việc tông theo đợt (phần 3): quản sự giao lại ba việc ở chương 9 và
+    // chương 11 qua cờ sectJobRound — cùng ba vật thể, cùng cách làm.
+    var jobRound = state.flags.sectJobRound && state.flags.sectJobRound === L.chapterOfQuest(state);
+    if (state.map === 'thanh_van_tong' && (state.quest === 'q7_tap_dich' || jobRound) && !state.flags[def.flag]) {
       return say(ST[def.scene], function () {
         state.flags[def.flag] = true;
         var total = L.addSectMerit(state, 5);
@@ -2183,16 +2412,519 @@
     }
     if (!line) return;
     say([line].concat(ST.SCENE_CHI_END), function () {
+      /* Công thức Trúc Cơ Đan (chuẩn đã chốt): toán phục kích mang theo
+         Yêu Đan cấp 1 — rơi CHẮC CHẮN trong chuyến hái linh chi này, để
+         nguyên liệu của công thức luôn kiếm được ở đúng sức mạnh trước
+         mốc Trúc Cơ (luật không tường). Cả hai món vào túi được mới tính
+         là hái thành công; túi đầy thì chưa đặt cờ, quay lại hái tiếp. */
       var rb = L.bagAdd(state, 'linh_chi', 2);
       if (rb.ok) {
-        state.flags.chiGathered = true;
-        toast('Đã hái Linh Chi Sau Núi ×2 — mang về Thanh Vân Đại Điện cho trưởng lão tông.', 3800);
+        var ry = L.bagAdd(state, 'yeu_dan_1', 1);
+        if (ry.ok) {
+          state.flags.chiGathered = true;
+          toast('Đã hái Linh Chi Sau Núi ×2 và nhặt được Yêu Đan cấp 1 từ toán phục kích — mang về Thanh Vân Đại Điện cho trưởng lão tông.', 4200);
+        } else {
+          L.bagRemove(state, 'linh_chi', 2);
+          toast(ry.reason + ' Linh chi vẫn còn ở sau núi — hãy dọn túi rồi quay lại hái.', 4400);
+        }
       } else {
         toast(rb.reason + ' Linh chi vẫn còn ở sau núi — hãy dọn túi rồi quay lại hái.', 4400);
       }
       refreshHUD(); saveNow();
     });
   }
+  /* Vườn dược sau núi (chương 8): hái Thanh Tâm Thảo cho công thức Trúc Cơ
+     Đan — đủ ba cây trong giai đoạn chuẩn bị, sau khi đã nghe điều kiện. */
+  function touchVuonDuoc() {
+    if (state.flags.herbGathered) {
+      return say([{ who: 'narrate', text: 'Vườn dược sau núi: luống Thanh Tâm Thảo đã hái đủ phần của kỳ này. Mấy cây còn lại còn non — để chúng lớn, vườn dược của tông không hái tận gốc.' }]);
+    }
+    if (state.quest === 'q8_chuan_bi' && state.flags.chuanBiSeen) {
+      var rb = L.bagAdd(state, 'thanh_tam_thao', 3);
+      if (!rb.ok) { toast(rb.reason + ' Hãy dọn túi rồi quay lại vườn dược.', 4200); return; }
+      state.flags.herbGathered = true;
+      sfxPage();
+      toast('Đã hái Thanh Tâm Thảo ×3 ở vườn dược sau núi — nguyên liệu của Trúc Cơ Đan.', 3800);
+      return say([{ who: 'narrate', text: 'Luống Thanh Tâm Thảo xanh mướt sau bãi trống. Ngươi hái đúng ba cây đủ tuổi, lá còn đọng sương — vị thuốc thứ ba trong công thức của trưởng lão đã có.' }], function () { refreshHUD(); saveNow(); });
+    }
+    return say([{ who: 'narrate', text: 'Vườn dược của tông sau núi: từng luống thảo dược xếp ngay ngắn, thơm ngát. Đừng hái bừa khi chưa biết mình cần gì — dược liệu hái sai lúc là phí của trời.' }]);
+  }
+  /* Luyện Trúc Cơ Đan theo công thức đã chốt (Linh Chi Sau Núi ×1 + Yêu
+     Đan cấp 1 ×1 + Thanh Tâm Thảo ×3 + 30 Linh Thạch) tại trưởng lão tông.
+     Thiếu món nào, trưởng lão nói rõ món đó và nơi lấy. Luyện lại (đan
+     trước đã nuốt hụt/mất) theo cùng công thức hoặc 60 điểm cống hiến —
+     phần khung độ kiếp hỏng sẽ nối vào cùng đường luyện lại này. */
+  var PILL_MISS_LINES = {
+    linh_chi: { who: 'truong_lao_tong', text: 'Linh Chi Sau Núi còn thiếu. Bãi trống sau núi phía đông bắc tông — hái một cây tươi, nguyên linh quang, mang về đây.' },
+    yeu_dan_1: { who: 'truong_lao_tong', text: 'Yêu Đan cấp 1 còn thiếu. Viên đan ấy rơi ra từ toán phục kích ở sau núi trong chuyến hái linh chi của ngươi — kiểm lại hành trang đi; nếu thật sự không còn, quay lại sau núi mà tìm cho ra.' },
+    thanh_tam_thao: { who: 'truong_lao_tong', text: 'Thanh Tâm Thảo còn thiếu. Vườn dược sau núi nằm ngay cạnh bãi trống ngươi hái linh chi, ở phía đông bãi — quay lại đó, hái cho đủ ba cây rồi về.' },
+    linh_thach: { who: 'truong_lao_tong', text: 'Công luyện 30 Linh Thạch còn thiếu. Linh Thạch kiếm được từ việc tông môn, thưởng của tông và những việc ngươi làm cho người ta — gom đủ rồi quay lại, ta luyện ngay.' }
+  };
+  function pillMissing() {
+    var miss = [];
+    if (!L.bagHas(state, 'linh_chi')) miss.push('linh_chi');
+    if (!L.bagHas(state, 'yeu_dan_1')) miss.push('yeu_dan_1');
+    if (L.bagCount(state, 'thanh_tam_thao') < 3) miss.push('thanh_tam_thao');
+    if (L.linhBalance(state) < 30) miss.push('linh_thach');
+    return miss;
+  }
+  function refineTrucCoDan(isAgain) {
+    var miss = pillMissing();
+    if (miss.length) {
+      var lines = isAgain ? [{ who: 'truong_lao_tong', text: 'Luyện lại cũng theo đúng công thức cũ, không bớt một thứ. Ngươi còn thiếu — nghe cho rõ:' }] : ST.SCENE_CHUAN_BI_2.slice();
+      miss.forEach(function (k) { lines.push(PILL_MISS_LINES[k]); });
+      return say(lines);
+    }
+    var can = L.bagCanAdd(state, 'truc_co_dan', 1);
+    if (!can.ok) { toast(can.reason + ' Hãy dọn túi rồi quay lại gặp trưởng lão.', 4200); return; }
+    say(ST.SCENE_CHUAN_BI_2_OK, function () {
+      L.bagRemove(state, 'linh_chi', 1);
+      L.bagRemove(state, 'yeu_dan_1', 1);
+      L.bagRemove(state, 'thanh_tam_thao', 3);
+      var sp = L.spendLinhThach(state, 30);
+      var rb = L.bagAdd(state, 'truc_co_dan', 1);
+      if (!rb.ok || !sp.ok) { toast('Lò đan gặp trục trặc — nguyên liệu đã được hoàn lại, hãy thử lại.', 4200); refreshHUD(); saveNow(); return; }
+      sfxQuest();
+      if (!isAgain) {
+        state.flags.pillGranted = true;
+        state.quest = 'q8_ho_phap';
+        toast('Trưởng lão đã luyện xong Trúc Cơ Đan theo đúng công thức. Lên Đài Trúc Cơ ở phía bắc tông để bắt đầu vận công.', 4400);
+      } else {
+        toast('Đã luyện lại Trúc Cơ Đan theo công thức. Viên đan trước mất thế nào, viên này bù lại thế ấy.', 4200);
+      }
+      refreshHUD(); saveNow();
+    });
+  }
+  /* ---------- Phần 3, chương 9: Thung Lũng Hồi Phong ---------- */
+  function touchVetTichHb() {
+    if (state.quest === 'q9_truy_vet') {
+      return say(ST.SCENE_CH9_TRUY_VET, function () {
+        addTuvi(60);
+        state.quest = 'q9_phuc_kich'; refreshHUD(); saveNow();
+        toast('Dấu vết đã rõ: lần theo đường ven suối vào hẻm núi giữa thung lũng (điểm gợi ý ở giữa hẻm).', 4200);
+      });
+    }
+    if (state.quest === 'q9_doi_dau') {
+      if (state.flags.ch9BreakReady) {
+        if (state.tuvi >= (L.REALMS[state.realm].tuviNext || 0)) return doCh9Breakthrough();
+        return say([{ who: 'narrate', text: 'Việc ở thung lũng đã xong, nhưng tu vi của ngươi chưa đầy Trúc Cơ Trung Kỳ. Điểm thổ nạp ở bờ bắc suối — ngay phía bắc điểm qua suối — đang chờ. Đầy rồi, quay lại gốc anh đào này.' }]);
+      }
+      if (!state.flags.ch9DoiDau) return startDoiDau();
+      return say([{ who: 'narrate', text: 'Dưới gốc anh đào, miếng Song Ngư Ngọc Bội vẫn nằm yên trong tay ngươi. Hoa rụng từng cánh xuống mặt ngọc đã nứt.' }]);
+    }
+    if (!state.flags.ch9TinDu) {
+      return say([{ who: 'narrate', text: 'Một cây anh đào cổ thụ ở cửa Thung Lũng Hồi Phong, hoa nở trái mùa quanh năm. Người của thung lũng bảo cây này có trước cả Thanh Vân Tông.' }]);
+    }
+    return say([{ who: 'narrate', text: 'Dưới gốc anh đào còn vệt máu khô, đoạn dây bị cắt và mũi tên gãy khắc vệt đỏ — dấu vết của một trận phục kích được bày sẵn từ nhiều ngày.' }]);
+  }
+  /* Cảnh phục kích chương 9 nổ khi người chơi tới điểm giữa hẻm núi (vùng
+     sự kiện trong checkPortalsAndZones) — hàm này chỉ mở cảnh + điểm chọn. */
+  function startCh9Ambush() {
+    var ph = L.dayPhaseAt ? L.dayPhaseAt(state.dayMinutes) : { night: 0 };
+    var lead = ph && ph.night > 0.5
+      ? { who: 'narrate', text: 'Trời đã tối hẳn. Đèn đá hai bên hẻm cháy leo lét — và chính trong ánh sáng leo lét ấy, bãi trống phía dưới hiện ra rõ hơn cả ban ngày.' }
+      : { who: 'narrate', text: 'Nắng chiều xiên qua miệng hẻm, rọi thẳng xuống bãi trống phía dưới.' };
+    say([lead].concat(ST.SCENE_CH9_PHUC_KICH));
+  }
+  function resolveCh9Choice(action) {
+    if (action === 'ch9_say') {
+      L.recordSpeech(state, 9, 'ch9_phuc_kich_cuu_nguoi', 'doan_hua_va_huyet_bac');
+      state.flags.ch9SayRescue = true;
+      sfxChan(); shakeT = Math.max(shakeT, 0.7);
+      rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
+      spawnParts(px + 16, py + 16, 14, '200,200,210', 34, false);
+      return say(ST.SCENE_CH9_SAY_RESCUE, function () { afterCh9Rescue(); });
+    }
+    if (action === 'ch9_silent') {
+      state.flags.ch9SilentRoute = true;
+      return say(ST.SCENE_CH9_SILENT_ROUTE, function () { afterCh9Rescue(); });
+    }
+  }
+  function afterCh9Rescue() {
+    addTuvi(80);
+    say(ST.SCENE_CH9_UNHAN_ACT, function () {
+      state.quest = 'q9_doi_dau'; refreshHUD(); saveNow();
+      toast('Đoàn xe đã an toàn. Quay lại gốc anh đào cổ thụ ở bãi đáp — có người đang chờ ngươi ở đó.', 4400);
+    });
+  }
+  function startDoiDau() {
+    if (state.flags.ch9SilentRoute) {
+      return say(ST.SCENE_CH9_DOI_DAU.slice(0, 8), function () {
+        say(ST.SCENE_CH9_DOI_DAU_SAY, function () {
+          L.recordSpeech(state, 9, 'ch9_doi_dau', 'mo_cuu_u_va_doan_hua');
+          say(ST.SCENE_CH9_DOI_DAU.slice(8), function () { finishDoiDau(); });
+        });
+      });
+    }
+    return say(ST.SCENE_CH9_DOI_DAU, function () { finishDoiDau(); });
+  }
+  function finishDoiDau() {
+    state.flags.ch9DoiDau = true;
+    if (state.unlocked.indexOf('song_ngu') < 0) state.unlocked.push('song_ngu');
+    addTuvi(120);
+    toast('Đã nhận vật phẩm cốt truyện: Song Ngư Ngọc Bội — xem trong Túi Trữ Vật, ngăn vật phẩm cốt truyện.', 4400);
+    say(ST.SCENE_CH9_HON_DAU, function () {
+      state.flags.ch9HonDau = true;
+      say(ST.SCENE_CH9_END, function () {
+        if (state.tuvi >= (L.REALMS[state.realm].tuviNext || 0)) return doCh9Breakthrough();
+        state.flags.ch9BreakReady = true;
+        refreshHUD(); saveNow();
+        toast('Mọi việc ở thung lũng đã xong. Chỉ còn tu vi chưa đầy Trúc Cơ Trung Kỳ — thổ nạp ở bờ bắc suối của thung lũng, rồi quay lại gốc anh đào.', 5000);
+      });
+    });
+  }
+  function doCh9Breakthrough() {
+    var r = L.tryBreakthrough(state);
+    if (!r.ok) { toast(r.reason); return; }
+    sfxBigBell();
+    pillarT = 2.2;
+    spawnParts(px + 16, py + 24, 32, '255,232,160', 32, true);
+    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+    state.flags.hbDone = true;
+    state.flags.ch9BreakReady = false;
+    if (!state.flags.ch9Reward) { state.flags.ch9Reward = true; state.linhThach += 30; setTimeout(function () { toast('Thưởng của tông cho chuyến đi thung lũng: +30 Linh Thạch.', 4200); }, 600); }
+    say([{ who: 'narrate', text: 'Dưới gốc anh đào cổ thụ, chu thiên cuối cùng khép lại. Hoa rụng xuống vai ngươi từng cánh — Trúc Cơ Trung Kỳ. Từ thung lũng này nhìn về phía Cô Châu Thành, có một tòa lầu đang chờ ngươi tới.' }], function () {
+      state.quest = 'q10_loi_moi'; refreshHUD(); saveNow();
+      toast('Hoàn thành chương 9: Tin dữ từ Thung Lũng Hồi Phong. Đột phá thành công: ' + r.label + '!', 4800);
+    });
+    refreshHUD();
+  }
+  /* ---------- Phần 3, chương 10: lộ thân phận + đột phá Hậu Kỳ ---------- */
+  function resolveCh10Choice(action) {
+    if (action === 'ch10_tu_lo') {
+      return say(ST.SCENE_CH10_TU_LO, function () {
+        state.flags.soulPublic = true;
+        state.flags.soulRevealed = true;
+        state.soulRank = 3;
+        state.soulPower = (state.soulPower || 0) + 30;
+        if (state.unlocked.indexOf('thien_co_gian') < 0) state.unlocked.push('thien_co_gian');
+        L.recordSpeech(state, 10, 'ch10_tu_noi_ra', 'thien_co_lau');
+        addTuvi(120);
+        state.flags.ch10BreakReady = true;
+        refreshHUD(); saveNow();
+        toast('Đã nhận vật phẩm cốt truyện: Thiên Cơ Ngọc Giản. Thân phận Hồn Sư từ nay công khai theo cách của chính ngươi. Tu vi còn thiếu một đoạn cuối — thổ nạp ở sân sau Tĩnh Quan Lâu, rồi gặp lại Bạch Kính Đường.', 5200);
+      });
+    }
+    if (action === 'ch10_im_lang') {
+      // Đường B: trong lầu chỉ giữ im lặng và rời đi (BI_LO_1). Việc bị lộ
+      // xảy ra SAU, bằng tin đồn ở chợ Cô Châu Thành (BI_LO_2 — vùng sự
+      // kiện trong checkPortalsAndZones), đúng thiết kế hai nhịp.
+      return say(ST.SCENE_CH10_BI_LO_1, function () {
+        state.flags.ch10RumorPending = true;
+        refreshHUD(); saveNow();
+      });
+    }
+  }
+  function finishCh10Break() {
+    var cap = L.REALMS[state.realm].tuviNext;
+    if (cap && state.tuvi < cap) {
+      return say([{ who: 'bach_kinh_duong', text: 'Cậu còn thiếu một đoạn tu vi cuối cho mốc Hậu Kỳ. Sân sau của lầu có một nền đá tụ linh khí — ra đó ngồi một lát. Đột phá ngay trong lầu này cũng được: ở đây, không ai ghi chép việc đột phá của cậu đâu.' }]);
+    }
+    var r = L.tryBreakthrough(state);
+    if (!r.ok) { toast(r.reason); return; }
+    state.flags.ch10BreakReady = false;
+    sfxBigBell();
+    pillarT = 2.2;
+    spawnParts(px + 16, py + 24, 32, '255,232,160', 32, true);
+    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+    say(state.flags.soulPublic ? ST.SCENE_CH10_END_A : ST.SCENE_CH10_END_B, function () {
+      if (state.flags.soulPublic && !state.flags.thienCoFeePaid) {
+        var rf = L.addLinhThach(state, 50);
+        if (rf.ok) { state.flags.thienCoFeePaid = true; toast('Thiên Cơ Các trả phí hợp tác: +50 Linh Thạch (số dư: ' + L.fmtNum(rf.balance) + ').', 4200); }
+      }
+      state.quest = 'q11_he_qua'; refreshHUD(); saveNow();
+      toast('Hoàn thành chương 10: Tĩnh Quan Lâu. Đột phá thành công: ' + r.label + '!', 4800);
+    });
+    refreshHUD();
+  }
+  /* ---------- Phần 3, chương 11: Viên Mãn + vật dẫn Kết Đan ---------- */
+  function finishVienMan() {
+    var r = L.tryBreakthrough(state);
+    if (!r.ok) { toast(r.reason); return; }
+    sfxBigBell();
+    pillarT = 2.2;
+    spawnParts(px + 16, py + 24, 32, '255,232,160', 32, true);
+    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+    say(ST.SCENE_CH11_VIEN_MAN, function () {
+      state.quest = 'q11_vat_dan'; refreshHUD(); saveNow();
+      toast('Đột phá thành công: ' + r.label + '! Giờ mang dược dẫn và Yêu Đan cấp 2 về đại điện để luyện vật dẫn Kết Đan.', 4800);
+    });
+    refreshHUD();
+  }
+  var KD_MISS_LINES = {
+    duoc: { who: 'truong_lao_tong', text: 'Vật dẫn chưa luyện được: ngươi còn thiếu dược dẫn. Qua cổng sau núi vào Thung Lũng Hồi Phong, tới bãi trống phía bắc thung lũng — cụm dược dẫn mọc quanh vòng đá cũ ở rìa đông bãi.' },
+    yeu: { who: 'truong_lao_tong', text: 'Vật dẫn chưa luyện được: còn thiếu Yêu Đan cấp 2 làm tim đan. Con yêu thú giữ cụm dược dẫn ở bãi bắc thung lũng mang theo nó — muốn có đan, phải thắng con thú ấy.' }
+  };
+  function refineKetDanDan() {
+    if (state.flags.ketDanRefined) {
+      return say([{ who: 'truong_lao_tong', text: 'Vật dẫn đã luyện xong và đang nằm trong túi ngươi. Giữ cho kỹ — ngày lên đài, ta cho người báo.' }]);
+    }
+    var miss = [];
+    if (!L.bagHas(state, 'ket_dan_duoc')) miss.push(KD_MISS_LINES.duoc);
+    if (!L.bagHas(state, 'yeu_dan_2')) miss.push(KD_MISS_LINES.yeu);
+    if (miss.length) return say(miss);
+    var can = L.bagCanAdd(state, 'ket_dan_dan', 1);
+    if (!can.ok) { toast(can.reason + ' Hãy dọn túi rồi quay lại gặp trưởng lão.', 4200); return; }
+    return say(ST.SCENE_CH11_VAT_DAN);
+  }
+  function resolveKdFee(action) {
+    if (action === 'kd_pay') {
+      var sp = L.spendLinhThach(state, 120);
+      if (!sp.ok) { toast(sp.reason + ' Hãy gom đủ Linh Thạch, hoặc chọn đường hái thêm dược dẫn.', 4400); say(ST.SCENE_CH11_VAT_DAN); return; }
+      return finishRefineKetDan();
+    }
+    if (action === 'kd_herb_fee') {
+      if (L.bagCount(state, 'ket_dan_duoc') < 3) {
+        toast('Muốn thay công luyện bằng dược dẫn thì cần thêm hai phần dược nữa (hiện có ' + L.bagCount(state, 'ket_dan_duoc') + '/3 phần) — quay lại cụm dược ở bãi bắc thung lũng mà hái thêm.', 4800);
+        say(ST.SCENE_CH11_VAT_DAN);
+        return;
+      }
+      L.bagRemove(state, 'ket_dan_duoc', 2);
+      return finishRefineKetDan();
+    }
+  }
+  function finishRefineKetDan() {
+    L.bagRemove(state, 'ket_dan_duoc', 1);
+    L.bagRemove(state, 'yeu_dan_2', 1);
+    var rb = L.bagAdd(state, 'ket_dan_dan', 1);
+    if (!rb.ok) { toast(rb.reason); refreshHUD(); saveNow(); return; }
+    state.flags.ketDanRefined = true;
+    sfxQuest();
+    addTuvi(100);
+    say(ST.SCENE_CH11_VAT_DAN_DONE, function () {
+      state.quest = 'q12_len_dai'; refreshHUD(); saveNow();
+      toast('Đã luyện thành vật dẫn Kết Đan. Chương cuối của phần này bắt đầu: lên Đài Trúc Cơ.', 4600);
+    });
+  }
+  function touchDuocDan() {
+    if (!state.flags.ketDanCoreGot) {
+      return say([{ who: 'narrate', text: 'Quanh vòng đá cũ là một cụm cây lá tím sẫm có vân vàng — dược liệu lạ của thung lũng. Chưa biết nó dùng vào việc gì, đừng hái bừa.' }]);
+    }
+    if (!state.flags.ketDanHerb) {
+      var canD = L.bagCanAdd(state, 'ket_dan_duoc', 1);
+      var canY = L.bagCanAdd(state, 'yeu_dan_2', 1);
+      if (!canD.ok || !canY.ok) { toast('Túi trữ vật đã đầy — hãy dọn túi rồi quay lại cụm dược.', 4200); return; }
+      state.flags.kdBeastWave = 1;
+      return say(ST.SCENE_CH11_DUOC, function () { say(ST.SCENE_CH11_DUOC_FIGHT); });
+    }
+    if ((state.quest === 'q11_chuan_bi_ket_dan' || state.quest === 'q11_vat_dan') && (state.flags.ketDanCoreExtra || 0) < 2) {
+      var rb2 = L.bagAdd(state, 'ket_dan_duoc', 1);
+      if (!rb2.ok) { toast(rb2.reason, 3800); return; }
+      state.flags.ketDanCoreExtra = (state.flags.ketDanCoreExtra || 0) + 1;
+      sfxPage();
+      return say([{ who: 'narrate', text: 'Ngươi hái thêm một phần dược dẫn nữa, gói riêng cẩn thận. Đan phòng của tông đang cần thứ này — hai phần thêm là đủ thay công luyện vật dẫn.' }], function () {
+        toast('Đã hái thêm dược dẫn Kết Đan (' + (state.flags.ketDanCoreExtra + 1) + '/3 phần tính cả phần luyện).', 3800);
+        refreshHUD(); saveNow();
+      });
+    }
+    return say([{ who: 'narrate', text: 'Cụm dược dẫn đã hái đủ phần. Mấy cây còn lại còn non — để chúng lớn, thung lũng này không hái tận gốc.' }]);
+  }
+  var KD_BEAST_LINES = {
+    1: { who: 'narrate', text: 'Đợt đầu: con thú lao thẳng vào, bờm đá quật nát một mảng cỏ. Ngươi lùi khỏi vòng đá, giữ khoảng cách — nó vẫn chưa tung hết sức.' },
+    2: { who: 'narrate', text: 'Đợt hai: con thú gầm lên, mắt đỏ rực, lao tới nhanh gấp đôi. Đây là đợt cuối của nó — và cũng là đợt mạnh nhất.' }
+  };
+  function resolveKdBeast(action) {
+    var wave = state.flags.kdBeastWave || 1;
+    var line = null;
+    if (action === 'kd_sword') {
+      var rs = L.castSword(state);
+      if (!rs.ok) { toast(rs.reason); say(ST.SCENE_CH11_DUOC_FIGHT); return; }
+      sfxSword();
+      spawnParts(px + 16, py + 16, 8, '190,235,200', 26, false);
+      addFloat(px + 16, py - 20, 'KIẾM!', '190,235,200');
+      line = { who: 'narrate', text: 'Thất Tinh Kiếm Quyết chém trúng bờm đá — tia lửa tóe ra, con thú loạng choạng lùi một bước.' };
+    } else if (action === 'kd_chan') {
+      var rw = L.castWord(state, 'chan');
+      if (!rw.ok) { toast(rw.reason + ' Hãy chọn cách khác cho đợt này.'); say(ST.SCENE_CH11_DUOC_FIGHT); return; }
+      sfxChan(); shakeT = Math.max(shakeT, 0.5);
+      rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
+      addFloat(px + 16, py - 20, 'CHẤN!', '150,200,255');
+      L.recordSpeech(state, 11, 'chan-giu-duoc-hoi-phong-dot-' + wave, 'hoi-phong');
+      line = { who: 'narrate', text: 'Một tiếng CHẤN nổ giữa bãi bắc — con thú ôm đầu gầm lên đau đớn, bước chân rối loạn.' };
+    } else if (action === 'kd_hold') {
+      state.silence = L.silenceGain('meditate', 2, state.silence);
+      line = { who: 'narrate', text: 'Ngươi lùi về sau vòng đá, giữ thế và dồn Tĩnh Mặc. Con thú gầm gừ vòng quanh, chưa dám lao vào lần nữa.' };
+    }
+    if (!line) return;
+    if (wave < 2) {
+      state.flags.kdBeastWave = wave + 1;
+      // KD_BEAST_LINES chỉ là câu dẫn đợt kế; điểm lựa chọn của đợt sau lấy
+      // lại đúng đối tượng lựa chọn trong cảnh trận (phần tử thứ hai của
+      // SCENE_CH11_DUOC_FIGHT) để người chơi chọn tiếp mà không lặp cảnh.
+      say([line, KD_BEAST_LINES[wave], ST.SCENE_CH11_DUOC_FIGHT[1]], function () { refreshHUD(); saveNow(); });
+      return;
+    }
+    state.flags.kdBeastWave = 0;
+    say([line].concat(ST.SCENE_CH11_DUOC_END), function () {
+      var rb = L.bagAdd(state, 'ket_dan_duoc', 1);
+      var ry = rb.ok ? L.bagAdd(state, 'yeu_dan_2', 1) : { ok: false };
+      if (!rb.ok || !ry.ok) {
+        if (rb.ok) L.bagRemove(state, 'ket_dan_duoc', 1);
+        toast('Túi trữ vật đã đầy — con thú đã rút lui vào rừng sâu. Hãy dọn túi rồi quay lại cụm dược.', 4600);
+        refreshHUD(); saveNow();
+        return;
+      }
+      state.flags.ketDanHerb = true;
+      addTuvi(100);
+      toast('Đã hái dược dẫn Kết Đan và lấy được Yêu Đan cấp 2 từ con thú giữ dược.', 4400);
+      refreshHUD(); saveNow();
+    });
+  }
+  /* ---------- Phần 3, chương 12: hộ pháp Kết Đan + Kết Đan + LỆNH ---------- */
+  function startKdGuard() {
+    sfxWind();
+    if ((state.flags.ketDanGuardBroken || 0) > 0) {
+      state.flags.ketDanGuardWave = 1;
+      say(ST.SCENE_KDGUARD1);
+      return;
+    }
+    sfxBell();
+    say(ST.SCENE_CH12_GUARD_INTRO, function () {
+      state.flags.ketDanGuardWave = 1;
+      say(ST.SCENE_KDGUARD1);
+      refreshHUD(); saveNow();
+    });
+  }
+  function resolveKdGuard(action) {
+    if (action === 'kdguard_voice') {
+      return say([{ who: 'narrate', text: 'Tiếng nói xé toang chu thiên đang vận hành. Kim đan chưa thành hình đã rung lên dữ dội rồi lặng xuống — vận công vỡ giữa chừng. May là vật dẫn vẫn còn nguyên trong tay ngươi: chưa nuốt, chưa mất gì. Hít một hơi. Làm lại từ đầu.' }], function () {
+        state.flags.ketDanGuardBroken = (state.flags.ketDanGuardBroken || 0) + 1;
+        state.flags.ketDanGuardWave = 0;
+        refreshHUD(); saveNow();
+        toast('Vận công Kết Đan đã vỡ vì một tiếng nói. Hãy tương tác lại Đài Trúc Cơ để vận công lại từ đầu — vật dẫn Kết Đan vẫn còn nguyên.', 4600);
+      });
+    }
+    var wave = state.flags.ketDanGuardWave || 1;
+    var line = null;
+    if (action === 'kdguard_dong') {
+      spawnParts(px + 52, py + 16, 10, '255,210,140', 30, false);
+      line = { who: 'narrate', text: 'Phía đông đài, Hứa U Nhàn dẫn người giương đuốc chặn đường — bóng địch bị ánh lửa ép lui khỏi thềm đá, như đúng vị trí nàng đã giữ ở kỳ Trúc Cơ.' };
+    } else if (action === 'kdguard_hoa') {
+      sfxSword();
+      spawnParts(px + 16, py + 16, 8, '190,235,200', 26, false);
+      line = { who: 'narrate', text: 'Hoa Hướng Thần rút kiếm đứng chắn trước đài — kiếm quang của đại đệ tử quét một vòng, đợt địch bị chém lui không còn một bóng.' };
+    } else if (action === 'kdguard_tam') {
+      rings.push({ x: px + 16, y: py + 16, r: 6, a: 0.9 });
+      line = { who: 'narrate', text: 'Liễu Khuynh Tiên ngồi xuống phía sau đài, tiếng đàn trầm giữ nhịp hơi thở cho ngươi — tâm cảnh vững như mặt hồ, đợt địch tan dần trong tiếng đàn.' };
+    }
+    if (!line) return;
+    if (wave < 3) {
+      state.flags.ketDanGuardWave = wave + 1;
+      say([line].concat(ST['SCENE_KDGUARD' + (wave + 1)]), function () { refreshHUD(); saveNow(); });
+    } else {
+      state.flags.ketDanGuardWave = 0;
+      say([line].concat(ST.SCENE_KDGUARD_END), function () {
+        state.flags.ketDanGuardDone = true;
+        state.quest = 'q12_ket_dan';
+        refreshHUD(); saveNow();
+        toast('Hộ pháp Kết Đan đã xong ba đợt trong im lặng tuyệt đối. Giờ là tâm ma — và khoảnh khắc quyết định.', 4200);
+      });
+    }
+  }
+  var KD_TAMMA_CHOICE = {
+    who: 'choice', text: 'Mảng đá đang rơi. Ngươi sẽ…',
+    options: [
+      { label: 'Cất lời — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
+      { label: 'Giữ im lặng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
+    ]
+  };
+  function resolveKetDanChoice(action) {
+    if (action === 'ketdan_say') {
+      state.flags.ketDanSpokeSave = true;
+      L.recordSpeech(state, 12, 'ch12_ket_dan_cuu_nguoi', 'toan_bo_ho_phap');
+      sfxChan(); shakeT = Math.max(shakeT, 0.6);
+      return say(ST.SCENE_CH12_TAMMA_SAY, function () { doKetDan(); });
+    }
+    if (action === 'ketdan_silent') {
+      return say(ST.SCENE_CH12_TAMMA_SILENT, function () { doKetDan(); });
+    }
+  }
+  /* Kết Đan (chương 12): sao khuôn đột phá Trúc Cơ — kiểm điều kiện theo
+     đúng thứ tự, vật dẫn chỉ bị trừ khi mọi điều kiện đã đủ và lần đột phá
+     thành công; hụt thì hoàn lại vật dẫn. */
+  function doKetDan() {
+    if (state.realm >= 3) return say([{ who: 'narrate', text: 'Ngươi đã là tu sĩ Kim Đan. Đài đá dưới chân vẫn còn ấm dư âm của ngày Kết Đan.' }]);
+    if (!(state.realm === 2 && state.stage === 3)) return say([{ who: 'narrate', text: 'Ngươi chưa tới Trúc Cơ Viên Mãn — chưa thể nghĩ tới Kết Đan. Hãy tu luyện tiếp cho tới khi viên mãn hẳn.' }]);
+    var cap = L.REALMS[state.realm].tuviNext;
+    if (cap && state.tuvi < cap) {
+      toast('Tu vi hiện tại: ' + Math.floor(state.tuvi) + '/' + cap + '.', 3600);
+      return say([{ who: 'narrate', text: 'Tu vi chưa đầy. Hãy thổ nạp ở điểm linh khí của tông, hoặc bờ suối Thung Lũng Hồi Phong, cho đầy hẳn rồi quay lại đài.' }]);
+    }
+    if (state.flags.ketDanGuardDone !== true) return say([{ who: 'narrate', text: 'Vòng hộ pháp quanh đài chưa qua đủ ba đợt sóng gió. Hãy vận công lại từ đầu — địch sẽ tới, và ngươi phải giữ im lặng cho tới khi chúng rút.' }]);
+    if (!L.bagHas(state, 'ket_dan_dan')) return say([{ who: 'narrate', text: 'Ngươi chưa có vật dẫn Kết Đan trong túi. Về Thanh Vân Đại Điện gặp trưởng lão tông — vật dẫn phải được luyện ở đó.' }]);
+    var rm = L.bagRemove(state, 'ket_dan_dan', 1);
+    if (!rm.ok) { toast(rm.reason); return; }
+    var r = L.tryBreakthrough(state);
+    if (!r.ok) {
+      L.bagAdd(state, 'ket_dan_dan', 1);
+      toast(r.reason);
+      refreshHUD(); saveNow();
+      return;
+    }
+    sfxBigBell();
+    pillarT = 3.5;
+    spawnParts(px + 16, py + 24, 48, '255,232,160', 36, true);
+    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+    rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+    shakeT = Math.max(shakeT, 0.9);
+    L.recordSpeech(state, 12, 'loi-dau-o-kim-dan', 'thanh-van-tong');
+    say(ST.SCENE_CH12_KET_DAN, function () {
+      state.quest = 'q12_lenh_dau_tien';
+      refreshHUD(); saveNow();
+      toast('Kết Đan thành công: ' + r.label + '! Ngôn Linh đã thành LỆNH — thử chiêu ĐỊNH (phím 4) vào tấm bia mới ở chân đài.', 5200);
+    });
+    refreshHUD();
+  }
+  /* LỆNH — bậc cao của Ngôn Linh (phần 3, chương 12): ĐỊNH giữ một nhịp,
+     PHONG khóa hai nhịp trong các trận về sau; ở sự kiện dạy lệnh tại đài,
+     uy lực phải đạt ngưỡng của trưởng lão mới tính là chạm được bậc lệnh. */
+  function castDinh() {
+    if (dlg) return;
+    var r = L.castWord(state, 'dinh');
+    if (!r.ok) { toast(r.reason); return; }
+    rings.push({ x: px + 16, y: py + 16, r: 7, a: 0.95 });
+    addFloat(px + 16, py - 20, 'ĐỊNH!', '170,220,255');
+    sfxBell();
+    if (state.quest === 'q12_lenh_dau_tien' && !state.flags.lenDinhDone) {
+      if (r.power >= 160) {
+        state.flags.lenDinhDone = true;
+        L.recordSpeech(state, 12, 'dinh-thu-bia-dai', 'thanh-van-tong');
+        refreshHUD(); saveNow();
+        say(ST.SCENE_CH12_LENH_2, function () { refreshHUD(); saveNow(); });
+        return;
+      }
+      toast('Uy lực ĐỊNH vừa rồi: ' + r.power + ' — chưa đủ 160 để bia đứng yên tuyệt đối. Hãy tích Tĩnh Mặc thêm (thổ nạp hoặc im lặng) rồi thử lại.', 4600);
+    }
+    refreshHUD(); saveNow();
+  }
+  function castPhong() {
+    if (dlg) return;
+    var r = L.castWord(state, 'phong');
+    if (!r.ok) { toast(r.reason); return; }
+    rings.push({ x: px + 16, y: py + 16, r: 12, a: 0.95 });
+    rings.push({ x: px + 16, y: py + 16, r: 5, a: 0.85 });
+    addFloat(px + 16, py - 20, 'PHONG!', '255,214,120');
+    sfxBigBell();
+    if (state.quest === 'q12_lenh_dau_tien' && state.flags.lenDinhDone && !state.flags.lenPhongDone) {
+      if (r.power >= 180) {
+        state.flags.lenPhongDone = true;
+        L.recordSpeech(state, 12, 'phong-thu-tran-van', 'thanh-van-tong');
+        refreshHUD(); saveNow();
+        say(ST.SCENE_CH12_LENH_DONE, function () {
+          if (!state.flags.kimDanReward) {
+            var rk = L.addLinhThach(state, 50);
+            if (rk.ok) { state.flags.kimDanReward = true; toast('Thưởng của tông môn mừng tân Kim Đan: +50 Linh Thạch (số dư: ' + L.fmtNum(rk.balance) + ').', 4200); }
+          }
+          state.quest = 'q12_done'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 12: Kết Đan — phần ba khép lại ở Kim Đan Sơ Kỳ. Ngôn Linh của ngươi từ nay là LỆNH.', 5600);
+        });
+        return;
+      }
+      toast('Uy lực PHONG vừa rồi: ' + r.power + ' — chưa đủ 180 để khóa trọn vết rạn. Hãy tích Tĩnh Mặc thêm rồi thử lại.', 4600);
+    }
+    refreshHUD(); saveNow();
+  }
+
   /* Hộ pháp trong im lặng (chương 8): ba đợt quấy phá quanh đài trong lúc
      vận công. Cất tiếng là vận công vỡ — làm lại từ đầu, Trúc Cơ Đan chưa
      nuốt nên không mất gì. Đã vỡ một lần thì vào thẳng đợt đầu, bỏ intro. */
@@ -2213,6 +2945,24 @@
   function touchDaiTrucCo() {
     if (state.quest === 'q8_ho_phap') return startGuard();
     if (state.quest === 'q8_truc_co') return doTrucCo();
+    if (state.quest === 'q12_len_dai') {
+      return say(ST.SCENE_CH12_LEN_DAI, function () {
+        say(state.flags.soulPublic ? ST.SCENE_CH12_HP_TCL : ST.SCENE_CH12_HP_TONG, function () {
+          state.quest = 'q12_ho_phap'; refreshHUD(); saveNow();
+          toast('Hộ pháp đã vào vị trí. Tương tác lại với đài để bắt đầu vận công Kết Đan — địch sẽ tới, và ngươi tuyệt đối không được cất tiếng.', 4600);
+        });
+      });
+    }
+    if (state.quest === 'q12_ho_phap') return startKdGuard();
+    if (state.quest === 'q12_ket_dan') {
+      if (state.flags.ketDanGuardDone !== true) return startKdGuard();
+      return say(ST.SCENE_CH12_TAM_MA.concat([KD_TAMMA_CHOICE]));
+    }
+    if (state.quest === 'q12_lenh_dau_tien') {
+      if (!state.flags.lenDinhDone) return say(ST.SCENE_CH12_LENH_1);
+      if (!state.flags.lenPhongDone) return say(ST.SCENE_CH12_LENH_2);
+      return say([{ who: 'narrate', text: 'Tấm bia ở chân đài đứng yên tuyệt đối, vết rạn trên trận văn đã khép dưới vòng ấn vàng. Bậc lệnh của ngươi bắt đầu từ đây.' }]);
+    }
     return say([{ who: 'narrate', text: 'Đài Trúc Cơ ở phía bắc tông môn: nền đá tròn khắc vòng trận văn cổ, linh khí quanh đài đậm đặc tới mức nhìn thấy được bằng mắt thường. Đây là nơi đệ tử Thanh Vân Tông bước qua mốc tu vi lớn đầu tiên của đời mình.' }]);
   }
   function resolveGuardWave(action) {
@@ -2434,6 +3184,13 @@
       toast('Đột phá Trúc Cơ là bước qua đại cảnh giới — phải thực hiện tại Đài Trúc Cơ ở phía bắc Thanh Vân Tông cùng Trúc Cơ Đan, theo nhiệm vụ chương 8. Hãy tới đài và tương tác với đài để bắt đầu.', 5600);
       return;
     }
+    // Chặn tương tự ở biên Trúc Cơ Viên Mãn -> Kim Đan: Kết Đan là sự kiện
+    // truyện tại đài cùng vật dẫn và vòng hộ pháp của chương 12.
+    if (state.realm === 2 && state.stage === L.REALMS[2].stages.length - 1 &&
+        state.tuvi >= L.REALMS[2].tuviNext && state.quest !== 'q12_done') {
+      toast('Kết Đan là bước qua đại cảnh giới — phải thực hiện tại Đài Trúc Cơ ở phía bắc Thanh Vân Tông cùng vật dẫn Kết Đan, theo nhiệm vụ chương 12. Hãy tới đài và tương tác với đài để bắt đầu.', 5600);
+      return;
+    }
     var r = L.tryBreakthrough(state);
     if (!r.ok) { toast(r.reason); return; }
     sfxBell();
@@ -2486,6 +3243,8 @@
     setSkillLock('sk-pha', state.unlocked.indexOf('voice') < 0, 'Mở khóa sau sự kiện mở miệng trước bia đá');
     setSkillLock('sk-chan', state.unlocked.indexOf('luyenkhi1') < 0, 'Mở khóa khi đạt Luyện Khí tầng 1');
     setSkillLock('sk-sword', state.unlocked.indexOf('that_tinh') < 0, 'Mở khóa khi nhận Thất Tinh Kiếm Quyết ở Kiểm Trắc Tháp');
+    setSkillLock('sk-dinh', state.unlocked.indexOf('kimdan') < 0, 'LỆNH chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
+    setSkillLock('sk-phong', state.unlocked.indexOf('kimdan') < 0, 'LỆNH chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
     var bagBtn = $('btn-bag');
     if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
@@ -2892,6 +3651,34 @@
       say(ST.SCENE_QUEUE, function () { state.flags.queueSeen = true; state.quest = 'q3_thuoc_do'; refreshHUD(); saveNow(); });
       return;
     }
+    if (state.map === 'hb_valley' && state.quest === 'q9_truy_vet' && !state.flags.ch9PlanSeen) {
+      // Cảnh cắt song song: U Nhàn tự bày thế trong thung lũng — chiếu khi
+      // người chơi vừa đặt chân vào thung lũng (cờ Seen đặt trong callback).
+      say(ST.SCENE_CH9_UNHAN_PLAN, function () { state.flags.ch9PlanSeen = true; refreshHUD(); saveNow(); });
+      return;
+    }
+    if (state.map === 'hb_valley' && state.quest === 'q9_phuc_kich' && pt.x >= 46 && pt.x <= 53 && pt.y >= 33 && pt.y <= 39) {
+      // Điểm phục kích giữa hẻm núi: bước vào vùng là sự kiện nổ ra (điểm
+      // lựa chọn trung tâm của chương 9 nằm trong cảnh này).
+      startCh9Ambush();
+      return;
+    }
+    if (state.map === 'co_chau' && state.quest === 'q10_lo_than_phan' && state.flags.ch10RumorPending && !state.flags.ch10BreakReady) {
+      // Chương 10, đường B (giữ im lặng ở lầu): tin đồn về Hồn Sư nổ ra ở
+      // chợ khi người chơi quay lại thành — thân phận bị kẻ khác lộ thay.
+      state.flags.ch10RumorPending = false;
+      say(ST.SCENE_CH10_BI_LO_2, function () {
+        state.flags.soulExposed = true;
+        state.flags.soulRevealed = true;
+        state.soulRank = 3;
+        state.soulPower = (state.soulPower || 0) + 30;
+        addTuvi(120);
+        state.flags.ch10BreakReady = true;
+        refreshHUD(); saveNow();
+        toast('Sự thật đã bị kẻ khác tung ra theo cách xấu nhất. Tu vi còn thiếu một đoạn cuối — thổ nạp ở sân sau Tĩnh Quan Lâu, rồi gặp lại Bạch Kính Đường để khép việc ở lầu.', 5200);
+      });
+      return;
+    }
     if (state.map !== 'duong_mon') return;
     // Bãi phục kích: bước vào vùng khi nhiệm vụ đang chờ thì sự kiện nổ ra.
     if (state.quest === 'q2_phuc_kich' && pt.x >= 39 && pt.x <= 48 && pt.y >= 49 && pt.y <= 55) {
@@ -2992,13 +3779,15 @@
     keys[k] = true;
     if (!state || $('screen-game').classList.contains('hidden')) return;
     if (k === 'e' || k === ' ') { cancelQuestNav(); interact(); }
-    else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2' || k === '3')) {
+    else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2' || k === '3' || k === '4')) {
       var idx = parseInt(k, 10) - 1;
       if (dlg.options[idx]) chooseOption(dlg.options[idx].action);
     }
     else if (k === '1') castPha();
     else if (k === '2') castChan();
     else if (k === '3') castSword();
+    else if (k === '4') castDinh();
+    else if (k === '5') castPhong();
     else if (k === 'b') doBreakthrough();
     else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
@@ -3335,6 +4124,8 @@
   $('sk-pha').addEventListener('click', function () { castPha(); });
   $('sk-chan').addEventListener('click', function () { castChan(); });
   $('sk-sword').addEventListener('click', function () { castSword(); });
+  $('sk-dinh').addEventListener('click', function () { castDinh(); });
+  $('sk-phong').addEventListener('click', function () { castPhong(); });
   $('sk-med').addEventListener('click', function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
   $('sk-break').addEventListener('click', function () { doBreakthrough(); });
   $('sk-interact').addEventListener('click', function () { sfxUi(); interact(); });
