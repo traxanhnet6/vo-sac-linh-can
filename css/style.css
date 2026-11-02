@@ -119,7 +119,10 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .minimap-label { text-align: center; font-size: 10px; color: #f7ead0; padding: 3px 0 1px; letter-spacing: 1px; }
 @media (max-width: 640px) {
   #minimap { width: 84px; height: 63px; }
-  .sk { width: 48px; height: 48px; }
+  /* Màn hẹp: cụm vòng cung thu còn 88% quanh góc dưới phải (thay luật cũ
+     phóng nút .sk lên 48px của thanh ngang — luật đó thành tiền đề chết
+     khi đổi sang vòng cung, xem Mục G đợt vá 2026-11-02). */
+  #skillbar { transform: scale(0.88); transform-origin: bottom right; }
   /* Màn hẹp: hàng Lưu/Thoát ở giữa-trên sẽ đè khung nhân vật (QA đợt 60×45 bắt được
      trên mô phỏng 390px) — dạt xuống góc dưới-trái, đối diện thanh kỹ năng. */
   #func-row { top: auto; bottom: 10px; left: 10px; transform: none; }
@@ -149,11 +152,19 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .quest-desc { font-size: 12px; color: #e2d5b5; line-height: 1.45;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* Thanh kỹ năng gọn ở góc dưới phải — giữa và giữa-dưới màn hình giữ trống sạch */
+/* Cụm nút chiến đấu VÒNG CUNG ở góc dưới phải (Mục G đợt vá 2026-11-02):
+   nút ĐÁNH (78px, tròn) làm tâm ở góc dưới phải của cụm 212x212; cung
+   ngoài bán kính 118px chứa 5 nút chiến đấu 46px ở các góc 86/109/132/
+   155/178 độ (đo từ tâm nút ĐÁNH, hướng lên-trái); cung trong bán kính
+   74px chứa 3 nút phụ 42px ở 100/135/170 độ. Thứ tự dọc cung giữ đúng
+   thứ tự trái->phải của thanh cũ: PHÁ, CHẤN, Kiếm, ĐỊNH, PHONG (ngoài),
+   Thổ nạp, Đột phá, Tương tác (trong). Giữa và giữa-dưới màn hình vẫn
+   trống sạch: cụm chỉ chiếm góc dưới phải, tâm màn hình không bị che. */
 #skillbar { position: absolute; left: auto; right: 10px; bottom: 10px; transform: none; z-index: 4;
-  display: flex; flex-direction: row; align-items: center; gap: 6px; pointer-events: none; }
-.sk { position: relative; width: 46px; height: 46px; padding: 0; cursor: pointer; pointer-events: auto;
-  background: rgba(43, 31, 19, 0.88); border: 1px solid #a8893a; border-radius: 7px;
+  width: 212px; height: 212px; pointer-events: none; }
+.sk { position: absolute; width: 46px; height: 46px; padding: 0; cursor: pointer; pointer-events: auto;
+  transform: translate(-50%, -50%);
+  background: rgba(43, 31, 19, 0.88); border: 1px solid #a8893a; border-radius: 50%;
   color: #f7ead0; font-family: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.45);
   display: flex; align-items: center; justify-content: center; }
 .sk:hover { border-color: #e3b83c; }
@@ -161,6 +172,24 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .sk-name { font-size: 11px; font-weight: bold; text-align: center; line-height: 1.15; padding: 0 2px; }
 .sk.locked { opacity: 0.45; color: #b9ac8d; border-color: #6d5c33; }
 .sk.active { border-color: #f3d94e; box-shadow: 0 0 12px rgba(243, 217, 78, 0.55); }
+/* Tâm cung: nút ĐÁNH lớn 78px, tâm tại (163,163) trong hộp cụm. */
+#sk-attack { left: 163px; top: 163px; width: 78px; height: 78px;
+  background: radial-gradient(circle at 38% 32%, rgba(122, 92, 40, 0.95), rgba(52, 36, 16, 0.94));
+  border: 2px solid #c9a227; }
+#sk-attack .sk-name { font-size: 15px; letter-spacing: 1px; }
+#sk-attack .sk-key { top: 8px; left: 11px; }
+#sk-attack:active { border-color: #f3d94e; box-shadow: 0 0 14px rgba(243, 217, 78, 0.6); }
+/* Cung ngoài (bán kính 118px từ tâm ĐÁNH) — nút chiến đấu 46px. */
+#sk-pha   { left: 171px; top: 45px; }
+#sk-chan  { left: 125px; top: 51px; }
+#sk-sword { left: 84px;  top: 75px; }
+#sk-dinh  { left: 56px;  top: 113px; }
+#sk-phong { left: 45px;  top: 159px; }
+/* Cung trong (bán kính 74px từ tâm ĐÁNH) — nút phụ 42px. */
+#sk-med      { left: 150px; top: 90px;  width: 42px; height: 42px; }
+#sk-break    { left: 111px; top: 111px; width: 42px; height: 42px; }
+#sk-interact { left: 90px;  top: 150px; width: 42px; height: 42px; }
+#sk-med .sk-name, #sk-break .sk-name, #sk-interact .sk-name { font-size: 10px; }
 
 /* Hộp thoại mỏng hơn, sát đáy */
 #dialogue { position: absolute; left: 2%; right: 2%; bottom: 8px; z-index: 5; max-height: 32dvh; overflow-y: auto;

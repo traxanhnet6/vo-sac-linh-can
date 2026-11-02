@@ -3575,26 +3575,6 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "e974b31a04d2": {
-   "f": "ve974b31a04d2.mp3",
-   "k": "narrate",
-   "s": "narrate"
-  },
-  "793d334e6269": {
-   "f": "v793d334e6269.mp3",
-   "k": "narrate",
-   "s": "narrate"
-  },
-  "f8bab49ba8cf": {
-   "f": "vf8bab49ba8cf.mp3",
-   "k": "narrate",
-   "s": "narrate"
-  },
-  "e6ca998e73f7": {
-   "f": "ve6ca998e73f7.mp3",
-   "k": "narrate",
-   "s": "narrate"
-  },
   "08aea097ef33": {
    "f": "v08aea097ef33.mp3",
    "k": "narrate",

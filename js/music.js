@@ -65,7 +65,7 @@
      vào MAPS của js/logic.js; cho tới lúc đó test-music.js sẽ đỏ ở các
      khẳng định đối chiếu MAPS (MAP_IDS khớp tuyệt đối + cờ stream khớp
      ô nước) — đó là điểm chờ làn A, không phải lỗi module này. */
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo'];
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem'];
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -235,6 +235,15 @@
       chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
       motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
     },
+    dai_dau_kiem: { /* Đài Đấu Kiếm Thanh Vân (Mục F đợt vá 2026-11-02)
+      — biến thể CĂNG của thanh_van_tong: giữ đệm rộng 5 nốt + mô-típ đi
+      lên của tông để nhận ra gốc, nhưng nhanh hơn (86 -> 96 bpm) và
+      nhịp nền dày hơn (0,40 -> 0,52) cho không khí tỉ thí. */
+      root: 60, scale: SCALE_MAJ_PENT, bpm: 96, density: 0.52,
+      padWave: 'triangle', motifWave: 'triangle',
+      chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
+      motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
+    },
     bc_hoiphong_mo: { /* Hồi Phong Cổ Mộ — biến thể TRẦM của hb_valley:
       gốc hạ 4 nửa cung (57 -> 53), vòng hợp âm thung lũng hạ theo,
       chậm hơn (76 -> 62 bpm), nhịp nền thưa hơn (0,26 -> 0,18), mô-típ
@@ -277,7 +286,8 @@
     bc_tapha: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: true, howl: false },
     bc_tapsau: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: true, howl: false },
     bc_kiemtrung: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
-    bc_hoiphong_mo: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true }
+    bc_hoiphong_mo: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true },
+    dai_dau_kiem: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false } // đài trên cao của tông: chỉ lớp gió như tông môn, không suối (đài không có ô nước)
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {

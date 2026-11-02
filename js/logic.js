@@ -57,7 +57,7 @@
     if (!state.unlocked || state.unlocked.indexOf(skill.unlock) < 0) return { ok: false, reason: 'Chưa mở khóa chiêu này.' };
     if (state.silence < skill.cost) return { ok: false, reason: 'Tĩnh Mặc chưa đủ — hãy im lặng tích lũy thêm.' };
     var power = wordPower(skill, state.silence);
-    if (state.gear && state.gear.indexOf('kiem_phong') >= 0) power += 10; // Thanh Phong Kiếm trợ uy Ngôn Linh
+    power += weaponBonus(state).word; // vũ khí đang đeo trợ uy Ngôn Linh (Thanh Phong Kiếm +10, Thiết Kiếm Hứa Gia +3)
     state.silence = Math.max(0, state.silence - skill.cost);
     state.timesSpoken = (state.timesSpoken || 0) + 1;
     return { ok: true, power: power, skill: skill };
@@ -1327,6 +1327,35 @@
     { id: 'da_mo', type: 'stone_platform', x: 36, y: 22, w: 3, h: 2, fx: 3, fy: 1, name: 'Bệ Đá Cổ Mộ' }
   ];
 
+  /* ---- Đài Đấu Kiếm Thanh Vân 40x30 (Mục F đợt vá 2026-11-02) ----
+     Bản đồ chuyên dụng RIÊNG cho trận tỉ thí chương 7 với Hoa Hướng
+     Thần: nền đá liền mạch (S) với bệ đấu hoa văn (P) ở giữa, kiếm bia
+     ở đầu bắc, đèn đá bốn góc và cụm kiếm cắm trang trí — đúng ngôn
+     ngữ hình ảnh của Thanh Vân Tông. Vào đài bằng LUỒNG TỈ THÍ có kịch
+     bản (gặp Hoa Hướng Thần ở quảng trường rồi được đưa lên đài, như
+     đường vào bí cảnh bằng vật thể cổng), KHÔNG có cổng đi bộ trỏ vào;
+     cổng ra ở viền nam đưa về quảng trường. Hoa và khán giả đệ tử là
+     thực thể TRÌNH DIỄN của trận trong game.js (như hình chiếu Thăng
+     Long), không phải NPC của bản đồ — nên npcs rỗng là có chủ đích. */
+  function buildArenaGrid() {
+    var rows = blankRows(40, 30, 'S');
+    rectC(rows, 10, 7, 29, 22, 'P');          // bệ đấu hoa văn giữa đài
+    rectC(rows, 18, 29, 21, 29, 'G');         // khe cổng ra viền nam (về quảng trường)
+    return rows;
+  }
+  var ARENA_GRID = buildArenaGrid();
+  var ARENA_PROPS = [
+    { id: 'kiem_bia_dai', type: 'stele', x: 18, y: 2, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Bia Đài Đấu Kiếm', interact: true },
+    { id: 'den_dai_a', type: 'lantern', x: 4, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_dai_b', type: 'lantern', x: 34, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_dai_c', type: 'lantern', x: 4, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_dai_d', type: 'lantern', x: 34, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'kiem_cum_dai_a', type: 'kiem_cum', x: 6, y: 6, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Ven Đài' },
+    { id: 'kiem_cum_dai_b', type: 'kiem_cum', x: 32, y: 6, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Ven Đài' },
+    { id: 'lu_huong_dai_a', type: 'lu_huong', x: 15, y: 4, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đầu Đài' },
+    { id: 'lu_huong_dai_b', type: 'lu_huong', x: 24, y: 4, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đầu Đài' }
+  ];
+
   var MAPS = {
     tran: {
       name: 'Hứa Gia Trấn', w: MAP_W, h: MAP_H, grid: MAP_GRID, props: PROPS, npcs: NPCS,
@@ -1376,6 +1405,14 @@
       signs: [{ x: 19, y: 27, text: 'Ra Sân Tháp' }],
       portals: [
         { x: 18, y: 29, w: 4, h: 1, to: 'kiem_trac_thap', toX: 35, toY: 13, label: 'Ra Sân Tháp' }
+      ]
+    },
+    dai_dau_kiem: {
+      name: 'Đài Đấu Kiếm Thanh Vân', w: 40, h: 30, grid: ARENA_GRID, props: ARENA_PROPS, npcs: [],
+      meditate: null, spawn: { x: 19, y: 26 },
+      signs: [{ x: 19, y: 27, text: 'Đài Đấu Kiếm' }],
+      portals: [
+        { x: 18, y: 29, w: 4, h: 1, to: 'thanh_van_tong', toX: 62, toY: 57, label: 'Về Quảng Trường Tông' }
       ]
     },
     thanh_van_tong: {
@@ -1591,17 +1628,18 @@
       techniques: {},            // lớp công pháp theo tầng (docs/congphap-prep): chỉ có mục khi đã học theo truyện
       activeMethod: null,        // tâm pháp đang vận hành ('thanh_phong' sau khi nhận ở tháp)
       grind: defaultGrind(),     // trạng thái hệ cày: hồ trần ngày, khóa chống trùng, sổ trả thưởng
+      sideQuests: defaultSideQuests(), // Mục H: chuỗi phụ quanh Trúc Cơ — { claimed, selected, socialMet } dữ kiện thuần, online-ready
       secretRealms: defaultSecretRealms(), // trạng thái bí cảnh: kho lượt ngày chung + từng bí cảnh
       spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
       sectMerit: 0,              // điểm cống hiến tông môn — trục tích lũy thứ ba, tách khỏi Linh Thạch (chương 7)
       items: { dan: 0 },         // GƯƠNG đọc của túi: số Hồi Khí Đan (syncBagMirrors ghi)
-      gear: [],                  // GƯƠNG đọc của túi: pháp khí đang có (syncBagMirrors ghi)
-      bag: { tier: 1, items: {} }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3)
+      gear: ['kiem_hua_gia'],    // GƯƠNG đọc của túi: pháp khí đang có (syncBagMirrors ghi) — tân thủ đeo sẵn Thiết Kiếm Hứa Gia
+      bag: { tier: 1, items: { kiem_hua_gia: 1 } }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3); kiếm khởi đầu ghi ở đây nhưng đeo trên người (worn) nên không chiếm ô
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0 },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0 },
       hp: 100, hpMax: 100
     };
   }
@@ -1639,9 +1677,32 @@
   // Thất Tinh Kiếm Quyết: đòn vật lý KHÔNG dùng tiếng nói — không tốn Tĩnh
   // Mặc, không ghi sổ lời đã nói. Đây là đường sức mạnh thứ hai buộc người
   // chơi mạnh cả khi không cất lời (đất dùng lớn ở Thăng Long Đạo chương 7).
+  /* ---------------- Vũ khí đang đeo (mục B đợt vá 2026-11-02) ----------------
+     Người chơi chỉ ĐEO MỘT vũ khí: trong số vũ khí đang sở hữu (đọc qua
+     gương state.gear như mọi hệ cũ), cây có swordBonus cao nhất là cây
+     đang đeo và CHỈ cây đó cộng uy lực — vũ khí tốt hơn THAY THẾ vũ khí
+     yếu hơn, không cộng dồn. Trước đợt này game chỉ có một vũ khí
+     (kiem_phong +8 kiếm / +10 lời) nên mọi số cũ giữ nguyên 100% khi chỉ
+     sở hữu Thanh Phong Kiếm. Chỉ số nằm ngay trong ITEM_DEFS
+     (swordBonus/wordBonus) để vũ khí về sau chỉ cần khai báo thêm. */
+  function equippedWeaponId(state) {
+    if (!state || !Array.isArray(state.gear)) return null;
+    var best = null, bestSword = -1, bestWord = -1;
+    for (var i = 0; i < state.gear.length; i++) {
+      var def = ITEM_DEFS[state.gear[i]];
+      if (!def || (typeof def.swordBonus !== 'number' && typeof def.wordBonus !== 'number')) continue;
+      var sw = def.swordBonus || 0, wd = def.wordBonus || 0;
+      if (sw > bestSword || (sw === bestSword && wd > bestWord)) { best = state.gear[i]; bestSword = sw; bestWord = wd; }
+    }
+    return best;
+  }
+  function weaponBonus(state) {
+    var id = equippedWeaponId(state), def = id ? ITEM_DEFS[id] : null;
+    return { id: id, sword: def ? (def.swordBonus || 0) : 0, word: def ? (def.wordBonus || 0) : 0 };
+  }
   function swordPower(state) {
     var base = 18 + (state.stage || 0) * 3 + (state.realm || 0) * 10;
-    if (state.gear && state.gear.indexOf('kiem_phong') >= 0) base += 8;
+    base += weaponBonus(state).sword;
     return base;
   }
   /* Chiêu kiếm theo tầng kiếm quyết (docs/congphap-prep mục 4/14.3):
@@ -1694,7 +1755,17 @@
      ghi chúng, từ dữ liệu túi. */
   var ITEM_DEFS = {
     hoi_khi_dan: { name: 'Hồi Khí Đan', type: 'dan', stack: true, glyph: 'Đan' },
-    kiem_phong: { name: 'Thanh Phong Kiếm', type: 'phap_khi', stack: false, glyph: 'Kiếm' },
+    kiem_phong: { name: 'Thanh Phong Kiếm', type: 'phap_khi', stack: false, glyph: 'Kiếm', swordBonus: 8, wordBonus: 10 },
+    /* Vũ khí khởi đầu của tân thủ (lệnh Bui 18:40 ngày 2026-11-02 "Thiếu
+       vũ khí cho tân thủ"): thanh kiếm sắt Hứa gia phát cho con em trong
+       nhà mang theo ngày đi trắc linh — lưỡi khắc một phù văn dẫn khí thô
+       sơ của thợ rèn trong trấn nên dù chưa nhập phẩm pháp khí vẫn trợ uy
+       được chút ít (+3 kiếm / +3 lời, nhỏ hơn hẳn Thanh Phong Kiếm
+       +8/+10; Thanh Phong về sau THAY THẾ nó theo luật vũ khí đang đeo).
+       worn: kiếm đeo bên hông người, không cất vào Túi Trữ Vật nên không
+       chiếm ô chứa (bagUsed bỏ qua như ngăn cốt truyện) — nhưng vẫn ghi
+       trong bag.items để panel túi liệt kê và gương gear đồng bộ. */
+    kiem_hua_gia: { name: 'Thiết Kiếm Hứa Gia', type: 'phap_khi', stack: false, glyph: 'Kiếm', worn: true, swordBonus: 3, wordBonus: 3 },
     ngoc_tu_linh: { name: 'Tụ Linh Ngọc', type: 'phap_khi', stack: false, glyph: 'Ngọc' },
     linh_chi: { name: 'Linh Chi Sau Núi', type: 'nguyen_lieu', stack: true, glyph: 'Chi' },
     truc_co_dan: { name: 'Trúc Cơ Đan', type: 'dan', stack: true, glyph: 'Cơ' },
@@ -1762,6 +1833,7 @@
     for (var id in b.items) {
       var def = ITEM_DEFS[id];
       if (!def || def.storySlot) continue; // ngăn riêng cốt truyện không tính sức chứa
+      if (def.worn) continue; // vũ khí đeo trên người (Thiết Kiếm Hứa Gia) không chiếm ô chứa
       used += Math.max(0, b.items[id] || 0);
     }
     return used;
@@ -1813,6 +1885,7 @@
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
     state.items.dan = bagCount(state, 'hoi_khi_dan');
     var gear = [];
+    if (bagHas(state, 'kiem_hua_gia')) gear.push('kiem_hua_gia');
     if (bagHas(state, 'kiem_phong')) gear.push('kiem_phong');
     if (bagHas(state, 'ngoc_tu_linh')) gear.push('ngoc_tu_linh');
     state.gear = gear;
@@ -2005,9 +2078,11 @@
     else state.dayCount = Math.floor(state.dayCount);
     ensureGrind(state);
     ensureSecretRealms(state);
+    ensureSideQuests(state);
     ensureTechniques(state);
-    if (!state.flags || typeof state.flags !== 'object') state.flags = { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, wroteFirst: false, evidence: false, ltLetter: false };
+    if (!state.flags || typeof state.flags !== 'object') state.flags = { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: false, wroteFirst: false, evidence: false, ltLetter: false };
     if (typeof state.flags.ltGift !== 'boolean') state.flags.ltGift = false;
+    if (typeof state.flags.starterWeaponGift !== 'boolean') state.flags.starterWeaponGift = false;
     if (typeof state.flags.dummyBroken !== 'boolean') state.flags.dummyBroken = false;
     if (typeof state.flags.wroteFirst !== 'boolean') state.flags.wroteFirst = false;
     if (typeof state.flags.evidence !== 'boolean') state.flags.evidence = false;
@@ -2106,6 +2181,7 @@
     if (!state.bag || typeof state.bag !== 'object' || !state.bag.items || typeof state.bag.items !== 'object') {
       var legacyBag = { tier: 1, items: {} };
       if (state.items.dan > 0) legacyBag.items.hoi_khi_dan = state.items.dan;
+      if (state.gear.indexOf('kiem_hua_gia') >= 0) legacyBag.items.kiem_hua_gia = 1;
       if (state.gear.indexOf('kiem_phong') >= 0) legacyBag.items.kiem_phong = 1;
       if (state.gear.indexOf('ngoc_tu_linh') >= 0) legacyBag.items.ngoc_tu_linh = 1;
       state.bag = legacyBag;
@@ -2136,6 +2212,23 @@
     if (state.quest === 'q7_done') state.quest = 'q8_chuan_bi';
     // Save cũ dừng ở mốc cuối chương 8: nối thẳng sang chương 9 (phần 3).
     if (state.quest === 'q8_done') state.quest = 'q9_tin_du';
+    // Cấp bù VŨ KHÍ KHỞI ĐẦU đúng một lần cho save cũ (tạo trước đợt vá
+    // 2026-11-02 mục B): nhân vật mới đã đeo sẵn Thiết Kiếm Hứa Gia từ
+    // newCharacter; save cũ chưa từng có vũ khí thì cấp bù tại đây — theo
+    // đúng tiền lệ ltGift ngay bên dưới (cờ starterWeaponGift chống cấp
+    // trùng qua mọi lần nạp lại; trường starterWeaponJustGranted chỉ là
+    // tín hiệu để lớp giao diện báo một lần). Ghi TRỰC TIẾP vào bag.items,
+    // không qua bagAdd/bagCanAdd: khoản bù bắt buộc không được phép bị
+    // sức chứa túi chặn (kiếm worn vốn không chiếm ô chứa), và túi khóa
+    // tới chương 3 cũng không chặn — kiếm đeo trên người từ đầu game.
+    if (!state.flags.starterWeaponGift) {
+      if (!bagHas(state, 'kiem_hua_gia')) {
+        bagOf(state).items.kiem_hua_gia = 1;
+        state.starterWeaponJustGranted = true;
+      }
+      state.flags.starterWeaponGift = true;
+      syncBagMirrors(state);
+    }
     // Bù lộ phí trưởng lão NGAY trong khâu chuẩn hóa (đặt ở cuối hàm, sau
     // khi cờ mở ví linhUnlocked đã được suy ra): save đã hoàn tất bản v1
     // (đã phá cọc gỗ, ví đã mở) mà chưa nhận 50 Linh Thạch thì cộng luôn
@@ -3025,6 +3118,194 @@
      cửu phẩm thành Vô Sắc). Làn kiểm thử đối chiếu tĩnh hằng số này. */
   var PHE_THUOC_COLOR_ORDER = ['Đỏ', 'Cam', 'Vàng', 'Lục', 'Lam', 'Chàm', 'Tím', 'Đen', 'Vô Sắc'];
 
+  /* ================= NHIỆM VỤ PHỤ QUANH TRÚC CƠ (Mục H, đợt vá 2026-11-02) =================
+     Chuỗi phụ LÀ ĐIỂM KHỞI HÀNH ONLINE: mọi nhiệm vụ là DỮ KIỆN THUẦN
+     trong save (claimed/selected/socialMet) + tiến độ SUY TỪ trạng thái
+     thật đã có (bí cảnh firstClear, túi, ví, lượt cày đã trả) — không
+     khóa giả định chỉ-chơi-đơn nào, về sau nhiều người chơi vẫn đọc cùng
+     dữ kiện này. Hai phân đoạn:
+       - 'pre' (trước đột phá): mở tại q8_chuan_bi cho người cuối Luyện
+         Khí — H1 chạy HAI bí cảnh dải Luyện Khí đã live (lượt đầu mỗi bí
+         cảnh KHÔNG tính vào kho chung nên xong trong đúng 2 lượt vào),
+         H2 kiểm đủ NGUYÊN LIỆU THẬT của công thức Trúc Cơ Đan (chỉ kiểm,
+         KHÔNG tiêu — nguyên liệu vẫn để trưởng lão luyện đan). Tài
+         khoản đã qua Trúc Cơ mà chưa nhận thưởng phân đoạn này: trạng
+         thái 'skipped' (đã qua mốc — bỏ qua), không kẹt, không thưởng.
+       - 'post' (sau đột phá): mở tại q8_done (hồi tố qua questReached
+         cho mọi save đã qua mốc), mỗi nhiệm vụ trỏ tới MỘT hệ lặp đã có.
+     Thưởng MỘT LẦN qua grantReward (trần mềm ngày như mọi khoản cày),
+     hồ sơ nội tuyến nhỏ — chủ yếu mở đường/chỉ hướng, không tạo nguồn
+     tu vi/Linh Thạch ngoài khung. KHÔNG bịa nguồn rơi: bảng đối chiếu
+     nguồn nằm trong báo cáo đợt (mucH) và trong desc từng nhiệm vụ. */
+  var SIDE_QUEST_DEFS = [
+    { id: 'sq_pre_bicanh', phase: 'pre', unlockQuest: 'q8_chuan_bi',
+      name: 'Luyện tay trong bí cảnh Luyện Khí',
+      desc: 'Qua ải lần đầu Thủy Liêm Động (cổng ở đường mòn) và Tàn Tích Dưới Tháp tầng ngoài (cửa trong sảnh Kiểm Trắc Tháp). Boss Thủy Liêm rơi chắc Yêu Đan Cấp 1 ở thưởng lần đầu; mỗi đợt quái và boss đều cho tu vi qua hệ cày — đường cày cấp chính trước Trúc Cơ.',
+      system: 'bí cảnh bc_thuyliem + bc_tapha', reward: { tuviPct: 5 },
+      guide: { map: 'duong_mon', x: 20, y: 36 } },
+    { id: 'sq_pre_nguyen_lieu', phase: 'pre', unlockQuest: 'q8_chuan_bi',
+      name: 'Đủ nguyên liệu Trúc Cơ Đan',
+      desc: 'Có đủ trong túi và ví: Linh Chi Sau Núi ×1 (cụm sau núi tông — toán phục kích mang theo Yêu Đan), Yêu Đan Cấp 1 ×1 (phục kích sau núi hoặc thưởng lần đầu Thủy Liêm Động), Thanh Tâm Thảo ×3 (vườn dược sau núi cạnh cụm Linh Chi), 30 Linh Thạch (việc tông, phiếu săn/thu thập, thưởng bí cảnh). Nhiệm vụ chỉ kiểm đủ — không tiêu nguyên liệu.',
+      system: 'công thức Trúc Cơ Đan chương 8', reward: { lt: 2, merit: 3 },
+      guide: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'sq_post_truy_na', phase: 'post', unlockQuest: 'q8_done',
+      name: 'Phiếu truy nã đầu tiên sau Trúc Cơ',
+      desc: 'Nhận một phiếu ở Bảng Treo Thưởng Săn Quái (qua chủ sạp chợ Cô Châu hoặc Quản Sự Tạp Dịch), săn đủ số rồi quay lại bảng trả thưởng một lần.',
+      system: 'bảng truy nã (board_hunt_daily)', reward: { tuviPct: 5 },
+      guide: { map: 'co_chau', x: 75, y: 35 } },
+    { id: 'sq_post_bicanh_tc', phase: 'post', unlockQuest: 'q8_done',
+      name: 'Bí cảnh dải Trúc Cơ',
+      desc: 'Qua ải lần đầu một bí cảnh dải Trúc Cơ: Tàn Tích Tầng Sâu (cửa Tàn Tích trong sảnh tháp) hoặc Kiếm Trủng Sau Núi (cụm kiếm cắm sau núi tông, cạnh cụm Linh Chi).',
+      system: 'bí cảnh bc_tapsau / bc_kiemtrung', reward: { tuviPct: 5, merit: 3 },
+      guide: { map: 'thap_noi', x: 3, y: 28 } },
+    { id: 'sq_post_thu_thap', phase: 'post', unlockQuest: 'q8_done',
+      name: 'Nộp một lượt thu thập',
+      desc: 'Nhận một phiếu ở Danh Sách Thu Thập (qua Dược Sư Hồi Xuân hoặc Quản Sự Tạp Dịch), hái đủ nguyên liệu ở các điểm hái rồi nộp trả một lần.',
+      system: 'thu thập/nộp vật (board_gather_daily)', reward: { lt: 2, tuviPct: 5 },
+      guide: { map: 'co_chau', x: 45, y: 52 } },
+    { id: 'sq_post_dong_mon', phase: 'post', unlockQuest: 'q8_done',
+      name: 'Đồng môn ở quảng trường',
+      desc: 'Tới quảng trường Thanh Vân Tông chào hỏi một đồng môn (Hoa Hướng Thần hoặc đệ tử ở quảng trường), rồi nhận và trả một Việc Tông Môn luân phiên ở Quản Sự Tạp Dịch. — nhịp gặp gỡ xã hội ở điểm tụ họp tông môn, đúng hình dáng việc chung khi mở online.',
+      system: 'việc tông môn (board_sect_daily) + gặp gỡ quảng trường tông', reward: { lt: 3, merit: 5 },
+      guide: { map: 'thanh_van_tong', x: 62, y: 56 } }
+  ];
+  function sideQuestDef(id) {
+    for (var i = 0; i < SIDE_QUEST_DEFS.length; i++) if (SIDE_QUEST_DEFS[i].id === id) return SIDE_QUEST_DEFS[i];
+    return null;
+  }
+  function defaultSideQuests() { return { claimed: {}, selected: null, socialMet: false }; }
+  function ensureSideQuests(state) {
+    if (!state || typeof state !== 'object') return defaultSideQuests();
+    if (!state.sideQuests || typeof state.sideQuests !== 'object') state.sideQuests = defaultSideQuests();
+    var sq = state.sideQuests;
+    if (!sq.claimed || typeof sq.claimed !== 'object') sq.claimed = {};
+    if (sq.selected != null && !sideQuestDef(sq.selected)) sq.selected = null;
+    if (typeof sq.socialMet !== 'boolean') sq.socialMet = false;
+    return sq;
+  }
+  function sideGrindClaimedCount(state, kind) {
+    var g = ensureGrind(state), n = 0;
+    for (var id in g.instances) {
+      var ins = g.instances[id];
+      if (ins && ins.kind === kind && ins.status === 'claimed') n++;
+    }
+    return n;
+  }
+  function sideRealmFirstClear(state, realmId) {
+    var sr = ensureSecretRealms(state);
+    return !!(sr.realms[realmId] && sr.realms[realmId].firstClear);
+  }
+  /* Tiến độ thuần từ trạng thái thật: { cur, target, text, done } */
+  function sideQuestProgress(state, def) {
+    if (!def) return { cur: 0, target: 1, text: '', done: false };
+    if (def.id === 'sq_pre_bicanh') {
+      var c1 = (sideRealmFirstClear(state, 'bc_thuyliem') ? 1 : 0) + (sideRealmFirstClear(state, 'bc_tapha') ? 1 : 0);
+      return { cur: c1, target: 2, text: 'Đã qua ải lần đầu: ' + c1 + '/2 bí cảnh', done: c1 >= 2 };
+    }
+    if (def.id === 'sq_pre_nguyen_lieu') {
+      var parts = [
+        { label: 'Linh Chi ' + Math.min(1, bagCount(state, 'linh_chi')) + '/1', ok: bagCount(state, 'linh_chi') >= 1 },
+        { label: 'Yêu Đan Cấp 1 ' + Math.min(1, bagCount(state, 'yeu_dan_1')) + '/1', ok: bagCount(state, 'yeu_dan_1') >= 1 },
+        { label: 'Thanh Tâm Thảo ' + Math.min(3, bagCount(state, 'thanh_tam_thao')) + '/3', ok: bagCount(state, 'thanh_tam_thao') >= 3 },
+        { label: 'Linh Thạch ' + Math.min(30, linhBalance(state)) + '/30', ok: linhBalance(state) >= 30 }
+      ];
+      var doneN = parts.filter(function (p) { return p.ok; }).length;
+      return { cur: doneN, target: 4, text: parts.map(function (p) { return p.label; }).join(' · '), done: doneN >= 4 };
+    }
+    if (def.id === 'sq_post_truy_na') {
+      var nh = Math.min(1, sideGrindClaimedCount(state, 'hunt'));
+      return { cur: nh, target: 1, text: 'Đã trả phiếu săn: ' + nh + '/1', done: nh >= 1 };
+    }
+    if (def.id === 'sq_post_bicanh_tc') {
+      var nr = (sideRealmFirstClear(state, 'bc_tapsau') || sideRealmFirstClear(state, 'bc_kiemtrung')) ? 1 : 0;
+      return { cur: nr, target: 1, text: 'Đã qua ải Trúc Cơ: ' + nr + '/1', done: nr >= 1 };
+    }
+    if (def.id === 'sq_post_thu_thap') {
+      var ng = Math.min(1, sideGrindClaimedCount(state, 'gather'));
+      return { cur: ng, target: 1, text: 'Đã nộp lượt thu thập: ' + ng + '/1', done: ng >= 1 };
+    }
+    if (def.id === 'sq_post_dong_mon') {
+      var sq = ensureSideQuests(state);
+      var ns = Math.min(1, sideGrindClaimedCount(state, 'sect'));
+      var steps = (sq.socialMet ? 1 : 0) + ns;
+      return { cur: steps, target: 2, text: 'Gặp đồng môn: ' + (sq.socialMet ? 1 : 0) + '/1 · Đã trả việc tông: ' + ns + '/1', done: steps >= 2 };
+    }
+    return { cur: 0, target: 1, text: '', done: false };
+  }
+  /* Trạng thái: locked | available | ready | claimed | skipped */
+  function sideQuestStatus(state, def) {
+    if (!def || !state) return 'locked';
+    var sq = ensureSideQuests(state);
+    if (sq.claimed[def.id] != null) return 'claimed';
+    if (!questReached(state, def.unlockQuest)) return 'locked';
+    if (def.phase === 'pre' && realmOrdinal(state) >= 200) return 'skipped';
+    return sideQuestProgress(state, def).done ? 'ready' : 'available';
+  }
+  function sideQuestList(state) {
+    return SIDE_QUEST_DEFS.map(function (def) {
+      return { def: def, status: sideQuestStatus(state, def), progress: sideQuestProgress(state, def) };
+    });
+  }
+  /* Mốc dẫn đường động theo TIẾN ĐỘ (không bịa tọa độ — mọi điểm đều là
+     vật/NPC/bản đồ thật đã có): H1 chỉ cổng bí cảnh chưa qua; H2 chỉ
+     nguồn của nguyên liệu đang thiếu đầu tiên; H4 chỉ cổng chưa qua;
+     H6 chưa gặp đồng môn thì chỉ quảng trường, gặp rồi thì chỉ quản sự. */
+  function sideQuestGuideHint(state, def) {
+    if (!def) return null;
+    if (def.id === 'sq_pre_bicanh') {
+      if (!sideRealmFirstClear(state, 'bc_thuyliem')) return { map: 'duong_mon', x: 20, y: 36 };
+      if (!sideRealmFirstClear(state, 'bc_tapha')) return { map: 'thap_noi', x: 3, y: 28 };
+      return { map: 'thanh_van_tong', x: 60, y: 27 };
+    }
+    if (def.id === 'sq_pre_nguyen_lieu') {
+      if (bagCount(state, 'linh_chi') < 1) return { map: 'thanh_van_tong', x: 100, y: 15 };
+      if (bagCount(state, 'yeu_dan_1') < 1) return { map: 'thanh_van_tong', x: 100, y: 15 };
+      if (bagCount(state, 'thanh_tam_thao') < 3) return { map: 'thanh_van_tong', x: 104, y: 18 };
+      if (linhBalance(state) < 30) return { map: 'thanh_van_tong', x: 97, y: 69 };
+      return { map: 'thanh_van_tong', x: 60, y: 27 };
+    }
+    if (def.id === 'sq_post_bicanh_tc') {
+      if (!sideRealmFirstClear(state, 'bc_tapsau') && !sideRealmFirstClear(state, 'bc_kiemtrung')) return { map: 'thap_noi', x: 3, y: 28 };
+      return def.guide;
+    }
+    if (def.id === 'sq_post_dong_mon') {
+      var sq = ensureSideQuests(state);
+      if (!sq.socialMet) return { map: 'thanh_van_tong', x: 62, y: 56 };
+      return { map: 'thanh_van_tong', x: 97, y: 69 };
+    }
+    return def.guide;
+  }
+  function sideMarkSocial(state) {
+    var sq = ensureSideQuests(state);
+    if (sq.socialMet) return false;
+    sq.socialMet = true;
+    return true;
+  }
+  function claimSideQuest(state, id) {
+    var def = sideQuestDef(id);
+    if (!def) return { ok: false, reason: 'unknown_side_quest' };
+    var st = sideQuestStatus(state, def);
+    if (st === 'claimed') return { ok: false, reason: 'duplicate', duplicate: true };
+    if (st !== 'ready') return { ok: false, reason: 'not_ready', status: st };
+    var spec = { tuviPct: def.reward.tuviPct || 0, lt: def.reward.lt || 0, merit: def.reward.merit || 0, profileId: 'side:' + id };
+    var r = grantReward(state, spec, { claimKey: 'side:' + id, sourceId: 'sideQuest:' + id });
+    if (!r.ok) return r;
+    var sq = ensureSideQuests(state);
+    sq.claimed[id] = state.dayCount;
+    if (sq.selected === id) sq.selected = null;
+    return { ok: true, granted: r.granted, def: def };
+  }
+  function selectSideQuest(state, id) {
+    var sq = ensureSideQuests(state);
+    if (id == null) { sq.selected = null; return { ok: true, selected: null }; }
+    var def = sideQuestDef(id);
+    if (!def) return { ok: false, reason: 'unknown_side_quest' };
+    var st = sideQuestStatus(state, def);
+    if (st !== 'available' && st !== 'ready') return { ok: false, reason: 'not_selectable', status: st };
+    sq.selected = id;
+    return { ok: true, selected: id };
+  }
+
   var VSLC = {
     REALMS: REALMS, realmName: realmName,
     SILENCE_MAX: SILENCE_MAX, SILENCE_RATES: SILENCE_RATES, WORD_SKILLS: WORD_SKILLS,
@@ -3035,6 +3316,7 @@
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, meditateRate: meditateRate, tryBreakthrough: tryBreakthrough,
     swordPower: swordPower, castSword: castSword, SWORD_MOVES: SWORD_MOVES, swordMoveById: swordMoveById,
+    equippedWeaponId: equippedWeaponId, weaponBonus: weaponBonus,
     TECHNIQUE_DEFS: TECHNIQUE_DEFS, techniqueOf: techniqueOf, techniqueTier: techniqueTier,
     techniqueTierUpReady: techniqueTierUpReady, techniqueGain: techniqueGain, ensureTechniques: ensureTechniques,
     BI_TICH_POINTS: BI_TICH_POINTS, useBiTich: useBiTich,
@@ -3050,6 +3332,10 @@
     RESOURCE_NODES: RESOURCE_NODES, nodeDef: nodeDef, nodeStatus: nodeStatus,
     SECRET_REALM_DEFS: SECRET_REALM_DEFS, defaultSecretRealms: defaultSecretRealms, ensureSecretRealms: ensureSecretRealms,
     secretRealmUnlocked: secretRealmUnlocked, bcPoolLeft: bcPoolLeft, bcConsumeEntry: bcConsumeEntry, bcRecordClear: bcRecordClear,
+    SIDE_QUEST_DEFS: SIDE_QUEST_DEFS, sideQuestDef: sideQuestDef, defaultSideQuests: defaultSideQuests, ensureSideQuests: ensureSideQuests,
+    sideQuestProgress: sideQuestProgress, sideQuestStatus: sideQuestStatus, sideQuestList: sideQuestList,
+    sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
+    sideGrindClaimedCount: sideGrindClaimedCount,
     PHE_THUOC_COLOR_ORDER: PHE_THUOC_COLOR_ORDER,
     isSessionHidden: isSessionHidden, hideSessionProp: hideSessionProp, showSessionProp: showSessionProp, clearSessionHiddenProps: clearSessionHiddenProps,
     MONSTER_DEFS: MONSTER_DEFS, HUNT_ZONES: HUNT_ZONES, HUNT_LAIRS: HUNT_LAIRS, BOSS_DEFS: BOSS_DEFS,
