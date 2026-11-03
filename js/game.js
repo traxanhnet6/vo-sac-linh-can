@@ -621,6 +621,7 @@
     if (document.hidden || document.visibilityState === 'hidden') resetAllInput();
   });
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
+  var clickLegFrom = null; // gốc sprite tại thời điểm phát lệnh chặng hiện tại — neo HƯỚNG CẢ CHẶNG cho lái hiển thị (đợt vá lắc 2026-11-03)
   var clickPathRaw = false;   // true khi đang đi theo đường ô THÔ (đường cứu hộ sau khi đường vuốt kẹt)
   var clickSegAnchor = null;  // gốc sprite tại điểm bắt đầu nhịp vuốt hiện tại (cho bám đuổi thuần túy)
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
@@ -2539,7 +2540,7 @@
     }
     if (!best || !bestPath) { toast('Không tìm được đường tới ' + (target.name || 'đối tượng') + '.'); return; }
     var f1 = targetFocusTile(target, best);
-    clickPath = smoothPath(bestPath); clickTarget = best; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
+    clickPath = smoothPath(bestPath); clickTarget = best; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
     pendingInteract = { kind: target.kind, id: target.id, name: target.name || target.id, standX: best.x, standY: best.y, focusX: f1.x, focusY: f1.y };
   }
   /* ---------- Tự tìm đường làm nhiệm vụ (lệnh Bui 19:16 ngày 2026-11-01) ----------
@@ -2622,7 +2623,7 @@
     var path = L.findPath(navFromTile(), dest, npcs || npcsLive);
     if (!path) return false;
     if (!path.length) return true; // đã đứng ngay đích
-    clickPath = smoothPath(path); clickTarget = dest; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
+    clickPath = smoothPath(path); clickTarget = dest; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
     pathStuckT = 0;
     return true;
   }
@@ -7075,6 +7076,27 @@
           var tgX = clickTarget.x * TILE - px, tgY = clickTarget.y * TILE - py;
           var tgLen = Math.hypot(tgX, tgY);
           if (tgLen > 40 && (velX * tgX + velY * tgY) / (speedNow * tgLen) > Math.cos(67.5 * Math.PI / 180)) { stDx = tgX; stDy = tgY; }
+          // Đợt VÁ LẮC 2026-11-03 (điểm chéo nông, bằng chứng live +
+          // tái hiện trace): đường vuốt phải bẻ quanh vật cản/NPC nên
+          // bị cắt thành các dây cung lệch hướng cả chặng tới ±10°;
+          // ở chéo nông, dây cung bù ở nửa sau chặng vượt biên khu vực
+          // 67,5° và vì điểm cuối dây là đích nên CẢ vận tốc lẫn
+          // hướng-tới-đích đều nằm trong khu vực hướng chính — lái
+          // theo đích vẫn ra dáng ngang. Neo thêm HƯỚNG CẢ CHẶNG
+          // (từ gốc chặng clickLegFrom tới đích): khi thân đang thật
+          // sự tiến về phía đích dọc theo chặng (vận tốc lệch hướng
+          // chặng <= 67,5° và hướng đích hiện tại còn trong 45° quanh
+          // hướng chặng) thì lái theo hướng chặng — dáng chéo giữ
+          // suốt chặng bất kể dây cung; khi đường bẻ gắt quanh góc
+          // (hai cổng đều trượt) thì rơi về lái theo đích/vận tốc
+          // như cũ.
+          if (clickLegFrom) {
+            var lgX = clickTarget.x * TILE - clickLegFrom.x, lgY = clickTarget.y * TILE - clickLegFrom.y;
+            var lgLen = Math.hypot(lgX, lgY);
+            if (lgLen > 40 && tgLen > 12 &&
+                (velX * lgX + velY * lgY) / (speedNow * lgLen) > Math.cos(67.5 * Math.PI / 180) &&
+                (tgX * lgX + tgY * lgY) / (tgLen * lgLen) > Math.cos(45 * Math.PI / 180)) { stDx = lgX; stDy = lgY; }
+          }
         }
         steerDir8Display(stDx, stDy, dt);
       }
@@ -7439,7 +7461,16 @@
     if (!path || path.length < 3) return path;
     var out = [], ax = px, ay = py, i = 0;
     while (i < path.length) {
-      var last = Math.min(path.length - 1, i + 11), pick = i;
+      // Đợt VÁ LẮC 2026-11-03 (điểm chéo nông live): cửa sổ ngắm vuốt
+      // TRƯỚC ĐÂY capped 11 ô — điểm cầu thang ở ô thứ 11 lệch đường
+      // thẳng cả chặng tới ±10° (đầu chặng nặng chéo, đuôi chặng nặng
+      // trục), nên các chặng chéo nông ~27° bị cắt thành hai dây cung
+      // 52° rồi 71,6°: dây 71,6° vượt biên khu vực 67,5° làm dáng hướng
+      // chính chiếm nửa sau chặng dù đo harness sân trống từng đạt.
+      // Nay ngắm tới điểm xa nhất THẬT SỰ nhìn thấy được trên toàn
+      // đường (segmentFree vẫn gác từng nhịp như cũ): sân trống còn
+      // đúng một dây cung thẳng tới đích, hướng dây = hướng cả chặng.
+      var last = path.length - 1, pick = i;
       for (var j = last; j > i; j--) {
         if (segmentFree(ax, ay, path[j].x * TILE, path[j].y * TILE)) { pick = j; break; }
       }
@@ -7573,7 +7604,7 @@
     if (!dest) return;
     var from = { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) };
     var path = L.findPath(from, dest, npcsLive);
-    if (path && path.length) { clickPath = smoothPath(path); clickTarget = dest; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py }; }
+    if (path && path.length) { clickPath = smoothPath(path); clickTarget = dest; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py }; }
     else { clickPath = null; clickTarget = null; }
   }
   // Sau một lần kéo cần, trình duyệt có thể phát thêm 1 sự kiện chuột tổng hợp nối tiếp:
