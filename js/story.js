@@ -346,12 +346,13 @@
   ];
 
   var SCENE_PHARMACY = [
-    { who: 'duoc_su', text: 'Chào cậu. Hồi Khí Đan của hiệu ta — mười hai viên Linh Thạch một viên, uống vào hồi ngay hai mươi lăm điểm Tĩnh Âm. Cậu đang có bao nhiêu đan, dùng thử là biết.' },
+    { who: 'duoc_su', text: 'Chào cậu. Hồi Khí Đan của hiệu ta — mười hai viên Linh Thạch một viên, uống vào hồi ngay hai mươi lăm điểm Tĩnh Âm. Cậu đang có bao nhiêu đan, dùng thử là biết. Hiệu ta còn có Hộ Thể Đan — hai mươi lăm Linh Thạch một viên, tu sĩ sắp độ kiếp hay mua lắm: nuốt vào giữa kiếp, một đạo lôi đánh xuống nhẹ đi sáu phần.' },
     {
       who: 'choice', text: 'Hiệu thuốc Hồi Xuân',
       options: [
         { label: 'Mua một viên Hồi Khí Đan — 12 Linh Thạch', action: 'buy_dan' },
         { label: 'Dùng một viên Hồi Khí Đan (hồi 25 Tĩnh Âm)', action: 'use_dan' },
+        { label: 'Mua một viên Hộ Thể Đan — 25 Linh Thạch', action: 'buy_ho_the_dan' },
         { label: 'Rời hiệu thuốc', action: 'shop_leave' }
       ]
     }

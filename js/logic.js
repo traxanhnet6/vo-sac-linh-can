@@ -1690,6 +1690,7 @@
       sideQuests: defaultSideQuests(), // Mục H: chuỗi phụ quanh Trúc Cơ — { claimed, selected, socialMet } dữ kiện thuần, online-ready
       secretRealms: defaultSecretRealms(), // trạng thái bí cảnh: kho lượt ngày chung + từng bí cảnh
       spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
+      announceLog: [],           // Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.1): tối đa 20 dòng gần nhất
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
       sectMerit: 0,              // điểm cống hiến tông môn — trục tích lũy thứ ba, tách khỏi Linh Thạch (chương 7)
@@ -1698,7 +1699,7 @@
       bag: { tier: 1, items: { kiem_hua_gia: 1 } }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3); kiếm khởi đầu ghi ở đây nhưng đeo trên người (worn) nên không chiếm ô
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0 },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false },
       hp: 100, hpMax: 100
     };
   }
@@ -1708,6 +1709,9 @@
   function meditateRate(state) {
     var r = 10 + techniqueMethodBonus(state);
     if (state.gear && state.gear.indexOf('ngoc_tu_linh') >= 0) r += 5;
+    // Trọng thương sau một lần độ kiếp hỏng (docs/realm-prep/ mục 6.1):
+    // tốc độ thổ nạp giảm một nửa cho tới khi thương thế khép lại.
+    if (state.flags && state.flags.trongThuong) r = Math.max(1, Math.floor(r / 2));
     return r;
   }
   // Cộng tốc độ thổ nạp của tâm pháp Thanh Phong theo TẦNG (lớp techniques
@@ -1814,6 +1818,12 @@
      ghi chúng, từ dữ liệu túi. */
   var ITEM_DEFS = {
     hoi_khi_dan: { name: 'Hồi Khí Đan', type: 'dan', stack: true, glyph: 'Đan' },
+    /* Vật phẩm chuẩn bị thiên kiếp (docs/realm-prep/ mục 5.1 — số đã
+       duyệt ở parent-decisions): Hộ Thể Đan giảm 60% một đạo lôi (trưởng
+       lão tặng đúng 1 viên làm quà làm quen ở khâu chuẩn bị chương 8);
+       Dẫn Lôi Pháp bị động giảm 25% mọi đạo khi nằm trong túi. */
+    ho_the_dan: { name: 'Hộ Thể Đan', type: 'dan', stack: true, glyph: 'Thể' },
+    dan_loi_phap: { name: 'Dẫn Lôi Pháp', type: 'phap_khi', stack: false, glyph: 'Pháp' },
     kiem_phong: { name: 'Thanh Phong Kiếm', type: 'phap_khi', stack: false, glyph: 'Kiếm', swordBonus: 8, wordBonus: 10 },
     /* Vũ khí khởi đầu của tân thủ (lệnh Bui 18:40 ngày 2026-11-02 "Thiếu
        vũ khí cho tân thủ"): thanh kiếm sắt Hứa gia phát cho con em trong
@@ -1846,8 +1856,13 @@
     /* Tị Lôi Phù — vật phẩm thưởng LẦN ĐẦU đã duyệt của bí cảnh Tàn Tích
        (Ngoài + Sâu) và Hồi Phong Cổ Mộ (docs/bicanh-prep). Đây KHÔNG phải
        Dẫn Lôi Pháp: Dẫn Lôi Pháp vẫn cấm phát miễn phí trong mọi bí cảnh
-       và giữ nguyên điểm tiêu 240 Linh Thạch / 150 merit của đợt thiên kiếp. */
-    ti_loi_phu: { name: 'Tị Lôi Phù', type: 'dan', stack: true, glyph: 'Phù' },
+       và giữ nguyên điểm tiêu 240 Linh Thạch / 150 merit của đợt thiên kiếp.
+       ĐỢT THIÊN KIẾP (docs/realm-prep/ mục 5.1): vật phẩm này CHÍNH LÀ lá
+       Tị Lôi Phù của hệ thiên kiếp (thiết kế gọi tên loi_phu — hợp nhất
+       một id duy nhất, không tạo vật phẩm trùng tên): giảm 85% một đạo
+       lôi, nguồn bền vững là mua 40 Linh Thạch / đổi 30 điểm cống hiến,
+       và type chuyển từ 'dan' sang 'phu' — loại vật phẩm mới đã duyệt. */
+    ti_loi_phu: { name: 'Tị Lôi Phù', type: 'phu', stack: true, glyph: 'Phù' },
     phuc_linh_dan: { name: 'Phục Linh Đan', type: 'dan', stack: true, glyph: 'Linh' },
     /* Nguyên liệu thu thập của hệ cày (docs/grind-prep/systems-data.md
        mục 4.3): cùng khuôn nguyen_lieu + stack:true như linh_chi. */
@@ -2024,6 +2039,221 @@
     // tiền tệ của giới tu tiên (phàm nhân chỉ dùng lượng bạc trong lời thoại).
     if (state.realm === 1 && state.stage === 0) state.linhUnlocked = true;
     return { ok: true, label: realmName(state.realm, state.stage) };
+  }
+
+  /* ---------------- Thiên kiếp + điều kiện đột phá (docs/realm-prep/) ----
+     Toàn bộ tầng số của hệ nằm ở đây dưới dạng hàm thuần để kiểm thử
+     được: hồ sơ đạo lôi theo cảnh giới đích, toán sát thương một đạo,
+     ước tính điểm chuẩn bị công khai, giá thất bại, đối hưởng thiên lôi,
+     tuyên cáo Thiên Đạo và ma trận điều kiện đột phá. Sự kiện tương tác
+     (lựa chọn từng đạo) nằm ở js/game.js theo khuôn resolveGuardWave. */
+  // Hồ sơ theo CẢNH GIỚI ĐÍCH (khóa của TRIBULATION_PROFILES là realm
+  // đích): Trúc Cơ 3 đạo tổng 66% và Kim Đan 5 đạo tổng 106% là SỐ ĐÃ
+  // DUYỆT (thiết kế mục 4.1/4.2). Nguyên Anh/Hóa Thần là KHUNG ở mục
+  // 4.3: mảng phần trăm và ngưỡng đạo cuối là số duyệt trong khung, các
+  // ngưỡng giữa nội suy đều — hai mốc này chưa có nội dung độ kiếp
+  // riêng; breakthroughInfo đánh dấu tribulationOpen = false cho chúng.
+  var TRIBULATION_PROFILES = {
+    2: { bolts: [{ pct: 18, uy: 90 }, { pct: 22, uy: 110 }, { pct: 26, uy: 130 }] },
+    3: { bolts: [{ pct: 16, uy: 130 }, { pct: 18, uy: 140 }, { pct: 20, uy: 150 }, { pct: 24, uy: 165 }, { pct: 28, uy: 180 }] },
+    4: { bolts: [{ pct: 16, uy: 150 }, { pct: 18, uy: 165 }, { pct: 20, uy: 180 }, { pct: 22, uy: 195 }, { pct: 24, uy: 205 }, { pct: 26, uy: 212 }, { pct: 30, uy: 220 }] },
+    5: { bolts: [{ pct: 16, uy: 190 }, { pct: 18, uy: 200 }, { pct: 20, uy: 212 }, { pct: 22, uy: 224 }, { pct: 24, uy: 236 }, { pct: 26, uy: 248 }, { pct: 28, uy: 258 }, { pct: 30, uy: 268 }, { pct: 34, uy: 280 }] }
+  };
+  var TRIB_REDUCTION_CAP = 0.90;    // trần tổng giảm trừ một đạo (trừ đối hưởng thiên lôi)
+  var TRIB_DAN_CUT = 0.60;          // Hộ Thể Đan: giảm 60% sát thương một đạo
+  var TRIB_PHU_CUT = 0.85;          // Tị Lôi Phù: giảm 85% sát thương một đạo
+  var TRIB_PHAP_CUT = 0.25;         // Dẫn Lôi Pháp trong túi: bị động giảm 25% mọi đạo
+  var TRIB_GUARD_CUT_FULL = 0.20;   // hộ pháp trọn vẹn, chưa từng vỡ: giảm 20% mọi đạo
+  var TRIB_GUARD_CUT_BROKEN = 0.10; // hộ pháp xong nhưng từng vỡ ít nhất một lần: giảm 10%
+  var TRIB_SPEAK_BOOST = 0.15;      // mỗi lần đối hưởng: mọi đạo còn lại +15% sát thương
+  var TRIB_SPEAK_MAX = 2;           // trần số lần đối hưởng trong một lần độ kiếp
+  var ANNOUNCE_LOG_MAX = 20;        // sổ thông cáo giữ tối đa 20 dòng gần nhất
+  // Loại tuyên cáo đăng ký đợt này chỉ có 'tribulation_success'; các
+  // loại giữ chỗ của thiết kế ('boss_down', 'sect_event', 'world_event')
+  // chưa đăng ký — publishAnnounce từ chối mọi loại ngoài danh sách này.
+  var ANNOUNCE_TYPES = ['tribulation_success'];
+
+  function tribProfileFor(targetRealm) { return TRIBULATION_PROFILES[targetRealm] || null; }
+  // Mức giảm hộ pháp suy từ số lần vỡ vòng hộ pháp của mốc tương ứng
+  // (chương 8: flags.guardBroken; chương 12: flags.ketDanGuardBroken).
+  function tribGuardCut(brokenCount) { return (brokenCount || 0) > 0 ? TRIB_GUARD_CUT_BROKEN : TRIB_GUARD_CUT_FULL; }
+  /* Sát thương một đạo lôi (thiết kế mục 3.2–3.3): gốc = phần trăm
+     hpMax -> nhân hệ số trời nghe (mỗi lần đối hưởng trước đó +15%) ->
+     nhân giảm trừ bị động (Dẫn Lôi Pháp, hộ pháp) -> nhân giảm trừ chủ
+     động của đạo đó ('dan' | 'phu') -> tổng giảm trừ chặn ở 90% so với
+     sát thương đã nhân hệ số trời nghe -> làm tròn xuống, tối thiểu 1. */
+  function tribBoltDamage(state, targetRealm, boltIdx, opts) {
+    var prof = tribProfileFor(targetRealm); if (!prof) return 0;
+    var bolt = prof.bolts[boltIdx]; if (!bolt) return 0;
+    opts = opts || {};
+    var base = (state.hpMax || 100) * bolt.pct / 100;
+    var boosted = 1 + TRIB_SPEAK_BOOST * (opts.spokenBefore || 0);
+    var mult = boosted;
+    if (bagHas(state, 'dan_loi_phap')) mult *= (1 - TRIB_PHAP_CUT);
+    mult *= (1 - (opts.guardCut || 0));
+    if (opts.active === 'dan') mult *= (1 - TRIB_DAN_CUT);
+    else if (opts.active === 'phu') mult *= (1 - TRIB_PHU_CUT);
+    var minMult = boosted * (1 - TRIB_REDUCTION_CAP);
+    if (mult < minMult) mult = minMult;
+    return Math.max(1, Math.floor(base * mult));
+  }
+  /* Đòn cộng hưởng mạnh nhất đang dùng được, KHÔNG tiêu Tĩnh Âm — cho
+     bảng chuẩn bị và cho lựa chọn đối hưởng. Uy lực tính đúng công thức
+     của castWord: gốc chiêu + Tĩnh Âm x 1,5 + kiếm ngân trợ hưởng của
+     vũ khí đang đeo. Trả null khi: đã đối hưởng đủ 2 lần, chưa mở chiêu
+     cộng hưởng nào, hoặc Tĩnh Âm không đủ bất kỳ chiêu nào. */
+  function tribBestResonance(state, spokenCount) {
+    if (!state || !state.unlocked) return null;
+    if ((spokenCount || 0) >= TRIB_SPEAK_MAX) return null;
+    var best = null;
+    for (var i = 0; i < WORD_SKILLS.length; i++) {
+      var sk = WORD_SKILLS[i];
+      if (state.unlocked.indexOf(sk.unlock) < 0) continue;
+      if ((state.silence || 0) < sk.cost) continue;
+      var p = wordPower(sk, state.silence) + weaponBonus(state).word;
+      if (!best || p > best.power) best = { skillId: sk.id, word: sk.word, power: p, cost: sk.cost };
+    }
+    return best;
+  }
+  /* Ước tính điểm chuẩn bị — công khai trước khi bước vào (thiết kế
+     mục 3.4): phương án tiết kiệm nhất với đồ đang trong túi (phù mạnh
+     hơn nên dành cho các đạo nặng nhất), KHÔNG tính đối hưởng thiên
+     lôi. Nhận định ba mức: còn lại trên 25% máu tối đa = đủ sức; còn
+     lại dương nhưng mỏng = căng; không dương = nguy hiểm. */
+  function tribEstimate(state, targetRealm, guardCut) {
+    var prof = tribProfileFor(targetRealm); if (!prof) return null;
+    var phuLeft = bagCount(state, 'ti_loi_phu'), danLeft = bagCount(state, 'ho_the_dan');
+    var order = prof.bolts.map(function (b, i) { return i; }).sort(function (a, b) { return prof.bolts[b].pct - prof.bolts[a].pct; });
+    var assign = {};
+    for (var k = 0; k < order.length; k++) {
+      if (phuLeft > 0) { assign[order[k]] = 'phu'; phuLeft--; }
+      else if (danLeft > 0) { assign[order[k]] = 'dan'; danLeft--; }
+    }
+    var total = 0, perBolt = [];
+    for (var i = 0; i < prof.bolts.length; i++) {
+      var d = tribBoltDamage(state, targetRealm, i, { guardCut: guardCut || 0, active: assign[i] || 'none', spokenBefore: 0 });
+      perBolt.push(d); total += d;
+    }
+    var remain = (state.hp || 0) - total;
+    var verdict = remain > (state.hpMax || 100) * 0.25 ? 'safe' : (remain > 0 ? 'tight' : 'danger');
+    return {
+      bolts: prof.bolts.length, totalDamage: total, remain: remain, perBolt: perBolt, verdict: verdict,
+      verdictText: verdict === 'safe' ? 'Đủ sức vượt qua' : (verdict === 'tight' ? 'Căng — nên chuẩn bị thêm' : 'Nguy hiểm — chắc chắn trọng thương')
+    };
+  }
+  /* Cái giá của một lần độ kiếp thất bại (thiết kế mục 6.1): tu vi về
+     50% trần của tầng đang đầy, máu về 1, đặt cờ trọng thương. Cảnh
+     giới, giai đoạn, nhiệm vụ, kết quả hộ pháp và Tĩnh Âm KHÔNG đổi —
+     việc mất vật dẫn do tầng sự kiện ở game.js chịu (đan đã nuốt). */
+  function applyTribFailure(state) {
+    var r = REALMS[state.realm];
+    var cap = r && r.tuviNext ? r.tuviNext : 0;
+    if (cap) state.tuvi = Math.floor(cap / 2);
+    state.hp = 1;
+    if (!state.flags) state.flags = {};
+    state.flags.trongThuong = true;
+    state.flags.ttPillCount = 0;
+    state.flags.ttElderSeen = false; // trưởng lão sẽ nhắc về trọng thương ở lần gặp kế
+    return { tuvi: state.tuvi, hp: state.hp };
+  }
+  /* Đường hồi phục trọng thương thứ hai (mục 6.1): mỗi viên Hồi Khí
+     Đan dùng trong lúc mang thương tính một nấc; đủ 2 viên thì thương
+     thế khép lại. Đường thứ nhất (nghỉ tại điểm linh khí tới khi máu
+     đầy) gọi thẳng clearTrongThuong ở game.js. */
+  function noteHoiKhiDanUsed(state) {
+    if (!state || !state.flags || !state.flags.trongThuong) return { cleared: false };
+    state.flags.ttPillCount = (state.flags.ttPillCount || 0) + 1;
+    if (state.flags.ttPillCount >= 2) { state.flags.trongThuong = false; state.flags.ttPillCount = 0; return { cleared: true }; }
+    return { cleared: false, count: state.flags.ttPillCount };
+  }
+  function clearTrongThuong(state) {
+    if (!state || !state.flags) return false;
+    var was = !!state.flags.trongThuong;
+    state.flags.trongThuong = false; state.flags.ttPillCount = 0;
+    return was;
+  }
+  /* Tuyên cáo Thiên Đạo — hàm cửa duy nhất publishAnnounce (thiết kế
+     mục 9.1). Chỉ lần nâng ĐẠI cảnh giới thành công mới đủ tư cách
+     (realmTo >= 2); khóa chống trùng theo cặp (tên nhân vật, cảnh
+     giới đích); sổ giữ tối đa 20 dòng. Trả mục vừa ghi, hoặc null khi
+     không đủ tư cách / trùng / loại chưa đăng ký. */
+  function publishAnnounce(state, evt) {
+    if (!state || !evt) return null;
+    if (ANNOUNCE_TYPES.indexOf(evt.type) < 0) return null;
+    if (evt.type === 'tribulation_success' && !(evt.realmTo >= 2)) return null;
+    if (!Array.isArray(state.announceLog)) state.announceLog = [];
+    for (var i = 0; i < state.announceLog.length; i++) {
+      var e0 = state.announceLog[i];
+      if (e0 && e0.type === evt.type && e0.name === state.name && e0.realmTo === evt.realmTo) return null;
+    }
+    var label = realmName(evt.realmTo, 0);
+    var entry = {
+      type: evt.type, name: state.name, realmTo: evt.realmTo, realmLabel: label,
+      text: 'Thiên Đạo chứng giám — ' + state.name + ' độ kiếp thành công, bước vào ' + label + '.',
+      day: state.dayCount || 0,
+      minutes: (typeof state.dayMinutes === 'number' ? state.dayMinutes : DAY_DEFAULT_MINUTES)
+    };
+    state.announceLog.push(entry);
+    while (state.announceLog.length > ANNOUNCE_LOG_MAX) state.announceLog.shift();
+    return entry;
+  }
+  /* Ma trận điều kiện đột phá (thiết kế mục 2): giai đoạn Trúc Cơ chỉ
+     đột phá trong sự kiện đóng chương tương ứng — điều kiện phụ của
+     chúng là mốc truyện đó, hiển thị rõ còn thiếu gì. Tiểu tầng Luyện
+     Khí và giai đoạn Kim Đan không thêm cổng phụ (mục 2.2/2.5). */
+  var TRIB_STAGE_MILESTONES = {
+    '2:0': { quest: 'q9_done', label: 'Hoàn thành sự kiện đóng chương 9 tại Thung Lũng Hồi Phong', hint: 'Đột phá Trúc Cơ Trung Kỳ diễn ra trong cảnh đóng chương 9.' },
+    '2:1': { quest: 'q10_done', label: 'Hoàn thành sự kiện đóng chương 10 tại Thiên Cơ Các', hint: 'Đột phá Trúc Cơ Hậu Kỳ diễn ra trong cảnh đóng chương 10.' },
+    '2:2': { quest: 'q11_vat_dan', label: 'Hoàn thành mốc Viên Mãn của chương 11 (gặp trưởng lão khi tu vi đầy)', hint: 'Đột phá Trúc Cơ Viên Mãn diễn ra trong cảnh chương 11 tại đại điện.' }
+  };
+  /* Điều kiện của mốc đột phá KẾ TIẾP — nguồn sự thật duy nhất cho
+     hiển thị (panel đột phá ở game.js) và cho lớp chặn ở nút Đột phá.
+     kind: 'none' (chưa có đường), 'minor' (tiểu tầng / mốc thức tỉnh),
+     'stage' (giai đoạn trong cùng đại cảnh giới), 'great' (qua đại
+     cảnh giới — có thiên kiếp; tribulationOpen = false khi mốc chưa
+     có nội dung độ kiếp riêng: Nguyên Anh, Hóa Thần). */
+  function breakthroughInfo(state) {
+    if (!state) return null;
+    var r = REALMS[state.realm]; if (!r) return null;
+    var info = {
+      realm: state.realm, stage: state.stage,
+      tuviCur: Math.floor(state.tuvi || 0), tuviNeed: r.tuviNext || 0,
+      tuviOk: !!r.tuviNext && (state.tuvi || 0) >= r.tuviNext,
+      kind: 'minor', targetLabel: '', conditions: [], tribulation: null, tribulationOpen: false
+    };
+    if (!r.tuviNext) { info.kind = 'none'; return info; }
+    if (state.stage < r.stages.length - 1) {
+      info.targetLabel = realmName(state.realm, state.stage + 1);
+      var ms = state.realm === 2 ? TRIB_STAGE_MILESTONES['2:' + state.stage] : null;
+      if (ms) {
+        info.kind = 'stage';
+        info.conditions.push({ id: 'milestone', label: ms.label, ok: questReached(state, ms.quest), hint: ms.hint });
+      }
+      return info;
+    }
+    info.targetLabel = realmName(state.realm + 1, 0);
+    if (state.realm === 0) return info; // Phàm Nhân -> Luyện Khí tầng 1: mốc thức tỉnh, không thiên kiếp (mục 2.1)
+    info.kind = 'great';
+    info.tribulation = tribProfileFor(state.realm + 1);
+    info.tribulationOpen = state.realm + 1 === 2 || state.realm + 1 === 3;
+    return info;
+  }
+  /* Lớp chặn cho nút Đột phá thường: null = cứ để tryBreakthrough xử
+     như cũ; {reason} = chặn kèm lý do hiển thị; {reason:'great_border'}
+     = biên đại cảnh giới (game.js tự có câu chữ riêng cho từng biên đã
+     mở và cho các biên chưa mở nội dung độ kiếp). Chưa đầy tu vi thì
+     không chặn ở đây — tryBreakthrough báo lý do như cũ. */
+  function stageGateBlocked(state) {
+    var info = breakthroughInfo(state);
+    if (!info || !info.tuviOk) return null;
+    if (info.kind === 'stage') {
+      for (var i = 0; i < info.conditions.length; i++) {
+        if (!info.conditions[i].ok) return { reason: 'Chưa đủ điều kiện đột phá: ' + info.conditions[i].label + '. ' + (info.conditions[i].hint || '') };
+      }
+      return null;
+    }
+    if (info.kind === 'great') return { reason: 'great_border', info: info };
+    return null;
   }
 
   /* ---------------- Chu kỳ ngày đêm (đợt "Bản đồ mượt + Ngày đêm") ----------------
@@ -2267,6 +2497,16 @@
     if (typeof state.flags.benhSeen !== 'boolean') state.flags.benhSeen = false;
     if (typeof state.flags.ch9PlanSeen !== 'boolean') state.flags.ch9PlanSeen = false;
     if (typeof state.flags.kdBeastWave !== 'number') state.flags.kdBeastWave = 0;
+    // Thiên kiếp (docs/realm-prep/ mục 6.1, 9.1): ấn Thiên Đạo, trọng
+    // thương sau độ kiếp hỏng, bộ đếm Hồi Khí Đan dưỡng thương, cờ quà
+    // làm quen Hộ Thể Đan; sổ thông cáo là trường cấp state.
+    if (typeof state.flags.thienDaoMark !== 'number') state.flags.thienDaoMark = 0;
+    if (typeof state.flags.trongThuong !== 'boolean') state.flags.trongThuong = false;
+    if (typeof state.flags.ttPillCount !== 'number') state.flags.ttPillCount = 0;
+    if (typeof state.flags.hoTheDanGifted !== 'boolean') state.flags.hoTheDanGifted = false;
+    if (typeof state.flags.ttElderSeen !== 'boolean') state.flags.ttElderSeen = false;
+    if (!Array.isArray(state.announceLog)) state.announceLog = [];
+    if (state.announceLog.length > 20) state.announceLog = state.announceLog.slice(state.announceLog.length - 20);
     // Hồi tố bậc Hưởng: save đã qua mốc Kết Đan mà thiếu khóa 'kimdan' thì cấp lại.
     if (state.unlocked && state.realm >= 3 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
@@ -3835,6 +4075,14 @@
     rollSessionValue: rollSessionValue, yeuDanDropFor: yeuDanDropFor, newEncounterSessionId: newEncounterSessionId,
     YEU_DAN_EXCHANGE_PCT: YEU_DAN_EXCHANGE_PCT, exchangeYeuDan: exchangeYeuDan,
     chapterOfQuest: chapterOfQuest, soulServiceDue: soulServiceDue, healSoul: healSoul,
+    TRIBULATION_PROFILES: TRIBULATION_PROFILES, TRIB_REDUCTION_CAP: TRIB_REDUCTION_CAP,
+    TRIB_DAN_CUT: TRIB_DAN_CUT, TRIB_PHU_CUT: TRIB_PHU_CUT, TRIB_PHAP_CUT: TRIB_PHAP_CUT,
+    TRIB_GUARD_CUT_FULL: TRIB_GUARD_CUT_FULL, TRIB_GUARD_CUT_BROKEN: TRIB_GUARD_CUT_BROKEN,
+    TRIB_SPEAK_BOOST: TRIB_SPEAK_BOOST, TRIB_SPEAK_MAX: TRIB_SPEAK_MAX, ANNOUNCE_LOG_MAX: ANNOUNCE_LOG_MAX,
+    tribProfileFor: tribProfileFor, tribGuardCut: tribGuardCut, tribBoltDamage: tribBoltDamage,
+    tribBestResonance: tribBestResonance, tribEstimate: tribEstimate,
+    applyTribFailure: applyTribFailure, noteHoiKhiDanUsed: noteHoiKhiDanUsed, clearTrongThuong: clearTrongThuong,
+    publishAnnounce: publishAnnounce, breakthroughInfo: breakthroughInfo, stageGateBlocked: stageGateBlocked,
     ITEM_DEFS: ITEM_DEFS, BAG_TIERS: BAG_TIERS, bagOf: bagOf, bagCount: bagCount, bagHas: bagHas,
     bagCap: bagCap, bagUsed: bagUsed, bagCanAdd: bagCanAdd, bagAdd: bagAdd, bagRemove: bagRemove, syncBagMirrors: syncBagMirrors, storyItemsOwned: storyItemsOwned,
     DAY_MINUTES: DAY_MINUTES, DAY_DEFAULT_MINUTES: DAY_DEFAULT_MINUTES, NIGHT_DARK_MAX: NIGHT_DARK_MAX,

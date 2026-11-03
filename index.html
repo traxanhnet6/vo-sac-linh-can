@@ -59,7 +59,7 @@
         <div class="hud-realm" id="hud-realm">Phàm Nhân</div>
         <div class="bar-row"><span>HP</span>
           <div class="bar"><div id="hud-hp-ghost"></div><div id="hud-hp-bar" class="bar-fill hp"></div></div>
-          <b id="hud-hp">100 / 100</b>
+          <b id="hud-hp">100 / 100</b><span id="hud-injury" class="hidden" title="Trọng thương do lôi kiếp: tốc độ thổ nạp giảm một nửa cho tới khi dưỡng thương xong">Trọng thương</span>
         </div>
         <div class="bar-row"><span>Tu vi</span>
           <div class="bar"><div id="hud-tuvi-bar" class="bar-fill tuvi"></div></div>
@@ -118,6 +118,26 @@
       <div id="boss-title"></div>
       <div class="boss-bar"><div id="boss-hp-fill"></div></div>
       <div id="boss-phase"></div>
+    </div>
+
+    <!-- Biểu ngữ Thiên Đạo tuyên cáo (độ kiếp thành công, docs/realm-
+         prep/ mục 9.2): hiện 6 giây khi một tu sĩ bước qua đại cảnh
+         giới; bản chơi đơn hiện tại chỗ, kiến trúc sẵn cho online. -->
+    <div id="announce-banner" class="hidden">
+      <div class="announce-title">THIÊN ĐẠO THÔNG CÁO</div>
+      <div id="announce-text"></div>
+    </div>
+
+    <!-- Bảng chuẩn bị thiên kiếp (docs/realm-prep/ mục 3.4): hiện
+         trước khi đạo lôi đầu tiên giáng xuống — toàn bộ con số công
+         khai, rút lui ở đây được hoàn vật dẫn nguyên vẹn. -->
+    <div id="trib-panel" class="hidden">
+      <div class="trib-title">THIÊN KIẾP — <span id="trib-realm"></span></div>
+      <div id="trib-body"></div>
+      <div class="trib-btns">
+        <button id="trib-enter" class="btn red" type="button">Bước vào kiếp</button>
+        <button id="trib-retreat" class="btn wood" type="button">Rút lui (hoàn vật dẫn)</button>
+      </div>
     </div>
 
     <!-- Đếm liên trảm (trình bày thuần, không thưởng) + nhãn vật phẩm rơi
@@ -222,6 +242,8 @@
           <button id="set-reset-btn" class="btn wood" type="button">Đặt lại cài đặt về mặc định</button>
         </div>
         <div id="set-info-msg" class="set-msg"></div>
+        <div class="set-sec">Thiên Đạo thông cáo</div>
+        <div id="announce-log-list"></div>
       </div>
       <!-- Hàng Lưu + Thoát CỐ ĐỊNH dính đáy panel (lệnh Bui 19:17 ngày
            2026-11-01): hai nút này trước đây chỉ nằm trong mục "Tài khoản

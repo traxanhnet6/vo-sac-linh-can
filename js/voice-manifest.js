@@ -138,6 +138,12 @@ window.VSLC_VOICE = {
    "speed": 78,
    "label": "Trưởng lão Thanh Vân Tông — lão thành trầm nhất (chung giọng trưởng lão, chậm hơn)"
   },
+  "thien_dao": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3497_v068_28k_g5k",
+   "speed": 68,
+   "label": "Thiên Đạo — không phải người: trầm nhất, chậm nhất. CÔNG THỨC KHÓA (Bui duyệt ứng viên 2, 2026-11-03): tốc độ 68 + ngắt nhịp bằng dấu câu trong bản tổng hợp (chữ không đổi) + vang sâu 4 tầng 90/180/320/480ms và lọc trầm 5000Hz NUNG SẴN trong tệp tuyên đọc; fx tầng phát chỉ điểm nhẹ (wet 0,10, hồi tiếp 0,12). Tuyên đọc theo công thức cảnh giới và ĐỌC TÊN người độ kiếp (lệnh Bui 23:07 ngày 2026-11-03, thay điểm thiết kế cũ không đọc tên)",
+   "fx": "thiendao"
+  },
   "lieu_khuynh_tien": {
    "voice": "avocado_v2:vd2_r8_rep5k_3492_v068_28k_g5k",
    "speed": 88,
@@ -615,8 +621,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "chu_quan"
   },
-  "252f1cf6770b": {
-   "f": "v252f1cf6770b.mp3",
+  "5e475c4d569e": {
+   "f": "v5e475c4d569e.mp3",
    "k": "say",
    "s": "duoc_su"
   },
@@ -3940,6 +3946,61 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
+  "66f126e1b41b": {
+   "f": "v66f126e1b41b.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "bef7ac61b5ca": {
+   "f": "vbef7ac61b5ca.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
+  "50a8df51e5b4": {
+   "f": "v50a8df51e5b4.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "2f615d8795b2": {
+   "f": "v2f615d8795b2.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "0295ecaef3bf": {
+   "f": "v0295ecaef3bf.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "4dfd3b5e3a24": {
+   "f": "v4dfd3b5e3a24.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "c6f34428d383": {
+   "f": "vc6f34428d383.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "7ad917ae36b1": {
+   "f": "v7ad917ae36b1.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "5f81cbda0da5": {
+   "f": "v5f81cbda0da5.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "630e55ce6c4d": {
+   "f": "v630e55ce6c4d.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "63d3b3be7177": {
+   "f": "v63d3b3be7177.mp3",
+   "k": "say",
+   "s": "truong_lao_tong"
+  },
   "181061e0cc97": {
    "f": "v181061e0cc97.mp3",
    "k": "say",
@@ -4009,6 +4070,35 @@ window.VSLC_VOICE = {
    "f": "vd78f14e878be.mp3",
    "k": "say",
    "s": "tap_dich_truong"
+  },
+  "ae81e8ccb32c": {
+   "f": "vae81e8ccb32c.mp3",
+   "k": "say",
+   "s": "thien_dao"
+  },
+  "6e17f56bc94f": {
+   "f": "v6e17f56bc94f.mp3",
+   "k": "say",
+   "s": "thien_dao"
+  },
+  "8831e64a2c6c": {
+   "f": "v8831e64a2c6c.mp3",
+   "k": "say",
+   "s": "thien_dao"
+  }
+ },
+ "announce": {
+  "truc_co": {
+   "key": "ae81e8ccb32c",
+   "f": "vae81e8ccb32c.mp3"
+  },
+  "kim_dan": {
+   "key": "6e17f56bc94f",
+   "f": "v6e17f56bc94f.mp3"
+  },
+  "fallback": {
+   "key": "8831e64a2c6c",
+   "f": "v8831e64a2c6c.mp3"
   }
  }
 };

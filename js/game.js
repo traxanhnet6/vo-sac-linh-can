@@ -316,6 +316,10 @@
   function sfxHhtStar1() { for (var hi = 0; hi < 7; hi++) setTimeout(function (k) { beep(1180 + k * 90, 0.06, 'square', 0.02, 'skill'); }, hi * 55); }
   function sfxHhtStar2() { for (var hj = 0; hj < 9; hj++) setTimeout(function () { beep(1750, 0.045, 'square', 0.02, 'skill'); }, hj * 70); setTimeout(function () { sfxWind(); }, 300); }
   function sfxHhtStar3() { beep(330, 0.8, 'triangle', 0.06, 'skill'); beep(82, 1.0, 'sawtooth', 0.045, 'skill'); setTimeout(function () { sfxBell(); sfxWind(); }, 320); }
+  /* Âm thanh thiên kiếp (docs/realm-prep/ mục 10): sấm xa trầm ở pha
+     tụ mây và khi kiếp tan; tiếng sét xé + nổ trầm cho mỗi đạo lôi. */
+  function sfxThunderFar() { beep(64, 1.4, 'sawtooth', 0.05, 'skill'); beep(48, 1.8, 'triangle', 0.04, 'skill'); setTimeout(function () { beep(72, 0.9, 'sawtooth', 0.028, 'skill'); }, 320); }
+  function sfxBolt(hard) { beep(2800, 0.07, 'square', 0.05, 'skill'); beep(140, 0.35, 'sawtooth', 0.06, 'skill'); beep(90, 0.5, 'triangle', 0.05, 'skill'); if (hard) setTimeout(function () { beep(118, 0.45, 'sawtooth', 0.045, 'skill'); }, 90); }
   function sfxCrowd(kind) {
     if (kind === 'win') { [523, 659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.22, 'sine', 0.03, 'ui'); }, i * 80); }); }
     else { beep(880, 0.16, 'sine', 0.022, 'ui'); setTimeout(function () { beep(1174, 0.2, 'sine', 0.02, 'ui'); }, 110); }
@@ -333,12 +337,63 @@
     if (SET && SET.voiceAllowed && !SET.voiceAllowed()) return;
     var e = VOICE.lines[voiceKey(line.who, line.text)];
     if (!e) return; // câu chưa có tiếng: rơi về tiếng chữ chạy như cũ, không lỗi
+    if (e.s === 'thien_dao') { playVoiceFileFx(e.f, e.k); return; } // giọng Thiên Đạo: luôn qua lớp vang vọng
     try {
       voiceAudio = new Audio('assets/voice/' + e.f);
       voiceAudio.volume = SET && SET.voiceScale ? SET.voiceScale(e.k) : (e.k === 'inner' ? 0.5 : 0.9);
       var pr = voiceAudio.play();
       if (pr && pr.catch) pr.catch(function () {});
     } catch (err) { voiceAudio = null; }
+  }
+  /* Tiếng Thiên Đạo tuyên đọc (docs/realm-prep/ mục 9.3): phát qua
+     chuỗi WebAudio có vang vọng RIÊNG — trễ 0,18 giây, hồi tiếp 0,12,
+     tỉ lệ trộn 0,10, cộng lọc trầm nhẹ. Từ 2026-11-03 (Bui duyệt ứng
+     viên 2): tệp tuyên đọc đã NUNG SẴN vang sâu 4 tầng + lọc trầm
+     (giọng Tenacious Mooring, tốc độ thu 68, ngắt nhịp bằng dấu câu)
+     nên lớp này chỉ điểm nhẹ, tránh vang chồng vang. Lớp xử lý này
+     là thứ phân biệt Thiên Đạo với mọi vai người và CHỈ áp cho vai
+     thien_dao / câu tuyên đọc. Lỗi WebAudio thì rơi về phát thường,
+     không chặn tuyên cáo. */
+  var voiceCtx = null;
+  function playVoiceFileFx(file, kind) {
+    if (SET && SET.voiceAllowed && !SET.voiceAllowed()) return;
+    stopVoice();
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error('no audiocontext');
+      if (!voiceCtx) voiceCtx = new AC();
+      if (voiceCtx.state === 'suspended' && voiceCtx.resume) voiceCtx.resume();
+      var el = new Audio('assets/voice/' + file);
+      el.volume = SET && SET.voiceScale ? SET.voiceScale(kind || 'narrate') : 0.9;
+      var src = voiceCtx.createMediaElementSource(el);
+      var dry = voiceCtx.createGain(); dry.gain.value = 1;
+      var lp = voiceCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100;
+      var delay = voiceCtx.createDelay(1); delay.delayTime.value = 0.18;
+      var fb = voiceCtx.createGain(); fb.gain.value = 0.12;
+      var wet = voiceCtx.createGain(); wet.gain.value = 0.10;
+      src.connect(dry); dry.connect(voiceCtx.destination);
+      src.connect(lp); lp.connect(delay); delay.connect(fb); fb.connect(delay);
+      delay.connect(wet); wet.connect(voiceCtx.destination);
+      voiceAudio = el;
+      var pr = el.play(); if (pr && pr.catch) pr.catch(function () {});
+    } catch (e) {
+      try {
+        voiceAudio = new Audio('assets/voice/' + file);
+        voiceAudio.volume = SET && SET.voiceScale ? SET.voiceScale(kind || 'narrate') : 0.9;
+        var p2 = voiceAudio.play(); if (p2 && p2.catch) p2.catch(function () {});
+      } catch (e2) { voiceAudio = null; }
+    }
+  }
+  /* Câu tuyên đọc theo CÔNG THỨC CẢNH GIỚI — ĐỌC TÊN người độ kiếp
+     (Giang Phàm) ở câu Trúc Cơ + Kim Đan theo lệnh Bui 23:07 ngày
+     2026-11-03, thay thiết kế cũ không đọc tên; câu dự phòng giữ
+     dạng chung. Tên cũng hiện bằng chữ trên biểu ngữ và trong sổ. */
+  function playThienDaoVoice(realmTo) {
+    if (!VOICE || !VOICE.announce) return;
+    var id = realmTo === 2 ? 'truc_co' : (realmTo === 3 ? 'kim_dan' : 'fallback');
+    var a = VOICE.announce[id];
+    if (!a || !a.f) return;
+    playVoiceFileFx(a.f, 'narrate');
   }
 
   /* ---------- Hiệu ứng hạt + cột sáng + chuyển cảnh (docs/effects-catalog.md) ---------- */
@@ -564,6 +619,10 @@
     saveNow(); exitToAuth();
   }
   $('btn-logout').addEventListener('click', requestLogout);
+  // Hai nút của bảng chuẩn bị thiên kiếp: Bước vào kiếp khóa bảng và
+  // mở đạo lôi đầu tiên; Rút lui hoàn vật dẫn (pha tụ mây, không mất).
+  $('trib-enter').addEventListener('click', function () { if (trib) beginTribBolts(); });
+  $('trib-retreat').addEventListener('click', function () { tribRetreat(); });
   // Cầu nối cho panel cài đặt (js/settings.js): nút Lưu/Thoát TRONG panel gọi
   // đúng các hàm này — cùng một đường xử lý với nút ở hàng chức năng phía trên.
   // exitToAuth tách riêng (không lưu) để luồng xóa tài khoản dùng: dữ liệu vừa
@@ -1825,6 +1884,34 @@
       ctx.strokeStyle = 'rgba(255,240,190,' + (0.55 * pa) + ')'; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.ellipse(px + 16, py + 30, 30 + (1 - pa) * 22, 9 + (1 - pa) * 6, 0, 0, Math.PI * 2); ctx.stroke();
     }
+    // Thiên kiếp (docs/realm-prep/ mục 10): mây kiếp xoáy tối tụ trên
+    // đầu trong lúc phiên độ kiếp mở (lớp phủ cục bộ quanh đài, KHÔNG
+    // dùng lớp tối ngày đêm), và tia lôi gấp khúc giáng xuống theo
+    // nhịp tribBoltFx — tất cả vẽ bằng mã trên canvas, không asset.
+    if (trib) {
+      var tcw = 150 + 26 * Math.sin(tNow / 900);
+      ctx.fillStyle = 'rgba(24,22,38,0.42)';
+      ctx.beginPath(); ctx.ellipse(px + 16, py - 118, tcw, 30, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(15,13,29,0.52)';
+      ctx.beginPath(); ctx.ellipse(px + 16 + 18 * Math.sin(tNow / 1300), py - 130, tcw * 0.62, 20, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    if (tribBoltFx.t > 0) {
+      var tba = Math.min(1, tribBoltFx.t / 0.35);
+      ctx.fillStyle = 'rgba(225,242,255,' + (0.30 * tba) + ')';
+      ctx.fillRect(px - 70, py - 165, 172, 205); // chớp sáng trắng một nhịp quanh điểm chạm
+      ctx.strokeStyle = 'rgba(212,236,255,' + (0.92 * tba) + ')'; ctx.lineWidth = 3;
+      ctx.beginPath();
+      var bTop = py - 148, bBot = py + 6, bSegs = 6;
+      ctx.moveTo(px + 16, bTop);
+      for (var bs2 = 1; bs2 <= bSegs; bs2++) {
+        var bty2 = bTop + (bBot - bTop) * bs2 / bSegs;
+        var btx2 = px + 16 + (bs2 === bSegs ? 0 : Math.sin(bs2 * 37.7 + tribBoltFx.seed) * 13);
+        ctx.lineTo(btx2, bty2);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(150,200,255,' + (0.55 * tba) + ')'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.ellipse(px + 16, py + 28, 26 * (1.35 - tba * 0.35), 8, 0, 0, Math.PI * 2); ctx.stroke();
+    }
     // Làm nổi bật người đang đo (gói I): cột sáng + vòng chân nhấp nháy tại
     // nhân vật mà dữ kiện cảnh đang ghim (dlg.spot) — người chơi nhìn là biết
     // lượt đo này của ai, khớp với băng kết quả trong hộp thoại.
@@ -2163,6 +2250,21 @@
       wrap.appendChild(b);
     });
   }
+  /* Cảnh tiệm pháp khí DỰNG ĐỘNG (docs/realm-prep/ mục 5.1): cảnh gốc
+     SCENE_FASHOP chỉ gồm Thoại + Lựa chọn; các mặt hàng chống lôi chỉ
+     xuất hiện khi đúng điều kiện — Tị Lôi Phù từ khi Linh Thạch mở,
+     Dẫn Lôi Pháp từ khâu chuẩn bị chương 8. Kiếm/Ngọc giữ nguyên
+     nhãn và giá gốc. */
+  function buildFaShopScene() {
+    var opts = [
+      { label: 'Mua {{item:kiem_phong}} — 150 Linh Thạch', action: 'buy_kiem', price: 150 },
+      { label: 'Mua {{item:ngoc_tu_linh}} — 260 Linh Thạch', action: 'buy_ngoc', price: 260 }
+    ];
+    if (state.linhUnlocked) opts.push({ label: 'Mua một lá Tị Lôi Phù — 40 Linh Thạch (chống lôi kiếp, giảm 85% sát thương một đạo)', action: 'buy_ti_loi_phu', price: 40 });
+    if (L.questReached(state, 'q8_chuan_bi') && !L.bagHas(state, 'dan_loi_phap')) opts.push({ label: 'Mua Dẫn Lôi Pháp — 240 Linh Thạch (giảm 25% sát thương mọi đạo lôi kiếp)', action: 'buy_dan_loi_phap', price: 240 });
+    opts.push({ label: 'Rời tiệm', action: 'shop_leave' });
+    return [ST.SCENE_FASHOP[0], { who: 'choice', text: 'Ngươi muốn mua gì?', options: opts }];
+  }
   function chooseOption(action) {
     if (action === 'write') {
       state.flags.wroteFirst = true; // nhánh [Viết chữ]: mở nhiệm vụ ẩn chứng cứ ở chương 2-4
@@ -2189,7 +2291,12 @@
       var ru = L.bagRemove(state, 'hoi_khi_dan', 1);
       if (ru.ok) {
         state.silence = Math.min(L.SILENCE_MAX, state.silence + 25);
-        toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm (còn ' + L.bagCount(state, 'hoi_khi_dan') + ' viên).', 3200);
+        // Trọng thương (độ kiếp hỏng): Hồi Khí Đan đồng thời là thuốc
+        // dưỡng thương — đủ 2 viên thì thương thế khép lại (mục 6.1).
+        var nt = L.noteHoiKhiDanUsed(state);
+        if (nt.cleared) toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm. Hai viên dưỡng thương đã đủ — trọng thương khép lại, tốc độ thổ nạp trở lại bình thường.', 4200);
+        else if (state.flags.trongThuong) toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm. Thương thế đã nhẹ đi một nấc — thêm một viên nữa, hoặc nghỉ ở điểm linh khí tới khi máu đầy, là khép hẳn.', 4200);
+        else toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm (còn ' + L.bagCount(state, 'hoi_khi_dan') + ' viên).', 3200);
       } else toast('Không còn viên Hồi Khí Đan nào trong túi.');
       refreshHUD(); saveNow();
       say(ST.SCENE_PHARMACY);
@@ -2200,13 +2307,63 @@
       if (L.bagHas(state, gid)) { toast('Ngươi đã có ' + gname + ' trong túi rồi.'); }
       else {
         var chkG = L.bagCanAdd(state, gid, 1);
-        if (!chkG.ok) { toast(chkG.reason); say(ST.SCENE_FASHOP); return; }
+        if (!chkG.ok) { toast(chkG.reason); say(buildFaShopScene()); return; }
         var rg = L.spendLinhThach(state, price);
         if (rg.ok) { L.bagAdd(state, gid, 1); sfxQuest(); toast('Đã mua ' + gname + ' (−' + price + ' Linh Thạch) và cất vào Túi Trữ Vật. Hiệu quả có tác dụng ngay.', 3800); }
         else toast(rg.reason);
       }
       refreshHUD(); saveNow();
-      say(ST.SCENE_FASHOP);
+      say(buildFaShopScene());
+    } else if (action === 'buy_ho_the_dan') {
+      // Hộ Thể Đan ở hiệu thuốc thành (docs/realm-prep/ mục 5.1): 25 LT.
+      var chkH = L.bagCanAdd(state, 'ho_the_dan', 1);
+      if (!chkH.ok) { toast(chkH.reason); say(ST.SCENE_PHARMACY); return; }
+      var rh2 = L.spendLinhThach(state, 25);
+      if (rh2.ok) { L.bagAdd(state, 'ho_the_dan', 1); sfxUi(); toast('Đã mua một viên Hộ Thể Đan (−25 Linh Thạch). Trong túi: ' + L.bagCount(state, 'ho_the_dan') + ' viên.', 3200); }
+      else toast(rh2.reason);
+      refreshHUD(); saveNow();
+      say(ST.SCENE_PHARMACY);
+    } else if (action === 'buy_ti_loi_phu') {
+      // Tị Lôi Phù bán bằng Linh Thạch: 40 LT/lá (mục 5.1).
+      var chkP = L.bagCanAdd(state, 'ti_loi_phu', 1);
+      if (!chkP.ok) { toast(chkP.reason); say(buildFaShopScene()); return; }
+      var rp2 = L.spendLinhThach(state, 40);
+      if (rp2.ok) { L.bagAdd(state, 'ti_loi_phu', 1); sfxUi(); toast('Đã mua một lá Tị Lôi Phù (−40 Linh Thạch). Trong túi: ' + L.bagCount(state, 'ti_loi_phu') + ' lá.', 3200); }
+      else toast(rp2.reason);
+      refreshHUD(); saveNow();
+      say(buildFaShopScene());
+    } else if (action === 'buy_dan_loi_phap') {
+      // Dẫn Lôi Pháp ở hiệu pháp khí: 240 LT, mở bán từ khâu chuẩn bị
+      // chương 8 (mục 5.1); pháp khí bền, một món là đủ.
+      if (L.bagHas(state, 'dan_loi_phap')) { toast('Ngươi đã có Dẫn Lôi Pháp trong túi rồi — pháp khí này một món là đủ.'); }
+      else {
+        var chkF = L.bagCanAdd(state, 'dan_loi_phap', 1);
+        if (!chkF.ok) { toast(chkF.reason); say(buildFaShopScene()); return; }
+        var rf2 = L.spendLinhThach(state, 240);
+        if (rf2.ok) { L.bagAdd(state, 'dan_loi_phap', 1); sfxQuest(); toast('Đã mua Dẫn Lôi Pháp (−240 Linh Thạch): từ nay mọi đạo lôi kiếp đều giảm 25% sát thương.', 4000); }
+        else toast(rf2.reason);
+      }
+      refreshHUD(); saveNow();
+      say(buildFaShopScene());
+    } else if (action === 'merit_buy_phu' || action === 'merit_buy_phap') {
+      // Đường công sức ở quản sự tông (mục 5.1/5.2): Tị Lôi Phù 30
+      // điểm cống hiến, Dẫn Lôi Pháp 150 điểm — cùng khuôn đổi điểm
+      // của đường luyện lại Trúc Cơ Đan (pill_again_merit).
+      var mid = action === 'merit_buy_phu' ? 'ti_loi_phu' : 'dan_loi_phap';
+      var mprice = action === 'merit_buy_phu' ? 30 : 150;
+      var mname = action === 'merit_buy_phu' ? 'Tị Lôi Phù' : 'Dẫn Lôi Pháp';
+      if (mid === 'dan_loi_phap' && L.bagHas(state, mid)) { toast('Ngươi đã có Dẫn Lôi Pháp trong túi rồi.'); }
+      else {
+        var chkM = L.bagCanAdd(state, mid, 1);
+        if (!chkM.ok) toast(chkM.reason);
+        else if ((state.sectMerit || 0) < mprice) toast('Chưa đủ điểm cống hiến (đang có ' + L.fmtNum(state.sectMerit || 0) + ', cần ' + mprice + '). Hãy làm việc tông môn để tích thêm.', 4600);
+        else {
+          state.sectMerit -= mprice;
+          var rbk = L.bagAdd(state, mid, 1);
+          if (rbk.ok) { sfxQuest(); toast('Đã ghi ' + mprice + ' điểm cống hiến, quản sự đổi cho ngươi ' + mname + '. Điểm cống hiến còn: ' + L.fmtNum(state.sectMerit) + '.', 4200); }
+        }
+      }
+      refreshHUD(); saveNow();
     } else if (action === 'ch4_evidence') {
       state.quest = 'q4_dieu_tra';
       say([{ who: 'narrate', text: 'Ngươi không cãi một câu. Ngươi quay lưng đi về phía kho Hứa gia ở rìa đông sân phủ — sự thật nằm ở đó, không nằm ở miệng người. (Đường im lặng: hãy kiểm tra kho và tìm nhân chứng.)' }], function () { refreshHUD(); saveNow(); });
@@ -2293,6 +2450,8 @@
         if (rbM.ok) { sfxQuest(); toast('Đã ghi 60 điểm cống hiến và luyện lại Trúc Cơ Đan. Lên Đài Trúc Cơ để vận công.', 4200); }
         refreshHUD(); saveNow();
       }
+    } else if (action.indexOf('trib_') === 0) {
+      resolveTribChoice(action);
     } else if (action.indexOf('grind_') === 0) {
       grindChoiceAction(action);
     } else if (action.indexOf('bc_') === 0) {
@@ -2959,7 +3118,7 @@
       ] }]);
       return say(ST.SCENE_PHARMACY);
     }
-    if (npc.id === 'phap_khi_chu') return say(ST.SCENE_FASHOP);
+    if (npc.id === 'phap_khi_chu') return say(buildFaShopScene());
     // Chương 4: các điểm chạm trong sân phủ Hứa và Thiên Cơ Các phân đà.
     if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_vu_cao') return say(ST.SCENE_ACCUSE);
     if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_dieu_tra') return confrontLucTranh();
@@ -2996,6 +3155,14 @@
         state.quest = 'q5_hon_su'; refreshHUD(); saveNow(); // nối thẳng sang chương 5 ngay trong phiên
         toast('Hoàn thành chương 4: Thiên Cơ Các tới nhà.', 4200);
       });
+    }
+    // Trọng thương sau độ kiếp hỏng (docs/realm-prep/ mục 6.1): trưởng
+    // lão nhận ra thương thế ở lần gặp đầu tiên và chỉ rõ hai đường
+    // dưỡng thương — chỉ nhắc một lần mỗi đợt thương.
+    if (npc.id === 'truong_lao_tong' && state.flags.trongThuong && !state.flags.ttElderSeen) {
+      state.flags.ttElderSeen = true;
+      refreshHUD(); saveNow();
+      return say([{ who: 'truong_lao_tong', text: 'Thương thế của ngươi là thương do lôi kiếp — kinh mạch còn ứ sét tàn, thổ nạp chậm đi một nửa là phải. Hai đường dưỡng thương: ngồi nghỉ ở điểm linh khí tới khi máu hồi đầy, hoặc dùng hai viên Hồi Khí Đan. Thương khép rồi, quay lại đài độ tiếp — đài không đi đâu cả.' }]);
     }
     // Chương 7: nhập tông, ghi công tạp dịch; chương 8: điều kiện Trúc Cơ,
     // cấp đan và gạch hồ sơ — mọi điểm chạm đều qua trưởng lão / quản sự /
@@ -3208,6 +3375,12 @@
       if (huntUnlocked()) sectOpts.push({ label: 'Bảng treo thưởng (săn)', action: 'grind_open_hunt' });
       if (state.flags.bagUnlocked) sectOpts.push({ label: 'Danh sách thu thập', action: 'grind_open_gather' });
       if (L.questReached(state, 'q7_done')) sectOpts.push({ label: 'Việc tông môn', action: 'grind_open_sect' });
+      // Đường công sức đổi đồ chống lôi kiếp (docs/realm-prep/ mục
+      // 5.1): quản sự tạp dịch giữ sổ đổi — chỉ khi túi đã mở.
+      if (state.flags.bagUnlocked) {
+        sectOpts.push({ label: 'Đổi 30 điểm cống hiến lấy một lá Tị Lôi Phù', action: 'merit_buy_phu' });
+        if (!L.bagHas(state, 'dan_loi_phap')) sectOpts.push({ label: 'Đổi 150 điểm cống hiến lấy Dẫn Lôi Pháp', action: 'merit_buy_phap' });
+      }
       sectOpts.push({ label: 'Trò chuyện', action: 'grind_idle' });
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: sectOpts }]);
     }
@@ -3928,6 +4101,16 @@
       var rb = L.bagAdd(state, 'truc_co_dan', 1);
       if (!rb.ok || !sp.ok) { toast('Lò đan gặp trục trặc — nguyên liệu đã được hoàn lại, hãy thử lại.', 4200); refreshHUD(); saveNow(); return; }
       sfxQuest();
+      // Trưởng lão tặng đúng 1 viên Hộ Thể Đan DUY NHẤT (docs/realm-
+      // prep/ mục 5.1 + 7.2) tại thời khắc luyện đan Trúc Cơ thành
+      // công — dù là lần luyện đầu hay một lần luyện lại khi người
+      // chơi chưa từng nhận quà này. Lời nhắn đi kèm mở màn cho thiên
+      // kiếp 3 đạo của mốc chương 8.
+      var giftedNow = false;
+      if (!state.flags.hoTheDanGifted && L.bagCanAdd(state, 'ho_the_dan', 1).ok) {
+        var rg = L.bagAdd(state, 'ho_the_dan', 1);
+        if (rg.ok) { state.flags.hoTheDanGifted = true; giftedNow = true; }
+      }
       if (!isAgain) {
         state.flags.pillGranted = true;
         state.quest = 'q8_ho_phap';
@@ -3936,6 +4119,7 @@
         toast('Đã luyện lại Trúc Cơ Đan theo công thức. Viên đan trước mất thế nào, viên này bù lại thế ấy.', 4200);
       }
       refreshHUD(); saveNow();
+      if (giftedNow) say([{ who: 'truong_lao_tong', text: 'Khoan đã — cầm thêm viên Hộ Thể Đan này. Trúc Cơ không còn là chuyện nuốt đan rồi ngồi chờ: trên đài sẽ có ba đạo lôi giáng xuống, đạo sau nặng hơn đạo trước. Viên đan này nuốt vào giữa kiếp sẽ chắn cho ngươi sáu phần sát thương của một đạo. Ta chỉ tặng một viên duy nhất — thiếu thì xuống hiệu thuốc trong thành mà mua, hai mươi lăm Linh Thạch một viên.' }]);
     });
   }
   /* ---------- Phần 3, chương 9: Thung Lũng Hồi Phong ---------- */
@@ -4297,24 +4481,37 @@
     if (!L.bagHas(state, 'ket_dan_dan')) return say([{ who: 'narrate', text: 'Ngươi chưa có vật dẫn Kết Đan trong túi. Về Thanh Vân Đại Điện gặp trưởng lão tông — vật dẫn phải được luyện ở đó.' }]);
     var rm = L.bagRemove(state, 'ket_dan_dan', 1);
     if (!rm.ok) { toast(rm.reason); return; }
-    var r = L.tryBreakthrough(state);
-    if (!r.ok) {
-      L.bagAdd(state, 'ket_dan_dan', 1);
-      toast(r.reason);
-      refreshHUD(); saveNow();
-      return;
-    }
-    sfxBigBell();
-    pillarT = 3.5;
-    spawnParts(px + 16, py + 24, 48, '255,232,160', 36, true);
-    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
-    rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
-    shakeT = Math.max(shakeT, 0.9);
-    L.recordSpeech(state, 12, 'loi-dau-o-kim-dan', 'thanh-van-tong');
-    say(ST.SCENE_CH12_KET_DAN, function () {
-      state.quest = 'q12_lenh_dau_tien';
-      refreshHUD(); saveNow();
-      toast('Kết Đan thành công: ' + r.label + '! Vạn Âm Cộng Hưởng đã thành bậc Hưởng — thử chiêu Định Âm (phím 4) vào tấm bia mới ở chân đài.', 5200);
+    // THIÊN KIẾP KIM ĐAN 5 ĐẠO (docs/realm-prep/ mục 8, sửa đổi 4.5
+    // cho part3-design): vật dẫn đã nuốt — vào sự kiện độ kiếp trước,
+    // qua hết 5 đạo mới gọi tryBreakthrough. Mức giảm hộ pháp suy từ
+    // flags.ketDanGuardBroken ở tribGuardCutNow (trọn vẹn −20%, từng
+    // vỡ −10%). Bậc Hưởng mở BỞI lần đột phá này nên đối hưởng trong
+    // sự kiện chỉ dùng được Phá Âm/Chấn Âm như thiết kế đã chốt.
+    startTribulation({
+      targetRealm: 3, catalystId: 'ket_dan_dan', chapter: 12,
+      onSuccess: function (fireAnnounce) {
+        var r = L.tryBreakthrough(state);
+        if (!r.ok) {
+          L.bagAdd(state, 'ket_dan_dan', 1);
+          toast(r.reason);
+          refreshHUD(); saveNow();
+          return;
+        }
+        sfxBigBell();
+        pillarT = 3.5;
+        spawnParts(px + 16, py + 24, 48, '255,232,160', 36, true);
+        rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+        rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+        shakeT = Math.max(shakeT, 0.9);
+        L.recordSpeech(state, 12, 'loi-dau-o-kim-dan', 'thanh-van-tong');
+        say(ST.SCENE_CH12_KET_DAN, function () {
+          state.quest = 'q12_lenh_dau_tien';
+          fireAnnounce(); // tuyên cáo Thiên Đạo (mục 9)
+          refreshHUD(); saveNow();
+          toast('Kết Đan thành công: ' + r.label + '! Vạn Âm Cộng Hưởng đã thành bậc Hưởng — thử chiêu Định Âm (phím 4) vào tấm bia mới ở chân đài.', 5200);
+        });
+        refreshHUD();
+      }
     });
     refreshHUD();
   }
@@ -6414,6 +6611,233 @@
       });
     }
   }
+  /* ================= THIÊN KIẾP (docs/realm-prep/) =================
+     Sự kiện độ kiếp bám khuôn resolveGuardWave: từng đạo lôi là một
+     lựa chọn của người chơi, không xúc xắc giấu — toàn bộ tầng số ở
+     logic.js (TRIBULATION_PROFILES, tribBoltDamage, tribEstimate).
+     Phiên độ kiếp (trib) CHỈ sống trong bộ nhớ, không ghi vào save:
+     đóng game giữa chừng được coi như rút lui ở pha tụ mây (vật dẫn
+     chưa mất vì cổng chưa ghi save nào sau khi trừ đan; máu đã trừ
+     bởi các đạo trước cũng chưa kịp ghi). Vật dẫn chỉ "đã nuốt" từ
+     đạo lôi đầu tiên: rút lui ở bảng chuẩn bị thì hoàn lại nguyên vẹn. */
+  var trib = null;           // phiên độ kiếp đang mở
+  var tribBoltFx = { t: 0, seed: 0 }; // tia lôi đang vẽ (giây còn lại + hạt giống gấp khúc)
+  var TRIB_BOLT_LINES = [
+    'Đạo lôi thứ nhất xé mây giáng thẳng xuống đài.',
+    'Đạo lôi thứ hai nặng hơn đạo trước — mây kiếp cuộn thấp hơn nữa, tiếng sấm dội vào lồng ngực.',
+    'Đạo lôi thứ ba tụ lại lâu hơn, sáng trắng cả một góc trời phía bắc.',
+    'Đạo lôi thứ tư giáng xuống kèm mưa đá nhỏ — trận văn quanh đài rung lên từng hồi.',
+    'Đạo lôi cuối cùng của kiếp này: cả bầu trời như nín lại một nhịp trước khi sét xé xuống.'
+  ];
+  function tribGuardCutNow(targetRealm) {
+    if (targetRealm === 2) return L.tribGuardCut(state.flags.guardBroken || 0);
+    if (targetRealm === 3) return L.tribGuardCut(state.flags.ketDanGuardBroken || 0);
+    return 0;
+  }
+  function startTribulation(opts) {
+    if (trib) return;
+    if (!L.tribProfileFor(opts.targetRealm)) { toast('Mốc này chưa có hồ sơ thiên kiếp.'); return; }
+    trib = {
+      targetRealm: opts.targetRealm, catalystId: opts.catalystId, chapter: opts.chapter || 0,
+      guardCut: tribGuardCutNow(opts.targetRealm),
+      idx: 0, spoken: 0, gapUsed: false, onSuccess: opts.onSuccess || null
+    };
+    showTribPanel();
+  }
+  /* Pha tụ mây — bảng chuẩn bị CÔNG KHAI (thiết kế mục 3.4): số đạo,
+     sát thương từng đạo sau giảm trừ bị động, đồ chống lôi đang có,
+     uy lực đối hưởng so với ngưỡng thiên uy, và ước tính máu còn lại
+     theo phương án tiết kiệm nhất. Đây là cơ hội rút lui cuối cùng
+     không mất gì. */
+  function showTribPanel() {
+    var panel = $('trib-panel');
+    if (!panel) { beginTribBolts(); return; }
+    var prof = L.tribProfileFor(trib.targetRealm);
+    var est = L.tribEstimate(state, trib.targetRealm, trib.guardCut);
+    var best = L.tribBestResonance(state, 0);
+    var rows = prof.bolts.map(function (b, i) {
+      var bare = L.tribBoltDamage(state, trib.targetRealm, i, { guardCut: trib.guardCut, active: 'none', spokenBefore: 0 });
+      return '<div class="trib-row"><span>Đạo ' + (i + 1) + '</span><span>' + b.pct + '% máu tối đa (≈ ' + bare + ' sau giảm trừ bị động)</span><span>Ngưỡng thiên uy ' + b.uy + '</span></div>';
+    }).join('');
+    var passive = [];
+    if (L.bagHas(state, 'dan_loi_phap')) passive.push('Dẫn Lôi Pháp −25% mọi đạo');
+    passive.push(trib.guardCut >= 0.2 ? 'Hộ pháp trọn vẹn −20% mọi đạo' : (trib.guardCut > 0 ? 'Hộ pháp từng vỡ −10% mọi đạo' : 'Không có hộ pháp'));
+    $('trib-realm').textContent = L.realmName(trib.targetRealm, 0).toUpperCase();
+    $('trib-body').innerHTML =
+      '<div class="trib-line">Số đạo lôi: <b>' + prof.bolts.length + '</b> · Máu hiện tại: <b>' + Math.floor(state.hp) + ' / ' + state.hpMax + '</b></div>'
+      + rows
+      + '<div class="trib-line">Giảm trừ bị động: ' + passive.join(' · ') + '</div>'
+      + '<div class="trib-line">Đồ chống lôi trong túi: Hộ Thể Đan ×' + L.bagCount(state, 'ho_the_dan') + ' (−60% một đạo) · Tị Lôi Phù ×' + L.bagCount(state, 'ti_loi_phu') + ' (−85% một đạo) · Hồi Khí Đan ×' + L.bagCount(state, 'hoi_khi_dan') + ' (giữa hai đạo, hồi 25 Tĩnh Âm)</div>'
+      + (best
+        ? '<div class="trib-line">Đòn cộng hưởng mạnh nhất hiện có: <b>' + best.word + ' — uy lực ' + best.power + '</b>. Đối hưởng xóa được đạo nào có ngưỡng thiên uy dưới ' + best.power + '; mỗi lần đối hưởng, các đạo còn lại nặng thêm 15% (tối đa 2 lần mỗi lần độ kiếp).</div>'
+        : '<div class="trib-line">Lúc này chưa có đòn cộng hưởng nào dùng được (thiếu Tĩnh Âm hoặc chưa mở chiêu) — đối hưởng thiên lôi không khả dụng.</div>')
+      + '<div class="trib-line">Ước tính theo phương án tiết kiệm nhất với đồ đang có: tổng sát thương ≈ <b>' + est.totalDamage + '</b>, máu còn lại ≈ <b>' + est.remain + '</b> — <b>' + est.verdictText + '</b>.</div>'
+      + '<div class="trib-warn">Vật dẫn đã nuốt. Rút lui ngay lúc này thì vật dẫn được hoàn lại nguyên vẹn. Từ đạo lôi đầu tiên giáng xuống, độ hỏng sẽ mất vật dẫn, tu vi về một nửa trần, thân mang trọng thương — nhưng không bao giờ tụt cảnh giới, và độ lại không giới hạn số lần.</div>';
+    panel.classList.remove('hidden');
+    sfxThunderFar();
+  }
+  function hideTribPanel() { var p = $('trib-panel'); if (p) p.classList.add('hidden'); }
+  function tribRetreat() {
+    if (!trib) return;
+    var cat = trib.catalystId;
+    trib = null; hideTribPanel();
+    if (cat) L.bagAdd(state, cat, 1); // rút lui ở pha tụ mây: hoàn vật dẫn, không mất gì cả
+    toast('Ngươi thu công, bước xuống đài. Vật dẫn đã hoàn lại túi — chuẩn bị thêm rồi quay lại độ kiếp.', 4200);
+    refreshHUD(); saveNow();
+  }
+  function beginTribBolts() {
+    hideTribPanel();
+    say([{ who: 'narrate', text: 'Mây kiếp kéo tới trên đài, đen như mực tàu loang trong nước. Sấm rền ở rất xa — thiên kiếp của ngươi đã bắt đầu.' }], function () { tribShowBolt(); });
+  }
+  function tribBoltOptions() {
+    var prof = L.tribProfileFor(trib.targetRealm);
+    var bolt = prof.bolts[trib.idx];
+    var opts = [{ label: 'Ngạnh kháng — chịu toàn bộ sát thương của đạo này', action: 'trib_tank' }];
+    if (L.bagCount(state, 'ho_the_dan') > 0) opts.push({ label: 'Nuốt Hộ Thể Đan — đạo này giảm 60% sát thương (còn ' + L.bagCount(state, 'ho_the_dan') + ' viên)', action: 'trib_dan' });
+    if (L.bagCount(state, 'ti_loi_phu') > 0) opts.push({ label: 'Kích Tị Lôi Phù — đạo này giảm 85% sát thương (còn ' + L.bagCount(state, 'ti_loi_phu') + ' lá)', action: 'trib_phu' });
+    var best = L.tribBestResonance(state, trib.spoken);
+    if (best) opts.push({ label: 'Đối hưởng thiên lôi bằng ' + best.word + ' (uy lực ' + best.power + ' / ngưỡng thiên uy ' + bolt.uy + ') — xóa đạo này nếu vượt ngưỡng; trời sẽ nghe được ngươi', action: 'trib_speak' });
+    return opts;
+  }
+  function tribShowBolt() {
+    if (!trib) return;
+    var prof = L.tribProfileFor(trib.targetRealm);
+    if (trib.idx >= prof.bolts.length) { tribSucceed(); return; }
+    say([
+      { who: 'narrate', text: TRIB_BOLT_LINES[Math.min(trib.idx, TRIB_BOLT_LINES.length - 1)] },
+      { who: 'choice', text: 'Đạo lôi thứ ' + (trib.idx + 1) + ' — ngươi sẽ…', options: tribBoltOptions() }
+    ]);
+  }
+  /* Giữa hai đạo: tối đa 1 viên Hồi Khí Đan mỗi khoảng nghỉ (theo đúng
+     hiệu lực hiện có của đan: hồi 25 Tĩnh Âm — vốn quý cho đối hưởng). */
+  function tribAfterBolt() {
+    if (!trib) return;
+    var prof = L.tribProfileFor(trib.targetRealm);
+    if (trib.idx >= prof.bolts.length) { tribSucceed(); return; }
+    if (!trib.gapUsed && L.bagCount(state, 'hoi_khi_dan') > 0) {
+      say([
+        { who: 'narrate', text: 'Giữa hai đạo lôi, mây kiếp chùng xuống một nhịp ngắn. Ngươi có đúng một hơi thở để chuẩn bị.' },
+        { who: 'choice', text: 'Trước đạo kế tiếp, ngươi sẽ…', options: [
+          { label: 'Dùng một viên Hồi Khí Đan (hồi 25 Tĩnh Âm) rồi đón đạo kế', action: 'trib_heal' },
+          { label: 'Đón đạo kế ngay', action: 'trib_next' }
+        ] }
+      ]);
+      return;
+    }
+    tribShowBolt();
+  }
+  function resolveTribChoice(action) {
+    if (!trib) return;
+    if (action === 'trib_next') { tribShowBolt(); return; }
+    if (action === 'trib_heal') {
+      var rh = L.bagRemove(state, 'hoi_khi_dan', 1);
+      if (rh.ok) {
+        state.silence = Math.min(L.SILENCE_MAX, state.silence + 25);
+        trib.gapUsed = true;
+        toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm (' + Math.floor(state.silence) + '/100).', 2600);
+        refreshHUD();
+      }
+      tribShowBolt(); return;
+    }
+    if (action === 'trib_speak') { tribSpeakBolt(); return; }
+    var active = action === 'trib_dan' ? 'dan' : (action === 'trib_phu' ? 'phu' : 'none');
+    if (active === 'dan' && !L.bagRemove(state, 'ho_the_dan', 1).ok) { toast('Không còn Hộ Thể Đan trong túi.'); tribShowBolt(); return; }
+    if (active === 'phu' && !L.bagRemove(state, 'ti_loi_phu', 1).ok) { toast('Không còn Tị Lôi Phù trong túi.'); tribShowBolt(); return; }
+    tribStrikeBolt(active);
+  }
+  /* Đối hưởng thiên lôi (thiết kế mục 3.5): dùng đòn cộng hưởng mạnh
+     nhất qua đúng cửa castWord (Tĩnh Âm tiêu như thường). Ba lớp giá —
+     Tĩnh Âm đã tiêu, ấn Thiên Đạo +1 kèm một dòng Sổ Dư Âm ngữ cảnh
+     'thien-kiep', và +15% cho mọi đạo còn lại — áp DÙ đạo có bị xóa
+     hay không; chỉ việc đạo bị xóa là khác nhau. Đạo không bị xóa thì
+     giáng xuống như một đạo ngạnh kháng (hệ số trời nghe của lần đối
+     hưởng này chỉ tính từ đạo SAU). */
+  function tribSpeakBolt() {
+    var prof = L.tribProfileFor(trib.targetRealm);
+    var bolt = prof.bolts[trib.idx];
+    var best = L.tribBestResonance(state, trib.spoken);
+    if (!best) { toast('Không còn đòn cộng hưởng nào dùng được lúc này.'); tribShowBolt(); return; }
+    var before = state.silence;
+    var r = L.castWord(state, best.skillId);
+    if (!r.ok) { toast(r.reason); tribShowBolt(); return; }
+    castResonanceFx(best.skillId, px + 16, py + 30, { silenceBefore: before, baseFreq: 200 });
+    if (r.power > bolt.uy) {
+      trib.spoken += 1;
+      state.flags.thienDaoMark = (state.flags.thienDaoMark || 0) + 1;
+      L.recordSpeech(state, trib.chapter || 0, 'thien-kiep', state.map);
+      tribBoltFx.t = 0.35; tribBoltFx.seed = Math.random() * 10;
+      rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 }); // sân cộng hưởng nở xuyên qua mây
+      addFloat(px + 16, py - 26, 'ĐỐI HƯỞNG!', '255,230,150');
+      toast('Đòn đối hưởng đánh tan đạo lôi giữa trời! Nhưng trời đã nghe được ngươi — ấn Thiên Đạo +1, các đạo còn lại nặng thêm 15%.', 4600);
+      trib.idx += 1; trib.gapUsed = false;
+      refreshHUD();
+      tribAfterBolt();
+      return;
+    }
+    toast('Uy lực ' + r.power + ' chưa vượt ngưỡng thiên uy ' + bolt.uy + ' — đòn cộng hưởng tan giữa trời, đạo lôi vẫn giáng xuống. Trời cũng đã nghe được ngươi.', 4600);
+    tribStrikeBolt('none');
+    if (trib) { // phiên còn mở (chưa gục ở đạo này) thì mới ghi đủ ba lớp giá
+      trib.spoken += 1;
+      state.flags.thienDaoMark = (state.flags.thienDaoMark || 0) + 1;
+      L.recordSpeech(state, trib.chapter || 0, 'thien-kiep', state.map);
+    }
+  }
+  function tribStrikeBolt(active) {
+    var prof = L.tribProfileFor(trib.targetRealm);
+    var n = prof.bolts.length;
+    var dmg = L.tribBoltDamage(state, trib.targetRealm, trib.idx, { guardCut: trib.guardCut, active: active, spokenBefore: trib.spoken });
+    state.hp -= dmg;
+    tribBoltFx.t = 0.35; tribBoltFx.seed = Math.random() * 10;
+    sfxBolt(trib.idx >= n - 1);
+    shakeT = Math.max(shakeT, 0.3 + 0.6 * (n > 1 ? trib.idx / (n - 1) : 0)); // đạo càng sau rung càng mạnh (mục 10)
+    spawnParts(px + 16, py + 10, 14, '190,220,255', 40, false); // hạt điện tóe ở điểm chạm
+    addFloat(px + 16, py - 22, '-' + dmg, '255,120,90');
+    if (state.hp <= 0) { tribFail(); return; }
+    toast('Đạo ' + (trib.idx + 1) + ' giáng xuống: −' + dmg + ' máu (còn ' + Math.floor(state.hp) + ').', 2400);
+    trib.idx += 1; trib.gapUsed = false;
+    refreshHUD();
+    tribAfterBolt();
+  }
+  /* Thất bại: áp bảng giá ở logic (tu vi 50% trần, máu 1, trọng
+     thương); vật dẫn đã nuốt thì mất hẳn — đường luyện lại có sẵn ở
+     trưởng lão (Trúc Cơ) và đường dược dẫn (Kết Đan). KHÔNG tuyên
+     cáo, KHÔNG tiếng Thiên Đạo: trời im lặng (thiết kế mục 9.2). */
+  function tribFail() {
+    trib = null; hideTribPanel();
+    L.applyTribFailure(state);
+    sfxThunderFar();
+    shakeT = Math.max(shakeT, 0.9);
+    say([
+      { who: 'narrate', text: 'Đạo lôi đánh ngươi quỳ xuống nền đá. Mây kiếp tan chậm rãi — trời im lặng, không một lời ghi nhận.' },
+      { who: 'truong_lao_tong', text: 'Đứng dậy được là tốt rồi. Vật dẫn đã hóa tro trong lò kiếp, tu vi hao mất một nửa, thân còn mang trọng thương. Về nghỉ cho thương khép lại, luyện lại vật dẫn theo đường cũ — đài này không đi đâu cả, độ lại bao nhiêu lần cũng được.' }
+    ], function () { refreshHUD(); saveNow(); });
+    refreshHUD();
+  }
+  function tribSucceed() {
+    var t = trib; trib = null; hideTribPanel();
+    var fired = false;
+    var fireAnnounce = function () {
+      if (fired) return; fired = true;
+      var entry = L.publishAnnounce(state, { type: 'tribulation_success', realmTo: t.targetRealm });
+      if (entry) presentAnnounce(entry);
+    };
+    if (t.onSuccess) t.onSuccess(fireAnnounce);
+  }
+  /* Tuyên cáo toàn "server" ở bản chơi đơn: biểu ngữ trang trọng 6
+     giây + chuông lớn + tiếng Thiên Đạo tuyên đọc; dòng sổ đã được
+     publishAnnounce ghi vào state.announceLog trước đó. */
+  var announceTimer = 0;
+  function presentAnnounce(entry) {
+    var b = $('announce-banner'), tx = $('announce-text');
+    if (tx) tx.textContent = entry.text;
+    if (b) b.classList.remove('hidden');
+    sfxBigBell();
+    rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
+    playThienDaoVoice(entry.realmTo);
+    if (announceTimer) clearTimeout(announceTimer);
+    announceTimer = setTimeout(function () { if (b) b.classList.add('hidden'); }, 6000);
+  }
+
   /* Đột phá Trúc Cơ (chương 8): qua tryBreakthrough sẵn có — điều kiện lần
      lượt nói rõ thiếu gì, đan chỉ bị trừ khi mọi điều kiện đã đủ. */
   function doTrucCo() {
@@ -6454,24 +6878,38 @@
     if (!L.bagHas(state, 'truc_co_dan')) return say([{ who: 'narrate', text: 'Ngươi chưa có Trúc Cơ Đan trong túi. Về Thanh Vân Đại Điện gặp trưởng lão tông — đan của ngươi đang chờ ở đó.' }]);
     var rm = L.bagRemove(state, 'truc_co_dan', 1);
     if (!rm.ok) { toast(rm.reason); return; }
-    var r = L.tryBreakthrough(state);
-    if (!r.ok) {
-      L.bagAdd(state, 'truc_co_dan', 1); // hoàn lại đan: không mất vật phẩm vì một lần đột phá hụt
-      toast(r.reason);
-      refreshHUD(); saveNow();
-      return;
-    }
-    sfxBigBell();
-    pillarT = 2.8; // cột sáng lớn của mốc Trúc Cơ
-    spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
-    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 }); // vòng sóng vàng lớn — Thiên Đạo Ấn của mốc mới
-    rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
-    shakeT = Math.max(shakeT, 0.8);
-    L.recordSpeech(state, 8, 'loi-dau-o-truc-co', 'thanh-van-tong');
-    say(ST.SCENE_TRUC_CO, function () {
-      state.quest = 'q8_thu_tieng';
-      refreshHUD(); saveNow();
-      toast('Đột phá thành công: ' + r.label + '! Về đại điện gặp trưởng lão tông.', 4600);
+    // THIÊN KIẾP NHẸ 3 ĐẠO (docs/realm-prep/ mục 7 — điểm chèn duy
+    // nhất): đan đã nuốt, sự kiện độ kiếp thay cho lời gọi
+    // tryBreakthrough trực tiếp. Khối thành công bên dưới giữ nguyên
+    // từng hiệu ứng/câu thoại của bản live; chỉ cộng thêm lớp tuyên
+    // cáo Thiên Đạo chạy trong hàm gọi lại của cảnh. Tiền lệ hoàn đan
+    // giữ nguyên cho hai trường hợp không mất: rút lui ở pha tụ mây
+    // (tribRetreat) và tryBreakthrough hụt ở tầng kỹ thuật sau lôi.
+    startTribulation({
+      targetRealm: 2, catalystId: 'truc_co_dan', chapter: 8,
+      onSuccess: function (fireAnnounce) {
+        var r = L.tryBreakthrough(state);
+        if (!r.ok) {
+          L.bagAdd(state, 'truc_co_dan', 1); // hoàn lại đan: không mất vật phẩm vì một lần đột phá hụt
+          toast(r.reason);
+          refreshHUD(); saveNow();
+          return;
+        }
+        sfxBigBell();
+        pillarT = 2.8; // cột sáng lớn của mốc Trúc Cơ
+        spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
+        rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 }); // vòng sóng vàng lớn — Thiên Đạo Ấn của mốc mới
+        rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+        shakeT = Math.max(shakeT, 0.8);
+        L.recordSpeech(state, 8, 'loi-dau-o-truc-co', 'thanh-van-tong');
+        say(ST.SCENE_TRUC_CO, function () {
+          state.quest = 'q8_thu_tieng';
+          fireAnnounce(); // tuyên cáo Thiên Đạo: biểu ngữ + sổ + tiếng tuyên đọc (mục 9)
+          refreshHUD(); saveNow();
+          toast('Đột phá thành công: ' + r.label + '! Về đại điện gặp trưởng lão tông.', 4600);
+        });
+        refreshHUD();
+      }
     });
     refreshHUD();
   }
@@ -6622,6 +7060,20 @@
       toast('Kết Đan là bước qua đại cảnh giới — phải thực hiện tại Đài Trúc Cơ ở phía bắc Thanh Vân Tông cùng vật dẫn Kết Đan, theo nhiệm vụ chương 12. Hãy tới đài và tương tác với đài để bắt đầu.', 5600);
       return;
     }
+    // Lớp điều kiện đột phá chung (docs/realm-prep/ mục 2, tầng logic
+    // stageGateBlocked): giai đoạn Trúc Cơ chỉ đột phá trong sự kiện
+    // đóng chương tương ứng — nút bấm báo rõ còn thiếu mốc nào; biên
+    // đại cảnh giới từ Kim Đan trở đi (Nguyên Anh, Hóa Thần) chưa có
+    // lễ độ kiếp riêng nên nút bấm không được qua mặt thiên kiếp.
+    var gate = L.stageGateBlocked(state);
+    if (gate) {
+      if (gate.reason === 'great_border') {
+        toast('Bước qua đại cảnh giới phải qua thiên kiếp tại đài. Lễ độ kiếp cho mốc ' + gate.info.targetLabel + ' chưa được mở — hãy tu luyện tiếp, chờ ngày tông môn mở đài.', 5600);
+      } else {
+        toast(gate.reason, 5600);
+      }
+      return;
+    }
     var r = L.tryBreakthrough(state);
     if (!r.ok) { toast(r.reason); return; }
     sfxBell();
@@ -6668,6 +7120,24 @@
      tiến độ thuần từ logic + nút Chọn/Bỏ chọn dẫn đường + nút Nhận
      thưởng khi ready. Vẽ lại chỉ khi chữ ký trạng thái đổi (tránh dựng
      lại DOM mỗi khung hình qua refreshHUD). */
+  /* Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.2): vẽ từ
+     state.announceLog, dòng mới nhất ở trên; ký hiệu chữ ký để không
+     dựng lại DOM khi không có gì thay đổi (cùng khuôn panel phụ). */
+  var announceSig = '';
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function renderAnnounceLog() {
+    var box = $('announce-log-list');
+    if (!box || !state) return;
+    var log = state.announceLog || [];
+    var sig = log.length + '|' + (log.length ? log[log.length - 1].ts : 0);
+    if (sig === announceSig) return;
+    announceSig = sig;
+    if (!log.length) { box.innerHTML = '<div class="announce-empty">Chưa có thông cáo nào. Thiên Đạo chỉ lên tiếng khi một tu sĩ độ kiếp thành công bước qua đại cảnh giới.</div>'; return; }
+    box.innerHTML = log.slice().reverse().map(function (e) {
+      var hh = Math.floor((e.minutes || 0) / 60), mm = (e.minutes || 0) % 60;
+      return '<div class="announce-row"><div class="announce-day">Ngày ' + (e.day || 1) + ' · ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm + '</div><div>' + escHtml(e.text) + '</div></div>';
+    }).join('');
+  }
   var sidePanelSig = '';
   function renderSidePanel() {
     var list = $('hud-side-list');
@@ -6733,6 +7203,11 @@
     $('hud-realm').textContent = L.realmName(state.realm, state.stage);
     $('hud-hp').textContent = Math.floor(state.hp) + ' / ' + state.hpMax;
     $('hud-hp-bar').style.width = Math.max(0, Math.min(100, state.hp / state.hpMax * 100)) + '%';
+    // Dấu trọng thương cạnh thanh máu (docs/realm-prep/ mục 10): chỉ
+    // hiện khi thân đang mang thương sau độ kiếp hỏng.
+    var injEl = $('hud-injury');
+    if (injEl) injEl.classList.toggle('hidden', !state.flags.trongThuong);
+    renderAnnounceLog();
     var cap = L.REALMS[state.realm].tuviNext;
     $('hud-tuvi').textContent = cap ? Math.floor(state.tuvi) + ' / ' + cap : Math.floor(state.tuvi) + '';
     $('hud-tuvi-bar').style.width = cap ? Math.min(100, state.tuvi / cap * 100) + '%' : '100%';
@@ -6854,6 +7329,7 @@
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
     if (flashA > 0) flashA = Math.max(0, flashA - dt * 0.7);
     if (pillarT > 0) pillarT = Math.max(0, pillarT - dt);
+    if (tribBoltFx.t > 0) tribBoltFx.t = Math.max(0, tribBoltFx.t - dt);
     // Dừng hình (cảm giác cày GF-03): đóng băng LỚP THẾ GIỚI (quái, hạt,
     // vòng sóng, số bay) trong 60-160ms tùy hạng đòn; giao diện, thoại và
     // đáp ứng di chuyển của người chơi vẫn chạy theo thời gian thật.
@@ -7172,6 +7648,12 @@
         // điểm linh khí hồi 10% máu tối đa mỗi giây — đường hồi máu duy
         // nhất ngoài đột phá, để vòng săn quái không kẹt ở máu thấp.
         if (state.hp < state.hpMax) { state.hp = Math.min(state.hpMax, state.hp + state.hpMax * 0.10 * dt); }
+        // Dưỡng thương bằng đường nghỉ (docs/realm-prep/ mục 6.1): máu
+        // hồi ĐẦY ở điểm linh khí thì trọng thương khép lại, tốc độ
+        // thổ nạp trở về bình thường.
+        if (state.flags.trongThuong && state.hp >= state.hpMax && L.clearTrongThuong(state)) {
+          toast('Thương thế do lôi kiếp đã khép hẳn sau khi nghỉ dưỡng — tốc độ thổ nạp trở lại bình thường.', 4200);
+        }
         if (state.tuvi !== beforeTuvi && state.quest === 'q_meditate' && state.tuvi >= 100) {
           state.quest = 'q_break'; toast('Tu vi đã đầy! Nhấn phím B để đột phá Luyện Khí tầng 1.');
         }

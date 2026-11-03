@@ -85,6 +85,36 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 #boss-hp-fill.phase-flash { filter: brightness(1.8); }
 #boss-phase { font-size: 11.5px; color: #ffb27a; margin-top: 3px; min-height: 14px; }
 
+/* Thiên Đạo tuyên cáo (docs/realm-prep/ mục 9.2): biểu ngữ vàng sẫm
+   trên nền tối, giữa-trên khung game, không chặn thao tác. */
+#announce-banner { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); z-index: 7;
+  min-width: 300px; max-width: 76%; text-align: center; pointer-events: none;
+  background: rgba(16, 12, 4, 0.88); border: 1px solid #d4af37; border-radius: 10px;
+  padding: 10px 22px 12px; box-shadow: 0 0 22px rgba(212, 175, 55, 0.25); }
+#announce-banner .announce-title { font-size: 12px; letter-spacing: 4px; color: #d4af37; margin-bottom: 4px; }
+#announce-text { font-size: 16px; font-weight: bold; color: #ffe9a8; line-height: 1.45; }
+.announce-row { border-bottom: 1px solid rgba(212, 175, 55, 0.18); padding: 5px 2px; font-size: 12.5px; color: #e8dfc0; }
+.announce-day { font-size: 10.5px; color: #b9a86a; letter-spacing: 0.5px; }
+.announce-empty { font-size: 12.5px; color: #9a8f6e; padding: 4px 2px; line-height: 1.5; }
+
+/* Bảng chuẩn bị thiên kiếp (mục 3.4): panel giữa màn hình, chặn thao
+   tác cho tới khi người chơi Bước vào kiếp hoặc Rút lui. */
+#trib-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9;
+  width: min(560px, 92%); max-height: 86%; overflow-y: auto;
+  background: rgba(14, 12, 22, 0.96); border: 1px solid #7d6fb8; border-radius: 12px;
+  padding: 16px 20px 14px; color: #e6e0f0; box-shadow: 0 0 34px rgba(90, 70, 180, 0.35); }
+.trib-title { font-size: 17px; font-weight: bold; letter-spacing: 2px; color: #cfd8ff; text-align: center; margin-bottom: 10px; }
+.trib-line { font-size: 13px; line-height: 1.55; margin: 6px 0; }
+.trib-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px;
+  padding: 3px 0; border-bottom: 1px dashed rgba(160, 150, 220, 0.25); }
+.trib-warn { font-size: 12px; line-height: 1.55; color: #ffb27a; margin-top: 10px;
+  border: 1px solid rgba(255, 178, 122, 0.35); border-radius: 8px; padding: 7px 10px; }
+.trib-btns { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+
+/* Dấu trọng thương cạnh thanh máu (mục 10): chữ đỏ nhỏ, vẽ bằng CSS. */
+#hud-injury { font-size: 10.5px; font-weight: bold; color: #ff9a8a; border: 1px solid rgba(255, 120, 100, 0.55);
+  border-radius: 6px; padding: 0 5px; margin-left: 4px; white-space: nowrap; }
+
 /* Liên trảm: góc dưới trái vùng chiến đấu; 2 giây cuối cửa sổ thì nhấp nháy. */
 #combo-box { position: absolute; left: 16px; bottom: 118px; z-index: 6; pointer-events: none;
   font-size: 17px; font-weight: bold; color: #ffd94e; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
