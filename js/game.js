@@ -426,12 +426,12 @@
   }
   /* Hạt khói lam xám (gói phụ 10): cuộn chậm, nở dần và tan — họ Huyết
      Bạc Cung (kẻ địch xuất hiện trong khói) và các vụn vỡ lớn. */
-  function spawnSmoke(x, y, n) {
+  function spawnSmoke(x, y, n, col) {
     if (!fxOn()) return;
     for (var i = 0; i < n && parts.length < MAX_PARTS; i++) {
       parts.push({ kind: 'smoke', x: x + (Math.random() - 0.5) * 22, y: y + (Math.random() - 0.5) * 8,
         vx: (Math.random() - 0.5) * 9, vy: -6 - Math.random() * 7, life: 1.1 + Math.random() * 0.7, t: 0,
-        col: '148,163,184', r: 4 + Math.random() * 5 });
+        col: col || '148,163,184', r: 4 + Math.random() * 5 });
     }
   }
   function fadeTransition(cb) {
@@ -517,7 +517,8 @@
     tlFight = null; tlSwordHeld = false; tlSub(null); // ải Thăng Long thật (gói phụ 13) cũng là trạng thái phiên
     hhtFight = null; hhtLastSkills = []; hideBossBanner(); // trận tỉ thí Hoa Hướng Thần trên đài (Mục F) cũng là trạng thái phiên
     atkFigs = []; atkFx = null; atkPanelPending = false; atkPanelShown = false; hideAtkPanel(); // hình diễn đánh đêm + tranh phân cảnh (gói phụ 8)
-    pillars = []; streaks = []; // cột sáng + vệt kiếm quang là trạng thái phiên (gói phụ 10)
+    kdFig = null; // hình diễn yêu thú giữ dược chương 11 (boss-fx #21+#22) cũng là trạng thái phiên
+    pillars = []; streaks = []; bossFx = []; // cột sáng + vệt kiếm quang + hiệu ứng boss là trạng thái phiên (gói phụ 10)
     resFields = []; resWaves = []; resPassiveT = 9; // sân cộng hưởng + sóng khóa + nhịp nghe thụ động cũng là trạng thái phiên (bước 2 Vạn Âm)
     comboN = 0; comboT = 0; hitStopT = 0; hurtT = 0; playerHurtT = 0; ghostHp = -1; ghostPctShown = -1;
     bossPillar = null; encStance = false; zoneDwell = 0;
@@ -1579,9 +1580,14 @@
         }
       }
       if (hb.phase === 'tele' && hb.skillId === 'star1') {
+        // Vòng báo nới KHỚP vùng trúng thật 120px (parent quyết khi gộp
+        // đợt hiệu ứng boss: trước đây vẽ 52x30 trong khi điều kiện
+        // trúng ở updateHhtFight là dist < 120 — chỉ đổi hình vẽ vòng
+        // báo, vùng trúng và sát thương giữ nguyên; tỉ lệ nén dọc
+        // 30/52 được giữ nguyên theo bán kính mới: 120 x 0,577 ~ 69).
         ctx.strokeStyle = 'rgba(255,150,90,' + (0.45 + Math.sin(tNow / 60) * 0.15) + ')';
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(px + 16, py + 16, 52, 30, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(px + 16, py + 16, 120, 69, 0, 0, Math.PI * 2); ctx.stroke();
       }
     }
     // Hạt linh khí lơ lửng trong không gian trấn: thưa, nhẹ, trôi theo gió —
@@ -1641,6 +1647,7 @@
     npcsLive.forEach(function (n) { draws.push({ depth: (n.y + 1) * TILE, kind: 'npc', n: n }); });
     mons.forEach(function (mn) { if (mn.state !== 'gone') draws.push({ depth: mn.y + TILE, kind: 'mon', m: mn }); });
     atkFigs.forEach(function (af) { draws.push({ depth: af.py + TILE, kind: 'atkfig', f: af }); }); // kẻ địch đánh đêm (gói phụ 8)
+    if (kdFig) draws.push({ depth: kdFig.py + TILE, kind: 'kdbeast', f: kdFig }); // yêu thú giữ dược chương 11 — hình diễn đường A (boss-fx #21+#22)
     if (tlFight) draws.push({ depth: tlFight.fig.y + TILE, kind: 'tlfig', f: tlFight.fig }); // hình chiếu Thăng Long (gói phụ 13)
     if (hhtFight) { draws.push({ depth: hhtFight.boss.y + TILE, kind: 'hhtboss', f: hhtFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // Mục F: Hoa Hướng Thần + vòng đệ tử đứng xem trên đài
     if (daiFight) { draws.push({ depth: daiFight.boss.y + TILE, kind: 'daiboss', f: daiFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // ARCIV ch.13: đài thách đấu dùng chung vòng khán giả quanh đài
@@ -1769,13 +1776,40 @@
         ctx.beginPath(); ctx.ellipse(af.px + 16 + ajx, af.py + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var afim = ASSETS.chars[af.look];
         if (imgReady(afim)) {
-          var afMoving = af.mode === 'enter' || af.mode === 'flee' || af.mode === 'advance';
+          var afMoving = af.mode === 'enter' || af.mode === 'flee' || af.mode === 'advance' || af.mode === 'lunge' || af.mode === 'retreat' || af.mode === 'search';
           var afsrc = charSrc(af.look, afim, af.dir, DIR8_ROW4[af.dir] || 0, afMoving ? (Math.floor(af.walkT * 8) % charCycleFrames(af.look)) : 0, 0);
           ctx.drawImage(afim, afsrc.x, afsrc.y, afsrc.w, afsrc.h, af.px - 16 + ajx, af.py - 48, 64, 80);
         } else {
           drawSprite(S.charSprite(af.look, af.dir, 0), af.px, af.py - 8, 2);
         }
         if (af.leader) labels.push({ key: 'atk_leader', name: 'Tên Cầm Đầu', title: 'Huyết Bạc Cung', cx: af.px + 16, wantY: af.py - 48 - 30, color: '#ffb0a0' });
+      } else if (d.kind === 'kdbeast') {
+        // Yêu thú giữ dược (boss-fx #21+#22): sheet son_chu sẵn có — hàng 0 đứng / 1 đi / 2 lao / 3 gục (khung chết), cùng quy ước monSrc.
+        var kf2 = d.f, ksize = MON_SHEET.son_chu || 136;
+        var kfx = kf2.px + 16, kfy = kf2.py + 32;
+        contactShadow(kfx, kfy - 2, ksize * 0.72);
+        var kim = ASSETS.mons['son_chu'];
+        if (imgReady(kim)) {
+          var kcw = kim.naturalWidth / 6, kch = kim.naturalHeight / 4, krow = 0, kcol = 0;
+          if (kf2.mode === 'collapse') { krow = 3; kcol = kf2.collapseT < 0.3 ? 1 : (kf2.collapseT < 0.65 ? 2 : 3); }
+          else if (kf2.mode === 'lunge') { krow = 2; kcol = 1; }
+          else if (kf2.mode === 'enter' || kf2.mode === 'retreat') { krow = 1; kcol = Math.floor(kf2.walkT * 8) % 4; }
+          else { krow = 0; kcol = Math.floor(tNow / 600) % 2; }
+          ctx.save();
+          if (kf2.mode === 'collapse') ctx.globalAlpha = Math.max(0, 1 - kf2.collapseT / 1.5);
+          ctx.drawImage(kim, kcol * kcw, krow * kch, kcw, kch, kfx - ksize / 2, kfy - ksize, ksize, ksize);
+          ctx.restore();
+          ctx.globalAlpha = 1;
+          if (kf2.eyesGlow) {
+            // Đợt 2: hai mắt đỏ phát sáng, nhấp nháy NHANH DẦN theo eyeT (chu kỳ co từ ~170ms xuống sàn 45ms).
+            var eper = Math.max(45, 170 - kf2.eyeT * 18);
+            var ea = 0.55 + 0.45 * Math.sin(tNow / eper);
+            ctx.fillStyle = 'rgba(255,60,40,' + (ea * 0.35).toFixed(3) + ')';
+            ctx.beginPath(); ctx.arc(kfx - 10, kfy - ksize * 0.78, 6, 0, Math.PI * 2); ctx.arc(kfx + 10, kfy - ksize * 0.78, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,70,45,' + ea.toFixed(3) + ')';
+            ctx.beginPath(); ctx.arc(kfx - 10, kfy - ksize * 0.78, 2.8, 0, Math.PI * 2); ctx.arc(kfx + 10, kfy - ksize * 0.78, 2.8, 0, Math.PI * 2); ctx.fill();
+          }
+        }
       } else if (d.kind === 'hhtboss') {
         // Hoa Hướng Thần trên đài (Mục F): thân hình ĐẶC như người thật
         // (khác hẳn hình chiếu bán trong suốt), chớp sáng khi trúng đòn,
@@ -1910,7 +1944,7 @@
     // vòng sóng âm Ngôn Linh (cài đặt fxRings chỉ tắt phần VẼ, vòng đời vòng vẫn chạy như cũ)
     rings = rings.filter(function (r) { return r.a > 0; });
     if (!SET || SET.current.fxRings) rings.forEach(function (r) {
-      ctx.strokeStyle = 'rgba(255,240,190,' + r.a + ')'; ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(' + (r.col || '255,240,190') + ',' + r.a + ')'; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
     });
     bcDrawOverlays(); // lớp phủ bí cảnh: bẫy kiếm trận, vòng trấn, điểm hái
@@ -2066,6 +2100,7 @@
     bossPillar = null;
     pillars.forEach(drawPillar);
     drawStreaks();
+    drawBossFx(); // lớp hiệu ứng riêng của đòn boss (nứt đất / tàn ảnh / kiếm dựng / gợn nước / điểm tụ) — đặt ngay sau drawStreaks như bản gốc đợt boss
     drawArcFx(); arcDrawEyes(); arcDrawCycle(); drawTechFx(); arcDrawWave2();
     // ARCIV ch.15 (điểm yếu F.6 đã khai, nay bổ sung): vòng nhiễu xám quanh
     // NHÂN VẬT khi cộng hưởng bị khóa bởi trạng thái cảnh.
@@ -6270,7 +6305,7 @@
       return say([{ who: 'narrate', text: 'Cụm Linh Chi Sau Núi đã được hái. Gốc rễ còn nằm trong khe đá ẩm — vài năm nữa mới lại có một cụm mới.' }]);
     }
     if (state.quest === 'q8_chuan_bi' && state.flags.chuanBiSeen) {
-      return say(ST.SCENE_CHI_GATHER, function () { say(ST.SCENE_CHI_AMBUSH); });
+      return say(ST.SCENE_CHI_GATHER, function () { chiSpawnAmbushFig(); say(ST.SCENE_CHI_AMBUSH); }); // #20: bóng đen HIỆN HÌNH ở mép rừng ngay khi cảnh phục kích bắt đầu
     }
     return say([{ who: 'narrate', text: 'Trong khe đá ẩm sau núi, một cụm nấm đỏ sẫm tỏa linh khí nhè nhẹ — Linh Chi quý của Thanh Vân Tông. Đừng hái bừa: hãy gặp trưởng lão tông ở Thanh Vân Đại Điện nhận điều kiện Trúc Cơ trước đã.' }]);
   }
@@ -6298,6 +6333,9 @@
       line = { who: 'narrate', text: 'Ngươi nín thở, ép mình vào sau thân cây lớn. Mười tám năm im lặng dạy ngươi cách biến mất giỏi hơn bất kỳ ai — bóng đen lùng sục một vòng rồi tan vào rừng.' };
     }
     if (!line) return;
+    // #20: diễn đáp trả theo đúng nhịp atkStageResolve (chao đảo 0,25s → tháo chạy + khói 0,62s) CHẠY SONG SONG lời thoại gốc — không chặn luồng, không đổi kết cục.
+    if (action === 'chi_hide') chiStageHide();
+    else atkStageResolve(action === 'chi_sword' ? 'atk_sword' : 'atk_chan', function () {});
     say([line].concat(ST.SCENE_CHI_END), function () {
       /* Công thức Trúc Cơ Đan (chuẩn đã chốt): toán phục kích mang theo
          Yêu Đan cấp 1 — rơi CHẮC CHẮN trong chuyến hái linh chi này, để
@@ -6603,6 +6641,7 @@
       var canY = L.bagCanAdd(state, 'yeu_dan_2', 1);
       if (!canD.ok || !canY.ok) { toast('Túi trữ vật đã đầy — hãy dọn túi rồi quay lại cụm dược.', 4200); return; }
       state.flags.kdBeastWave = 1;
+      kdSpawnBeast(); // #21 đợt 1: thú bước ra trong bụi đất + khói, gầm và lao 1 nhịp ngay khi dòng dẫn đợt 1 hiện
       return say(ST.SCENE_CH11_DUOC, function () { say(ST.SCENE_CH11_DUOC_FIGHT); });
     }
     if ((state.quest === 'q11_chuan_bi_ket_dan' || state.quest === 'q11_vat_dan') && (state.flags.ketDanCoreExtra || 0) < 2) {
@@ -6646,6 +6685,7 @@
     if (!line) return;
     if (wave < 2) {
       state.flags.kdBeastWave = wave + 1;
+      kdBeastWave2Fx(); // #22 đợt 2: mắt đỏ nhấp nháy nhanh dần + gầm dài + lao hai nhịp gấp đôi + vệt quật đôi + shakeWorld(0,6)
       // KD_BEAST_LINES chỉ là câu dẫn đợt kế; điểm lựa chọn của đợt sau lấy
       // lại đúng đối tượng lựa chọn trong cảnh trận (phần tử thứ hai của
       // SCENE_CH11_DUOC_FIGHT) để người chơi chọn tiếp mà không lặp cảnh.
@@ -6653,6 +6693,7 @@
       return;
     }
     state.flags.kdBeastWave = 0;
+    kdBeastCollapse(); // #21+#22 kết: hình thú gục bằng khung chết + mờ dần + hạt đất lắng, chạy song song cảnh SCENE_CH11_DUOC_END gốc
     say([line].concat(ST.SCENE_CH11_DUOC_END), function () {
       var rb = L.bagAdd(state, 'ket_dan_duoc', 1);
       var ry = rb.ok ? L.bagAdd(state, 'yeu_dan_2', 1) : { ok: false };
@@ -7163,7 +7204,7 @@
         updateBossBar(m);
       }
       sfxRoar(false); shakeWorld(0.35); musicBoss(true);
-      if (bcSession && bcSession.realm === 'bc_kiemtrung' && bcSession.speechUsed) { monsterStrike(m); toast('Kiếm ý đã nhớ lấy tiếng người — nó ra đòn mở màn ngay khi trận bắt đầu!', 4200); }
+      if (bcSession && bcSession.realm === 'bc_kiemtrung' && bcSession.speechUsed) { m.bossFxOpening = true; monsterStrike(m); toast('Kiếm ý đã nhớ lấy tiếng người — nó ra đòn mở màn ngay khi trận bắt đầu!', 4200); }
     }
     if (bcSession && bcSession.realm === 'bc_kiemtrung') bcSession.tranT = 0; // bắt đầu trận: đặt lại bộ đếm tĩnh mặc trấn
     // ARCIV ch.16: boss Trận Nhãn mở trận -> dựng chu kỳ kiếm trận + hai
@@ -7231,6 +7272,125 @@
     enc.hitN += 1;
     var v = 0.85 + 0.3 * L.rollSessionValue(enc.sessionId, ':matk' + enc.hitN);
     hurtPlayer(Math.max(1, Math.round(m.atk * v)));
+    bossStrikeFx(m); // lớp trình diễn của đòn boss — chạy SAU khi số đã áp đúng khung gốc, không đụng enc/số nào
+  }
+  /* ===== HIỆU ỨNG ĐÒN THƯỜNG CỦA BOSS CHẠM TRÁN (đợt cài 2026-11-04,
+     thiết kế docs/boss-skill-fx-report.md Mục 2.1 #1–#8) =====
+     Khung chung cho 7 boss: vòng chấn động màu loài ở chân + tiếng ra
+     đòn theo loài + một đường đòn SỐNG từ boss tới người chơi, phân
+     nhánh theo species. RÀNG BUỘC CỨNG: hàm này chỉ VẼ và PHÁT TIẾNG —
+     sát thương, hệ số, chu kỳ và thời điểm trừ máu nằm trọn ở
+     monsterStrike/hurtPlayer phía trên và KHÔNG đổi một con số nào;
+     dấu hiệu tụ lực (xem khối vẽ trong drawMonster) chỉ nằm BÊN TRONG
+     chu kỳ atkT sẵn có, không thêm thời gian né nào. Ngân sách: mỗi
+     đòn cộng thêm tối đa ~11 hạt, tự co khi parts đã cao (bossFxBudget),
+     trần chung MAX_PARTS 90 do spawnParts/spawnSmoke tự giữ. */
+  var BOSS_FX_SPECIES = { lang_vuong: 1, son_chu: 1, thuy_xa_tinh: 1, thach_tuong_thu_ve: 1, tan_anh_vo_cuc: 1, kiem_y_tan_hon: 1, oan_hon_chien_truong: 1 };
+  function bossFxBudget(n) { // tự co ngân sách hạt khi parts.length đã cao (đúng thói quen của spawnResParts)
+    if (parts.length >= MAX_PARTS) return 0;
+    if (parts.length > MAX_PARTS - 24) return Math.min(n, 2);
+    return n;
+  }
+  function bossStrikeFx(m) {
+    var opening = !!m.bossFxOpening; m.bossFxOpening = false;
+    if (!BOSS_FX_SPECIES[m.species]) return;
+    var mcx = m.x + 16, mcy = m.y + 16, pcx = px + 16, pcy = py + 16;
+    var ang = Math.atan2(pcy - mcy, pcx - mcx);
+    var col = MON_PARTS[m.species] || '200,200,200';
+    if (!SET || SET.current.fxRings) rings.push({ x: mcx, y: m.y + 30, r: 6, a: 0.65, col: col }); // vòng chấn động lúc chiêu ra tại chân boss
+    if (m.species === 'lang_vuong') {
+      // #1 Lang Vương: BA vệt trảo gió song song lệch ±0,18 rad quanh
+      // hướng đòn + bụi gió cuốn theo; từ nửa máu (đợt 3 trở đi theo
+      // mốc máu ≤ 50%) thêm vệt thứ tư và gió nhanh hơn — chỉ trình
+      // diễn, số đòn không đổi.
+      sfxMonsterCry(m.species, false);
+      var enraged = m.hp <= m.hpMax * 0.5;
+      spawnParts(mcx, mcy - 4, bossFxBudget(4), '190,200,215', enraged ? 58 : 40, false);
+      var offs = enraged ? [-0.27, -0.09, 0.09, 0.27] : [-0.18, 0, 0.18];
+      for (var li = 0; li < offs.length; li++) spawnStreak(mcx, mcy - 6, ang + offs[li], '190,200,215', false);
+      if (m.hp <= m.hpMax * 0.25) spawnPetals(mcx, mcy - 24, bossFxBudget(2)); // chấn động rung cánh anh đào quanh ổ (thung lũng hoa)
+    } else if (m.species === 'son_chu') {
+      // #2 Sơn Chủ: đòn nặng — gầm trầm, bụi đất rơi, VỆT NỨT ĐẤT LAN
+      // theo đoạn từ chân boss tới chân người chơi, rung cấp đòn nặng.
+      sfxRoar(true);
+      spawnParts(mcx, m.y + 28, bossFxBudget(6), '150,130,110', 26, false);
+      var pts = [], jit = [0, 7, -6, 5, -4, 3, 0];
+      for (var ci = 0; ci <= 6; ci++) {
+        var cf = ci / 6;
+        pts.push([mcx + (pcx - mcx) * cf, (m.y + 30) + ((py + 30) - (m.y + 30)) * cf + jit[ci]]);
+      }
+      bossFx.push({ kind: 'crack', pts: pts, t: 0, dur: 0.8 });
+      shakeWorld(0.35);
+      if (m.hp <= m.hpMax * 0.25) spawnPetals(mcx, mcy - 24, bossFxBudget(2)); // đợt cuối: chấn động rung hoa quanh ổ
+    } else if (m.species === 'thuy_xa_tinh') {
+      // #3 Thủy Xà Tinh: vệt SÓNG NƯỚC lệch sin theo thời gian (opts.wave
+      // của spawnStreak) + giọt nước rơi ở đích + gợn elip ở đầu rắn.
+      // LƯU Ý: 3 hạt xanh lục quanh đầu rắn chỉ là TRANG TRÍ màu độc —
+      // boss này KHÔNG có cơ chế độc: không trạng thái, không số nào kèm.
+      sfxMonsterCry(m.species, false);
+      bossFx.push({ kind: 'ripple', x: mcx, y: m.y + 30, t: 0, dur: 0.5 });
+      spawnStreak(mcx, mcy - 4, ang, '80,170,190', false, { wave: 10 });
+      spawnParts(pcx, pcy - 6, bossFxBudget(5), '80,170,190', 30, false);
+      spawnParts(mcx, mcy - 18, bossFxBudget(3), '110,190,120', 12, true); // hạt "độc" trang trí thuần (xem lưu ý trên)
+    } else if (m.species === 'thach_tuong_thu_ve') {
+      // #4 Thạch Tượng: đòn ĐẬP THẲNG XUỐNG — bụi đá BẬT ĐỨNG tại chân
+      // người chơi + mảnh khói đá + nốt kim loại 2400 Hz lúc chạm +
+      // rung cấp nặng + dừng hình 0,06s (trong trần khóa 300ms sẵn có).
+      // Vòng tụ CO LẠI đọc ở nửa vận đòn nằm trong drawMonster.
+      sfxRoar(true);
+      spawnParts(pcx, py + 30, bossFxBudget(8), '160,155,140', 34, true);
+      spawnSmoke(pcx, py + 24, Math.min(3, bossFxBudget(3)), '168,160,148');
+      sfxHitBlade(); // tiếng kim loại của vỏ đá-kim lúc đòn chạm
+      shakeWorld(0.35);
+      hitStop(0.06);
+    } else if (m.species === 'tan_anh_vo_cuc') {
+      // #5 Tàn Ảnh Vô Cực: hai BÓNG TÀN ẢNH của chính sprite boss lệch
+      // ngược hướng đòn (8px / 16px, mờ 0,35 / 0,18) + vệt trảo ảnh
+      // NHẤP NHÁY mất-hiện trong lúc trượt (opts.flick của spawnStreak).
+      sfxMonsterCry(m.species, false);
+      sfxWind();
+      if (imgReady(ASSETS.mons[m.species])) {
+        var gs = monSrc(m), gsize = MON_SHEET[m.species] || 136;
+        [8, 16].forEach(function (off, gi) {
+          bossFx.push({ kind: 'ghost', species: m.species, src: gs, size: gsize, face: m.face,
+            x: mcx - Math.cos(ang) * off, y: (m.y + 32) - Math.sin(ang) * off * 0.5,
+            alpha: gi === 0 ? 0.35 : 0.18, t: 0, dur: 0.3 });
+        });
+      }
+      spawnStreak(mcx, mcy - 6, ang, '200,210,255', false, { flick: true });
+    } else if (m.species === 'kiem_y_tan_hon') {
+      // #6 Kiếm Ý Tàn Hồn: kiếm khí TỰ BAY — kiếm ánh sáng DỰNG ĐỨNG
+      // trên đầu boss trong 0,35s cuối của chu kỳ atkT (vẽ ở
+      // drawMonster) rồi LAO THẬT bằng streak lớn + tia lửa lam bám đuôi.
+      sfxSword();
+      sfxMonsterCry(m.species, false);
+      if (opening) {
+        // #7 ĐÒN MỞ MÀN "kiếm ý nhớ tiếng người": 3 kiếm dựng quanh
+        // boss + cột sáng mảnh + 3 kiếm LAO NỐI TIẾP cách nhau 0,12s
+        // (hai kiếm đầu nhỏ/mờ tan giữa đường, kiếm cuối là streak lớn).
+        // Số vẫn là ĐÚNG MỘT đòn monsterStrike như mã gốc — hai kiếm
+        // đầu là lớp trình diễn, không thêm lần trừ máu nào. (Lệch
+        // trình diễn đã ghi ở báo cáo bàn giao: khung trừ máu của đòn
+        // mở màn vốn là NGAY khi trận bắt đầu theo mã gốc và ràng buộc
+        // không đổi thời điểm trừ máu, nên nhịp lao nối tiếp chạy từ
+        // khung mở màn đó thay vì kết thúc đúng vào nó.)
+        spawnPillar(mcx, m.y + 30, { dur: 0.8, h: 100 });
+        bossFx.push({ kind: 'swordStand', x: mcx, y: m.y + 30, t: 0, dur: 0.36 });
+        spawnStreak(mcx, mcy - 10, ang - 0.15, '190,210,255', false, { alpha: 0.55 });
+        spawnStreak(mcx, mcy - 10, ang + 0.15, '190,210,255', false, { alpha: 0.55, delay: 0.12 });
+        spawnStreak(mcx, mcy - 10, ang, '190,210,255', true, { delay: 0.24 });
+      } else {
+        spawnStreak(mcx, mcy - 10, ang, '190,210,255', true);
+      }
+      spawnParts((mcx + pcx) / 2, (mcy + pcy) / 2 - 6, bossFxBudget(4), '170,220,255', 36, true);
+    } else if (m.species === 'oan_hon_chien_truong') {
+      // #8 Oán Hồn Chiến Trường: khói oán CUỘN quanh thân lúc vận đòn +
+      // tiếng gào + vệt TRẢO KHÓI mờ kèm khói bám đường trảo tan chậm.
+      sfxGhostWail();
+      spawnSmoke(mcx, mcy - 10, bossFxBudget(5), '110,130,170');
+      spawnStreak(mcx, mcy - 6, ang, '150,160,200', false, { alpha: 0.55 });
+      spawnSmoke((mcx + pcx) / 2, (mcy + pcy) / 2, Math.min(3, bossFxBudget(3)), '110,130,170');
+    }
   }
   function hurtPlayer(dmg) {
     if (!state || dmg <= 0 || !enc) return;
@@ -7319,6 +7479,15 @@
      - Cánh hoa: chiêu của U Nhàn trong tỉ thí, boss thung lũng gục.
      - Khói lam xám: kẻ bịt mặt xuất hiện, quái gục. */
   var pillars = [], streaks = [];
+  /* Lớp hiệu ứng RIÊNG của đòn boss (đợt cài hiệu ứng boss 2026-11-04,
+     theo docs/boss-skill-fx-report.md Mục 2.1/2.2): các vật thể vẽ thuần
+     trình diễn mà nguyên hàm sẵn có không biểu diễn được — vệt nứt đất
+     lan theo đoạn (Sơn Chủ), bóng tàn ảnh sprite (Tàn Ảnh Vô Cực), ba
+     kiếm dựng mở màn (Kiếm Ý Tàn Hồn), gợn nước elip (Thủy Xà Tinh),
+     điểm sáng tụ (Cửu Phẩm Kiếm Khí của Lục Tranh). Cập nhật bằng dtW
+     trong vòng lặp như pillars/streaks, dọn trong resetPresentationState.
+     TUYỆT ĐỐI không mang số gameplay nào. */
+  var bossFx = [];
   /* Sân cộng hưởng + đường sóng khóa Vạn Âm (bước 2, thiết kế 3.2–3.4):
      cấu trúc trình diễn thuần, dọn trong resetPresentationState, cập
      nhật bằng dtW nên tôn trọng dừng hình GF-03 như pillars/streaks. */
@@ -7345,7 +7514,13 @@
   function spawnStreak(x, y, ang, col, big, opts) {
     opts = opts || {};
     streaks.push({ x: x, y: y, ang: ang, t: 0, dur: big ? 0.55 : 0.45, col: col || '170,230,255', big: !!big,
-      scale: opts.scale || 1, guard: opts.guard || null, core: opts.core || null, thick: opts.thick || 0, swordFx: true });
+      scale: opts.scale || 1, guard: opts.guard || null, core: opts.core || null, thick: opts.thick || 0, swordFx: true,
+      // opts của lớp hiệu ứng boss (gộp đợt boss-fx): wave = biên độ lệch
+      // sin vuông góc lúc trượt (vệt sóng nước Thủy Xà); flick = alpha
+      // nhấp nháy mất-hiện (trảo ảnh Tàn Ảnh); alpha = hệ số mờ tổng
+      // (vệt trảo khói Oán Hồn); delay = giây chờ trước khi vệt trượt
+      // (kiếm lao nối tiếp của Kiếm Ý mở màn). Mọi điểm gọi cũ không đổi.
+      wave: opts.wave || 0, flick: !!opts.flick, alpha: opts.alpha == null ? 1 : opts.alpha, delay: opts.delay || 0 });
     if (streaks.length > 12) streaks.shift();
     if (window.__VSLC_FX_COUNT) window.__VSLC_FX_COUNT.swordDraws++;
   }
@@ -7457,10 +7632,17 @@
   function shadeCol(col, k) { var a = String(col).split(','); return Math.round(+a[0] * k) + ',' + Math.round(+a[1] * k) + ',' + Math.round(+a[2] * k); }
   function drawStreaks() {
     streaks.forEach(function (st) {
+      if (st.delay > 0) return; // boss-fx: vệt đang chờ nhịp lao nối tiếp (Kiếm Ý mở màn) — chưa hiện
       var k = st.t / st.dur, a = Math.sin(Math.min(1, k) * Math.PI);
+      if (st.alpha != null) a *= st.alpha; // boss-fx: mờ tổng (vệt trảo khói của Oán Hồn)
+      if (st.flick) a *= (Math.sin(st.t * 46) > -0.25 ? 1 : 0.12); // boss-fx: trảo ảnh nhấp nháy mất-hiện hai lần trong lúc trượt
       var L = (st.big ? 170 : 120) * (st.scale || 1);
       var head = (k - 0.5) * L * 0.38;
       var cx = st.x + Math.cos(st.ang) * head, cy = st.y + Math.sin(st.ang) * head;
+      if (st.wave) { // boss-fx: vệt sóng nước — đầu vệt lệch sin vuông góc, biên độ tắt dần hai đầu trượt
+        var wOff = Math.sin(k * Math.PI) * Math.sin(k * Math.PI * 3) * st.wave;
+        cx += Math.cos(st.ang + Math.PI / 2) * wOff; cy += Math.sin(st.ang + Math.PI / 2) * wOff;
+      }
       var crit = st.col === '255,226,150';
       var guard = st.guard || (crit ? '150,110,40' : '45,70,110');
       var core = st.core || (crit ? '255,246,220' : '235,245,255');
@@ -7964,6 +8146,85 @@
     });
   }
 
+  /* ================= Lớp vẽ hiệu ứng riêng của đòn boss =================
+     Mọi vật thể ở đây CHỈ sống theo t/dur của chính nó (chuyển động sống
+     liên tục, không ảnh tĩnh hiện rồi biến mất) và không mang thông tin
+     gameplay duy nhất nào: tắt fxParticles/fxRings chỉ mất lớp vẽ này. */
+  function drawBossFx() {
+    if (!fxOn()) return;
+    bossFx.forEach(function (fx) {
+      var k = Math.min(1, fx.t / fx.dur);
+      if (fx.kind === 'crack') {
+        // #2 Sơn Chủ: vệt NỨT ĐẤT LAN theo 3 đoạn nối tiếp trong 0,3s
+        // đầu từ chân boss tới chân người chơi, sau đó giữ hình rồi mờ.
+        var a = fx.t < 0.45 ? 0.92 : 0.92 * Math.max(0, 1 - (fx.t - 0.45) / Math.max(0.01, fx.dur - 0.45));
+        var segs = Math.min(3, Math.floor(fx.t / 0.1) + 1);
+        ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        for (var si = 0; si < segs; si++) {
+          ctx.strokeStyle = 'rgba(120,92,58,' + a + ')';
+          ctx.beginPath();
+          for (var pi = 0; pi <= 2; pi++) {
+            var idx = si * 2 + pi, pt = fx.pts[idx];
+            if (!pt) break;
+            if (pi === 0) ctx.moveTo(pt[0], pt[1]); else ctx.lineTo(pt[0], pt[1]);
+          }
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(226,192,120,' + (a * 0.8) + ')'; ctx.lineWidth = 1.1;
+          ctx.stroke(); ctx.lineWidth = 2.2;
+        }
+      } else if (fx.kind === 'ghost') {
+        // #5 Tàn Ảnh Vô Cực: bóng tàn ảnh của CHÍNH sprite boss, lệch
+        // ngược hướng đòn, mờ dần trong 0,3s (kỹ thuật bóng liềm của
+        // drawStreaks áp lên thân quái).
+        var gim = ASSETS.mons[fx.species];
+        if (!imgReady(gim)) return;
+        ctx.save();
+        ctx.globalAlpha = fx.alpha * Math.max(0, 1 - k);
+        ctx.translate(fx.x, fx.y);
+        if (fx.face < 0) ctx.scale(-1, 1);
+        ctx.drawImage(gim, fx.src.x, fx.src.y, fx.src.w, fx.src.h, -fx.size / 2, -fx.size, fx.size, fx.size);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      } else if (fx.kind === 'swordStand') {
+        // #7 Kiếm Ý mở màn: BA kiếm ánh sáng DỰNG ĐỨNG quanh boss (đúng
+        // hình kiếm dựng của khối báo chiêu Thăng Long / Hoa: thân trắng
+        // nóng + quầng lam + chuôi sáng ngang) trong nhịp dựng kiếm,
+        // trước khi ba kiếm lao nối tiếp bằng streak trễ nhịp.
+        var env = Math.sin(k * Math.PI);
+        for (var wi = -1; wi <= 1; wi++) {
+          var wx = fx.x + wi * 26, wy = fx.y - 52 - Math.abs(wi) * -6 + Math.sin(tNow / 240 + wi) * 2;
+          ctx.fillStyle = 'rgba(127,232,224,' + (0.30 * env) + ')';
+          ctx.beginPath(); ctx.ellipse(wx, wy, 7, 17, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.92 * env) + ')';
+          ctx.fillRect(wx - 1.4, wy - 15, 2.8, 26);
+          ctx.fillStyle = 'rgba(190,246,255,' + (0.9 * env) + ')';
+          ctx.fillRect(wx - 5, wy + 11, 10, 2.2);
+        }
+      } else if (fx.kind === 'ripple') {
+        // #3 Thủy Xà Tinh: gợn nước ELIP nén dọc 0,42 lan từ đầu rắn
+        // (cùng tỉ lệ nén của vòng gợn Chấn Âm trong drawResFields).
+        var rr = 8 + 24 * k;
+        ctx.strokeStyle = 'rgba(80,170,190,' + (0.75 * (1 - k)) + ')'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(fx.x, fx.y, rr, rr * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(190,235,250,' + (0.5 * (1 - k)) + ')'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(fx.x, fx.y, rr * 0.55, rr * 0.55 * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      } else if (fx.kind === 'converge') {
+        // #18 Cửu Phẩm Kiếm Khí: 3 điểm sáng VÀNG tụ dần vào đầu kiếm
+        // của Lục Tranh trong suốt windup 0,38s, kết bằng một chớp tụ.
+        for (var ci = 0; ci < 3; ci++) {
+          var ca = ci * 2.1 + fx.t * 3.2, cr = 17 * (1 - k) + 3;
+          var cxp = fx.x + Math.cos(ca) * cr, cyp = fx.y + Math.sin(ca) * cr * 0.6;
+          ctx.fillStyle = 'rgba(255,226,150,0.9)';
+          ctx.beginPath(); ctx.arc(cxp, cyp, 2.2, 0, Math.PI * 2); ctx.fill();
+        }
+        if (k > 0.7) {
+          ctx.fillStyle = 'rgba(255,244,200,' + ((k - 0.7) / 0.3 * 0.55) + ')';
+          ctx.beginPath(); ctx.ellipse(fx.x, fx.y, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    });
+  }
+
   /* ================= Sân cộng hưởng Vạn Âm (bước 2, thiết kế 3.2–3.5) ================= */
   // Thang trình diễn bốn nấc theo Tĩnh Âm TRƯỚC khi ra đòn (3.3).
   var RES_TIERS = [
@@ -8223,7 +8484,8 @@
     atkFigs = defs.map(function (d, i) {
       return { px: d.sx * TILE, py: d.sy * TILE, tx: d.tx * TILE, ty: d.ty * TILE,
         sx: d.sx * TILE, sy: d.sy * TILE, look: 'villager_m', dir: 'left',
-        mode: 'enter', t: 0, walkT: i * 0.7, leader: !!d.leader, seed: i * 1.7, threadT: 0 };
+        mode: 'enter', t: 0, walkT: i * 0.7, leader: !!d.leader, seed: i * 1.7, threadT: 0,
+        standX: d.tx * TILE, standY: d.ty * TILE, swingDone: false, threadShotT: d.leader ? 1.1 : 0 };
     });
     atkFigs.forEach(function (f) { spawnSmoke(f.px + 16, f.py + 14, 3); }); // kẻ bịt mặt hiện ra trong khói lam xám (gói phụ 10)
     if (n === 1) atkPanelPending = true; // tranh phân cảnh cho nhịp gia nhân gác cổng (xảy ra trước khi người chơi tới)
@@ -8241,13 +8503,29 @@
     if (dt <= 0) return;
     for (var i = atkFigs.length - 1; i >= 0; i--) {
       var f = atkFigs[i]; f.t += dt;
-      if (f.mode === 'enter' || f.mode === 'flee' || f.mode === 'advance') {
-        var spd = f.leader ? 55 : 105;
+      if (f.mode === 'enter' || f.mode === 'flee' || f.mode === 'advance' || f.mode === 'lunge' || f.mode === 'retreat' || f.mode === 'search') {
+        var spd = f.mode === 'lunge' ? 170 : (f.mode === 'search' ? 120 : (f.leader ? 55 : 105));
         var dx = f.tx - f.px, dy = f.ty - f.py, dist = Math.hypot(dx, dy), step = spd * dt;
         if (dist <= step) {
           f.px = f.tx; f.py = f.ty;
-          if (f.mode === 'flee') { atkFigs.splice(i, 1); continue; }
-          f.mode = 'stand';
+          if (f.mode === 'flee') { if (f.smokeOnRemove && parts.length <= MAX_PARTS - 6) spawnSmoke(f.px + 16, f.py + 14, 3); atkFigs.splice(i, 1); continue; }
+          if (f.mode === 'search') {
+            // Nhánh ẩn nấp (#20): lùng sục qua vị trí người chơi rồi về điểm xuất phát ở mép rừng và tan trong khói.
+            f.searchPts = (f.searchPts || []).slice(1);
+            if (!f.searchPts.length) { if (parts.length <= MAX_PARTS - 6) spawnSmoke(f.px + 16, f.py + 14, 3); atkFigs.splice(i, 1); continue; }
+            f.tx = f.searchPts[0].x; f.ty = f.searchPts[0].y;
+          } else if (f.mode === 'lunge') {
+            f.mode = 'retreat'; f.tx = f.standX; f.ty = f.standY; // vung đao xong lùi về đúng vị trí đứng
+          } else if (f.mode === 'retreat') {
+            f.mode = 'stand'; f.swingDone = true;
+          } else if (f.mode === 'enter' && !f.swingDone) {
+            // #19: vừa tới vị trí đứng — lao thêm 10px vung đao về phía người chơi/sân + 1 vệt xám thép + tiếng kiếm khẽ, rồi lùi về (chỉ trình diễn, không sát thương).
+            f.standX = f.px; f.standY = f.py;
+            var sdx = (px + 16) - (f.px + 16), sdy = (py + 16) - (f.py + 16), sd = Math.hypot(sdx, sdy) || 1;
+            f.tx = f.standX + sdx / sd * 10; f.ty = f.standY + sdy / sd * 10; f.mode = 'lunge';
+            if (fxOn()) spawnStreak(f.px + 16, f.py + 10, Math.atan2(sdy, sdx), '150,160,175', false);
+            sfxSword();
+          } else f.mode = 'stand';
         } else {
           f.px += dx / dist * step; f.py += dy / dist * step; f.walkT += dt;
           f.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
@@ -8256,13 +8534,27 @@
       if (f.leader && f.mode === 'stand') {
         f.threadT -= dt;
         if (f.threadT <= 0) { f.threadT = 0.45; spawnParts(f.px + 26, f.py + 34, 2, '46,44,58', 10, false); } // sợi tơ đen uốn lượn giữa các ngón tay hắn
+        // #19 cầm đầu đợt 3: vệt tơ đen BẮN THỬ về phía người chơi mỗi ~2s — 2 hạt tối bay cong (trọng lực hạt bẻ cong quỹ đạo) rồi tan; chỉ trình diễn.
+        f.threadShotT = (f.threadShotT == null ? 1.1 : f.threadShotT) - dt;
+        if (f.threadShotT <= 0) {
+          f.threadShotT = 2 + (f.seed % 0.7);
+          if (fxOn() && parts.length <= MAX_PARTS - 12) {
+            var tox = px + 16, toy = py + 16, tdx = tox - (f.px + 26), tdy = toy - (f.py + 34);
+            for (var tk = 0; tk < 2; tk++) {
+              parts.push({ x: f.px + 26 + (tk ? 5 : -5), y: f.py + 34, vx: tdx / 0.65, vy: tdy / 0.65 - tk * 14, life: 0.6 + tk * 0.08, t: 0, col: '40,38,52', r: 2 + tk * 0.6 });
+            }
+          }
+        }
       }
     }
     if (atkFx) {
       atkFx.t += dt;
       if (!atkFx.reacted && atkFx.t >= 0.25) {
         atkFx.reacted = true;
-        atkFigs.forEach(function (f, idx) {
+        if (atkFx.action === 'chi_hide') {
+          // #20 nhánh ẩn nấp: hình địch lùng sục 1 vòng qua vị trí người chơi rồi tan vào rừng (xem mode 'search' ở trên).
+          atkFigs.forEach(function (f) { if (f.chi) { f.searchPts = [{ x: px, y: py }, { x: f.sx, y: f.sy }]; f.tx = px; f.ty = py; f.mode = 'search'; } });
+        } else atkFigs.forEach(function (f, idx) {
           if (atkFx.action === 'atk_sword') {
             spawnStreak(f.px + 16, f.py + 4, 0.3 + idx * 0.22, '170,230,255'); // vệt kiếm quang qua từng tên (gói phụ 10)
             addDmgFloat(f.px + 16, f.py - 8, '-' + (14 + (idx * 7) % 13), '190,235,200', { size: 15, targetKey: 'atk' + idx });
@@ -8278,6 +8570,103 @@
         atkFigs.forEach(function (f) { f.tx = f.sx + 3 * TILE; f.ty = f.sy; f.mode = 'flee'; });
       }
       if (atkFx.t >= atkFx.dur) { var dn = atkFx.done; atkFx = null; dn(); }
+    }
+  }
+
+  /* ================= #20 Bóng đen phục kích Linh Chi, chương 8 (boss-fx) =================
+     Tái dùng NGUYÊN cơ chế hình diễn đánh đêm (atkFigs/atkSpawnWave/
+     atkStageResolve): 1 hình địch look villager_m (đệ tử Huyết Bạc
+     Cung) hiện trong khói ở mép rừng phía đông người chơi, tiến vào
+     đứng cách 2 ô rồi TỰ diễn nhịp vung đao của #19 (lao 10px + vệt
+     xám thép). Khi người chơi đáp trả, resolveChiAmbush gọi
+     atkStageResolve('atk_sword'/'atk_chan', noop) CHẠY SONG SONG với
+     lời thoại gốc — chao đảo ở 0,25s, tháo chạy về mép rừng + khói ở
+     0,62s, khép ở 1,15s — không chặn/không thêm chờ cho luồng thoại,
+     không đụng một chữ/cờ/kết cục nào của ba nhánh. Nhánh ẩn nấp dùng
+     chiStageHide: hình địch lùng sục qua vị trí người chơi rồi tan. */
+  function chiSpawnAmbushFig() {
+    if (atkFigs.some(function (f) { return f.chi; })) return; // chọn hỏng rồi chọn lại: hình vẫn đứng nguyên, không sinh thêm
+    var sx = px + 5 * TILE, sy = py, tx = px + 2 * TILE, ty = py;
+    atkFigs = [{ px: sx, py: sy, tx: tx, ty: ty, sx: sx, sy: sy, look: 'villager_m', dir: 'left',
+      mode: 'enter', t: 0, walkT: 0, leader: false, seed: 2.3, threadT: 0,
+      standX: tx, standY: ty, swingDone: false, chi: true, smokeOnRemove: true }];
+    if (parts.length <= MAX_PARTS - 6) spawnSmoke(sx + 16, sy + 14, 3); // hiện ra trong khói ở mép rừng
+  }
+  function chiStageHide() {
+    if (!atkFigs.some(function (f) { return f.chi; })) return;
+    var chEl = $('dlg-choices'); if (chEl) chEl.innerHTML = ''; // như atkStageResolve: gỡ nút ngay, tránh bấm lại trong lúc diễn
+    atkFx = { action: 'chi_hide', t: 0, dur: 1.15, reacted: false, fled: true, done: function () {} }; // fled=true sẵn: bỏ qua khối tháo chạy chung, mode 'search' tự lo
+  }
+
+  /* ================= #21+#22 Yêu thú giữ dược chương 11 — ĐƯỜNG A (boss-fx) =================
+     Hình diễn THUẦN TRÌNH DIỄN dựng bằng sheet son_chu sẵn có qua cơ
+     chế hình diễn riêng kiểu atkFigs (kdFig): KHÔNG đăng ký loài mới,
+     KHÔNG HP, KHÔNG sát thương — trận vẫn là 2 đợt lựa chọn qua
+     resolveKdBeast nguyên trạng. Đợt 1: bước ra trong bụi đất + khói,
+     gầm, lao 1 nhịp, vệt quật lớn + cỏ-đất văng + shakeWorld(0,35).
+     Đợt 2: mắt đỏ nhấp nháy nhanh dần, gầm dài, lao HAI nhịp tốc độ
+     hình diễn gấp đôi, vệt quật đôi, shakeWorld(0,6) ở nhịp cuối.
+     Kết: gục bằng khung chết (hàng 3) + mờ dần + hạt đất lắng. */
+  var kdFig = null;
+  function kdBudget(n) { return parts.length > MAX_PARTS - 20 ? Math.max(1, Math.ceil(n / 2)) : n; } // tự co hạt khi ngân sách thấp (Mục 2.0.5)
+  function kdSpawnBeast() {
+    if (kdFig) return;
+    var sx = px - 2 * TILE, sy = py - 3 * TILE, tx = px - 1 * TILE, ty = py - 2 * TILE;
+    kdFig = { px: sx, py: sy, tx: tx, ty: ty, sx: sx, sy: sy, standX: tx, standY: ty,
+      mode: 'enter', t: 0, walkT: 0, wave: 1, lungeQueue: 1, speedMul: 1,
+      eyesGlow: false, eyeT: 0, collapseT: 0 };
+    if (parts.length <= MAX_PARTS - 12) { spawnSmoke(sx + 16, sy + 20, 3); spawnParts(sx + 16, sy + 26, kdBudget(3), '150,130,110', 26, false); } // bụi đất + khói lúc bước ra
+    sfxRoar(false);
+  }
+  function kdBeginLunge(kf) {
+    var dx = (px + 16) - (kf.px + 16), dy = (py + 16) - (kf.py + 16), d = Math.hypot(dx, dy) || 1;
+    kf.tx = kf.standX + dx / d * 14; kf.ty = kf.standY + dy / d * 14; kf.mode = 'lunge';
+    if (fxOn()) spawnStreak(kf.px + 16, kf.py + 26, Math.PI / 2, '150,130,110', true); // vệt quật lớn hướng xuống mặt đất trước vòng đá
+  }
+  function kdLungeImpact(kf) {
+    kf.lungeQueue = Math.max(0, kf.lungeQueue - 1);
+    var cx = kf.px + 16, cy = kf.py + 28;
+    if (kf.wave === 2 && kf.lungeQueue === 0) {
+      if (fxOn()) { spawnStreak(cx - 12, cy, Math.PI / 2, '150,130,110', true); spawnStreak(cx + 12, cy, Math.PI / 2, '170,150,120', true); } // vệt quật ĐÔI ở nhịp cuối đợt 2
+      shakeWorld(0.6);
+      if (parts.length <= MAX_PARTS - 12) { spawnParts(cx, cy, kdBudget(3), '110,160,80', 34, false); spawnParts(cx, cy, kdBudget(3), '150,130,110', 34, false); }
+    } else {
+      shakeWorld(0.35);
+      if (parts.length <= MAX_PARTS - 16) { spawnParts(cx, cy, kdBudget(4), '110,160,80', 34, false); spawnParts(cx, cy, kdBudget(4), '150,130,110', 34, false); } // 8 hạt cỏ-đất văng ở điểm quật đợt 1
+    }
+  }
+  function kdBeastWave2Fx() {
+    if (!kdFig) return;
+    kdFig.wave = 2; kdFig.eyesGlow = true; kdFig.eyeT = 0; kdFig.lungeQueue = 2; kdFig.speedMul = 2; // lao nhanh gấp đôi = tốc độ HÌNH DIỄN, không phải thông số đấu
+    sfxRoar(false); // gầm dài hơn đợt 1: bản dài 0,7s + lớp trầm nối tiếp sẵn trong sfxRoar, cộng thêm một lớp gầm trầm nối sau
+    setTimeout(function () { sfxRoar(true); }, 380);
+    if (kdFig.mode === 'stand') kdBeginLunge(kdFig); // đang lao dở đợt 1 thì hàng đợi 2 nhịp tự nối tiếp ở nhịp lùi về
+  }
+  function kdBeastCollapse() {
+    if (!kdFig || kdFig.mode === 'collapse') return;
+    kdFig.mode = 'collapse'; kdFig.collapseT = 0; kdFig.eyesGlow = false;
+    if (parts.length <= MAX_PARTS - 10) spawnParts(kdFig.px + 16, kdFig.py + 28, kdBudget(6), '150,130,110', 12, false); // hạt đất lắng xuống quanh thân thú gục
+  }
+  function updateKdFig(dt) {
+    if (dt <= 0 || !kdFig) return;
+    var kf = kdFig; kf.t += dt;
+    if (kf.eyesGlow) kf.eyeT += dt;
+    if (kf.mode === 'collapse') {
+      kf.collapseT += dt;
+      if (kf.collapseT >= 1.5) kdFig = null;
+      return;
+    }
+    if (kf.mode === 'enter' || kf.mode === 'lunge' || kf.mode === 'retreat') {
+      var spd = kf.mode === 'lunge' ? 160 * (kf.speedMul || 1) : (kf.mode === 'retreat' ? 140 * (kf.speedMul || 1) : 105);
+      var dx = kf.tx - kf.px, dy = kf.ty - kf.py, dist = Math.hypot(dx, dy), step = spd * dt;
+      if (dist <= step) {
+        kf.px = kf.tx; kf.py = kf.ty;
+        if (kf.mode === 'enter') { if (kf.lungeQueue > 0) kdBeginLunge(kf); else kf.mode = 'stand'; }
+        else if (kf.mode === 'lunge') { kdLungeImpact(kf); kf.mode = 'retreat'; kf.tx = kf.standX; kf.ty = kf.standY; }
+        else if (kf.mode === 'retreat') { if (kf.lungeQueue > 0) kdBeginLunge(kf); else kf.mode = 'stand'; }
+      } else {
+        kf.px += dx / dist * step; kf.py += dy / dist * step; kf.walkT += dt;
+      }
     }
   }
 
@@ -8419,6 +8808,41 @@
       var a = it.who === 'u' ? duel.u : duel.l;
       addDmgFloat(a.x * TILE + 16 + (a.ox || 0), a.y * TILE - 26, it.skill, it.who === 'u' ? '190,235,200' : '255,180,150', { size: 16, life: 1.05 });
     }
+    if (it.who === 'l') duelLucWindupFx(it); // nửa VẬN CHIÊU của Lục Tranh (#16–#18) — chạy trọn trong windup sẵn có, không đổi nhịp đòn
+  }
+  /* ===== Nửa vận chiêu của LỤC TRANH (đợt cài hiệu ứng boss, thiết kế
+     Mục 2.2 #16–#18) ===== Sinh đúng lúc duelNextItem gán duel.cur nên
+     hiệu ứng chạy trọn trong windup sẵn có (0,38s chiêu có tên / 0,14s
+     đòn thường) và kết thúc đúng khung chạm đòn. Chỉ vẽ + tiếng: nhịp
+     0,38 / 0,14 / 0,5s và mọi số sát thương kịch bản giữ nguyên. */
+  function duelLucWindupFx(it) {
+    if (!duel) return;
+    var l = duel.l;
+    var lx = l.x * TILE + 16 + (duel.lOx || 0), lfy = l.y * TILE + 30, lcy = l.y * TILE + 8;
+    if (!it.skill) {
+      // #16 đòn thường: chớp sáng mờ ở vai kiếm lúc bắt đầu windup 0,14s
+      // (vệt kiếm nhỏ ở điểm chạm nằm trong updateDuel). Ngân sách ≤ 2 hạt.
+      spawnParts(lx - 12, l.y * TILE + 2, bossFxBudget(2), '210,230,255', 9, true);
+      return;
+    }
+    if (it.skill === 'Trảm Phong Thức') {
+      // #17 (phong): vòng GIÓ XOÁY TỤ quanh chân Lục Tranh — 6 hạt xoay
+      // tròn thật (kind 'orbit' trong vòng lặp hạt) + tiếng gió rút gọn.
+      if (fxOn()) {
+        for (var wi = 0; wi < 6 && parts.length < MAX_PARTS; wi++) {
+          var wa = wi * Math.PI / 3;
+          parts.push({ kind: 'orbit', cx: lx, cy: lfy, r0: 15 + (wi % 2) * 4, ang: wa, va: 9.5,
+            x: lx + Math.cos(wa) * 15, y: lfy + Math.sin(wa) * 15 * 0.42,
+            t: 0, life: 0.38, col: '170,220,255', r: 1.6 + (wi % 3) * 0.5 });
+        }
+      }
+      sfxWind();
+    } else if (it.skill === 'Cửu Phẩm Kiếm Khí') {
+      // #18: 3 điểm sáng VÀNG cửu phẩm tụ trên đầu kiếm trong windup
+      // (vật thể 'converge' của drawBossFx); luồng kiếm khí bay thật ở
+      // khung chạm nằm trong updateDuel.
+      bossFx.push({ kind: 'converge', x: lx - 16, y: lcy - 6, t: 0, dur: 0.38 });
+    }
   }
   function updateDuel(dt) {
     if (!duel || dt <= 0) return;
@@ -8483,6 +8907,14 @@
         else if (it.skill === 'Hồi Phong Phất Liễu') { spawnStreak(dxp, def.y * TILE + 6, dAng, '140,220,160', true, { scale: 1.2 }); spawnPetals(dxp - 14, def.y * TILE, 6); }
         else if (it.skill === 'Trảm Phong Thức') { spawnStreak(dxp, def.y * TILE + 6, dAng, '230,200,140', false, { thick: 3 }); }
         else { spawnStreak(dxp, def.y * TILE + 6, dAng, dCol, it.crit); if (it.who === 'u') spawnPetals(dxp - 14, def.y * TILE, 3); }
+      } else if (it.who === 'l') {
+        // boss-fx #16 (gộp): đòn thường của Lục Tranh cũng có vệt kiếm
+        // NHỎ tại điểm chạm (đồng bộ với đòn có tên, chỉ mờ hơn, không
+        // chữ chiêu). Nhánh Cửu Phẩm của đợt boss-fx KHÔNG áp ở đây:
+        // khối ARCIV 8.1 phía trên đã trình diễn chiêu đó bằng chín
+        // kiếm tỏa (bản sắc mới hơn đã duyệt) — giữ nguyên, xem báo
+        // cáo gộp trong docs/boss-skill-fx-report.md.
+        spawnStreak(dxp, def.y * TILE + 6, Math.PI - 0.2, '190,220,255', false, { alpha: 0.8 });
       }
     }
     if (duel.uKb) { duel.uKb = Math.abs(duel.uKb) <= 90 * dt ? 0 : duel.uKb - Math.sign(duel.uKb) * 90 * dt; }
@@ -9260,6 +9692,67 @@
         ctx.drawImage(white || mim, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
         ctx.restore();
         ctx.globalAlpha = 1;
+      }
+    }
+    // TỤ LỰC CỦA BOSS (đợt cài hiệu ứng boss, thiết kế 2.0.3/2.1): hào
+    // quang dưới chân boss đậm dần trong 0,35s CUỐI của chu kỳ atkT
+    // SẴN CÓ khi boss là quái của trận hiện tại — chỉ là dấu hiệu đọc
+    // nhịp bên trong cửa sổ đòn đã tồn tại, KHÔNG thêm thời gian né,
+    // KHÔNG đổi thời điểm đòn rơi một khung hình nào.
+    if (mn.state === 'alive' && enc && enc.mon === mn && BOSS_FX_SPECIES[mn.species] && mn.atkT > 0 && mn.atkT <= 0.35 && fxOn()) {
+      var ck = 1 - mn.atkT / 0.35; // 0 -> 1: càng sát đòn càng đậm
+      var ccol = MON_PARTS[mn.species] || '200,200,200';
+      ctx.fillStyle = 'rgba(' + ccol + ',' + (0.10 + 0.22 * ck).toFixed(3) + ')';
+      ctx.beginPath(); ctx.ellipse(feetX, feetY - 2, size * 0.40 * (0.8 + 0.2 * ck), size * 0.13, 0, 0, Math.PI * 2); ctx.fill();
+      if (mn.species === 'thach_tuong_thu_ve') {
+        // #4: vòng sáng kim loại TỤ CO LẠI vào thân tượng theo tiến trình vận đòn.
+        var shr = 36 - 22 * ck;
+        ctx.strokeStyle = 'rgba(160,155,140,' + (0.30 + 0.60 * ck).toFixed(3) + ')'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(feetX, feetY - 2, shr, shr * 0.34, 0, 0, Math.PI * 2); ctx.stroke();
+      } else if (mn.species === 'kiem_y_tan_hon') {
+        // #6: kiếm ánh sáng DỰNG ĐỨNG trên đầu boss suốt nhịp vận đòn
+        // (hình kiếm dựng của khối báo chiêu Thăng Long/Hoa) + vòng tụ
+        // dưới chân theo cặp VÀNG-báo -> ĐỎ-đánh của bẫy Kiếm Trủng.
+        var kcy = feetY - size - 12, kenv = 0.35 + 0.65 * ck;
+        ctx.fillStyle = 'rgba(127,232,224,' + (0.30 * kenv) + ')';
+        ctx.beginPath(); ctx.ellipse(feetX, kcy, 7, 17, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.92 * kenv) + ')';
+        ctx.fillRect(feetX - 1.4, kcy - 15, 2.8, 26);
+        ctx.fillStyle = 'rgba(190,246,255,' + (0.9 * kenv) + ')';
+        ctx.fillRect(feetX - 5, kcy + 11, 10, 2.2);
+        ctx.strokeStyle = ck < 0.6 ? 'rgba(255,205,84,' + (0.35 + 0.5 * ck) + ')' : 'rgba(255,110,70,' + (0.35 + 0.5 * ck) + ')';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(feetX, feetY - 2, 22, 7.5, 0, 0, Math.PI * 2); ctx.stroke();
+      } else if (mn.species === 'tan_anh_vo_cuc') {
+        // #5: thân boss đã để lại một bóng mờ lệch sau lưng ngay từ nhịp vận đòn.
+        if (imgReady(mim)) {
+          var cms = monSrc(mn);
+          ctx.save();
+          ctx.globalAlpha = 0.05 + 0.15 * ck;
+          ctx.translate(feetX - mn.face * 7, feetY);
+          if (mn.face < 0) ctx.scale(-1, 1);
+          ctx.drawImage(mim, cms.x, cms.y, cms.w, cms.h, -size / 2, -size, size, size);
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+      } else if (mn.species === 'oan_hon_chien_truong') {
+        // #8: vòng oán khí tím-xám xoay quanh thân trong nhịp vận đòn.
+        ctx.strokeStyle = 'rgba(150,160,200,' + (0.30 + 0.30 * ck).toFixed(3) + ')'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(feetX, feetY - size * 0.5, size * 0.34, size * 0.13, tNow / 300, tNow / 300 + Math.PI * 1.3); ctx.stroke();
+      }
+    }
+    // #8 (ngoài trận): Oán Hồn XOÁY NHẸ LIÊN TỤC trong khoang boss khi
+    // hộp lựa chọn hồi phong đang mở (bossChoiceShown) — khói oán thưa
+    // 1 hạt / 0,4s quanh thân + hai vòng oán khí xoay chậm, để khoảnh
+    // khắc chọn đánh/đáp âm/trấn an có sức nặng bằng mắt. Trình diễn
+    // thuần: không trạng thái, không số, tôn trọng trần hạt.
+    if (mn.species === 'oan_hon_chien_truong' && mn.state === 'alive' && bcSession && bcSession.realm === 'bc_hoiphong_mo' && bcSession.bossChoiceShown && !(enc && enc.mon === mn) && fxOn()) {
+      ctx.strokeStyle = 'rgba(110,130,170,0.35)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(feetX, feetY - size * 0.5, size * 0.36, size * 0.14, tNow / 420, tNow / 420 + Math.PI * 1.25); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(feetX, feetY - size * 0.5, size * 0.27, size * 0.10, -tNow / 560, -tNow / 560 + Math.PI * 1.1); ctx.stroke();
+      if (parts.length < MAX_PARTS - 10 && (!mn.bossFxSwirlT || tNow - mn.bossFxSwirlT >= 400)) {
+        mn.bossFxSwirlT = tNow;
+        spawnSmoke(feetX, feetY - size * 0.55, 1, '110,130,170');
       }
     }
     // Vòng ĐỊNH và ấn PHONG: hai dấu hiệu PHẢI phân biệt được bằng mắt —
@@ -10215,10 +10708,13 @@
         p.rot += (p.vr || 2) * dtW; p.x += (p.vx + Math.sin(p.t * 6 + p.rot) * 10) * dtW; p.y += p.vy * dtW;
       } else if (p.kind === 'star') {
         p.x += p.vx * dtW; p.y += p.vy * dtW;
+      } else if (p.kind === 'orbit') { // hạt XOAY TRÒN quanh một tâm (gió tụ của Trảm Phong Thức, Lục Tranh): vận tốc tiếp tuyến, elip nén dọc như mọi vòng chân
+        p.ang += p.va * dtW; p.x = p.cx + Math.cos(p.ang) * p.r0; p.y = p.cy + Math.sin(p.ang) * p.r0 * 0.42;
       } else { p.x += p.vx * dtW; p.y += p.vy * dtW; p.vy -= 8 * dtW; }
     });
     pillars = pillars.filter(function (pl) { pl.t += dtW; return pl.t < pl.dur; });
-    streaks = streaks.filter(function (st) { st.t += dtW; return st.t < st.dur; });
+    streaks = streaks.filter(function (st) { if (st.delay > 0) { st.delay -= dtW; return true; } st.t += dtW; return st.t < st.dur; });
+    bossFx = bossFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; });
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
     updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
@@ -10559,6 +11055,7 @@
       clickPath = null; clickTarget = null; resetJoy();
     }
     updateAtkFigs(dtW); // hình diễn đánh đêm (gói phụ 8): chạy cả khi thoại mở để khớp nhịp lời kể
+    updateKdFig(dtW); // hình diễn yêu thú giữ dược chương 11 (boss-fx #21+#22): cùng nhịp, chạy cả khi thoại mở
     // Đồng hồ thế giới: chỉ chạy trong phiên chơi (vòng lặp này), theo tốc
     // độ cài đặt. Chế độ ghim ngày/đêm thì đồng hồ nền TẠM DỪNG (giờ hiển
     // thị bị ghim ở 12:00/00:00) — quay về "Theo chu kỳ" là chạy tiếp từ
@@ -12573,7 +13070,8 @@
   window.VSLC_ATK = {
     figs: function () { return atkFigs.length; },
     panel: function () { return atkPanelShown; },
-    staging: function () { return !!atkFx; }
+    staging: function () { return !!atkFx; },
+    beast: function () { return kdFig ? { mode: kdFig.mode, wave: kdFig.wave, eyesGlow: !!kdFig.eyesGlow } : null; } // #21+#22: hình diễn yêu thú giữ dược (chỉ đọc)
   };
 
   window.VSLC_DUEL = {
