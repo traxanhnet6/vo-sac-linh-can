@@ -305,35 +305,89 @@
     }
     return false;
   }
-  // BFS tìm đường đi (cho di chuyển bằng chuột): cùng luật đi được với
+  // A* tìm đường đi (cho di chuyển bằng chuột): cùng luật đi được với
   // reachable()/isWalkable(). Trả về mảng các ô {x, y} từ ô kề điểm đầu tới
   // ô đích (không gồm ô đầu, gồm ô đích), [] nếu đã đứng ở đích, hoặc null
   // nếu đích không đi được / không tới được.
+  // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục A): 8 HƯỚNG với chi phí Euclid
+  // (trục chính 1, chéo sqrt(2)) thay cho BFS 4 hướng cũ — đường ô thôi đã
+  // chéo thật thay vì bậc thang ngang/dọc thuần, để khâu vuốt đường phía
+  // game.js có chất liệu chéo mà bám. CHẶN CẮT GÓC: bước chéo (dx,dy) chỉ
+  // được phép khi CẢ HAI ô trục chính kề (x+dx,y) và (x,y+dy) đều đi được
+  // — không bao giờ lách qua góc của ô chặn/vật thể/NPC. Hệ quả: tập ô tới
+  // được không đổi so với 4 hướng (mọi cạnh 4 hướng vẫn còn nguyên, cạnh
+  // chéo chỉ thêm), nên reachable() và mọi khẳng định neo/cổng giữ nguyên
+  // ngữ nghĩa; chỉ hình dáng + độ dài (theo chi phí Euclid) của đường đổi.
   function findPath(from, to, npcs) {
     if (!from || !to) return null;
     if (!isWalkable(to.x, to.y, npcs)) return null;
     if (from.x === to.x && from.y === to.y) return [];
     var key = function (x, y) { return x + ',' + y; };
-    var prev = {}, queue = [[from.x, from.y]];
-    prev[key(from.x, from.y)] = null;
-    while (queue.length) {
-      var cur = queue.shift(), x = cur[0], y = cur[1];
-      var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-      for (var i = 0; i < 4; i++) {
-        var nx = x + dirs[i][0], ny = y + dirs[i][1], k = key(nx, ny);
-        if (k in prev) continue;
-        if (!isWalkable(nx, ny, npcs)) continue;
-        prev[k] = [x, y];
-        if (nx === to.x && ny === to.y) {
-          var path = [], cx = nx, cy = ny;
-          while (cx !== from.x || cy !== from.y) {
-            path.push({ x: cx, y: cy });
-            var p = prev[key(cx, cy)]; cx = p[0]; cy = p[1];
-          }
-          path.reverse();
-          return path;
+    var SQ2 = Math.SQRT2;
+    // Ước lượng octile: admissible + nhất quán cho lưới 8 hướng chi phí trên.
+    function heur(x, y) {
+      var dx = Math.abs(x - to.x), dy = Math.abs(y - to.y);
+      return dx + dy + (SQ2 - 2) * Math.min(dx, dy);
+    }
+    var gScore = {}, prev = {}, closed = {};
+    // Heap nhị phân theo f = g + h (phần tử: [f, x, y]).
+    var heap = [];
+    function hPush(f, x, y) {
+      heap.push([f, x, y]);
+      var i = heap.length - 1;
+      while (i > 0) {
+        var par = (i - 1) >> 1;
+        if (heap[par][0] <= heap[i][0]) break;
+        var t = heap[par]; heap[par] = heap[i]; heap[i] = t; i = par;
+      }
+    }
+    function hPop() {
+      var top = heap[0], last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        var i = 0;
+        for (;;) {
+          var l = i * 2 + 1, r = l + 1, m = i;
+          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+          if (m === i) break;
+          var t = heap[m]; heap[m] = heap[i]; heap[i] = t; i = m;
         }
-        queue.push([nx, ny]);
+      }
+      return top;
+    }
+    var dirs = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
+                [1, 1, SQ2], [1, -1, SQ2], [-1, 1, SQ2], [-1, -1, SQ2]];
+    gScore[key(from.x, from.y)] = 0;
+    prev[key(from.x, from.y)] = null;
+    hPush(heur(from.x, from.y), from.x, from.y);
+    while (heap.length) {
+      var cur = hPop(), x = cur[1], y = cur[2], ck = key(x, y);
+      if (closed[ck]) continue;
+      closed[ck] = true;
+      if (x === to.x && y === to.y) {
+        var path = [], cx = x, cy = y;
+        while (cx !== from.x || cy !== from.y) {
+          path.push({ x: cx, y: cy });
+          var p = prev[key(cx, cy)]; cx = p[0]; cy = p[1];
+        }
+        path.reverse();
+        return path;
+      }
+      var gCur = gScore[ck];
+      for (var i = 0; i < 8; i++) {
+        var dx = dirs[i][0], dy = dirs[i][1], nx = x + dx, ny = y + dy, k = key(nx, ny);
+        if (closed[k]) continue;
+        if (!isWalkable(nx, ny, npcs)) continue;
+        if (dx !== 0 && dy !== 0) {
+          // Chặn cắt góc: cả hai ô trục chính kề phải đi được.
+          if (!isWalkable(x + dx, y, npcs) || !isWalkable(x, y + dy, npcs)) continue;
+        }
+        var gNew = gCur + dirs[i][2];
+        if (gScore[k] !== undefined && gNew >= gScore[k]) continue;
+        gScore[k] = gNew;
+        prev[k] = [x, y];
+        hPush(gNew + heur(nx, ny), nx, ny);
       }
     }
     return null;
@@ -1564,7 +1618,7 @@
     { id: 'q6_sinh_le', name: 'Sính lễ năm mươi vạn lượng', desc: 'Tới sân phủ Hứa: Chu Kiến Thâm đang mang sính lễ tới cầu hôn U Nhàn.', hint: { map: 'co_chau', x: 17, y: 37 } },
     { id: 'q6_phong_thu', name: 'Đêm phủ Hứa bị tấn công', desc: 'Gặp Hứa Chính Ngôn trong sân phủ: có tin kẻ lạ đang dò la quanh phủ Hứa sau vụ sính lễ.', hint: { map: 'co_chau', x: 13, y: 35 } },
     { id: 'q6_thu_moi', name: 'Thư mời lên Thanh Vân Tông', desc: 'Nhận thư mời nhập môn từ Hứa Chính Ngôn — cánh cửa Thanh Vân Tông đang mở.', hint: { map: 'co_chau', x: 13, y: 35 } },
-    { id: 'q6_done', name: 'Chương 7: Nhập Thanh Vân Tông', desc: 'Thư mời đã trong tay. Cổng lên Thanh Vân Tông ở đông bắc thành đã mở cho ngươi.', hint: null },
+    { id: 'q6_done', name: 'Chương 7: Nhập Thanh Vân Tông', desc: 'Thư mời đã trong tay. Cổng lên Thanh Vân Tông ở đông bắc thành đã mở cho ngươi.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     /* Chương 7 — Vào Thanh Vân Tông với thân phận vô linh căn */
     { id: 'q7_nhap_tong', name: 'Vào tông với thân phận vô linh căn', desc: 'Tới gặp trưởng lão tông ở Thanh Vân Đại Điện, trình thư mời nhập môn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q7_tap_dich', name: 'Việc tạp dịch', desc: 'Làm ba việc ở khu tạp dịch đông nam: bổ củi, gánh nước, chuyển bao dược, xong về gặp quản sự tạp dịch.', hint: { map: 'thanh_van_tong', x: 97, y: 69 } },
@@ -2212,6 +2266,20 @@
     if (state.quest === 'q7_done') state.quest = 'q8_chuan_bi';
     // Save cũ dừng ở mốc cuối chương 8: nối thẳng sang chương 9 (phần 3).
     if (state.quest === 'q8_done') state.quest = 'q9_tin_du';
+    // Cứu cờ THƯ MỜI lên Thanh Vân Tông (vá nhanh 2026-11-03): cổng lên
+    // tông khóa bằng flags.invited, mà cờ này chỉ đặt ở đúng một chỗ —
+    // callback của cảnh nhận thư mời cuối chương 6, cùng lúc quest thành
+    // q6_done (rồi chuẩn hóa ở trên nối tiếp thành q7_nhap_tong). Vậy hễ
+    // nhiệm vụ hiện tại đã ở q7_nhap_tong hoặc xa hơn theo thứ tự QUESTS
+    // thì cảnh nhận thư mời CHẮC CHẮN đã chạy; save cũ đi đường khác mà
+    // cờ bị mất/không kịp ghi không được kẹt cổng vĩnh viễn. Ngược lại,
+    // save còn ở q6_thu_moi hoặc trước đó: giữ nguyên khóa như thiết kế.
+    var qiInv = -1, wiInv = -1;
+    for (var invI = 0; invI < QUESTS.length; invI++) {
+      if (QUESTS[invI].id === state.quest) qiInv = invI;
+      if (QUESTS[invI].id === 'q7_nhap_tong') wiInv = invI;
+    }
+    if (qiInv >= 0 && wiInv >= 0 && qiInv >= wiInv && !state.flags.invited) state.flags.invited = true;
     // Cấp bù VŨ KHÍ KHỞI ĐẦU đúng một lần cho save cũ (tạo trước đợt vá
     // 2026-11-02 mục B): nhân vật mới đã đeo sẵn Thiết Kiếm Hứa Gia từ
     // newCharacter; save cũ chưa từng có vũ khí thì cấp bù tại đây — theo
@@ -2256,13 +2324,13 @@
   // Chuẩn: docs/char-sheet-8dir.md mục 4 và docs/touch-joystick.md mục 3.
   // Hàng sheet theo chiều kim đồng hồ từ hướng xuống: 0 down, 1 down-right,
   // 2 right, 3 up-right, 4 up, 5 up-left, 6 left, 7 down-left.
-  var DIR8_HYSTERESIS_DEG = 32.5; // nửa cung 22,5° + biên 10°
+  var DIR8_HYSTERESIS_DEG = 26.5; // nửa cung 22,5° + biên 4° (đợt làm lại di chuyển 2026-11-03 mục C: giảm từ 32,5° — dáng lệch hướng đi thật tối đa ~26,5° thay vì ~32,5°; biên 4° còn lại đủ chống nhấp nháy ở biên cung vì đổi qua lại đòi vector dao động > 8° quanh biên)
   var JOY_DEAD = 0.18;            // vùng chết = 18% bán kính cần
   var JOY_MIN_SPEED = 0.45;       // tốc độ tối thiểu khi vừa ra khỏi vùng chết
   var JOY_STICK_DIST = 12;        // kéo lệch quá 12px => chế độ cần
   var JOY_STICK_MS = 250;         // giữ quá 250ms => chế độ cần
   // Góc của vector đo từ trục xuống (a = atan2(dx, dy), dương về phía phải).
-  // Trễ chuyển hướng: còn lệch khỏi tâm cung của hướng cũ không quá 32,5°
+  // Trễ chuyển hướng: còn lệch khỏi tâm cung của hướng cũ không quá 26,5°
   // thì giữ hướng cũ, tránh rung hình khi vector đi gần biên cung.
   function dir8FromVector(dx, dy, prevDir8) {
     var prevOk = typeof prevDir8 === 'number' && isFinite(prevDir8) &&

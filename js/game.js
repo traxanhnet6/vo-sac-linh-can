@@ -688,7 +688,8 @@
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
   var DIR_ROW = { down: 0, up: 1, right: 2, left: 3 }; // hàng trong sheet nhân vật
   /* ---------- Đợt 8 hướng + cần cảm ứng (docs/char-sheet-8dir.md, docs/touch-joystick.md) ---------- */
-  // Nhân vật đã chuyển sang sheet 8 hướng 480x960 (ô 96x120, hàng = dir8, cột = khung).
+  // Nhân vật đã chuyển sang sheet 8 hướng (ô 96x120, hàng = dir8, cột = khung;
+  // bề rộng = số cột x 96, cao 960 — xem isChar8).
   // Nhân vật chưa có trong bảng này vẫn dùng sheet cũ 128x320 (ô 64x80, DIR_ROW).
   var CHAR8 = { player_nam: true, player_nu: true, u_nhan: true, di_ninh: true, luc_tranh: true, anh_phung: true, chinh_ngon: true, elder: true, villager_m: true, villager_f: true, villager_old: true };
   var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
@@ -736,28 +737,43 @@
      thân hình 64×80 khi chơi thật. ---------- */
   var STRIDE_DIR = {
     // thứ tự dir8: [xuống, xuống-phải, phải, lên-phải, lên, lên-trái, trái, xuống-trái]
-    player_nam: [19.0, 16.3, 25.7, 17.5, 19.0, 18.4, 25.0, 19.8],
-    player_nu: [18.5, 21.9, 24.7, 25.9, 18.5, 21.2, 24.7, 18.9],
-    _default: [19.0, 16.3, 25.7, 17.5, 19.0, 18.4, 25.0, 19.8]
+    // HƯỚNG DỌC (chỉ số 0 và 4) — bổ sung đợt làm lại di chuyển
+    // 2026-11-03: KHÔNG còn theo nguyên tắc 0,75 x ngang. Đo riêng
+    // (tools/work/measure-stride-vert.py) xác nhận mép đáy hàng dọc bị
+    // neo phẳng tuyệt đối (đáy = hàng cuối ô ở mọi khung; độ tách trục
+    // dọc ~0-2px) — sheet KHÔNG mã hóa độ dài bước dọc nào để khóa
+    // pha, nên neo đúng đắn duy nhất là NHỊP BƯỚC NHẤT QUÁN: sải dọc
+    // = sải ngang của chính nhân vật, để cadence (bước/giây ở cùng tốc
+    // độ mặt đất 132) của hướng dọc bằng hướng ngang. Trước: 19,0/
+    // 18,5 -> nhịp dọc 6,4-6,6 bước/giây so với ngang 4,8 — chân đảo
+    // nhanh hơn thân đi ~35%, đúng cảm giác "lướt" Bui báo nặng nhất
+    // ở hướng xuống. Sau: 25,7/24,7 -> nhịp dọc ~4,9-5,1, khóa với
+    // ngang. Sáu hướng ngang/chéo giữ nguyên số Mục D 2026-11-02.
+    player_nam: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8],
+    player_nu: [24.7, 21.9, 24.7, 25.9, 24.7, 21.2, 24.7, 18.9],
+    _default: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8]
   };
   var BOB_AMP = 2.0;     // biên độ nhún thân (px thế giới): thân hạ +2,0 ở tiếp đất, nâng -2,0 ở qua giữa
+  var BOB_AMP_VERT = 3.2; // biên độ nhún RIÊNG cho hướng dọc (dir8 0/4): chân bị tà áo che nên nhịp nhún là tín hiệu bước chính của hướng dọc — tăng lên 3,2 để bước đọc được (bổ sung 2026-11-03)
   var walkBobY = 0;      // độ nhún thân của khung hình hiện tại (chỉ người chơi, chỉ khi đang đi)
   function strideGroupOf(d8) {
     if (d8 % 2 === 1) return 'diag';
     return (d8 === 2 || d8 === 6) ? 'side' : 'vert';
   }
   function playerLookId() { return state && state.gender === 'nu' ? 'player_nu' : 'player_nam'; }
-  // Số khung bước trong một chu kỳ của sheet người chơi = số cột - 1 (cột 0
-  // là đứng yên). Sheet 5 cột -> 4 khung; sheet 7 cột -> 6 khung. Ảnh chưa
-  // tải xong thì dùng 4 như bản cũ.
-  function walkCycleFrames() {
-    var im = ASSETS.chars[playerLookId()];
+  // Số khung bước trong một chu kỳ của một sheet nhân vật = số cột - 1
+  // (cột 0 là đứng yên), suy thẳng từ bề rộng thật của ảnh: sheet 5 cột
+  // -> 4 khung, 7 cột -> 6, 13 cột -> 12, 25 cột -> 24. Ảnh chưa tải
+  // xong / không đúng khổ 8 hướng thì dùng 4 như bản cũ.
+  function charCycleFrames(look) {
+    var im = ASSETS.chars[look];
     if (imgReady(im)) {
       var cols = Math.round(im.naturalWidth / 96);
       if (cols >= 3 && im.naturalHeight === 960) return cols - 1;
     }
     return 4;
   }
+  function walkCycleFrames() { return charCycleFrames(playerLookId()); }
   // Quãng đường thế giới ứng với MỘT KHUNG bước ở hướng hiện tại:
   // sải của CHÍNH hướng dir8 đang hiển thị (Mục D 2026-11-02 — trước
   // đây lấy theo nhóm hướng nên các hướng chéo lệch nhau bị gộp chung).
@@ -766,9 +782,14 @@
     return t[dir8] / (walkCycleFrames() / 2);
   }
   function isChar8(look, im) {
-    // Khổ sheet 8 hướng: 5 cột (480px) hoặc 7 cột (672px, chu kỳ đi 6
-    // khung của đợt động tác đi bộ) x 8 hàng (960px), ô 96x120.
-    return !!(CHAR8[look] && im && (im.naturalWidth === 480 || im.naturalWidth === 672) && im.naturalHeight === 960);
+    // Khổ sheet 8 hướng: MỌI bề rộng là bội của 96 với ít nhất 5 cột
+    // (480px = 5 cột, 672px = 7 cột, 1248px = 13 cột, 2400px = 25 cột)
+    // x 8 hàng (960px), ô 96x120. Bổ sung đợt làm lại di chuyển
+    // 2026-11-03: sheet người chơi mới 25 cột (nam) / 13 cột (nữ) —
+    // khóa cứng 480/672 cũ làm khâu vẽ rơi về ánh xạ sheet cũ trên
+    // sheet mới. Số cột thật do charCycleFrames suy từ bề rộng.
+    return !!(CHAR8[look] && im && im.naturalHeight === 960 &&
+      im.naturalWidth % 96 === 0 && im.naturalWidth / 96 >= 5);
   }
   // Hình chữ nhật nguồn trong sheet: sheet mới -> ô 96x120 (hàng dir8, cột frame8);
   // sheet cũ -> ô 64x80 (hàng DIR_ROW theo hướng 4 chính, cột frame01).
@@ -1601,7 +1622,7 @@
         var tfim = ASSETS.chars['player_nu'];
         ctx.globalAlpha = tlProjectionAlpha(); // bán trong suốt CHỚP NHẸ 0,50–0,82 quanh 0,66 (Mục E) — thay mức tĩnh 0,78 cũ
         if (imgReady(tfim)) {
-          var tsrc = charSrc('player_nu', tfim, tf.dir, DIR8_ROW4[tf.dir] || 0, tf.lunging ? (Math.floor(tf.walkT * 10) % 6) : 0, 0);
+          var tsrc = charSrc('player_nu', tfim, tf.dir, DIR8_ROW4[tf.dir] || 0, tf.lunging ? (Math.floor(tf.walkT * 10) % charCycleFrames('player_nu')) : 0, 0);
           ctx.drawImage(tfim, tsrc.x, tsrc.y, tsrc.w, tsrc.h, tf.x - 16, tf.y - 48, 64, 80);
         } else {
           drawSprite(S.charSprite('player_nu', tf.dir, 0), tf.x, tf.y - 8, 2);
@@ -1625,7 +1646,7 @@
         var afim = ASSETS.chars[af.look];
         if (imgReady(afim)) {
           var afMoving = af.mode === 'enter' || af.mode === 'flee' || af.mode === 'advance';
-          var afsrc = charSrc(af.look, afim, af.dir, DIR8_ROW4[af.dir] || 0, afMoving ? (Math.floor(af.walkT * 8) % 6) : 0, 0);
+          var afsrc = charSrc(af.look, afim, af.dir, DIR8_ROW4[af.dir] || 0, afMoving ? (Math.floor(af.walkT * 8) % charCycleFrames(af.look)) : 0, 0);
           ctx.drawImage(afim, afsrc.x, afsrc.y, afsrc.w, afsrc.h, af.px - 16 + ajx, af.py - 48, 64, 80);
         } else {
           drawSprite(S.charSprite(af.look, af.dir, 0), af.px, af.py - 8, 2);
@@ -1641,7 +1662,7 @@
         ctx.beginPath(); ctx.ellipse(hf.x + 16, hf.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var hfim = ASSETS.chars['player_nam'];
         if (imgReady(hfim)) {
-          var hsrc = charSrc('player_nam', hfim, hf.dir, DIR8_ROW4[hf.dir] || 0, (hf.phase === 'chase' || hf.phase === 'lunge') && (Math.abs(hf.x - (hf._lx || hf.x)) > 0.1 || Math.abs(hf.y - (hf._ly || hf.y)) > 0.1) ? (Math.floor(hf.walkT * 8) % 6) : 0, 0);
+          var hsrc = charSrc('player_nam', hfim, hf.dir, DIR8_ROW4[hf.dir] || 0, (hf.phase === 'chase' || hf.phase === 'lunge') && (Math.abs(hf.x - (hf._lx || hf.x)) > 0.1 || Math.abs(hf.y - (hf._ly || hf.y)) > 0.1) ? (Math.floor(hf.walkT * 8) % charCycleFrames('player_nam')) : 0, 0);
           ctx.drawImage(hfim, hsrc.x, hsrc.y, hsrc.w, hsrc.h, hf.x - 16 + hvx, hf.y - 48, 64, 80);
         } else {
           drawSprite(S.charSprite('player_nam', hf.dir, 0), hf.x + hvx, hf.y - 8, 2);
@@ -4919,9 +4940,24 @@
       var ex = w.x0 + (w.x1 - w.x0) * w.reach, ey = w.y0 + (w.y1 - w.y0) * w.reach;
       var dx = ex - w.x0, dy = ey - w.y0, len = Math.max(1, Math.hypot(dx, dy));
       var nx = -dy / len, ny = dx / len;
-      for (var pass = 0; pass < 2; pass++) {
-        ctx.strokeStyle = pass === 0 ? 'rgba(127,232,224,' + (0.32 * (1 - p * 0.4)) + ')' : 'rgba(255,255,255,' + (0.85 * (1 - p * 0.3)) + ')';
-        ctx.lineWidth = pass === 0 ? 5 : 2;
+      /* Vá nhanh 2026-11-03 (Điểm 4 — chơi thử live đợt Vạn Âm: đường
+         sóng ở cự ly gần gần như không thấy trên nền cỏ sáng): thông số
+         cũ là quầng cyan 5px độ mờ 0,32 + lõi trắng 2px — ở cỡ điện
+         thoại đường sóng ngắn (quái đứng sát) chìm hẳn vào nền sáng.
+         Nay thêm một lượt NỀN TƯƠNG PHẢN tối (cùng mẹo viền tối của số
+         sát thương), đặt SÀN độ mờ/độ dày cho cả ba lượt và nút sáng ở
+         hai đầu sóng để mắt neo được hai đầu nối. Thuần trình diễn:
+         vòng đời 0,12s, hình sin, cơ chế khóa và mọi con số đấu giữ
+         nguyên. */
+      var passes = [
+        { col: '7,42,48', a: Math.max(0.34, 0.5 * (1 - p * 0.35)), lw: 9 },
+        { col: '127,232,224', a: Math.max(0.38, 0.55 * (1 - p * 0.35)), lw: 7 },
+        { col: '255,255,255', a: Math.max(0.8, 0.95 * (1 - p * 0.25)), lw: 3 }
+      ];
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (var pass = 0; pass < passes.length; pass++) {
+        ctx.strokeStyle = 'rgba(' + passes[pass].col + ',' + passes[pass].a + ')';
+        ctx.lineWidth = passes[pass].lw;
         ctx.beginPath();
         for (var s = 0; s <= 12; s++) {
           var u = s / 12;
@@ -4932,6 +4968,13 @@
         }
         ctx.stroke();
       }
+      // Nút sáng hai đầu sóng: đầu người tung + đầu mục tiêu.
+      ctx.fillStyle = 'rgba(127,232,224,' + Math.max(0.35, 0.6 * (1 - p * 0.3)) + ')';
+      ctx.beginPath(); ctx.arc(w.x0, w.y0, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex, ey, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0.8, 0.95 * (1 - p * 0.25)) + ')';
+      ctx.beginPath(); ctx.arc(w.x0, w.y0, 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex, ey, 2.6, 0, Math.PI * 2); ctx.fill();
     });
   }
   function drawResFields() {
@@ -6786,6 +6829,11 @@
       if (manual) {
         clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; questNav = null;
         resetJoy(); // phím di chuyển hủy trạng thái cần ngay
+        // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục D): chuẩn hóa tốc độ mặt
+        // đất — hai trục cùng active thì co mỗi trục theo 1/sqrt(2) để
+        // tốc độ chéo đúng 132 px/giây như bấm-đi và cần cảm ứng (bản cũ
+        // hai trục độc lập 132 cho tốc độ chéo 179 px/giây, lệch sqrt(2)).
+        if (dx !== 0 && dy !== 0) { dx *= Math.SQRT1_2; dy *= Math.SQRT1_2; }
         dir8 = L.dir8FromVector(dx, dy, dir8);
       }
       // Cần cảm ứng: ghi đè đường bấm chuột (đường đã bị hủy ngay khi vào chế độ cần);
@@ -6929,6 +6977,16 @@
       if (velX !== 0) { var wantX = velX * dt, gotX = tryMove(wantX, 0); if (Math.abs(gotX) < Math.abs(wantX) - 0.001) velX = 0; }
       if (velY !== 0) { var wantY = velY * dt, gotY = tryMove(0, wantY); if (Math.abs(gotY) < Math.abs(wantY) - 0.001) velY = 0; }
       var speedNow = Math.hypot(velX, velY);
+      // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục C): hướng HIỂN THỊ bám
+      // VẬN TỐC THẬT, không bám vector mong muốn — khi trượt dọc tường
+      // hay cắt cua, thân phải quay theo hướng thân đang THẬT SỰ đi,
+      // không còn dáng hướng chính trong khi thân trôi chéo (gốc của lỗi
+      // "lướt" Bui phán). Ngưỡng 24 px/giây: dưới đó giữ dir8 cũ (gần
+      // đứng yên, vận tốc chưa có hướng đáng tin). Các điểm gọi
+      // dir8FromVector(dx, dy, ...) ở khâu ra lệnh giữ nguyên để đáp ứng
+      // tức thì trong cùng khung; giá trị CUỐI khung (cái được vẽ) là
+      // giá trị suy từ vận tốc này mỗi khi đang thật sự di chuyển.
+      if (speedNow > 24) dir8 = L.dir8FromVector(velX, velY, dir8);
       moving = !!(dx || dy) || speedNow > 6;
       // Đường THÔ kẹt một khung vì hộp chân còn vương sang ô kề chéo
       // (thường gặp ngay sau khi rẽ hướng): thử bước theo trục phụ về phía
@@ -6978,7 +7036,7 @@
           while (stepAcc >= thr) { stepAcc -= thr; stepPhase = stepPhase % cyc + 1; }
         }
         var contPhase = ((stepPhase - 1) + stepAcc / thr) / cyc;
-        walkBobY = BOB_AMP * Math.cos(4 * Math.PI * contPhase);
+        walkBobY = ((dir8 === 0 || dir8 === 4) ? BOB_AMP_VERT : BOB_AMP) * Math.cos(4 * Math.PI * contPhase);
         walkFrame = stepPhase % 2;
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
@@ -7251,16 +7309,34 @@
   }
   // Đoạn thẳng giữa hai gốc sprite có thông suốt cho hộp chân không (lấy
   // mẫu mỗi 8px) — dùng để vuốt đường chạm-để-đi. Kiểm bằng hộp chân NỞ
-  // thêm 3px mỗi phía: nhịp vuốt chỉ được nhận khi còn dư khoảng hở, để
-  // lúc bám đoạn (bám đuổi thuần túy, luôn có sai lệch vài px) nhân vật
-  // không cọ vào góc vật thể rồi kẹt trong túi góc như ca cổng Thiên Cơ
-  // Các ở chương 5 (đứng chết một chỗ dù đích còn xa).
+  // thêm SEG_FREE_PAD px mỗi phía: nhịp vuốt chỉ được nhận khi còn dư
+  // khoảng hở, để lúc bám đoạn (bám đuổi thuần túy, luôn có sai lệch vài
+  // px) nhân vật không cọ vào góc vật thể rồi kẹt trong túi góc như ca
+  // cổng Thiên Cơ Các ở chương 5 (đứng chết một chỗ dù đích còn xa).
+  // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục B): pad cũ 3px bị hiệu chỉnh
+  // lại BẰNG DỮ LIỆU pin tuyến (tools/work/battery-move.js, quét
+  // 0/1/2/3 trên cây ổn định; bảng đầy đủ ở ~/workspace/.verify-logs/
+  // movement-rework/pad-sweep-stable.txt + báo cáo làn engine):
+  // PAD CHỐT = 0 — pad LỚN NHẤT (và duy nhất) mà cả 4 quãng chéo trống
+  // đều đạt >= 90% vận tốc chéo thật VÀ >= 90% hàng hình chéo (98/98,
+  // 98/98, 100/100, 100/100), đồng thời mọi tuyến chật lịch sử (cổng
+  // Thiên Cơ Các chương 5, các cổng bản đồ, cửa sảnh tháp) và tuyến
+  // tương tác/tự tìm đường đều tới đúng ô, kẹt tối đa 0,00 giây. Pad
+  // >= 1 làm quãng đông-bắc đường mòn rớt còn 88%/83% vì nhịp vuốt
+  // thẳng qua góc cây (12,6) bị loại, đường vuốt phải giữ vòng trục
+  // chính của findPath. Pad 0 = ĐÚNG mô hình va chạm thật lúc di
+  // chuyển (tryMove cũng dùng hộp chân pad 0): segmentFree không còn
+  // nghiêm hơn chính bước đi; kỷ luật góc vẫn do luật chặn cắt góc
+  // của findPath + hộp chân khi trượt + cứu kẹt 0,45s/0,9s giữ.
+  // Tay nắm VSLC_MOVE.segPad còn lại cho pin tuyến tái quét khi bản
+  // đồ thay đổi.
+  var SEG_FREE_PAD = 0;
   function segmentFree(x0, y0, x1, y1) {
     var dist = Math.hypot(x1 - x0, y1 - y0);
     var steps = Math.max(1, Math.ceil(dist / 8));
     for (var i = 1; i <= steps; i++) {
       var t = i / steps;
-      if (!footBoxFreePad(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 3)) return false;
+      if (!footBoxFreePad(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, SEG_FREE_PAD)) return false;
     }
     return true;
   }
@@ -8663,6 +8739,25 @@
     tile: function () { return playerTile(); },
     // Đợt động tác đi bộ: nhịp nhún thân hiện tại, ngưỡng quãng đường của
     // một khung bước ở hướng hiện tại, số khung trong chu kỳ, nhóm sải.
+    // Tay nắm hiệu chỉnh pad vuốt đường (mục B đợt làm lại di chuyển):
+    // segPad() đọc pad hiện tại, segPad(n) đặt pad mới — chỉ phục vụ pin
+    // tuyến đo trên engine thật, không phải cài đặt người chơi.
+    segPad: function (v) { if (typeof v === 'number' && isFinite(v)) SEG_FREE_PAD = v; return SEG_FREE_PAD; },
+    // Tay nắm kiểm chứng khổ sheet (bổ sung đợt làm lại di chuyển):
+    // giả lập một sheet có bề rộng/cao cho trước cho một look, trả về
+    // engine có nhận là sheet 8 hướng không, chu kỳ bước suy ra, và ô nguồn của
+    // khung bước CUỐI chu kỳ ở hàng xuống-trái (dir8 7) — đủ để khẳng
+    // định ánh xạ không rơi về sheet cũ và khung cuối nằm trong sheet.
+    probeSheet: function (look, w, h) {
+      var stub = { naturalWidth: w, naturalHeight: h, complete: true };
+      var old = ASSETS.chars[look];
+      ASSETS.chars[look] = stub;
+      var cyc = charCycleFrames(look);
+      var src = charSrc(look, stub, 'down', 7, cyc, 0);
+      var out = { is8: isChar8(look, stub), cycle: cyc, src: src };
+      ASSETS.chars[look] = old;
+      return out;
+    },
     bobY: function () { return walkBobY; },
     stridePerFrame: function () { return stridePerFrame(); },
     cycleFrames: function () { return walkCycleFrames(); },
