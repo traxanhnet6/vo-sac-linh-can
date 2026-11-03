@@ -1360,6 +1360,54 @@
     { id: 'bia_kiemtrung', type: 'stele_small', x: 34, y: 12, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Kiếm Trủng' },
     { id: 'xuong_kiemtrung', type: 'bones', x: 10, y: 12, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu' }
   ];
+  /* Tầng sâu Kiếm Trủng bc_kiemtrung_sau 44x32 (cung IV, chương 16):
+     lưới NGUYÊN VĂN từ bố cục đã chốt ở tiền sản xuất
+     (tools/work/arc-iv-prep/art/bc_kiemtrung_sau/layout.json — S sàn đá,
+     P sàn hoa văn, X tường; spawn (21,29); cổng nam (20..23,31) về tầng
+     trên; phòng boss bắc–trung (14..29, 2..9), tâm trận (22,5); hai hốc
+     mắt trận phụ tây (6,14) / đông (37,14)). Không sinh lại bằng hàm để
+     khớp 100% tâm ô với tranh nền bg-bc_kiemtrung_sau.png. */
+  var BC_KIEMTRUNG_SAU_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSSSSSSSSSSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSPPPPPPPPSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSSSSSSSSSSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXSSSSSSXXXXXXXXXXSPPPPSXXXXXXXXXXSSSSSSXXX',
+    'XXXSPPPPSSSSSSSSSSSSPPPPSSSSSSSSSSSSPPPPSXXX',
+    'XXXSPPPPSSSSSSSSSSSSSSSSSSSSSSSSSSSSPPPPSXXX',
+    'XXXSPPPPSSSSSSSSSSSSSSSSSSSSSSSSSSSSPPPPSXXX',
+    'XXXSPPPPSSSSSXXXXXXXXXXXXXXXXXXXXXXSPPPPSXXX',
+    'XXXSSSSSSSPPSSSSSSXXXXXXXXXXXXXXXXXSSSSSSXXX',
+    'XXXXXXXXXSPPSSSSSSXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXSSSSSSSSSXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSXXXXXXXXXXSSSSXXXSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXSSSSSSSPPPPPPSSSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXSSSSSSSPPPPPPSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXSSPPPPPPSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXSSSSSSSSSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX'
+  ];
+  var BC_KIEMTRUNG_SAU_PROPS = [
+    { id: 'mat_tran_tay', type: 'stele_small', x: 6, y: 14, w: 1, h: 1, fx: 1, fy: 1, name: 'Mắt Trận Phụ Phía Tây', interact: true },
+    { id: 'mat_tran_dong', type: 'stele_small', x: 37, y: 14, w: 1, h: 1, fx: 1, fy: 1, name: 'Mắt Trận Phụ Phía Đông', interact: true },
+    { id: 'kiem_gay_sau_a', type: 'kiem_cum', x: 31, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'kiem_gay_sau_b', type: 'kiem_cum', x: 6, y: 22, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'xuong_kiemtrung_sau', type: 'bones', x: 14, y: 18, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu' }
+  ];
   function buildHoiphongGrid() {
     var rows = blankRows(52, 38, 'S');
     rectC(rows, 1, 28, 50, 28, 'X');           // vách tiền thất / hành lang cơ quan
@@ -1538,6 +1586,14 @@
         { x: 21, y: 33, w: 4, h: 1, to: 'thanh_van_tong', toX: 99, toY: 15, label: 'Ra Rừng Sau Núi' }
       ]
     },
+    bc_kiemtrung_sau: {
+      name: 'Kiếm Trủng — Tầng Sâu', w: 44, h: 32, grid: BC_KIEMTRUNG_SAU_GRID, props: BC_KIEMTRUNG_SAU_PROPS, npcs: [],
+      meditate: null, spawn: { x: 21, y: 29 },
+      signs: [{ x: 21, y: 30, text: 'Kiếm Trủng — Tầng Sâu' }],
+      portals: [
+        { x: 20, y: 31, w: 4, h: 1, to: 'bc_kiemtrung', toX: 23, toY: 29, label: 'Về Kiếm Trủng (tầng trên)' }
+      ]
+    },
     bc_hoiphong_mo: {
       name: 'Hồi Phong Cổ Mộ', w: 52, h: 38, grid: BC_HOIPHONG_GRID, props: BC_HOIPHONG_PROPS, npcs: [],
       meditate: null, spawn: { x: 25, y: 33 },
@@ -1659,7 +1715,79 @@
     { id: 'q12_ho_phap', name: 'Hộ pháp lúc Kết Đan', desc: 'Địch sẽ tới đúng thời khắc quyết định. Những người hộ pháp cho ngươi đang giữ các hướng quanh đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q12_ket_dan', name: 'Kết Đan', desc: 'Vận công đã chín. Nuốt vật dẫn và Kết Đan tại đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q12_lenh_dau_tien', name: 'Dạy cách nghe', desc: 'Kim Đan đã thành, tai nghe của ngươi đã sâu tới bậc Hưởng. Học cách nghe sóng đứng và độ lệch tần ngay tại đài — thử Định Âm và Phong Âm như trưởng lão dạy.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
-    { id: 'q12_done', name: 'Kim Đan Sơ Kỳ', desc: 'Ngươi đã đứng ở Kim Đan Sơ Kỳ. Tai nghe của ngươi từ nay chạm tới bậc Hưởng — và món nợ mười hai năm bắt đầu được tính từ đây.', hint: null }
+    { id: 'q12_done', name: 'Kim Đan Sơ Kỳ', desc: 'Ngươi đã đứng ở Kim Đan Sơ Kỳ. Tai nghe của ngươi từ nay chạm tới bậc Hưởng — và món nợ mười hai năm bắt đầu được tính từ đây.', hint: null },
+    /* Cung IV — Chương 13: Vị thế mới ở sơn môn (docs/arc-iv-detail/13.md) */
+    { id: 'q13_tro_lai_tong', name: 'Trở lại sơn môn', desc: 'Về Thanh Vân Đại Điện gặp trưởng lão tông: tông môn sắp xếp lại vị thế cho ngươi sau Kết Đan.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q13_de_nghi', name: 'Đề nghị danh phận', desc: 'Nghe trưởng lão đề nghị vị trí có danh phận trong tông; trả lời bằng chữ viết.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q13_thinh_cau_dau', name: 'Thỉnh cầu đầu tiên', desc: 'Một nhà thế lực ngoài tông gửi thỉnh cầu "mượn lệnh" qua người đưa tin ở sơn môn.', hint: { map: 'thanh_van_tong', x: 61, y: 88 } },
+    { id: 'q13_ve_thanh', name: 'Xuống thành gặp U Nhàn', desc: 'Tới sân phủ Hứa ở Cô Châu Thành: U Nhàn đang tiếp quản việc đối ngoại của Hứa gia.', hint: { map: 'co_chau', x: 16, y: 36 } },
+    { id: 'q13_done', name: 'Chương 14: Những lời thỉnh cầu', desc: 'Vị thế mới đã định, thỉnh cầu đầu tiên đã tới.', hint: null },
+    /* Cung IV — Chương 14: Hai thỉnh cầu cùng một ngày (docs/arc-iv-detail/14.md) */
+    { id: 'q14_hai_thinh_cau', name: 'Hai thỉnh cầu', desc: 'Hai nhà thế lực cùng gửi thỉnh cầu mượn lệnh (tranh đất linh; tranh hôn sự).', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q14_dieu_tra', name: 'Đi đường chứng cứ', desc: 'Xuống thành điều tra vụ tranh đất linh bằng sổ sách và người làm chứng (đường chữ viết).', hint: { map: 'co_chau', x: 26, y: 39 } },
+    { id: 'q14_tu_choi', name: 'Từ chối cả hai', desc: 'Trả lời cả hai nhà bằng chữ viết, kèm cách giải quyết không cần lệnh.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q14_bao_lanh', name: 'Đoàn thương của Hứa gia', desc: 'U Nhàn bảo lãnh một đoàn thương nhân bị ép giá; hỗ trợ nàng ở phủ thành.', hint: { map: 'co_chau', x: 75, y: 35 } },
+    { id: 'q14_done', name: 'Chương 15: Trận loạn sóng', desc: 'Hai thỉnh cầu đã khép; tin về một trận pháp lạ nhắm vào đoàn đệ tử tông.', hint: null },
+    /* Cung IV — Chương 15: Trận loạn sóng (docs/arc-iv-detail/15.md) */
+    { id: 'q15_bao_dong', name: 'Tin báo động', desc: 'Tới điểm hẹn của đoàn đệ tử tông đang bị vây thử trận loạn sóng.', hint: { map: 'duong_mon', x: 47, y: 38 } },
+    { id: 'q15_cuu_doan', name: 'Phá trận không dùng cộng hưởng', desc: 'Giải vây bằng kiếm quyết và công pháp — điều kiện truyện: không dùng Vạn Âm Cộng Hưởng trong trận này.', hint: null },
+    { id: 'q15_truy_duoi', name: 'Truy kẻ chỉ huy', desc: 'Truy theo kẻ chỉ huy đợt thử trận vừa rút.', hint: { map: 'duong_mon', x: 43, y: 54 } },
+    { id: 'q15_bao_cao', name: 'Báo cáo sơn môn', desc: 'Về đại điện báo cáo; tông quyết định đối sách với pháp khí loạn sóng.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q15_done', name: 'Chương 16: Tĩnh tu', desc: 'Trận loạn sóng đã lui; sơn môn cho ngươi một đợt tĩnh tu.', hint: null },
+    /* Cung IV — Chương 16: Tĩnh tu và lĩnh ngộ (docs/arc-iv-detail/16.md) */
+    { id: 'q16_tinh_tu', name: 'Tĩnh tu ở điểm linh khí', desc: 'Thổ nạp tại điểm linh khí tông tới đầy giai đoạn Sơ Kỳ.', hint: { map: 'thanh_van_tong', x: 31, y: 61 } },
+    { id: 'q16_linh_ngo', name: 'Lĩnh ngộ khung Huyền', desc: 'Trong tĩnh tu, tâm pháp chạm ngưỡng lĩnh ngộ mới.', hint: null },
+    { id: 'q16_benh_vuc', name: 'Người đứng ra nói thay', desc: 'Liễu Khuynh Tiên công khai bênh vực cách tông môn đang dùng người, trước mặt các trưởng lão.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q16_dot_pha', name: 'Đột phá Kim Đan Trung Kỳ', desc: 'Đột phá tại đài tông khi tu vi đã đầy.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q16_done', name: 'Chương 17: Tin từ tháp', desc: 'Trung Kỳ đã thành; một tin từ Kiểm Trắc Tháp ở thành làm ngươi phải xuống núi.', hint: null },
+    /* Cung IV — Chương 17: Vết nứt ở tháp (docs/arc-iv-detail/17.md) */
+    { id: 'q17_tin_tu_thap', name: 'Tin từ Kiểm Trắc Tháp', desc: 'Trần Tư Linh báo tin: ở Kiểm Trắc Tháp, một người dân thường bị xử ép vì thước không hiện màu cho con ông ta — và Hứa Di Ninh đã đứng ra cãi ngay tại sảnh. Tới khuôn viên tháp xem đầu đuôi.', hint: { map: 'kiem_trac_thap', x: 32, y: 13 } },
+    { id: 'q17_do_lai', name: 'Việc đo lại', desc: 'Vào sảnh tháp: buổi đo lại cho cậu bé bị phán vô căn được tổ chức trước chứng kiến. Giữ trật tự buổi đo — và để mắt tới thước pha lê.', hint: { map: 'thap_noi', x: 19, y: 7 } },
+    { id: 'q17_chat_van', name: 'Người của tháp chất vấn', desc: 'Buổi đo lại vừa xong, chấp sự tháp quay sang chất vấn tư cách can thiệp của Hứa Di Ninh. Ở lại sảnh nghe cho hết.', hint: { map: 'thap_noi', x: 22, y: 9 } },
+    { id: 'q17_di_ninh', name: 'Nói chuyện với Di Ninh', desc: 'Di Ninh đang chờ ở khuôn viên tháp. Có những lời nàng chưa từng nói với ai — hôm nay nàng muốn nói với ngươi.', hint: { map: 'kiem_trac_thap', x: 32, y: 13 } },
+    { id: 'q17_done', name: 'Chương 18: Cả vùng chờ một lệnh', desc: 'Thước đã đứng yên, một đứa trẻ đã có lại cơ hội của nó, và trong lòng Hứa Di Ninh, một vết nứt nhỏ vừa mở ra trên thứ nàng tin mười mấy năm.', hint: null },
+    /* Cung IV — Chương 18: Cả vùng chờ một lệnh (docs/arc-iv-detail/18.md) */
+    { id: 'q18_tranh_chap', name: 'Vụ tranh chấp hai nhà', desc: 'Tạ gia và Đỗ gia tranh quyền khai thác một mạch linh tuyền ở rìa thành, việc đã tới phủ thành mà quan phủ không xử nổi. Hai nhà đều đang chờ ngươi tới.', hint: { map: 'co_chau', x: 51, y: 30 } },
+    { id: 'q18_ap_luc', name: 'Áp lực mượn lệnh', desc: 'Một phía muốn gặp riêng ngươi với một lời hứa rất nặng. Phía còn lại muốn thử sức ngươi bằng một trận đấu công khai trước dân thành. Cả hai việc đều nằm trong nhiệm vụ này.', hint: { map: 'co_chau', x: 51, y: 30 } },
+    { id: 'q18_chung_cu', name: 'Gom chứng cứ', desc: 'Trước phiên phân xử, tự tay gom chứng cứ: sổ sách của nhà ghi chép mạch tuyền, lời của người giữ đập, sổ thuế của phủ. Đừng mong một đáp án sạch — việc này khó chính vì thế.', hint: { map: 'co_chau', x: 75, y: 35 } }, // ô đứng cạnh người bán chợ cho_a (75,34): hint không được trùng ô NPC tĩnh (ghim hint reachable tính NPC là vật cản) — phân xử điều phối đợt 2
+    { id: 'q18_cho_phien', name: 'Tới phiên phân xử', desc: 'Hai nhà đã cam kết giữ hòa và ngồi vào phiên phân xử. Tới phủ thành, có mặt trước khi phiên mở.', hint: { map: 'co_chau', x: 51, y: 30 } },
+    { id: 'q18_done', name: 'Chương 19: Lệnh không cho mượn', desc: 'Ngươi thắng một trận công khai mà không cất một lời nào — và cả vùng càng chờ lệnh của ngươi hơn trước. Phiên phân xử ở ngay trước mặt.', hint: null },
+    /* Cung IV — Chương 19: Lệnh không cho mượn (docs/arc-iv-detail/19.md) */
+    { id: 'q19_phan_xu', name: 'Phân xử bằng chữ viết', desc: 'Phiên phân xử mở tại phủ thành. Cả vùng chờ ngươi cất một lệnh — ngươi sẽ trình một bản án bằng chữ viết, dựng trên chứng cứ đã gom.', hint: { map: 'co_chau', x: 51, y: 30 } },
+    { id: 'q19_phan_ung', name: 'Phía thua quay lưng', desc: 'Án đã tuyên. Phía thua không phục — và đoàn nhân chứng đang rời phủ qua phố nam về phía cổng thành. Đi theo họ. Ngay bây giờ.', hint: { map: 'co_chau', x: 51, y: 73 } },
+    { id: 'q19_vet_ran', name: 'Dấu hiệu đáng ngờ', desc: 'Đưa nhân chứng về tới cổng thành an toàn. Nhưng ở ngoài cổng, có một cuộc gặp không nên xảy ra đang diễn ra — xem cho rõ rồi hãy đi.', hint: { map: 'co_chau', x: 51, y: 74 } },
+    { id: 'q19_an_dinh', name: 'Ấn định hậu quả', desc: 'Về đại điện Thanh Vân Tông báo cáo lại toàn bộ vụ việc: tông môn cần ấn định cách ứng xử với phía thù địch từ nay.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q19_done', name: 'Chương 20: Rạn nứt trong các', desc: 'Quy tắc đã tuyên trước mặt tất cả: lệnh của ngươi không cho mượn. Và ở ngoài cổng thành, một vết rạn mới vừa mở về phía Huyết Bạc Cung.', hint: null },
+    /* Cung IV — Chương 20: Rạn nứt trong các (docs/arc-iv-detail/20.md) */
+    { id: 'q20_ran_nut', name: 'Tin rạn nứt', desc: 'Bên trong Thiên Cơ Các có rạn nứt — và hồ sơ của ngươi là một trong những vết rạn ấy. Tới Tĩnh Quan Lâu nghe cho rõ đầu đuôi.', hint: { map: 'thien_co_lau', x: 32, y: 8 } },
+    { id: 'q20_bao_tin', name: 'Người báo tin', desc: 'Có người đang chờ báo cho ngươi một tin không viết được vào thư: đề xuất "quản thúc mềm" của Bạch Kính Đường. Điểm hẹn ở khách điếm Vọng Châu trong thành.', hint: { map: 'co_chau', x: 69, y: 27 } },
+    { id: 'q20_giam_sat', name: 'Quản thúc mềm', desc: 'Người của Bạch Kính Đường đã xuất hiện công khai quanh thành và tông: ghi chép đoàn ra vào, đứng xem ở những chỗ ai cũng thấy. Đi một vòng qua cổng thành và để ý cho kỹ.', hint: { map: 'co_chau', x: 51, y: 73 } },
+    { id: 'q20_doi_sach', name: 'Đối sách của ngươi', desc: 'Về Tĩnh Quan Lâu đưa lời đáp của ngươi cho Thiên Cơ Các. Nhưng trước đó, ở tông môn, một ca chữa hồn công khai đang chờ — và ca này sẽ không yên ổn như mọi ca trước.', hint: { map: 'thien_co_lau', x: 32, y: 8 } },
+    { id: 'q20_done', name: 'Chương 21: Mở đầu chương 21', desc: 'Tư cách Hồn Sư của ngươi đã được ghi nhận chính thức — phẩm hồn 4, dịch vụ hồn cấp tông môn mở. Và lời đáp của ngươi đã tới Thiên Cơ Các: nguyên tắc không cho mượn, áp cả với các.', hint: null },
+    /* Cung IV — Chương 21: Người thay mặt nhà họ Hứa (docs/arc-iv-detail/21.md) */
+    { id: 'q21_doan_thuong', name: 'Đoàn thương bị ép giá', desc: 'Đoàn thương nhân được Hứa U Nhàn bảo lãnh đang bị các nhà buôn trong thành ép giá đồng loạt ở chợ Cô Châu. Nàng đã có mặt ở đó từ trước — nàng đang làm việc, không chờ ai tới cứu.', hint: { map: 'co_chau', x: 76, y: 35 } }, // ô đứng phía nam của điểm neo chợ (76,34): hint không được trùng ô NPC đích đứng (ghim hint reachable tính NPC là vật cản) — tự kiểm đợt 3
+    { id: 'q21_so_sach', name: 'Sổ sách và luật thành', desc: 'Cùng U Nhàn đối chiếu sổ sách ở phủ Hứa: giá niêm yết của phủ và sổ thuế ba năm là thứ vũ khí của nàng. Phần của ngươi là việc chân tay — lấy sổ, mời người làm chứng giá, giữ hồ sơ.', hint: { map: 'co_chau', x: 16, y: 36 } },
+    { id: 'q21_doi_chat', name: 'Đối chất ở phủ thành', desc: 'U Nhàn trình hồ sơ đối chất ở phủ thành. Còn ngươi — theo lời nàng dặn — ra cổng thành đứng giữ đoàn hàng: nếu phía ép giá thua lý, chúng sẽ đánh vào hàng thật.', hint: { map: 'co_chau', x: 51, y: 74 } },
+    { id: 'q21_danh_gia', name: 'Lời nhìn nhận', desc: 'Về sân phủ Hứa. Sau trận đối chất, Hứa Chính Ngôn có một lời phải nói trước mặt người nhà và đoàn thương.', hint: { map: 'co_chau', x: 16, y: 36 } },
+    { id: 'q21_done', name: 'Chương 22: Đột phá trước chuyến đi', desc: 'Hứa U Nhàn đã thắng bằng chính nghề của nàng, và Hứa gia đã công khai nhìn nhận nàng. +150 tu vi sự kiện. Việc tông đợt 3 (dải Kim Đan) mở từ đây.', hint: null },
+    /* Cung IV — Chương 22: Đột phá trước chuyến đi (docs/arc-iv-detail/22.md) */
+    { id: 'q22_tham_bao', name: 'Thám báo trận loạn sóng', desc: 'Thám báo của tông về tới đại điện với một tin nặng: Huyết Bạc Cung đã dựng xong một trận loạn sóng hoàn chỉnh quanh tuyến hộ tống sắp tới. Nghe trình bày ở đại điện, rồi tự ra vành tuyến xác minh bằng mắt của ngươi.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q22_tich_luy', name: 'Tích lũy cuối chặng', desc: 'Trước chuyến đi lớn đầu tiên của thời Kim Đan: thổ nạp tại điểm linh khí tông và làm nốt việc tông còn thiếu, cho đầy giai đoạn Kim Đan Trung Kỳ.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q22_nhan_viec', name: 'Nhận việc hộ tống', desc: 'Tới điểm rơi cổng tông nhận đoàn hộ tống — người và vật tư của tông đi việc lớn ở thành — và tự tay phân công các hướng giữ đoàn cho chuyến đi.', hint: { map: 'thanh_van_tong', x: 61, y: 88 } },
+    { id: 'q22_dot_pha', name: 'Đột phá Kim Đan Hậu Kỳ', desc: 'Tu vi đã đầy giai đoạn Trung Kỳ. Lên đài tông đột phá Kim Đan Hậu Kỳ (3,2) — giai đoạn trong đại cảnh giới: không thiên kiếp, không tuyên cáo.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q22_done', name: 'Chương 23: Vòng vây loạn sóng', desc: 'Kim Đan Hậu Kỳ đã thành, đoàn hộ tống đã nhận, các hướng giữ đoàn đã phân công xong. +250 tu vi sự kiện của chương đã trả trước mốc đột phá. Chỉ còn chờ ngày đoàn lên đường.', hint: null },
+    /* Cung IV — Chương 23: Vòng vây loạn sóng (docs/arc-iv-detail/23.md) */
+    { id: 'q23_ho_tong', name: 'Đoàn lên đường', desc: 'Đoàn hộ tống lên đường từ cổng tông, qua đường mòn tới trạm nghỉ. Đội hình giữ đúng phân công ngươi đã chốt ở chương 22 — và lần đầu ngươi thấy rõ mặt từng người sẽ đi cùng ngươi vào đoạn đường ấy.', hint: { map: 'duong_mon', x: 53, y: 24 } },
+    { id: 'q23_vong_vay', name: 'Trận khép vòng', desc: 'Đoạn đường giữa hai vách đá. Vòng trận loạn sóng hoàn chỉnh khép lại quanh đoàn: trong vùng trận, cộng hưởng bị nhiễu tới mức khóa sóng không tới — thắng bằng kiếm và công pháp. Phá các mắt trận ven đường để giữ vùng nhiễu không phủ kín đoàn.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // ô (44,44) của prep bị gốc thông cay_r44_43 chiếm footprint — dời 1 ô xuống (44,45), vẫn trong vùng trận 41..47 — tự kiểm đợt 3
+    { id: 'q23_huong_sup', name: 'Một hướng sụp', desc: 'Địch dồn quân số áp đảo vào hướng mỏng nhất của đoàn — chính hướng ngươi đã phân công người giữ ở chương 22. Người giữ hướng ấy đang bị thương nặng. Đoàn phải co cụm về mỏm đá ở rìa vùng trận.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // dời khỏi (44,44) như q23_vong_vay — tự kiểm đợt 3
+    { id: 'q23_lua_chon', name: 'Lựa chọn ở mỏm đá', desc: 'Ở mỏm đá ngoài vùng trận, sóng khóa được trở lại. Người bị thương nặng cần được giữ mạng ngay — và một đòn bậc Hưởng từ đây sẽ phá thế vây cho cả hướng đã sụp, trước hàng trăm nhân chứng.', hint: null },
+    { id: 'q23_done', name: 'Chương 24: Manh mối cứng đầu tiên', desc: 'Lựa chọn đã định. Chương 24 mở ngay tại chỗ, không về hub. +200 tu vi sự kiện.', hint: null },
+    /* Cung IV — Chương 24: Manh mối cứng đầu tiên (docs/arc-iv-detail/24.md) */
+    { id: 'q24_lenh_cuu_nguoi', name: 'Đòn bậc Hưởng cứu người', desc: 'Vòng vây sắp vỡ. Theo lựa chọn của ngươi ở mỏm đá: hoặc phát đòn bậc Hưởng cứu người giữ hướng trước hàng trăm nhân chứng, hoặc dẫn đoàn đánh xuyên ra bằng kiếm trong thế yếu.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // dời khỏi (44,44) như q23_vong_vay — tự kiểm đợt 3
+    { id: 'q24_tha_mang', name: 'Kẻ bị bỏ lại', desc: 'Sau trận, ở mép đoạn đường: Mạc Cửu U — người điều trận của Huyết Bạc Cung — trọng thương và bị chính người của hắn bỏ lại khi rút. Hắn đang chờ một lời kết liễu.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // ô đứng kề đông của Mạc Cửu U tiêm ở (43,45); dời khỏi (44,44) như q23_vong_vay — tự kiểm đợt 3
+    { id: 'q24_manh_moi', name: 'Cái tên trong hồ sơ', desc: 'Kẻ bị bỏ rơi ấy vừa thốt ra một điều về vụ bến đò năm xưa. Nghe cho hết — đây là manh mối cứng đầu tiên sau mười hai năm.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // ô đứng kề Mạc Cửu U như q24_tha_mang — tự kiểm đợt 3
+    { id: 'q24_len_duong', name: 'Chuẩn bị lên đường', desc: 'Về đại điện tông báo cáo vụ việc và sắp xếp hành trình sông Bạc, rồi xuống thành từ biệt Hứa U Nhàn — nàng giờ đã là người thay mặt Hứa gia.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q24_done', name: 'Kết thúc cung IV', desc: 'Cung IV khép lại ở Kim Đan Hậu Kỳ, tu vi giai đoạn 450/1.200. +250 tu vi sự kiện của chương. Cổng cung V mở từ mốc này: hành trình sông Bạc và cái tên trong hồ sơ của Thiên Cơ Các.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -1699,7 +1827,9 @@
       bag: { tier: 1, items: { kiem_hua_gia: 1 } }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3); kiếm khởi đầu ghi ở đây nhưng đeo trên người (worn) nên không chiếm ô
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false },
+
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, ch13Reward: false, ch14Reward: false, ch15Reward: false, ch16Reward: false, ch15ResonanceLock: false, thanhLongPending: false, challengeWinsNoiMon: 0, challengeWinsTinhAnh: 0, bcSauFirstPaid: false, ch17Reward: false, ch18Reward: false, ch19Reward: false, ch20Reward: false, ch21Reward: false, ch22Reward: false, ch23Reward: false, ch24Reward: false, ch18Insight: false, ch19Insight: false, ch20SoulRecognized: false, challengeWinsVoDich: 0, soulGrandPaidFor: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false },
+
       hp: 100, hpMax: 100
     };
   }
@@ -1775,26 +1905,35 @@
      giữ nguyên hành vi, và bộ đếm chiêu của chúng đếm LẦN GỌI, không đếm
      số đòn (Liên Hoàn vẫn là một lần gọi). */
   var SWORD_MOVES = [
-    { id: 'tram', name: 'Thất Tinh Trảm', tier: 1, mult: 1, hits: 1 },
-    { id: 'lien_hoan', name: 'Thất Tinh Liên Hoàn', tier: 2, mult: 0.6, hits: 2 },
-    { id: 'pha_quan', name: 'Thất Tinh Phá Quân', tier: 3, mult: 1.7, hits: 1 },
-    { id: 'quy_nhat', name: 'Thất Tinh Quy Nhất', tier: 4, mult: 2.5, hits: 1 }
+    { id: 'tram', name: 'Thất Tinh Trảm', tier: 1, mult: 1, hits: 1, techId: 'that_tinh' },
+    { id: 'lien_hoan', name: 'Thất Tinh Liên Hoàn', tier: 2, mult: 0.6, hits: 2, techId: 'that_tinh' },
+    { id: 'pha_quan', name: 'Thất Tinh Phá Quân', tier: 3, mult: 1.7, hits: 1, techId: 'that_tinh' },
+    { id: 'quy_nhat', name: 'Thất Tinh Quy Nhất', tier: 4, mult: 2.5, hits: 1, techId: 'that_tinh' },
+    /* Cung IV: chiêu của Huyền Tinh Kiếm Phổ — dòng kiếm quyết THỨ HAI.
+       techId riêng: tầng kiểm theo chính bộ phổ, fxId là id trình diễn
+       engine dùng ('huyen_tinh_tram'). Hệ số 1,9 nằm giữa Phá Quân 1,7
+       và Quy Nhất 2,5 theo khóa thiết kế; không đổi số nào đã duyệt. */
+    { id: 'huyen_tinh_tram', name: 'Huyền Tinh Trảm', tier: 1, mult: 1.9, hits: 1, techId: 'huyen_tinh_kiem_pho', fxId: 'huyen_tinh_tram' }
   ];
   function swordMoveById(id) {
     for (var i = 0; i < SWORD_MOVES.length; i++) if (SWORD_MOVES[i].id === id) return SWORD_MOVES[i];
     return null;
   }
   function castSword(state, moveId) {
-    if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
     var move = SWORD_MOVES[0];
     if (moveId) {
       move = swordMoveById(moveId);
       if (!move) return { ok: false, reason: 'Chiêu kiếm không tồn tại.' };
-      var tech = techniqueOf(state, 'that_tinh');
+      var tid = move.techId || 'that_tinh';
+      if (tid === 'that_tinh' && (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0)) return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
+      var tech = techniqueOf(state, tid);
+      if (tid !== 'that_tinh' && !tech) return { ok: false, reason: 'Chưa học ' + (TECHNIQUE_DEFS[tid] ? TECHNIQUE_DEFS[tid].name : tid) + '.' };
       var tier = tech ? tech.tier : 1; // save chưa di trú: coi như tầng 1 (chỉ chiêu gốc chắc chắn mở)
       if (tier < move.tier) return { ok: false, reason: 'Kiếm quyết mới tầng ' + tier + ' — chưa lĩnh ngộ được ' + move.name + '.' };
+    } else if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) {
+      return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
     }
-    return { ok: true, power: Math.round(swordPower(state) * move.mult), hits: move.hits, move: move.id, moveName: move.name };
+    return { ok: true, power: Math.round(swordPower(state) * move.mult), hits: move.hits, move: move.id, moveName: move.name, techId: move.techId || 'that_tinh', fxId: move.fxId || null };
   }
   /* ---------------- Hồn Sư — trục thứ hai, giấu kín (chương 5) ----------------
      Giang Phàm là Hồn Sư nhị phẩm nhưng giấu kín thân phận (theo truyện).
@@ -1920,7 +2059,8 @@
     song_ngu_ngoc_boi: { name: 'Song Ngư Ngọc Bội', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Ngọc', unlockKey: 'song_ngu' },
     thien_co_ngoc_gian: { name: 'Thiên Cơ Ngọc Giản', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Giản', unlockKey: 'thien_co_gian' },
     thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh', unlockKey: 'thanh_phong' },
-    that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết', unlockKey: 'that_tinh' }
+    that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết', unlockKey: 'that_tinh' },
+    huyen_tinh_kiem_pho_sach: { name: 'Huyền Tinh Kiếm Phổ', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Phổ', unlockKey: 'huyen_tinh_kiem_pho' }
   };
   // Sức chứa theo tầng — giá nâng cấp là số [ĐỀ XUẤT] chờ parent duyệt (docs/part2-design.md).
   var BAG_TIERS = [null,
@@ -2497,6 +2637,7 @@
     if (typeof state.flags.benhSeen !== 'boolean') state.flags.benhSeen = false;
     if (typeof state.flags.ch9PlanSeen !== 'boolean') state.flags.ch9PlanSeen = false;
     if (typeof state.flags.kdBeastWave !== 'number') state.flags.kdBeastWave = 0;
+
     // Thiên kiếp (docs/realm-prep/ mục 6.1, 9.1): ấn Thiên Đạo, trọng
     // thương sau độ kiếp hỏng, bộ đếm Hồi Khí Đan dưỡng thương, cờ quà
     // làm quen Hộ Thể Đan; sổ thông cáo là trường cấp state.
@@ -2507,6 +2648,35 @@
     if (typeof state.flags.ttElderSeen !== 'boolean') state.flags.ttElderSeen = false;
     if (!Array.isArray(state.announceLog)) state.announceLog = [];
     if (state.announceLog.length > 20) state.announceLog = state.announceLog.slice(state.announceLog.length - 20);
+
+    // Cung IV (chương 13–16): cờ thưởng sự kiện chống trùng + cờ khóa
+    // cộng hưởng chương 15 + bậc thang đài thách đấu — save cũ dựng mặc định.
+    if (typeof state.flags.ch13Reward !== 'boolean') state.flags.ch13Reward = false;
+    if (typeof state.flags.ch14Reward !== 'boolean') state.flags.ch14Reward = false;
+    if (typeof state.flags.ch15Reward !== 'boolean') state.flags.ch15Reward = false;
+    if (typeof state.flags.ch16Reward !== 'boolean') state.flags.ch16Reward = false;
+    if (typeof state.flags.ch15ResonanceLock !== 'boolean') state.flags.ch15ResonanceLock = false;
+    if (typeof state.flags.thanhLongPending !== 'boolean') state.flags.thanhLongPending = false;
+    if (typeof state.flags.challengeWinsNoiMon !== 'number') state.flags.challengeWinsNoiMon = 0;
+    if (typeof state.flags.challengeWinsTinhAnh !== 'number') state.flags.challengeWinsTinhAnh = 0;
+    if (typeof state.flags.bcSauFirstPaid !== 'boolean') state.flags.bcSauFirstPaid = false;
+    // Cung IV đợt 2 (chương 17–20): cờ thưởng sự kiện + lĩnh ngộ + công
+    // nhận phẩm hồn 4 + bậc thang hạng vô địch + sổ dịch vụ hồn cấp tông.
+    if (typeof state.flags.ch17Reward !== 'boolean') state.flags.ch17Reward = false;
+    if (typeof state.flags.ch18Reward !== 'boolean') state.flags.ch18Reward = false;
+    if (typeof state.flags.ch19Reward !== 'boolean') state.flags.ch19Reward = false;
+    if (typeof state.flags.ch20Reward !== 'boolean') state.flags.ch20Reward = false;
+    // Cung IV đợt 3 (chương 21–24): cờ thưởng sự kiện chống trùng.
+    if (typeof state.flags.ch21Reward !== 'boolean') state.flags.ch21Reward = false;
+    if (typeof state.flags.ch22Reward !== 'boolean') state.flags.ch22Reward = false;
+    if (typeof state.flags.ch23Reward !== 'boolean') state.flags.ch23Reward = false;
+    if (typeof state.flags.ch24Reward !== 'boolean') state.flags.ch24Reward = false;
+    if (typeof state.flags.ch18Insight !== 'boolean') state.flags.ch18Insight = false;
+    if (typeof state.flags.ch19Insight !== 'boolean') state.flags.ch19Insight = false;
+    if (typeof state.flags.ch20SoulRecognized !== 'boolean') state.flags.ch20SoulRecognized = false;
+    if (typeof state.flags.challengeWinsVoDich !== 'number') state.flags.challengeWinsVoDich = 0;
+    if (typeof state.flags.soulGrandPaidFor !== 'number') state.flags.soulGrandPaidFor = 0;
+
     // Hồi tố bậc Hưởng: save đã qua mốc Kết Đan mà thiếu khóa 'kimdan' thì cấp lại.
     if (state.unlocked && state.realm >= 3 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
@@ -2548,6 +2718,12 @@
     if (state.quest === 'q7_done') state.quest = 'q8_chuan_bi';
     // Save cũ dừng ở mốc cuối chương 8: nối thẳng sang chương 9 (phần 3).
     if (state.quest === 'q8_done') state.quest = 'q9_tin_du';
+    // Save dừng ở mốc cuối chương 12 (cuối phần 3): nối thẳng sang cung IV.
+    if (state.quest === 'q12_done') state.quest = 'q13_tro_lai_tong';
+    // Save dừng ở mốc cuối chương 16 (đợt 1 cung IV): nối thẳng sang đợt 2.
+    if (state.quest === 'q16_done') state.quest = 'q17_tin_tu_thap';
+    // Save dừng ở mốc cuối chương 20 (đợt 2 cung IV): nối thẳng sang đợt 3.
+    if (state.quest === 'q20_done') state.quest = 'q21_doan_thuong';
     // Cứu cờ THƯ MỜI lên Thanh Vân Tông (vá nhanh 2026-11-03): cổng lên
     // tông khóa bằng flags.invited, mà cờ này chỉ đặt ở đúng một chỗ —
     // callback của cảnh nhận thư mời cuối chương 6, cùng lúc quest thành
@@ -2870,11 +3046,27 @@
     'profile:bc_tapsau_boss': { lt: 15, tuviPct: 20, merit: 6, items: { phuc_linh_dan: 1 } },
     'profile:bc_kiemtrung_boss': { lt: 15, tuviPct: 20, merit: 6, items: { phuc_linh_dan: 1 } },
     'profile:bc_hoiphong_boss': { lt: 15, tuviPct: 20, merit: 6, items: { phuc_linh_dan: 1 } },
+    /* Cung IV (dải Kim Đan, trần 1200): hồ sơ lặp của tầng sâu theo
+       thang hồ sơ bí cảnh hiện hành leo dải (Trúc Cơ 15 lt/công trạng 6
+       -> Kim Đan 24/9); hồ sơ boss dã ngoại Kim Đan đúng khung đã
+       duyệt của bản đồ giữ chân: 32 lt + 30% tu vi + 10 công trạng +
+       Yêu Đan cấp 3 x1 chắc chắn (qua grantReward với boss:true thì
+       sàn hệ số x0,5 như các boss hiện hành). */
+    'profile:bc_kiemtrung_sau_boss': { lt: 24, tuviPct: 20, merit: 9, items: { phuc_linh_dan: 1 } },
+    'profile:boss_hb_ho_tran': { lt: 32, tuviPct: 30, merit: 10, items: { yeu_dan_3: 1 } },
+    /* Đài thách đấu (trần mềm, điểm nhỏ): chỉ tu vi — đệ tử đấu giao
+       lưu không rơi tài nguyên; hạng tinh anh thêm chút công trạng. */
+    'profile:challenge:noi_mon': { tuviPct: 5 },
+    'profile:challenge:tinh_anh': { tuviPct: 8, merit: 2 },
+    /* Hạng vô địch (đợt 2, chương 18): [ĐỀ XUẤT SỐ] tuviPct 12, merit 4
+       — bậc trên tinh anh 8/2 theo hợp đồng đợt 2 mục A.4. */
+    'profile:challenge:vo_dich': { tuviPct: 12, merit: 4 },
     'profile:bc:bc_thuyliem:wave': { tuviPct: 5 },
     'profile:bc:bc_tapha:wave': { tuviPct: 5 },
     'profile:bc:bc_tapsau:wave': { tuviPct: 5 },
     'profile:bc:bc_kiemtrung:wave': { tuviPct: 5 },
-    'profile:bc:bc_hoiphong_mo:wave': { tuviPct: 5 }
+    'profile:bc:bc_hoiphong_mo:wave': { tuviPct: 5 },
+    'profile:bc:bc_kiemtrung_sau:wave': { tuviPct: 5 }
   };
   /* grantReward(state, spec, opts) — spec: id hồ sơ trong REWARD_PROFILES
      hoặc đối tượng hồ sơ phẳng { lt?, tuvi?, tuviPct?, merit?, items? }.
@@ -3045,7 +3237,7 @@
   function nguHanhDef(cfg) {
     var floors = NGU_HANH_BAND_FLOORS[cfg.band];
     var def = { name: cfg.name, kind: cfg.kind || 'ngu_hanh', line: cfg.line || 'ngu_hanh',
-      nguHanh: true, hidden: true, element: cfg.element, band: cfg.band, rarity: cfg.rarity,
+      nguHanh: true, hidden: cfg.hidden === false ? false : true, element: cfg.element, band: cfg.band, rarity: cfg.rarity,
       profile: cfg.profile || null, source: cfg.source,
       tiers: [null, { xp: 0 },
         { xp: NGU_HANH_TIER_XP[0], realm: floors[0][0], stage: floors[0][1] },
@@ -3084,6 +3276,15 @@
     // Hai dòng chỉ ĐĂNG KÝ để ánh xạ, không có mục trong state.techniques:
     // luyện hồn tiến theo phẩm soulRank sẵn có; ngự kiếm theo cờ bay của
     // đợt ngự kiếm. Không bịa kinh thư luyện hồn (truyện không có).
+    /* Cung IV: Huyền Tinh Kiếm Phổ — kiếm quyết dòng Huyền, truyền tại
+       tầng sâu Kiếm Trủng. Cung IV chỉ có TẦNG 1 (chiêu Huyền Tinh
+       Trảm); tầng cao hơn để dành cung V. Học DUY NHẤT qua thưởng
+       thông lần đầu bc_kiemtrung_sau (learnHuyenTinhKiemPho) — điều
+       kiện vào tầng sâu đã là q16_linh_ngo + Kim Đan; không cổng tầng
+       công pháp nào khác (luật cứng). */
+    huyen_tinh_kiem_pho: { name: 'Huyền Tinh Kiếm Phổ', kind: 'kiem_quyet', unlockKey: 'huyen_tinh_kiem_pho', grade: 'Huyen',
+      tiers: [null,
+        { xp: 0 }] },
     luyen_hon: { name: 'Luyện Hồn', kind: 'luyen_hon', tiersBy: 'soulRank' },
     ngu_kiem: { name: 'Ngự Kiếm', kind: 'than_phap', tiersBy: 'flags.fly' },
     // ===== 33 mục của chương trình bí pháp (khung ẩn — cơ chế tích
@@ -3123,37 +3324,37 @@
     diet_son_dia_chan: nguHanhDef({ name: 'Điệt Sơn Địa Chấn', element: 'tho', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Thông quan lần đầu Tàn Tích Tầng Sâu (bc_tapsau)', effect: 'Mỏm đá trồi theo hàng' }),
     // --- Dải Kim Đan (đợt cài đi cùng cung IV — ở khung này chỉ đăng ký) ---
-    tu_dien_kich: nguHanhDef({ name: 'Tử Điện Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
+    tu_dien_kich: nguHanhDef({ hidden: false, name: 'Tử Điện Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Trưởng lão truyền thừa Lôi hệ sau Kết Đan (q12_done) + đã thắng 1 boss dã ngoại dải Kim Đan',
       effect: 'Sét phân nhánh sang 1 địch kề (đã gộp trong hệ số)' }),
-    thanh_loan_pha_hu: nguHanhDef({ name: 'Thanh Loan Phá Hư', element: 'phong', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
+    thanh_loan_pha_hu: nguHanhDef({ hidden: false, name: 'Thanh Loan Phá Hư', element: 'phong', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
       source: 'Mảnh từ đài thách đấu tông môn hạng tinh anh (cung IV), ghép tại tàng kinh', requires: ['cuong_phong_loc_xoay'],
       fragments: 5, fragmentSource: 'dai_thach_dau:tinh_anh', effect: 'T4 Thanh Loan lao qua diện' }),
-    hoa_phuong_lieu_nguyen: nguHanhDef({ name: 'Hỏa Phượng Liêu Nguyên', element: 'hoa', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
+    hoa_phuong_lieu_nguyen: nguHanhDef({ hidden: false, name: 'Hỏa Phượng Liêu Nguyên', element: 'hoa', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
       source: 'Mảnh từ đài thách đấu hạng vô địch (cung IV), ghép tại tàng kinh', requires: ['viem_long_tho_tuc'],
       fragments: 5, fragmentSource: 'dai_thach_dau:vo_dich', effect: 'Đốt gộp trong hệ số' }),
-    dai_nhat_hoa_cau: nguHanhDef({ name: 'Đại Nhật Hỏa Cầu', element: 'hoa', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
+    dai_nhat_hoa_cau: nguHanhDef({ hidden: false, name: 'Đại Nhật Hỏa Cầu', element: 'hoa', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
       source: 'Tàng kinh trao sau khi hoàn thành 10 phiếu săn dải Kim Đan', requires: ['viem_long_tho_tuc'],
       effect: 'Nổ diện, đốt gộp trong hệ số' }),
-    thanh_long_xuat_the: nguHanhDef({ name: 'Thanh Long Xuất Thế', element: 'moc', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
+    thanh_long_xuat_the: nguHanhDef({ hidden: false, name: 'Thanh Long Xuất Thế', element: 'moc', band: 'kim_dan', rarity: 'hiem', profile: 'trieu_hoi',
       source: 'Thông quan lần đầu tầng sâu Kiếm Trủng (bc_kiemtrung_sau, cung IV)',
       requires: ['bich_ngoc_cu_kiem', 'huyen_moc_dang_giao'], effect: 'T4 Thanh Long cắn diện trước' }),
-    tuyet_hoa_cu_kiem: nguHanhDef({ name: 'Tuyết Hoa Cự Kiếm', element: 'bang', band: 'kim_dan', rarity: 'hiem', profile: 'don',
+    tuyet_hoa_cu_kiem: nguHanhDef({ hidden: false, name: 'Tuyết Hoa Cự Kiếm', element: 'bang', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Mảnh từ boss Trận Nhãn Kiếm Linh (bc_kiemtrung_sau, cung IV), ghép tại tàng kinh', requires: ['han_bang_xieng_xich'],
       fragments: 5, fragmentSource: 'boss:bc_kiemtrung_sau', effect: 'T4 đóng băng 1 giây (boss chỉ chậm 30%)' }),
-    han_bang_bao_lien: nguHanhDef({ name: 'Hàn Băng Bảo Liên', element: 'bang', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
+    han_bang_bao_lien: nguHanhDef({ hidden: false, name: 'Hàn Băng Bảo Liên', element: 'bang', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
       source: 'Mảnh từ boss Kiếm Ý Tàn Hồn (bc_kiemtrung), ghép tại tàng kinh', requiresAny: ['bang_tram_van_tien', 'han_bang_xieng_xich'],
       fragments: 5, fragmentSource: 'boss:bc_kiemtrung', effect: 'Nổ pha lê, làm chậm 20%' }),
-    thuong_hai_cuong_dao: nguHanhDef({ name: 'Thương Hải Cuồng Đào', element: 'thuy', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
+    thuong_hai_cuong_dao: nguHanhDef({ hidden: false, name: 'Thương Hải Cuồng Đào', element: 'thuy', band: 'kim_dan', rarity: 'hiem', profile: 'dien',
       source: 'Mảnh từ boss Thủy Xà Tinh (bc_thuyliem), ghép tại tàng kinh', requires: ['huyen_thuy_xoay_luu'],
       fragments: 5, fragmentSource: 'boss:bc_thuyliem', effect: 'Đẩy lùi nhẹ' }),
-    loi_quang_than_kiem: nguHanhDef({ name: 'Lôi Quang Thần Kiếm', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
+    loi_quang_than_kiem: nguHanhDef({ hidden: false, name: 'Lôi Quang Thần Kiếm', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Mảnh từ boss Kiếm Ý Tàn Hồn (bc_kiemtrung), ghép tại tàng kinh', requires: ['tu_dien_kich'],
       fragments: 3, fragmentSource: 'boss:bc_kiemtrung', effect: 'Hồ quang gộp trong hệ số' }),
-    thai_bach_kim_kiem: nguHanhDef({ name: 'Thái Bạch Kim Kiếm', element: 'kim', band: 'kim_dan', rarity: 'hiem', profile: 'don',
+    thai_bach_kim_kiem: nguHanhDef({ hidden: false, name: 'Thái Bạch Kim Kiếm', element: 'kim', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Mảnh từ boss Hộ Trận Kiếm Linh (cung IV, chu kỳ 5 ngày), ghép tại tàng kinh', requires: ['diet_son_dia_chan'],
       fragments: 5, fragmentSource: 'boss:ho_tran_kiem_linh', effect: 'Tia quạt ở T3 (đã gộp trong hệ số)' }),
-    bon_loi_thiem_kich: nguHanhDef({ name: 'Bôn Lôi Thiểm Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
+    bon_loi_thiem_kich: nguHanhDef({ hidden: false, name: 'Bôn Lôi Thiểm Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Kỳ ngộ bậc hiếm khi đi đường/săn ở đường mòn', requires: ['tu_dien_kich'],
       kyNgo: { activities: ['travel', 'hunt'], weight: 1 }, effect: 'Lướt tới mục tiêu khi xuất chiêu' }),
     // --- Dải Nguyên Anh (khung giữ chỗ — tọa độ khóa khi cung sản xuất) ---
@@ -3252,13 +3453,14 @@
     if (!state || typeof state !== 'object') return {};
     if (!state.techniques || typeof state.techniques !== 'object') state.techniques = {};
     var unlocked = Array.isArray(state.unlocked) ? state.unlocked : [];
-    ['thanh_phong', 'that_tinh'].forEach(function (id) {
+    ['thanh_phong', 'that_tinh', 'huyen_tinh_kiem_pho'].forEach(function (id) {
       var has = unlocked.indexOf(id) >= 0, t = state.techniques[id];
+      var maxTier = (TECHNIQUE_DEFS[id] && TECHNIQUE_DEFS[id].tiers) ? TECHNIQUE_DEFS[id].tiers.length - 1 : 4;
       if (has && !t) state.techniques[id] = { tier: 1, xp: 0 };
       else if (!has && t) delete state.techniques[id];
       else if (t) {
         if (typeof t.tier !== 'number' || !isFinite(t.tier)) t.tier = 1;
-        t.tier = Math.min(4, Math.max(1, Math.floor(t.tier)));
+        t.tier = Math.min(maxTier, Math.max(1, Math.floor(t.tier)));
         if (typeof t.xp !== 'number' || !isFinite(t.xp) || t.xp < 0) t.xp = 0;
       }
     });
@@ -3341,7 +3543,10 @@
     if (def.registrationOnly) return { ok: false, reason: 'registration_only' };
     if (!def.nguHanh) return { ok: false, reason: 'not_ngu_hanh' };
     if (techniqueOf(state, id)) return { ok: false, reason: 'already' };
-    if (def.requiresExternal) return { ok: false, reason: 'external_missing', external: def.requiresExternal };
+    // Vá cung IV: requiresExternal chỉ chặn khi CHƯA sở hữu bí tịch
+    // ngoài danh mục (SP-02 đòi Huyền Tinh Kiếm Phổ — trước đây nhánh
+    // này từ chối VÔ ĐIỀU KIỆN nên bộ không bao giờ học được).
+    if (def.requiresExternal && !techniqueOf(state, def.requiresExternal)) return { ok: false, reason: 'external_missing', external: def.requiresExternal };
     var missing = (def.requires || []).filter(function (r) { return !techniqueOf(state, r); });
     if (missing.length) return { ok: false, reason: 'chain', missing: missing };
     if (def.requiresAny && !def.requiresAny.some(function (r) { return !!techniqueOf(state, r); })) {
@@ -3484,7 +3689,31 @@
     kiem_linh: { name: 'Kiếm Linh', rank: 'normal', hp: 115, atk: 13, atkInterval: 1.4, speed: 48, cry: 600 },
     kiem_y_tan_hon: { name: 'Kiếm Ý Tàn Hồn', rank: 'boss', hp: 1450, atk: 18, atkInterval: 1.3, speed: 50, cry: 580, wordResist: 0.5 },
     oan_binh: { name: 'Oán Binh', rank: 'normal', hp: 160, atk: 14, atkInterval: 1.5, speed: 40, cry: 260 },
-    oan_hon_chien_truong: { name: 'Oán Hồn Chiến Trường', rank: 'boss', hp: 1650, atk: 18, atkInterval: 1.4, speed: 42, cry: 240 }
+    oan_hon_chien_truong: { name: 'Oán Hồn Chiến Trường', rank: 'boss', hp: 1650, atk: 18, atkInterval: 1.4, speed: 42, cry: 240 },
+    /* Cung IV — tầng sâu Kiếm Trủng + boss dã ngoại Kim Đan + tinh anh
+       đường mòn. Số [ĐỀ XUẤT theo thang hiện hành]: boss Trúc Cơ
+       1450–1650 hp ở uy lực kiếm ~47 (Phá Quân); Kim Đan Sơ Kỳ kiếm
+       nền 56 (Huyền Tinh Trảm ~106 / Phá Quân ~95), boss dải này đặt
+       2400–2600 để trận dài ~25 nhát như tiền lệ. Âm gốc của Trận Nhãn
+       ỔN ĐỊNH nên không khai wordResist — cộng hưởng tác dụng đầy đủ, cửa sổ
+       Định Âm nằm ở chu kỳ chiêu chứ không ở kháng; lính giữ cửa giữ
+       kháng 0,5 như Kiếm Ý Tàn Hồn tầng trên (đúng nhiệm vụ giao). */
+    tan_hon_kiem_y_sau: { name: 'Kiếm Ý Tàn Hồn (Tầng Sâu)', rank: 'normal', hp: 700, atk: 20, atkInterval: 1.3, speed: 50, cry: 580, wordResist: 0.5 },
+    tran_nhan_kiem_linh: { name: 'Trận Nhãn Kiếm Linh', rank: 'boss', hp: 2600, atk: 24, atkInterval: 1.3, speed: 44, cry: 300,
+      skills: [
+        { id: 'quat_kiem', name: 'Quạt Kiếm Phóng', swords: 7, telegraphSec: 0.6 },
+        { id: 'chu_ky_kiem_tran', name: 'Chu Kỳ Kiếm Trận', swords: 7, note: '7 kiếm luân phiên; quạt cuộn theo chu kỳ — đứng lâu một chỗ sẽ bị quét lặp' },
+        { id: 'van_kiem_quy_tong', name: 'Vạn Kiếm Quy Tông', telegraphSec: 1.2, dinhAmWindow: true, note: 'chiêu lớn cuối chu trình: báo trước dài, cửa sổ dùng Định Âm đóng băng chu kỳ' }
+      ],
+      eyes: { count: 2, phongAmSlowsCycle: true, note: 'hai mắt trận phụ ở (6,14) và (37,14): mỗi mắt bị Phong Âm phong ấn làm chu kỳ quay chậm lại' } },
+    ho_tran_kiem_linh: { name: 'Hộ Trận Kiếm Linh', rank: 'boss', hp: 2400, atk: 23, atkInterval: 1.3, speed: 44, cry: 300,
+      skills: [
+        { id: 'quat_kiem_tran', name: 'Quạt Kiếm Trận', swords: 7, telegraphSec: 0.6 },
+        { id: 'van_chu_ky', name: 'Vận Chu Kỳ', dinhAmWindow: true, note: 'cửa sổ Định Âm như Trận Nhãn — cùng một họ kiếm linh' }
+      ] },
+    /* Tinh anh Kim Đan ở đường mòn (bảng spawn mới — hình dùng chung
+       họ Sơn Lang, tông nhiễu sóng do engine vẽ phân biệt). */
+    lang_nhiem_song: { name: 'Sơn Lang Nhiễm Sóng', rank: 'elite', hp: 1500, atk: 22, atkInterval: 1.3, speed: 50, cry: 420 }
   };
   var HUNT_ZONES = {
     zone_duong_mon_rung: { map: 'duong_mon', x0: 2, y0: 2, x1: 93, y1: 71, grassOnly: true, yeuDanLevel: 1 },
@@ -3499,7 +3728,8 @@
     zone_bc_tapha: { map: 'bc_tapha', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 1 },
     zone_bc_tapsau: { map: 'bc_tapsau', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 2 },
     zone_bc_kiemtrung: { map: 'bc_kiemtrung', x0: 1, y0: 1, x1: 46, y1: 32, yeuDanLevel: 2 },
-    zone_bc_hoiphong_mo: { map: 'bc_hoiphong_mo', x0: 1, y0: 1, x1: 50, y1: 36, yeuDanLevel: 2 }
+    zone_bc_hoiphong_mo: { map: 'bc_hoiphong_mo', x0: 1, y0: 1, x1: 50, y1: 36, yeuDanLevel: 2 },
+    zone_bc_kiemtrung_sau: { map: 'bc_kiemtrung_sau', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 }
   };
   // Ổ (lair) của từng vùng: điểm sinh xác định, xa điểm cốt truyện/đường
   // chính — quái chỉ đi lại quanh ổ trong vùng của mình.
@@ -3513,7 +3743,19 @@
     { zoneId: 'zone_hb_rung', species: 'son_lang', x: 25, y: 40 },
     { zoneId: 'zone_hb_rung', species: 'doc_vu_xa', x: 70, y: 50 },
     { zoneId: 'zone_hb_rung', species: 'thiet_giap_tru', x: 30, y: 25 },
-    { zoneId: 'zone_hb_bac', species: 'phong_ung', x: 52, y: 17 }
+    { zoneId: 'zone_hb_bac', species: 'phong_ung', x: 52, y: 17 },
+    /* Cung IV: ổ tinh anh dải Kim Đan ở đường mòn — mở sau q14_done.
+       Trường requiresQuest là MỚI ở bảng lairs: engine sinh quái PHẢI
+       lọc theo questReached(state, requiresQuest) (xem hợp đồng A.3). */
+    { zoneId: 'zone_duong_mon_rung', species: 'lang_nhiem_song', x: 56, y: 40, requiresQuest: 'q14_done' },
+    /* Cung IV đợt 3: tinh anh quanh tuyến hộ tống — hiện diện từ
+       q22_done theo 22.md mục 5 (R-1), và chính là các điểm "tàn trận"
+       ở lại vĩnh viễn sau cung theo 23.md/24.md mục 5 (cùng một cổng
+       q22_done — sau q24_done cổng vẫn đạt nên trạng thái thế giới tự
+       duy trì). Loài kiếm linh xỉn chưa có sheet riêng: dùng
+       lang_nhiem_song (loài nhiễm sóng sẵn có, đúng tông). */
+    { zoneId: 'zone_duong_mon_rung', species: 'lang_nhiem_song', x: 44, y: 40, requiresQuest: 'q22_done' },
+    { zoneId: 'zone_duong_mon_rung', species: 'phong_ung', x: 38, y: 50, requiresQuest: 'q22_done' }
   ];
   var BOSS_DEFS = {
     boss_dm_lang_vuong: { name: 'Lang Vương Bãi Phục Kích', title: 'Chúa tể bãi phục kích', species: 'lang_vuong',
@@ -3523,7 +3765,16 @@
     boss_hb_son_chu: { name: 'Sơn Chủ Hồi Phong', title: 'Chúa tể Hồi Phong', species: 'son_chu',
       zoneId: 'zone_hb_bac', map: 'hb_valley', lair: { x: 49, y: 14 }, cycleDays: 4,
       profileId: 'profile:boss_hb_son_chu', guaranteedYeuDan: 'yeu_dan_2',
-      requiresQuest: 'q9_tin_du', minOrdinal: 200, biTich: 'bi_tich_thanh_phong' }
+      requiresQuest: 'q9_tin_du', minOrdinal: 200, biTich: 'bi_tich_thanh_phong' },
+    /* Cung IV: boss dã ngoại dải Kim Đan — chu kỳ 5 ngày, requiresQuest
+       q15_done theo nhiệm vụ giao; hồ sơ ở profileId (32 lt + 30% tu vi
+       + 10 công trạng + Yêu Đan cấp 3 chắc chắn, sàn boss x0,5 áp trong
+       grantReward như các boss hiện hành). Ổ (46,10) tránh ổ Sơn Chủ
+       (49,14) và ổ Phong Ưng (52,17) trong cùng vùng hb_bac. */
+    boss_hb_ho_tran_kiem_linh: { name: 'Hộ Trận Kiếm Linh', title: 'Kiếm linh giữ trận Hồi Phong', species: 'ho_tran_kiem_linh',
+      zoneId: 'zone_hb_bac', map: 'hb_valley', lair: { x: 46, y: 10 }, cycleDays: 5,
+      profileId: 'profile:boss_hb_ho_tran', guaranteedYeuDan: 'yeu_dan_3',
+      requiresQuest: 'q15_done', minOrdinal: 300, biTich: null }
   };
   function bossClaimKey(bossId, cycleId) { return 'gr:boss:' + bossId + ':c' + cycleId; }
   // Trạng thái boss là HÀM THUẦN DUY NHẤT của dayCount + khóa chu kỳ +
@@ -3601,7 +3852,23 @@
     { templateId: 'hunt_thiet_giap_tru_tong', scope: 'repeat', speciesId: 'thiet_giap_tru', zoneId: 'zone_tong_sau_nui', boardIds: ['board_hunt_daily'], realmMin: 105, realmMax: 203, targetMin: 2, targetMax: 4, profileId: 'profile:hunt:lk' },
     { templateId: 'hunt_thiet_giap_tru_valley', scope: 'repeat', speciesId: 'thiet_giap_tru', zoneId: 'zone_hb_rung', boardIds: ['board_hunt_daily'], realmMin: 200, realmMax: 203, requiresQuest: 'q9_tin_du', targetMin: 2, targetMax: 4, profileId: 'profile:hunt:tc' },
     { templateId: 'hunt_phong_ung_tong', scope: 'repeat', speciesId: 'phong_ung', zoneId: 'zone_tong_sau_nui', boardIds: ['board_hunt_daily'], realmMin: 200, realmMax: 203, targetMin: 2, targetMax: 3, profileId: 'profile:hunt:tc' },
-    { templateId: 'hunt_phong_ung_valley', scope: 'repeat', speciesId: 'phong_ung', zoneId: 'zone_hb_bac', boardIds: ['board_hunt_daily'], realmMin: 200, realmMax: 203, requiresQuest: 'q9_tin_du', targetMin: 2, targetMax: 3, profileId: 'profile:hunt:tc' }
+    { templateId: 'hunt_phong_ung_valley', scope: 'repeat', speciesId: 'phong_ung', zoneId: 'zone_hb_bac', boardIds: ['board_hunt_daily'], realmMin: 200, realmMax: 203, requiresQuest: 'q9_tin_du', targetMin: 2, targetMax: 3, profileId: 'profile:hunt:tc' },
+    /* Cung IV: mẫu dải Kim Đan (ordinal >= 300). Khi chưa có các mẫu
+       này, tập mẫu hợp lệ của người chơi Kim Đan RỖNG (mọi mẫu cũ
+       realmMax <= 203) — bảng săn không sinh nổi phiếu. profileId ghi
+       sẵn hunt:kd nhưng resolvedProfileId vẫn đóng băng theo dải LÚC
+       NHẬN qua huntProfileForOrdinal như mọi mẫu (hai bảng cùng cơ
+       chế định giá theo dải). realmMax null: phiếu dải này còn dùng
+       được ở các đại cảnh giới sau (R-4 vòng đời dài). */
+    { templateId: 'hunt_son_lang_kd', scope: 'repeat', speciesId: 'son_lang', zoneId: 'zone_duong_mon_rung', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, targetMin: 3, targetMax: 5, profileId: 'profile:hunt:kd' },
+    { templateId: 'hunt_doc_vu_xa_kd', scope: 'repeat', speciesId: 'doc_vu_xa', zoneId: 'zone_duong_mon_rung', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, targetMin: 3, targetMax: 4, profileId: 'profile:hunt:kd' },
+    { templateId: 'hunt_lang_nhiem_song_kd', scope: 'repeat', speciesId: 'lang_nhiem_song', zoneId: 'zone_duong_mon_rung', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q14_done', targetMin: 2, targetMax: 3, profileId: 'profile:hunt:kd' },
+    { templateId: 'hunt_thiet_giap_tru_kd', scope: 'repeat', speciesId: 'thiet_giap_tru', zoneId: 'zone_tong_sau_nui', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, targetMin: 2, targetMax: 4, profileId: 'profile:hunt:kd' },
+    { templateId: 'hunt_phong_ung_kd', scope: 'repeat', speciesId: 'phong_ung', zoneId: 'zone_hb_bac', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q9_tin_du', targetMin: 2, targetMax: 3, profileId: 'profile:hunt:kd' },
+    /* Cung IV đợt 2 (chương 17): phiếu săn thành phố làm mới đợt 2 —
+       bầy lang nhiễm sóng kéo về gần tháp sau vụ thước rung; đúng 3 con,
+       mở từ q17_done (khác mẫu hunt_lang_nhiem_song_kd mở từ q14_done). */
+    { templateId: 'hunt_lang_nhiem_song_thap_kd', scope: 'repeat', speciesId: 'lang_nhiem_song', zoneId: 'zone_duong_mon_rung', boardIds: ['board_hunt_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q17_done', targetMin: 3, targetMax: 3, profileId: 'profile:hunt:kd' }
   ];
   /* Mẫu phiếu thu thập (systems-data mục 4.1; boardIds quy về
      board_gather_daily). profileId là hồ sơ lựa chọn tu vi; nếu người
@@ -3612,7 +3879,12 @@
     { templateId: 'gat_xich_tam_hoa', scope: 'repeat', itemId: 'xich_tam_hoa', zoneHint: 'duong_mon', boardIds: ['board_gather_daily'], realmMin: 101, realmMax: 203, targetMin: 2, targetMax: 4, profileId: 'profile:gat:tuvi' },
     { templateId: 'gat_thuy_lau', scope: 'repeat', itemId: 'thuy_lau', zoneHint: 'duong_mon', boardIds: ['board_gather_daily'], realmMin: 100, realmMax: 203, targetMin: 3, targetMax: 5, profileId: 'profile:gat:tuvi' },
     { templateId: 'gat_linh_chi', scope: 'repeat', itemId: 'linh_chi', zoneHint: 'thanh_van_tong', boardIds: ['board_gather_daily'], realmMin: 105, realmMax: 203, targetMin: 1, targetMax: 2, profileId: 'profile:gat:tuvi' },
-    { templateId: 'gat_son_kim_sa', scope: 'repeat', itemId: 'son_kim_sa', zoneHint: 'thanh_van_tong/hb_valley', boardIds: ['board_gather_daily'], realmMin: 200, realmMax: 203, targetMin: 2, targetMax: 3, profileId: 'profile:gat:tuvi' }
+    { templateId: 'gat_son_kim_sa', scope: 'repeat', itemId: 'son_kim_sa', zoneHint: 'thanh_van_tong/hb_valley', boardIds: ['board_gather_daily'], realmMin: 200, realmMax: 203, targetMin: 2, targetMax: 3, profileId: 'profile:gat:tuvi' },
+    /* Cung IV: bản sao dải Kim Đan của các mẫu thu thập (bảng thu thập
+       cũng phải làm mới theo dải như bảng săn). */
+    { templateId: 'gat_thanh_tam_thao_kd', scope: 'repeat', itemId: 'thanh_tam_thao', zoneHint: 'duong_mon/thanh_van_tong', boardIds: ['board_gather_daily'], realmMin: 300, realmMax: null, targetMin: 3, targetMax: 5, profileId: 'profile:gat:tuvi' },
+    { templateId: 'gat_linh_chi_kd', scope: 'repeat', itemId: 'linh_chi', zoneHint: 'thanh_van_tong', boardIds: ['board_gather_daily'], realmMin: 300, realmMax: null, targetMin: 1, targetMax: 2, profileId: 'profile:gat:tuvi' },
+    { templateId: 'gat_son_kim_sa_kd', scope: 'repeat', itemId: 'son_kim_sa', zoneHint: 'thanh_van_tong/hb_valley', boardIds: ['board_gather_daily'], realmMin: 300, realmMax: null, targetMin: 2, targetMax: 3, profileId: 'profile:gat:tuvi' }
   ];
   /* Mẫu việc tông (systems-data mục 5.2). targetMin = targetMax = 1:
      việc tính theo lượt hoàn thành. profileId theo TẦNG việc (không
@@ -3626,7 +3898,24 @@
     { templateId: 'sect_patrol_rot', scope: 'repeat', jobType: 'patrol', tier: 'tap_dich', boardIds: ['board_sect_daily'], realmMin: 105, realmMax: 203, requiresQuest: 'q7_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:tap_dich', checkpoints: [{ map: 'thanh_van_tong', x: 61, y: 88 }, { map: 'thanh_van_tong', x: 38, y: 58 }, { map: 'thanh_van_tong', x: 101, y: 15 }] },
     { templateId: 'sect_escort_rot', scope: 'repeat', jobType: 'escort', tier: 'tap_dich', boardIds: ['board_sect_daily'], realmMin: 105, realmMax: 203, requiresQuest: 'q7_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:tap_dich', escortFrom: { map: 'thanh_van_tong', x: 97, y: 68 }, escortTo: { map: 'thanh_van_tong', x: 61, y: 60 } },
     { templateId: 'sect_patrol_valley', scope: 'repeat', jobType: 'patrol', tier: 'truc_co', boardIds: ['board_sect_daily'], realmMin: 200, realmMax: null, requiresQuest: 'q9_tin_du', targetMin: 1, targetMax: 1, profileId: 'profile:sect:truc_co', checkpoints: [{ map: 'hb_valley', x: 49, y: 60 }, { map: 'hb_valley', x: 49, y: 36 }, { map: 'hb_valley', x: 49, y: 14 }] },
-    { templateId: 'sect_delivery_elder', scope: 'repeat', jobType: 'delivery', tier: 'truc_co', boardIds: ['board_sect_daily'], realmMin: 200, realmMax: null, requiresQuest: 'q7_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:truc_co', deliverNpc: 'truong_lao_tong', deliverMap: 'thanh_van_tong' }
+    { templateId: 'sect_delivery_elder', scope: 'repeat', jobType: 'delivery', tier: 'truc_co', boardIds: ['board_sect_daily'], realmMin: 200, realmMax: null, requiresQuest: 'q7_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:truc_co', deliverNpc: 'truong_lao_tong', deliverMap: 'thanh_van_tong' },
+    /* Cung IV: tầng việc Kim Đan — hồ sơ đóng băng theo tầng lúc nhận
+       qua sectProfileForTier('kim_dan') -> profile:sect:kim_dan. */
+    { templateId: 'sect_patrol_kim_dan', scope: 'repeat', jobType: 'patrol', tier: 'kim_dan', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q14_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', checkpoints: [{ map: 'duong_mon', x: 47, y: 38 }, { map: 'duong_mon', x: 43, y: 54 }, { map: 'thanh_van_tong', x: 97, y: 15 }] },
+    { templateId: 'sect_delivery_kim_dan', scope: 'repeat', jobType: 'delivery', tier: 'kim_dan', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q14_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', deliverNpc: 'truong_lao_tong', deliverMap: 'thanh_van_tong' },
+    /* Cung IV đợt 2 (chương 17/19): việc tông quanh Kiểm Trắc Tháp và
+       áp tải hậu phiên phân xử — hồ sơ đóng băng profile:sect:kim_dan
+       theo tier như mọi mẫu Kim Đan. Mẫu escort mang escortFrom/
+       escortName/escortLook của chính mẫu (engine tổng quát ở mục B.9
+       của hợp đồng đợt 2); các mẫu cũ không đổi hành vi. */
+    { templateId: 'sect_patrol_thap_do', scope: 'repeat', jobType: 'patrol', tier: 'kim_dan', name: 'Tuần tra giữ trật tự ngày đo', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q17_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', checkpoints: [{ map: 'kiem_trac_thap', x: 32, y: 14 }, { map: 'thap_noi', x: 19, y: 8 }, { map: 'co_chau', x: 51, y: 31 }] },
+    { templateId: 'sect_escort_do_lai', scope: 'repeat', jobType: 'escort', tier: 'kim_dan', name: 'Hộ tống người đo lại', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q17_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', escortFrom: { map: 'kiem_trac_thap', x: 36, y: 42 }, escortTo: { map: 'kiem_trac_thap', x: 32, y: 14 }, escortName: 'Người đo lại', escortLook: 'villager_m' },
+    { templateId: 'sect_escort_ap_tai', scope: 'repeat', jobType: 'escort', tier: 'kim_dan', name: 'Áp tải văn thư nhân chứng về tông', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q19_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', escortFrom: { map: 'co_chau', x: 52, y: 71 }, escortTo: { map: 'thanh_van_tong', x: 61, y: 87 }, escortName: 'Người giữ văn thư', escortLook: 'villager_old' },
+    /* Cung IV đợt 3 (chương 21/22): việc tông quanh tuyến hộ tống —
+       hộ tống thương đoàn mở từ q21_done, tuần tra tuyến mở từ
+       q22_done (00-tong-quan mục 4.3.7); cùng khuôn đợt 2. */
+    { templateId: 'sect_escort_thuong_doan', scope: 'repeat', jobType: 'escort', tier: 'kim_dan', name: 'Hộ tống thương đoàn về tông', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q21_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', escortFrom: { map: 'co_chau', x: 51, y: 73 }, escortTo: { map: 'thanh_van_tong', x: 61, y: 87 }, escortName: 'Trưởng đoàn thương', escortLook: 'villager_old' },
+    { templateId: 'sect_patrol_tuyen', scope: 'repeat', jobType: 'patrol', tier: 'kim_dan', name: 'Tuần tra tuyến hộ tống', boardIds: ['board_sect_daily'], realmMin: 300, realmMax: null, requiresQuest: 'q22_done', targetMin: 1, targetMax: 1, profileId: 'profile:sect:kim_dan', checkpoints: [{ map: 'duong_mon', x: 53, y: 24 }, { map: 'duong_mon', x: 44, y: 44 }, { map: 'thanh_van_tong', x: 61, y: 87 }] }
   ];
   /* Mẫu cốt truyện KHÔNG BAO GIỜ lọt vào bảng cày (systems-data 5.4):
      ba việc tạp dịch chương 7 (id vật thể dùng chung với việc luân
@@ -3769,7 +4058,13 @@
     bc_tapha: { name: 'Tàn Tích Dưới Tháp — Tầng Ngoài', band: 'luyenkhi', unlockQuest: 'q3_thuoc_do', map: 'bc_tapha', boss: 'thach_tuong_thu_ve', bossProfileId: 'profile:bc_tapha_boss', waveProfileId: 'profile:bc:bc_tapha:wave', yeuDanLevel: 1 },
     bc_tapsau: { name: 'Tàn Tích Dưới Tháp — Tầng Sâu', band: 'trucco', unlockQuest: 'q8_done', map: 'bc_tapsau', boss: 'tan_anh_vo_cuc', bossProfileId: 'profile:bc_tapsau_boss', waveProfileId: 'profile:bc:bc_tapsau:wave', yeuDanLevel: 2 },
     bc_kiemtrung: { name: 'Kiếm Trủng Sau Núi', band: 'trucco', unlockQuest: 'q8_done', map: 'bc_kiemtrung', boss: 'kiem_y_tan_hon', bossProfileId: 'profile:bc_kiemtrung_boss', waveProfileId: 'profile:bc:bc_kiemtrung:wave', yeuDanLevel: 2 },
-    bc_hoiphong_mo: { name: 'Hồi Phong Cổ Mộ', band: 'trucco', unlockQuest: 'q9_tin_du', map: 'bc_hoiphong_mo', boss: 'oan_hon_chien_truong', bossProfileId: 'profile:bc_hoiphong_boss', waveProfileId: 'profile:bc:bc_hoiphong_mo:wave', yeuDanLevel: 2 }
+    bc_hoiphong_mo: { name: 'Hồi Phong Cổ Mộ', band: 'trucco', unlockQuest: 'q9_tin_du', map: 'bc_hoiphong_mo', boss: 'oan_hon_chien_truong', bossProfileId: 'profile:bc_hoiphong_boss', waveProfileId: 'profile:bc:bc_hoiphong_mo:wave', yeuDanLevel: 2 },
+    /* Tầng sâu Kiếm Trủng (cung IV): unlockQuest chỉ là MỘT nửa điều
+       kiện — ensureSecretRealms ép thêm cảnh giới Kim Đan (ordinal
+       >= 300) cho riêng bí cảnh này. TUYỆT ĐỐI không điều kiện tầng
+       công pháp (luật cứng). Boss: Trận Nhãn Kiếm Linh; lính giữ cửa
+       kháng cộng hưởng 50% như tầng trên. */
+    bc_kiemtrung_sau: { name: 'Kiếm Trủng — Tầng Sâu', band: 'kimdan', unlockQuest: 'q16_linh_ngo', repeatQuest: 'q17_done', map: 'bc_kiemtrung_sau', boss: 'tran_nhan_kiem_linh', bossProfileId: 'profile:bc_kiemtrung_sau_boss', waveProfileId: 'profile:bc:bc_kiemtrung_sau:wave', yeuDanLevel: 3 }
   };
   function defaultSecretRealms() {
     return { pool: { day: 0, used: 0 }, realms: {} };
@@ -3787,6 +4082,7 @@
       if (!e || typeof e !== 'object') e = sr.realms[id] = {};
       var wasUnlocked = e.unlocked === true;
       e.unlocked = wasUnlocked || questReached(state, SECRET_REALM_DEFS[id].unlockQuest);
+      if (id === 'bc_kiemtrung_sau' && realmOrdinal(state) < 300) e.unlocked = false; // cổng tầng sâu: mốc truyện + Kim Đan, không phải tầng công pháp
       if (e.firstClear !== true) e.firstClear = false;
       if (typeof e.deepest !== 'number' || !isFinite(e.deepest) || e.deepest < 0) e.deepest = 0;
       if (typeof e.entriesDay !== 'number' || !isFinite(e.entriesDay) || e.entriesDay < 0) e.entriesDay = 0;
@@ -3815,6 +4111,12 @@
     var sr = ensureSecretRealms(state);
     var e = sr.realms[realmId];
     if (!e.unlocked) return { ok: false, reason: 'locked', poolLeft: bcPoolLeft(state) };
+    /* Cổng lượt LẶP theo mốc truyện (đợt 2): bí cảnh có repeatQuest thì
+       lượt sau lần thông quan đầu tiên (firstClear đã có) chỉ mở khi đã
+       đạt mốc ấy — tầng sâu Kiếm Trủng lặp mở từ q17_done (thiết kế
+       chương 17 mục 5). Lượt đầu (chưa firstClear) giữ nguyên. */
+    var bcDef = SECRET_REALM_DEFS[realmId];
+    if (bcDef.repeatQuest && e.firstClear && !questReached(state, bcDef.repeatQuest)) return { ok: false, reason: 'repeat_locked', poolLeft: bcPoolLeft(state) };
     if (sr.pool.day !== state.dayCount) { sr.pool.day = state.dayCount; sr.pool.used = 0; }
     var first = !e.entered;
     if (!first && sr.pool.used >= 2) return { ok: false, reason: 'pool_empty', poolLeft: 0 };
@@ -4029,6 +4331,294 @@
     return { ok: true, selected: id };
   }
 
+
+  /* ================= CUNG IV — KHỐI DỮ LIỆU + HÀM (chương 13–16) =================
+     Toàn bộ điểm neo dữ liệu của đợt 1 cung IV nằm ở đây + các đăng ký
+     rải trong tệp (QUESTS, MAPS.bc_kiemtrung_sau, SECRET_REALM_DEFS,
+     MONSTER_DEFS, BOSS_DEFS, hồ sơ thưởng, mẫu bảng dải Kim Đan).
+     Hợp đồng với worker engine: arciv-work/CONTRACT-wave1.md. */
+
+  /* ---- Thưởng tu vi sự kiện có cờ chống trùng (mẫu flags.kimDanReward
+     của chương 12 ở game.js, chuyển về logic để engine gọi một dòng).
+     Tu vi cộng CÓ TRẦN tuviNext như addTuvi của game.js (trả sự kiện
+     truyện không qua grantReward/trần mềm — tiền lệ chương 12).
+     q15_done kèm +120 điểm lĩnh ngộ that_tinh: tiền lệ trong mã là
+     BC_FIRST_REWARDS.bc_kiemtrung.tech {id:'that_tinh', pts:120} của
+     game.js (trong mã KHÔNG có ký hiệu lingNgoAward riêng).
+     'q16_pre_break' = khoản +300 của chương 16, engine gọi TRƯỚC khi
+     cho đột phá q16_dot_pha. ---- */
+  var ARC_IV_STORY_REWARDS = {
+    q13_done: { tuvi: 150, flag: 'ch13Reward' },
+    q14_done: { tuvi: 200, flag: 'ch14Reward' },
+    q15_done: { tuvi: 250, flag: 'ch15Reward', swordInsight: 120 },
+    q16_pre_break: { tuvi: 300, flag: 'ch16Reward' },
+    /* Đợt 2 (chương 17–20): tu vi sự kiện theo thiết kế từng chương;
+       q18_champion / q19_an_dinh là khoản lĩnh ngộ kiếm +60 [ĐỀ XUẤT SỐ
+       đã duyệt ở thiết kế chương 18 mục 4.1 / chương 19 mục 5] trả qua
+       cùng cơ chế swordInsight của claimArcIvStoryReward, tuvi 0. */
+    q17_done: { tuvi: 150, flag: 'ch17Reward' },
+    q18_done: { tuvi: 150, flag: 'ch18Reward' },
+    q19_done: { tuvi: 150, flag: 'ch19Reward' },
+    q20_done: { tuvi: 200, flag: 'ch20Reward' },
+    q18_champion: { tuvi: 0, flag: 'ch18Insight', swordInsight: 60 },
+    q19_an_dinh: { tuvi: 0, flag: 'ch19Insight', swordInsight: 60 },
+    /* Đợt 3 (chương 21–24): tu vi sự kiện theo thiết kế từng chương.
+       KHÔNG có mục q22_done — khoản 250 của chương 22 nằm ở
+       q22_pre_break, engine gọi TRƯỚC mốc đột phá q22_dot_pha
+       (khuôn q16_pre_break của đợt 1). */
+    q21_done: { tuvi: 150, flag: 'ch21Reward' },
+    q22_pre_break: { tuvi: 250, flag: 'ch22Reward' },
+    q23_done: { tuvi: 200, flag: 'ch23Reward' },
+    q24_done: { tuvi: 250, flag: 'ch24Reward' }
+  };
+  function claimArcIvStoryReward(state, key) {
+    var spec = ARC_IV_STORY_REWARDS[key];
+    if (!spec) return { ok: false, reason: 'unknown_reward' };
+    if (!state.flags || typeof state.flags !== 'object') state.flags = {};
+    if (state.flags[spec.flag]) return { ok: false, reason: 'duplicate' };
+    var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+    var gained = 0;
+    if (cap) { gained = Math.max(0, Math.min(spec.tuvi, cap - (state.tuvi || 0))); state.tuvi = (state.tuvi || 0) + gained; }
+    var tierUps = [];
+    if (spec.swordInsight) { var tg = techniqueGain(state, 'that_tinh', spec.swordInsight); if (tg && tg.tierUps) tierUps = tg.tierUps; }
+    state.flags[spec.flag] = true;
+    return { ok: true, tuvi: gained, swordInsight: spec.swordInsight || 0, tierUps: tierUps };
+  }
+
+  /* ---- Đợt 2, chương 20: công nhận phẩm hồn 4 + dịch vụ hồn cấp tông ----
+     arcIvRecognizeSoulRank4: CÔNG NHẬN phẩm — nâng soulRank lên 4 nếu
+     đang thấp hơn và đặt cờ ch20SoulRecognized; hàm này KHÔNG cộng hồn
+     lực (hồn lực cộng ở tầng engine theo biến thể kết trận, hợp đồng
+     đợt 2 mục A.7). arcIvSectSoulServiceDue: dịch vụ hồn cấp tông đến
+     hạn khi đã đóng chương 20, phẩm hồn >= 4, và chương hiện tại chưa
+     trả khoản dịch vụ cấp tông (soulGrandPaidFor < chương hiện tại —
+     cùng khuôn soulServiceDue/soulPaidFor của dịch vụ kín chương 5). */
+  function arcIvRecognizeSoulRank4(state) {
+    if (!state || typeof state !== 'object') return { ok: false, reason: 'no_state' };
+    if (!state.flags || typeof state.flags !== 'object') state.flags = {};
+    var before = typeof state.soulRank === 'number' ? state.soulRank : 0;
+    if (before < 4) state.soulRank = 4;
+    state.flags.ch20SoulRecognized = true;
+    return { ok: true, before: before, soulRank: state.soulRank };
+  }
+  function arcIvSectSoulServiceDue(state) {
+    if (!state || typeof state !== 'object') return false;
+    return questReached(state, 'q20_done') && (state.soulRank || 0) >= 4 &&
+      ((state.flags && state.flags.soulGrandPaidFor) || 0) < chapterOfQuest(state);
+  }
+
+  /* ---- Cờ khóa cộng hưởng chương 15 (tên cờ giao cho engine) ---- */
+  var ARC_IV_CH15_LOCK_FLAG = 'ch15ResonanceLock';
+  function arcIvCh15ResonanceLocked(state) { return !!(state && state.flags && state.flags[ARC_IV_CH15_LOCK_FLAG]); }
+
+  /* ---- Cổng tầng sâu: điểm tương tác là vật thể CỤM KIẾM CHẮN HANG
+     sẵn có ở thanh_van_tong (97,15) — tầng do điều kiện quyết, đúng
+     tiền lệ cua_tan_tich một vật thể hai tầng. Điều kiện: mốc truyện
+     q16_linh_ngo + Kim Đan. TUYỆT ĐỐI không đọc tầng công pháp. ---- */
+  var BC_SAU_GATE = { map: 'thanh_van_tong', propId: 'bc_gate_kiemtrung', x: 97, y: 15, condQuest: 'q16_linh_ngo', minOrdinal: 300 };
+  function bcSauGateOpen(state) {
+    return questReached(state, BC_SAU_GATE.condQuest) && realmOrdinal(state) >= BC_SAU_GATE.minOrdinal;
+  }
+
+  /* ---- Sóng + vị trí boss tầng sâu cho engine chép vào BC_WAVES /
+     BC_BOSS_POS của game.js (mẫu sóng bc_kiemtrung: [[loài x n]...]).
+     Lính giữ cửa là loài MỚI tan_hon_kiem_y_sau (kháng cộng hưởng 50%). ---- */
+  var BC_KIEMTRUNG_SAU_WAVES = [['tan_hon_kiem_y_sau', 2], ['tan_hon_kiem_y_sau', 3]];
+  var BC_KIEMTRUNG_SAU_BOSS_POS = { x: 22, y: 5 };
+  var BC_KIEMTRUNG_SAU_EYES = [{ x: 6, y: 14 }, { x: 37, y: 14 }];
+
+  /* ---- Huyền Tinh Kiếm Phổ: học + vòng xuất chiêu ----
+     learnHuyenTinhKiemPho là đường học DUY NHẤT (gọi từ thưởng lần
+     đầu tầng sâu). availableSwordMoves/bestSwordMoveFor: vòng tự chọn
+     lấy hệ số nhân CAO NHẤT trong các chiêu đã mở của cả hai dòng —
+     Huyền Tinh Trảm 1,9 thắng Phá Quân 1,7 ở tầng 3, Quy Nhất 2,5 vẫn
+     thắng ở tầng 4 (không hồi quy đòn của người chơi tầng cao). */
+  function learnHuyenTinhKiemPho(state) {
+    if (!state || typeof state !== 'object') return { ok: false, reason: 'no_state' };
+    if (!Array.isArray(state.unlocked)) state.unlocked = [];
+    var already = state.unlocked.indexOf('huyen_tinh_kiem_pho') >= 0;
+    if (!already) state.unlocked.push('huyen_tinh_kiem_pho');
+    ensureTechniques(state);
+    return { ok: true, already: already, technique: techniqueOf(state, 'huyen_tinh_kiem_pho') };
+  }
+  function availableSwordMoves(state) {
+    var out = [];
+    SWORD_MOVES.forEach(function (mv) {
+      var tid = mv.techId || 'that_tinh';
+      if (tid === 'that_tinh') {
+        if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) return;
+        var t = techniqueOf(state, 'that_tinh'); var tier = t ? t.tier : 1;
+        if (tier >= mv.tier) out.push(mv);
+      } else {
+        var t2 = techniqueOf(state, tid);
+        if (t2 && t2.tier >= mv.tier) out.push(mv);
+      }
+    });
+    return out;
+  }
+  function bestSwordMoveFor(state) {
+    var list = availableSwordMoves(state);
+    if (!list.length) return SWORD_MOVES[0];
+    var best = list[0];
+    list.forEach(function (mv) { if (mv.mult * mv.hits > best.mult * best.hits) best = mv; });
+    return best;
+  }
+
+  /* ---- Thưởng thông LẦN ĐẦU tầng sâu — NGOÀI trần mềm (engine gọi
+     đúng một lần khi bcRecordClear báo firstClear; bản thân cờ
+     firstClear là khóa chống trùng, hàm còn tự kiểm lại). Gồm: bí
+     tịch Huyền Tinh Kiếm Phổ + Yêu Đan cấp 3 x1 + tu vi 240 (20% trần
+     Kim Đan 1200, cộng có trần) + thử học ô 06 Thanh Long Xuất Thế
+     (cần ô 02 + ô 05; thiếu chuỗi thì chờ ở cờ thanhLongPending, học
+     bù bằng arcIvResolvePendingSets khi chuỗi đủ). ---- */
+  var BC_SAU_FIRST_TUVI = 240;
+  function bcSauFirstClearRewards(state) {
+    var sr = ensureSecretRealms(state);
+    var e = sr.realms.bc_kiemtrung_sau;
+    if (!e || !e.firstClear) return { ok: false, reason: 'not_first_clear' };
+    if (state.flags && state.flags.bcSauFirstPaid) return { ok: false, reason: 'duplicate' };
+    var learned = learnHuyenTinhKiemPho(state);
+    bagAdd(state, 'yeu_dan_3', 1);
+    var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+    var gained = 0;
+    if (cap) { gained = Math.max(0, Math.min(BC_SAU_FIRST_TUVI, cap - (state.tuvi || 0))); state.tuvi = (state.tuvi || 0) + gained; }
+    var set06 = nguHanhLearn(state, 'thanh_long_xuat_the');
+    if (!set06.ok && set06.reason === 'chain') { if (state.flags) state.flags.thanhLongPending = true; }
+    if (!state.flags) state.flags = {};
+    state.flags.bcSauFirstPaid = true;
+    return { ok: true, huyenTinh: learned, items: { yeu_dan_3: 1 }, tuvi: gained, set06: set06 };
+  }
+  function arcIvResolvePendingSets(state) {
+    var out = [];
+    if (state && state.flags && state.flags.thanhLongPending && !techniqueOf(state, 'thanh_long_xuat_the')) {
+      var r = nguHanhLearn(state, 'thanh_long_xuat_the');
+      if (r.ok) { state.flags.thanhLongPending = false; out.push('thanh_long_xuat_the'); }
+    }
+    return out;
+  }
+
+  /* ---- Đài thách đấu tông môn (mở khi qua q13_de_nghi) ----
+     Điểm kiếm trong trận chảy theo mô hình hiện hành: resolver trận
+     của engine gọi techniqueGain(state,'that_tinh',2) mỗi lần xuất
+     kiếm (đúng encCastSword/hhtCastSword ở game.js) — hàm ghi thắng
+     KHÔNG cộng điểm kiếm. Bậc vo_dich: giữ chỗ ở đợt 1, MỞ ở đợt 2
+     (chương 18) thành hạng trong ranks với mốc openQuest riêng; đối
+     tượng champion bên dưới là tombstone cũ, giữ nguyên như hợp đồng. */
+  var DAI_THACH_DAU_DEFS = {
+    unlockQuest: 'q13_de_nghi',
+    swordPtsPerCast: 2,
+    ranks: [
+      { id: 'noi_mon', name: 'Đệ tử nội môn', profileId: 'profile:challenge:noi_mon', flag: 'challengeWinsNoiMon' },
+      { id: 'tinh_anh', name: 'Tinh anh nội môn', profileId: 'profile:challenge:tinh_anh', flag: 'challengeWinsTinhAnh', fragmentSet: 'thanh_loan_pha_hu' },
+      /* Đợt 2 (chương 18): hạng vô địch mở sau trận đấu công khai ở phủ
+         thành (mốc q18_chung_cu); mảnh ô 07 Hỏa Phượng Liêu Nguyên. */
+      { id: 'vo_dich', name: 'Vô địch đài', profileId: 'profile:challenge:vo_dich', flag: 'challengeWinsVoDich', fragmentSet: 'hoa_phuong_lieu_nguyen', openQuest: 'q18_chung_cu' }
+    ],
+    champion: { id: 'vo_dich', name: 'Quán quân đài', open: false, reservedFor: 'chuong_18' }
+  };
+  function challengeOpen(state) { return questReached(state, 'q13_thinh_cau_dau'); }
+  function daiThachDauRank(rankId) {
+    for (var i = 0; i < DAI_THACH_DAU_DEFS.ranks.length; i++) if (DAI_THACH_DAU_DEFS.ranks[i].id === rankId) return DAI_THACH_DAU_DEFS.ranks[i];
+    return null;
+  }
+  function daiThachDauRecordWin(state, rankId) {
+    var rank = daiThachDauRank(rankId);
+    if (!rank) return { ok: false, reason: 'unknown_rank' };
+    if (!challengeOpen(state)) return { ok: false, reason: 'locked' };
+    // Hạng có mốc mở riêng (openQuest): chưa đạt mốc thì khóa, dù đài đã mở.
+    if (rank.openQuest && !questReached(state, rank.openQuest)) return { ok: false, reason: 'locked' };
+    var g = ensureGrind(state);
+    g.seq += 1;
+    var r = grantReward(state, rank.profileId, { claimKey: 'gr:challenge:' + rankId + ':d' + state.dayCount + ':n' + g.seq, sourceId: 'daiThachDau:' + rankId });
+    if (!r.ok) return r;
+    if (!state.flags) state.flags = {};
+    state.flags[rank.flag] = (state.flags[rank.flag] || 0) + 1;
+    var frag = null;
+    if (rank.fragmentSet) frag = nguHanhAddFragment(state, rank.fragmentSet);
+    return { ok: true, reward: r, wins: state.flags[rank.flag], fragment: frag };
+  }
+
+  /* ---- Nguồn mảnh bí pháp dải Kim Đan (bản đồ mục 4.3) ----
+     Luật boss CHUNG NGUỒN: mỗi lần hạ chỉ rơi mảnh cho bộ GẦN HOÀN
+     THÀNH NHẤT trong các bộ đủ điều kiện của nguồn đó (đủ điều kiện =
+     chưa học + đủ chuỗi hệ requires/requiresAny + đủ mốc riêng). Tỉ
+     lệ hoàn thành = mảnh đã có / mảnh cần; hòa thì bộ cần ít mảnh hơn
+     thắng. Mỗi lần hạ rơi ĐÚNG 1 mảnh (cần 5 lần hạ cho bộ 5 mảnh —
+     đúng nhịp hồ sơ mảnh của giai đoạn 2). */
+  var ARC_IV_FRAGMENT_SOURCES = {
+    'dai_thach_dau:tinh_anh': ['thanh_loan_pha_hu'],
+    'boss:bc_kiemtrung_sau': ['tuyet_hoa_cu_kiem'],
+    'boss:ho_tran_kiem_linh': ['thai_bach_kim_kiem'],
+    'boss:bc_kiemtrung': ['han_bang_bao_lien', 'loi_quang_than_kiem'],
+    'boss:bc_thuyliem': ['thuong_hai_cuong_dao', 'thanh_hoa_lien_tran']
+  };
+  function arcIvFragmentEligible(state, setId, sourceId) {
+    var def = TECHNIQUE_DEFS[setId];
+    if (!def || !def.nguHanh) return false;
+    if (techniqueOf(state, setId)) return false;
+    if (def.requiresExternal && !techniqueOf(state, def.requiresExternal)) return false;
+    var missing = (def.requires || []).filter(function (r) { return !techniqueOf(state, r); });
+    if (missing.length) return false;
+    if (def.requiresAny && !def.requiresAny.some(function (r) { return !!techniqueOf(state, r); })) return false;
+    // Mốc riêng: Mảnh Sứ của SP-01 chỉ rơi SAU q16_linh_ngo (nhiệm vụ giao).
+    if (setId === 'thanh_hoa_lien_tran' && !questReached(state, 'q16_linh_ngo')) return false;
+    var cur = nguHanhFragments(state, setId);
+    return cur < (def.fragmentsNeeded || 0);
+  }
+  function arcIvFragmentDropFor(state, sourceId) {
+    var sets = ARC_IV_FRAGMENT_SOURCES[sourceId];
+    if (!sets) return null;
+    var best = null, bestRatio = -1, bestNeed = Infinity;
+    sets.forEach(function (setId) {
+      if (!arcIvFragmentEligible(state, setId, sourceId)) return;
+      var def = TECHNIQUE_DEFS[setId];
+      var need = def.fragmentsNeeded || 1;
+      var ratio = nguHanhFragments(state, setId) / need;
+      if (ratio > bestRatio || (ratio === bestRatio && need < bestNeed)) { best = setId; bestRatio = ratio; bestNeed = need; }
+    });
+    if (!best) return null;
+    var r = nguHanhAddFragment(state, best);
+    if (!r || !r.ok) return null;
+    return { setId: best, count: r.count, needed: r.needed, complete: !!r.complete, converted: !!r.converted };
+  }
+
+  /* ---- Ô 19 (trưởng lão dạy): sau q12_done + thắng ÍT NHẤT 1 boss
+     dã ngoại dải Kim Đan. Số lần thắng rút từ sổ nhận thưởng của hệ
+     cày (khóa claim của boss Hộ Trận) — không cần cờ riêng. ---- */
+  function kimDanWildBossWins(state) {
+    var g = ensureGrind(state);
+    var keys = Object.keys(g.claimed || {});
+    var n = 0;
+    keys.forEach(function (k) { if (/^gr:boss:boss_hb_ho_tran_kiem_linh:c\d+$/.test(k)) n += 1; });
+    return n;
+  }
+  function arcIvTryTeachTuDien(state) {
+    if (!questReached(state, 'q12_done')) return { ok: false, reason: 'quest' };
+    if (kimDanWildBossWins(state) < 1) return { ok: false, reason: 'wild_boss' };
+    return nguHanhLearn(state, 'tu_dien_kich');
+  }
+  /* ---- Ô 09 (tàng kinh): 10 phiếu săn ĐÃ TRẢ với hồ sơ dải Kim Đan
+     (resolvedProfileId đóng băng lúc nhận) + đã có ô 08. ---- */
+  function arcIvHuntTicketsKimDan(state) {
+    var g = ensureGrind(state);
+    var n = 0;
+    Object.keys(g.instances || {}).forEach(function (k) {
+      var inst = g.instances[k];
+      if (inst && inst.kind === 'hunt' && inst.status === 'claimed' && inst.resolvedProfileId === 'profile:hunt:kd') n += 1;
+    });
+    return n;
+  }
+  function arcIvTryTeachDaiNhat(state) {
+    if (!techniqueOf(state, 'viem_long_tho_tuc')) return { ok: false, reason: 'chain', missing: ['viem_long_tho_tuc'] };
+    if (arcIvHuntTicketsKimDan(state) < 10) return { ok: false, reason: 'tickets', tickets: arcIvHuntTicketsKimDan(state) };
+    return nguHanhLearn(state, 'dai_nhat_hoa_cau');
+  }
+  /* ---- Điểm ghép dải Kim Đan: tàng kinh, sau q16_linh_ngo ---- */
+  function arcIvCraftAtTangKinh(state, id) {
+    if (!questReached(state, 'q16_linh_ngo')) return { ok: false, reason: 'locked' };
+    return nguHanhCraft(state, id);
+  }
+
   var VSLC = {
     REALMS: REALMS, realmName: realmName,
     SILENCE_MAX: SILENCE_MAX, SILENCE_RATES: SILENCE_RATES, WORD_SKILLS: WORD_SKILLS,
@@ -4070,6 +4660,20 @@
     PHE_THUOC_COLOR_ORDER: PHE_THUOC_COLOR_ORDER,
     isSessionHidden: isSessionHidden, hideSessionProp: hideSessionProp, showSessionProp: showSessionProp, clearSessionHiddenProps: clearSessionHiddenProps,
     MONSTER_DEFS: MONSTER_DEFS, HUNT_ZONES: HUNT_ZONES, HUNT_LAIRS: HUNT_LAIRS, BOSS_DEFS: BOSS_DEFS,
+    /* Cung IV (đợt 1): dữ kiện + hàm chương 13–16 cho worker engine. */
+    ARC_IV_STORY_REWARDS: ARC_IV_STORY_REWARDS, claimArcIvStoryReward: claimArcIvStoryReward,
+    arcIvRecognizeSoulRank4: arcIvRecognizeSoulRank4, arcIvSectSoulServiceDue: arcIvSectSoulServiceDue,
+    ARC_IV_CH15_LOCK_FLAG: ARC_IV_CH15_LOCK_FLAG, arcIvCh15ResonanceLocked: arcIvCh15ResonanceLocked,
+    BC_SAU_GATE: BC_SAU_GATE, bcSauGateOpen: bcSauGateOpen,
+    BC_KIEMTRUNG_SAU_GRID: BC_KIEMTRUNG_SAU_GRID, BC_KIEMTRUNG_SAU_WAVES: BC_KIEMTRUNG_SAU_WAVES,
+    BC_KIEMTRUNG_SAU_BOSS_POS: BC_KIEMTRUNG_SAU_BOSS_POS, BC_KIEMTRUNG_SAU_EYES: BC_KIEMTRUNG_SAU_EYES,
+    learnHuyenTinhKiemPho: learnHuyenTinhKiemPho, availableSwordMoves: availableSwordMoves, bestSwordMoveFor: bestSwordMoveFor,
+    bcSauFirstClearRewards: bcSauFirstClearRewards, arcIvResolvePendingSets: arcIvResolvePendingSets,
+    DAI_THACH_DAU_DEFS: DAI_THACH_DAU_DEFS, challengeOpen: challengeOpen, daiThachDauRank: daiThachDauRank, daiThachDauRecordWin: daiThachDauRecordWin,
+    ARC_IV_FRAGMENT_SOURCES: ARC_IV_FRAGMENT_SOURCES, arcIvFragmentEligible: arcIvFragmentEligible, arcIvFragmentDropFor: arcIvFragmentDropFor,
+    kimDanWildBossWins: kimDanWildBossWins, arcIvTryTeachTuDien: arcIvTryTeachTuDien,
+    arcIvHuntTicketsKimDan: arcIvHuntTicketsKimDan, arcIvTryTeachDaiNhat: arcIvTryTeachDaiNhat,
+    arcIvCraftAtTangKinh: arcIvCraftAtTangKinh,
     bossClaimKey: bossClaimKey, bossStatus: bossStatus,
     YEU_DAN_DROP_NORMAL: YEU_DAN_DROP_NORMAL, YEU_DAN_DROP_ELITE: YEU_DAN_DROP_ELITE,
     rollSessionValue: rollSessionValue, yeuDanDropFor: yeuDanDropFor, newEncounterSessionId: newEncounterSessionId,

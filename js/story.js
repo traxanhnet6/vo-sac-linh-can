@@ -1209,6 +1209,259 @@
     { who: 'narrate', text: 'Nàng đọc xong, gấp tờ giấy lại rất cẩn thận và cất vào ngực áo — như cất một tờ tự thư khác. Trên đài, chuông tông ngân dài. Một phần đường đã khép lại bằng chữ viết, đúng như nó đã bắt đầu bằng chữ viết.' }
   ];
 
+  /* ================= CUNG IV — CHƯƠNG 13: VỊ THẾ MỚI Ở SƠN MÔN =================
+     Cài nguyên văn từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch13.js.
+     Điểm ngắt engine (thay chú thích neo trong bản thảo):
+     - SCENE_CH13_DAI_THACH kết thúc ở lời khiêu chiến của tinh anh: engine
+       chạy 2 trận đệ tử nội môn NGAY TRƯỚC đoạn cuối của cảnh này — xem
+       SCENE_CH13_DAI_THACH_2; hợp đồng arciv-work/CONTRACT-wave1.md mục A. */
+  var SCENE_CH13_TRO_LAI = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện, ba ngày sau khi Kết Đan. Ngươi bước qua cửa điện, hai hàng đệ tử chấp sự tự động dạt ra nhường lối — không ai bảo ai. Mấy tháng trước, cũng lối đi này, ngươi từng phải đứng chờ ở bậc thềm dưới cùng.' },
+    { who: 'truong_lao_tong', text: 'Giang Phàm. Ngồi đi. Hôm nay ta gọi ngươi tới không phải để giao việc — là để tông môn tự sắp xếp lại một việc: từ nay, trong sổ sách của Thanh Vân Tông, ngươi đứng ở hàng nào.' },
+    { who: 'truong_lao_tong', text: 'Có trưởng lão nói: Kim Đan là Kim Đan, cứ theo lệ cũ mà xếp. Cũng có người nói: hồ sơ của ngươi bắt đầu bằng bốn chữ "vô linh căn", xếp vội e rằng sau này khó sửa. Ta nghe cả hai phía. Giờ ta muốn nghe phía ngươi — bằng cách của ngươi.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Hồ sơ viết gì, đệ tử không tranh. Đệ tử chỉ xin một điều: việc gì tông giao, cứ giao như giao cho một đệ tử Kim Đan. Làm được hay không, để việc trả lời."' },
+    { who: 'lieu_khuynh_tien', text: 'Lời ấy đủ rồi. Trưởng lão, con từng đứng trên Thăng Long Đạo nhìn chàng đánh hình chiếu của chính mình. Tông này nếu còn phân vân về một người như thế, thì phân vân không nằm ở chàng.' },
+    { who: 'de_tu_a', text: '(thì thầm ở hàng dưới) Sư tỷ Liễu nói thay cho hắn… Từ ngày Kết Đan tới giờ, cả tông chưa ai nghe hắn nói một câu nào nữa. Không biết bậc Hưởng kia, rốt cuộc là phúc hay là họa.' },
+    { who: 'truong_lao_tong', text: 'Đủ. Lời đồn để ngoài cửa điện. Giang Phàm, tông đã có cách định vị thế cho ngươi — một cách không cần ai ban, cũng không ai tranh được. Nghe ta nói hết đã.' },
+    { who: 'narrate', text: 'Trưởng lão đứng dậy, đi tới bên cửa điện, nhìn xuống quảng trường và đài đấu kiếm phía xa. Giọng ông chậm lại, như thể việc sắp nói ông đã cân nhắc suốt ba ngày.' }
+  ];
+  var SCENE_CH13_DE_NGHI = [
+    { who: 'truong_lao_tong', text: 'Tông muốn ngươi nhận một việc có danh phận: đứng lớp kiếm pháp cho đệ tử mới ở đài đấu kiếm. Không phải việc tạp dịch, không phải việc sai vặt — là việc của một người mà tông tin vào kiếm của hắn.' },
+    { who: 'truong_lao_tong', text: 'Nhưng ta biết tính ngươi, và ta cũng biết tính đám đệ tử trong tông. Danh phận ta ban hôm nay, ngày mai sẽ có kẻ nói là ban vì nể, vì sợ, vì cái đan trong bụng ngươi. Cho nên tông đổi cách: mở đài thách đấu.' },
+    { who: 'truong_lao_tong', text: 'Ba ngày tới, đài đấu kiếm mở cho mọi đệ tử nội môn. Ai không phục vị thế của ngươi, cứ lên đài, nói rõ trước mặt mọi người rồi xuất kiếm. Ngươi thắng, vị thế ấy do chính kiếm của ngươi đứng lấy — không ai còn đường nói khác.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử nhận. Nhưng có một điều xin nói trước: lên đài là tỉ thí của tông môn. Đệ tử ra kiếm có chừng mực — mong các sư huynh đệ cũng vậy."' },
+    { who: 'hoa_huong_than', text: 'Câu ấy để ta nói lại với bọn họ, nguyên văn. Giang Phàm, ta giữ sổ thách đấu ba ngày này. Ai ghi tên, ta ghi cả lý do không phục của họ vào sổ — để sau này thắng thua gì cũng còn chữ mà đối chiếu.' },
+    { who: 'truong_lao_tong', text: 'Tốt. Còn một việc nữa, nói riêng ở đây: từ hôm nay, mỗi lần ngươi lên tầng công pháp, tông sẽ cho gióng chuông nghi thức ở đài — không phải để khoe. Là để đám đệ tử mới hiểu: tầng kiếm không ai cho không ai cả, nó đến từ từng trận đánh thật.' },
+    { who: 'narrate', text: 'Tin mở đài lan khắp tông ngay trong buổi sáng. Đến trưa, sổ thách đấu của Hoa Hướng Thần đã có hai cái tên ghi đầu tiên — hai đệ tử nội môn trẻ, kiếm pháp thuộc hàng khá nhất trong lớp mới lên.' },
+    { who: 'de_tu_b', text: 'Ta ghi tên không phải vì ghét ai. Ta chỉ muốn tận mắt xem: người mà cả tông đang xôn xao ấy, kiếm thật sự đi tới đâu. Thua cũng đáng — miễn là được thấy.' },
+    { who: 'narrate', text: 'Đài thách đấu tông môn chính thức mở từ hôm nay.' }
+  ];
+  var SCENE_CH13_DAI_THACH = [
+    { who: 'narrate', text: 'Đài Đấu Kiếm. Khán giả đệ tử đứng kín ba mặt đài — có người tới xem kiếm, có người tới xem người, cũng có người tới để chờ xem ngươi thua. Hoa Hướng Thần cầm sổ đứng ở bậc đài, giọng rõ ràng như đọc chiếu.' },
+    { who: 'hoa_huong_than', text: 'Thách đấu vị thế, trận thứ nhất. Đệ tử nội môn ghi tên đầu tiên — lên đài. Quy củ như tỉ thí Thăng Long: ra kiếm có chừng mực, thắng thua ghi sổ, không ai được mang oán xuống đài.' },
+    { who: 'de_tu_a', text: 'Giang sư huynh. Đệ không nói lời khách sáo. Đệ luyện Thất Tinh ba năm, hôm nay chỉ xin huynh cho đệ thấy: cùng một quyển kiếm quyết, người đã Kết Đan đánh khác người chưa Kết Đan ở chỗ nào.' }
+  ];
+  /* Điểm ngắt engine: HAI trận đệ tử nội môn (đài thách đấu) chạy giữa
+     SCENE_CH13_DAI_THACH và cảnh dưới đây; sau đó là lời khiêu chiến của
+     tinh anh nội môn — trận tinh anh chạy ngay sau cảnh này, rồi mở
+     SCENE_CH13_TINH_ANH_END. */
+  var SCENE_CH13_DAI_THACH_2 = [
+    { who: 'hoa_huong_than', text: 'Hai trận đầu ghi sổ xong. Còn ai ghi tên nữa không — hay là cả lớp nội môn hôm nay chỉ cử được hai người trẻ nhất lên xem kiếm?' },
+    { who: 'de_tu_a', text: 'Để ta. Ta không ghi tên trong sổ của ngươi, Hoa sư huynh — ta chờ đúng lúc này mới lên tiếng, để mọi người nghe rõ: ta không phục. Không phải không phục cái đan của hắn. Ta không phục chuyện tông xếp một người chưa từng dạy ai một ngày, lên đứng lớp kiếm pháp.' },
+    { who: 'de_tu_a', text: 'Giang Phàm. Ta là người mạnh nhất trong lớp nội môn khóa này — câu ấy cả đài đều biết. Ngươi thắng ta trước mặt mọi người, chức đứng lớp ấy ta tự tay ghi tên ngươi vào sổ. Ngươi thua, thì tự mình xuống đài, nói với trưởng lão hai chữ: chưa xứng. Lên kiếm đi.' }
+  ];
+  var SCENE_CH13_TINH_ANH_END = [
+    { who: 'narrate', text: 'Đòn kết liễu vừa dứt, cả đài im một khắc dài. Năm điểm sao khép thành một đường thẳng dọc hướng chém, thanh kiếm lớn bay dọc tuyến sao ấy — những đệ tử từng học Thất Tinh đều nhận ra chiêu ấy tên gì, và đều hiểu nó vừa được đánh ở tầng nào.' },
+    { who: 'de_tu_a', text: '…Ta thua. Thua ở chiêu Phá Quân cuối cùng — thua tâm phục. Giang sư huynh, cái tên trong sổ đứng lớp, để ta tự tay ghi. Từ nay ai trong lớp nội môn còn nói một câu không phục, cứ qua kiếm của ta trước.' },
+    { who: 'hoa_huong_than', text: 'Ghi sổ: thách đấu vị thế, ba trận, Giang Phàm thắng cả ba. Ta đọc lại cho cả đài nghe — từ giờ, vị thế của Giang sư huynh trong tông không còn là việc để bàn ra tán vào nữa. Nó là việc đã ghi sổ.' },
+    { who: 'lieu_khuynh_tien', text: 'Ngươi thấy không — danh phận không ai ban cho ngươi cả. Ngươi tự đứng lấy nó, ngay tại đài này, trước mặt đúng những người từng nghi ngờ ngươi nhất. Đó mới là cách của Thanh Vân Tông.' },
+    { who: 'narrate', text: 'Đám đông tan dần xuống núi. Nhưng ở bậc thềm cuối cùng của đài, một người không mặc áo đệ tử tông đang đứng chờ — áo lữ hành phủ bụi đường, tay cầm một phong thư niêm triện đỏ của một nhà thế lực ngoài tông.' },
+    { who: 'tin_su', text: 'Giang công tử… tiểu nhân chờ công tử từ lúc đài còn chưa mở. Chủ nhân của tiểu nhân dặn: thư này nhất định phải trao tận tay công tử, ngay trong ngày công tử định xong vị thế ở sơn môn. Xin công tử đọc cho.' }
+  ];
+  var SCENE_CH13_THINH_CAU = [
+    { who: 'narrate', text: 'Điểm rơi cổng tông. Phong thư niêm triện đỏ, giấy tốt, chữ viết tay người khác — nhưng từng câu trong thư đều nói về ngươi như thể ngươi là một món đồ có thể mượn được: "mượn một lệnh của Giang công tử, dùng xong xin hoàn trả nguyên vẹn, hậu tạ tùy công tử định".' },
+    { who: 'tin_su', text: 'Chủ nhân của tiểu nhân nói: nhà họ sắp có một việc lớn, đối thủ là người không nể mặt ai — chỉ nể đúng một thứ: một lời của Giang công tử. Chỉ cần công tử gật đầu cho mượn danh một lần, việc của nhà họ yên, mà công tử cũng không mất gì.' },
+    { who: 'tin_su', text: 'Tiểu nhân chỉ là người đưa thư, công tử đừng khó xử với tiểu nhân. Chủ nhân còn dặn thêm một câu: nếu công tử chưa tiện trả lời, cứ giữ thư lại. Nhà họ chờ được. Nhà họ… rất kiên nhẫn.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Thư ta nhận. Đáp, ta chưa đáp. Ngươi về nói với chủ nhân của ngươi đúng một câu này: lệnh của ta không phải vật cho mượn — nhưng thư thì ta đã đọc, và ta nhớ ai là người gửi."' },
+    { who: 'tin_su', text: 'Tiểu nhân… ghi nhớ từng chữ. Tiểu nhân xin cáo lui. Chỉ mong công tử biết: nhà họ gửi thư này không phải nhà đầu tiên nghĩ tới việc ấy đâu. Chẳng qua họ nhanh chân nhất thôi.' },
+    { who: 'narrate', text: 'Người đưa tin xuống núi, bóng khuất dần sau cổng sơn môn. Ngươi đứng lại một lúc với phong thư trong tay. "Mượn một lệnh" — bốn chữ nghe như mượn một món đồ, mà thứ bị mượn thật ra là cả cái giá của một lần cất lời.' },
+    { who: 'narrate', text: 'Dưới thành, có một người cũng đang bị thiên hạ hỏi mượn một thứ tương tự: uy tín của Hứa gia. Và người đang gánh việc ấy ở Hứa gia lúc này, không phải Hứa Chính Ngôn.' }
+  ];
+  var SCENE_CH13_VE_THANH = [
+    { who: 'narrate', text: 'Sân phủ Hứa, Cô Châu Thành. Bàn làm việc của U Nhàn đặt ngay gian ngoài: sổ sách xếp theo từng nhà, một chồng thư chưa trả lời, và một danh sách dài những người đang chờ gặp nàng — cảnh tượng của một người đang thật sự điều hành việc đối ngoại của một gia tộc.' },
+    { who: 'u_nhan', text: 'Phàm ca tới đúng lúc muội vừa tiễn đoàn người thứ ba trong ngày. Toàn là người tới "thăm hỏi" — mà thăm hỏi nào cũng vòng về một câu: Hứa gia bây giờ, còn ai đứng sau lưng nữa không. Muội trả lời từng đoàn một, bằng sổ sách, không bằng lời hứa.' },
+    { who: 'u_nhan', text: 'Muội nghe tin trên núi rồi. Mở đài thách đấu, thắng ba trận, tự đứng lấy vị thế — đúng là cách của huynh. Cha muội cười suốt buổi trưa vì chuyện ấy đấy.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Trên núi vừa có người gửi thư, xin mượn một lệnh của ta để dẹp việc nhà họ. Ta chưa đáp. Nhưng ta có cảm giác: thư như thế sẽ không dừng ở một phong."' },
+    { who: 'u_nhan', text: 'Huynh cảm giác đúng đấy. Dưới thành này, từ ngày huynh Kết Đan, đã có ba nhà dò hỏi qua trung gian: một lệnh của Giang Phàm đáng giá bao nhiêu. Muội chặn hết ở cửa Hứa gia — không phải vì muội quyết thay huynh, mà vì những lời hỏi ấy chưa xứng được đưa tới trước mặt huynh.' },
+    { who: 'u_nhan', text: 'Nhưng chặn mãi không phải cách. Sớm muộn cũng có nhà đưa thỉnh cầu tới tận sơn môn, đường hoàng, trước mặt trưởng lão — lúc ấy huynh phải tự mình trả lời. Và muội tin huynh đã biết mình sẽ trả lời thế nào rồi.' },
+    { who: 'narrate', text: 'Nàng nói đúng. Ngay sáng hôm sau, khi ngươi vừa trở lại sơn môn, quản sự đại điện đã chờ sẵn ở cửa: hai phong thư thỉnh cầu nữa vừa tới — từ hai nhà khác nhau, về hai việc khác nhau, và cả hai đều xin cùng một thứ.' }
+  ];
+
+  /* ================= CUNG IV — CHƯƠNG 14: HAI THỈNH CẦU CÙNG MỘT NGÀY =================
+     Nguyên văn từ ch14.js. Điểm ngắt engine: trận giữ đất + phong ấn mắt
+     trận chạy giữa SCENE_CH14_HIEN_TRUONG và SCENE_CH14_HIEN_TRUONG_END. */
+  var SCENE_CH14_HAI_THINH_CAU = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện. Hai người đưa tin đứng cách nhau đúng một khoảng sân hẹp, không ai chịu nhìn ai: một người mang triện của nhà đang giữ dải đất linh ven đường mòn, một người mang thư của nhà còn lại — chính nhà đang tranh dải đất ấy, và đang bị ép một mối hôn sự.' },
+    { who: 'tin_su', text: 'Giang công tử, thư của chủ nhân tiểu nhân: dải đất linh ven đường mòn vốn của nhà họ từ ba đời, nay bị nhà bên lấn dần. Chỉ cần công tử cho mượn một lệnh, nói rõ đất ấy thuộc về ai — việc ba đời sẽ yên trong một ngày. Hậu tạ, chủ nhân không dám để công tử thiệt.' },
+    { who: 'tin_su_b', text: 'Công tử đừng nghe một phía. Thư của chủ nhân tiểu nhân đây: nhà họ mới là người bị lấn. Và còn một việc riêng nữa — tiểu thư nhà họ bị ép gả cho một mối hôn sự chỉ vì nhà bên muốn nuốt đất qua đường hôn nhân. Một lệnh của công tử hủy được mối hôn ấy, là cứu cả một đời người.' },
+    { who: 'tin_su', text: 'Ngươi nói ai ép ai? Đất có sổ, hôn có ước — nhà ngươi mang cả hai thứ tới cùng một người, tưởng người ta không nhìn ra à?' },
+    { who: 'tin_su_b', text: 'Sổ của nhà ngươi là sổ mới viết lại năm ngoái, cả thành này ai mà không biết. Ta tới trước hay ngươi tới trước, hôm nay để công tử phân xử.' },
+    { who: 'truong_lao_tong', text: 'Đủ rồi. Hai nhà cãi nhau, đừng cãi ở điện của ta. Giang Phàm — hai phong thư, hai việc, cùng một lời xin: mượn lệnh của ngươi. Ngươi đáp thế nào, tông không cản. Nhưng ta nhắc một câu: đáp vội một phía ở đây, là ngươi vừa cho mượn thứ mà họ xin đấy.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Hai thư ta đều nhận. Nhưng lệnh chưa cho mượn vội. Việc đất, ta xem bằng sổ sách trước — sổ của cả hai nhà, và cả người giữ đất lâu năm. Việc hôn sự, ta xem sau, nhưng cũng xem bằng chứng, không xem bằng lời."' },
+    { who: 'tin_su_b', text: 'Công tử… xem sổ? Việc này xưa nay ai cũng tưởng chỉ cần công tử gật đầu…' },
+    { who: 'truong_lao_tong', text: 'Nghe rõ chưa. Người ta không từ chối các ngươi — người ta từ chối cách các ngươi xin. Về nói lại với chủ nhân hai nhà: muốn một lời của Giang Phàm, thì mang sự thật ra mà đổi. Xuống thành thôi, Giang Phàm. Sổ đất của hai nhà đều lưu ở phủ thành.' },
+    { who: 'narrate', text: 'Hai người đưa tin cúi đầu lui ra, mỗi người một hướng, không ai còn dám cãi thêm câu nào. Lần đầu tiên, một lời thỉnh cầu mượn lệnh bị chặn lại không phải bằng im lặng — mà bằng một yêu cầu rất cụ thể: chứng cứ.' }
+  ];
+  var SCENE_CH14_SO_DAT = [
+    { who: 'narrate', text: 'Phòng lưu sổ của phủ thành. Hai cuốn sổ đất được mang ra đặt cạnh nhau: một cuốn bìa cũ sờn, giấy ngả vàng, nét mực nhiều đời; một cuốn bìa mới cứng, chữ viết đều tăm tắp như chép lại trong một đêm.' },
+    { who: 'dan_thanh_a', text: 'Cậu Giang xem đây. Sổ cũ này ghi từ đời ông cố của cả hai nhà: dải đất ven đường mòn là đất chung giữ đường nước — hai nhà cùng dùng, không nhà nào được rào, được bán, được dựng gì lên đó. Chữ của quan phủ đời trước, triện còn nguyên.' },
+    { who: 'dan_thanh_a', text: 'Còn cuốn mới này… năm ngoái có người mang tới xin đối chiếu, nói là sổ nhà họ "chép lại cho rõ". Lão giữ sổ ba mươi năm, lão phân biệt được giấy cũ thật với giấy làm cũ. Cuốn này, là làm cũ.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Sổ cũ ghi đất chung giữ đường nước. Vậy dải đất ấy mà hỏng, cả hai nhà cùng mất nước. Người làm giả sổ này, hắn không chỉ muốn lấy đất — hắn muốn nhà bên phải tự bỏ đất trước."' },
+    { who: 'dan_thanh_a', text: 'Cậu nói đúng ý lão. Mấy tháng nay linh khí ở dải đất ấy nhiễu lạ lắm, cỏ chết từng mảng, nước giếng hai nhà đều vẩn. Nhà bên tưởng đất hỏng thật, đã tính chuyện bỏ đất mà đi. Cậu muốn rõ hơn nữa, thì hỏi lão giữ đất — lão ấy ở ngay ven đường mòn, giữ đường nước ấy còn lâu hơn lão giữ sổ.' },
+    { who: 'narrate', text: 'Sổ giả đã rõ một nửa. Nhưng sổ giả không tự làm linh khí nhiễu được — muốn biết đất "hỏng" bằng cách nào, phải nghe người sống ngay trên dải đất ấy, và phải tận mắt tới hiện trường.' }
+  ];
+  var SCENE_CH14_NHAN_CHUNG = [
+    { who: 'dan_c', text: 'Cậu là Giang công tử trên núi xuống à? Lão giữ đường nước này bốn mươi năm. Bốn mươi năm, nước chưa từng vẩn một ngày — cho tới ba tháng trước, khi có người lạ tới dựng mấy cột đá khắc chữ quanh dải đất, nói là "trấn đất cho linh khí tụ lại".' },
+    { who: 'dan_c', text: 'Từ ngày có mấy cột đá ấy, đêm nào lão cũng nghe tiếng ong ong rất khẽ trong đất, như có ai gõ lệch nhịp vào tai. Cỏ chết bắt đầu từ quanh mấy cột đá ấy mà lan ra. Lão nói với người của hai nhà, không ai tin một lão già giữ đất.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Tiếng ong ong lệch nhịp trong đất — cháu nghe ông tả, đã rõ nó là gì rồi. Ông không hoa tai, cũng không nói sai. Việc còn lại để cháu tận mắt xem mấy cột đá ấy."' },
+    { who: 'dan_c', text: 'Cậu là người đầu tiên tin lời lão. Nhưng cậu cẩn thận: quanh dải đất bây giờ có mấy tay thanh niên lạ mặt canh giữ, nói là người của nhà bên thuê "giữ đất khỏi bị phá". Lão thấy chúng nó còn sợ mấy cột đá hơn cả lão — đứng canh mà cứ đứng xa xa.' },
+    { who: 'narrate', text: 'Cột đá khắc chữ, tiếng lệch tần trong đất, linh khí nhiễu lan từ một điểm — mọi dấu hiệu đều chỉ về cùng một thứ ngươi đã từng thấy ở chương trước: trận văn loạn sóng. Lần này là một mắt trận cỡ nhỏ, dựng lén trên đất chung, để ép một nhà phải tự bỏ đất của chính mình.' },
+    { who: 'narrate', text: 'Hiện trường ở ngay phía trước, trên dải đất ven đường mòn. Và đúng như lời lão giữ đất: có người đang canh ở đó.' }
+  ];
+  var SCENE_CH14_HIEN_TRUONG = [
+    { who: 'narrate', text: 'Dải đất linh ven đường mòn. Cỏ chết loang thành một vòng xám quanh bốn cột đá khắc đầy trận văn lạ — và ngay giữa vòng xám ấy, không khí rung lên từng đợt lệch tần quen thuộc: một mắt trận loạn sóng cỡ nhỏ, vẫn đang chạy, vẫn đang gặm dần dải đất này từng ngày.' },
+    { who: 'dan_a', text: 'Đứng lại! Đất này đang có tranh chấp, người ngoài không được vào. Bọn ta được thuê giữ đất — thuê đàng hoàng, có tiền có giấy. Cậu là ai mà dám tới gần mấy cột đá ấy?' },
+    { who: 'hero', mode: 'write', text: '(viết, giơ lên) "Ta là người hai nhà cùng mời tới xem đất. Giấy thuê của các ngươi ghi giữ đất — không ghi giữ một cái trận đang phá đất. Nhìn quanh chân các ngươi đi: cỏ chết, nước vẩn. Thứ các ngươi đang canh, chính là thứ làm đất này hỏng."' },
+    { who: 'dan_a', text: 'Nó… nó nói cái trận kia làm hỏng đất? Nhưng người thuê nói mấy cột đá ấy là để trấn đất… Thôi mặc kệ! Tiền đã nhận, đất phải giữ. Anh em, cản nó lại — đừng để nó chạm vào cột đá!' },
+    { who: 'narrate', text: 'Nhóm tay chân thuê rút vũ khí, dàn ra quanh mắt trận. Vòng nhiễu xám quanh các cột đá bỗng dày lên — mắt trận đang nạp nhịp cho chúng. Nhưng ngươi nghe rõ hơn chúng: trong tiếng lệch tần của mắt trận, có một nhịp đứng yên rất rõ. Phong Âm của ngươi, lần đầu tiên, có một việc để làm ngoài chiến trường.' },
+    { who: 'narrate', text: 'Đứng vào tầm của mắt trận, kết ấn — hoặc đánh gục nhóm giữ đất trước rồi phong ấn sau. Cả hai đường đều mở. Đất này yên lại được hay không, nằm ở trận này.' }
+  ];
+  var SCENE_CH14_HIEN_TRUONG_END = [
+    { who: 'narrate', text: 'Ấn vàng của Phong Âm khép lại trên mắt trận. Tiếng lệch tần tắt dần như một sợi dây đàn bị tháo ra — và lần đầu tiên sau ba tháng, dải đất ven đường mòn yên tĩnh hẳn: hạt linh khí quanh hiện trường chuyển từ nhiễu xám sang trôi đều, cỏ ở rìa vòng chết như vừa được thở lại.' },
+    { who: 'dan_a', text: 'Tắt… tắt thật rồi. Đất yên rồi… Bọn ta khai hết: người thuê là quản sự của nhà giữ sổ mới. Hắn dặn chỉ canh, không được hỏi mấy cột đá là gì, tiền trả gấp ba giá thường. Bọn ta giữ đất ba tháng, hóa ra là giữ một cái bẫy cho chính hai nhà.' },
+    { who: 'dan_a', text: 'Mảnh trận văn này cậu cầm lấy — nó rơi ra từ cột đá khi cái ấn của cậu khép lại. Bọn ta xin làm chứng trước phủ thành: ai dựng trận, ai trả tiền, bọn ta nói hết. Chỉ xin cậu nói giúp một câu: bọn ta bị thuê, không phải chủ mưu.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Làm chứng thật, tội nhẹ đi. Ta ghi đúng một câu cho các ngươi: người giữ bẫy không phải người đặt bẫy. Nhưng từ nay, tiền gấp ba mà không cho hỏi — thì đừng nhận."' },
+    { who: 'narrate', text: 'Mảnh trận văn vỡ nằm gọn trong tay ngươi, còn vương hơi nhiễu lạnh — vật chứng mà không một cuốn sổ giả nào cãi lại được. Đường về đại điện đã rõ: hai lời từ chối của ngươi giờ đứng trên chứng cứ vừa giành được ở hiện trường này, chứ không đứng trên miệng lưỡi của bất cứ nhà nào.' },
+    { who: 'narrate', text: 'Ở lại sau cùng, ngươi ngoái nhìn dải đất một lần nữa. Nơi này từ nay là một điểm đất yên: linh thảo sẽ mọc lại quanh vòng đá cũ. Người đi đường mòn về sau hái thuốc ở đây, ít ai biết nó từng suýt bị đánh cắp bằng một cái trận câm lặng.' }
+  ];
+  var SCENE_CH14_TU_CHOI = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện. Hai người đưa tin lại có mặt — lần này đứng cạnh nhau, và giữa điện, trên bàn của trưởng lão, là ba thứ: cuốn sổ đất cũ, cuốn sổ làm giả, và mảnh trận văn vỡ mang về từ hiện trường.' },
+    { who: 'truong_lao_tong', text: 'Giang Phàm đã xem việc đất xong. Hai nhà nghe cho rõ: hôm nay người ta trả lời — bằng chữ viết, trước mặt tông môn, và từng câu đều có chứng cứ đặt ngay trên bàn này. Đọc đi, Giang Phàm.' },
+    { who: 'hero', mode: 'write', text: '(viết, giơ lên) "Việc đất: dải đất ven đường mòn là đất chung giữ đường nước của hai nhà từ đời trước, sổ cũ của phủ thành ghi rõ. Một phía đã làm giả sổ và dựng trận loạn sóng lên đất để ép phía kia tự bỏ đất. Trận đã bị phong ấn, người dựng đã có kẻ làm chứng. Việc này không cần lệnh của ta — nó cần phủ thành xử theo sổ cũ, và hai nhà cùng dỡ bỏ những gì đã dựng trên đất chung."' },
+    { who: 'tin_su', text: 'Chủ nhân của tiểu nhân… nếu biết việc dựng trận bị phơi ra thế này… Tiểu nhân không dám cãi một chữ. Sổ giả đặt ngay kia, mảnh trận đặt ngay kia. Tiểu nhân chỉ xin công tử ghi nhận: người đưa thư không biết gì hết.' },
+    { who: 'hero', mode: 'write', text: '(viết, giơ lên) "Việc hôn sự: hôn ước dựng trên một vụ tranh đất và một cuốn sổ giả thì không đứng được. Nhưng hủy hôn cũng không cần lệnh của ta — luật thành có đường của luật thành: mang sổ cũ và lời chứng này tới phủ thành, mối hôn ép buộc tự nó tan. Ta không cho mượn lệnh cho việc mà luật đã có sẵn đường giải quyết."' },
+    { who: 'tin_su_b', text: 'Tiểu thư nhà tiểu nhân… được cứu bằng một tờ giấy viết tay và một cuốn sổ cũ, không cần ai phải nợ ai một lệnh nào. Tiểu nhân về sẽ nói đúng như thế: Giang công tử không từ chối cứu người — công tử từ chối để người ta biến việc cứu người thành một món nợ.' },
+    { who: 'truong_lao_tong', text: 'Hai nhà nghe rõ cả chưa. Từ nay, ai còn muốn "mượn lệnh" của đệ tử tông ta, cứ theo đúng lệ hôm nay: mang sự thật tới trước, việc xong xuôi rồi, lệnh có khi chẳng cần dùng nữa. Đó không phải lời của Giang Phàm nữa — đó là lệ của Thanh Vân Tông.' },
+    { who: 'narrate', text: 'Hai phong thư thỉnh cầu được trả lại nguyên triện, kèm theo hai tờ giấy viết tay của ngươi. Không nhà nào được thứ chúng xin — mà cả hai nhà đều nhận được thứ chúng thật sự cần: một lối ra.' },
+    { who: 'narrate', text: 'Tin về buổi trả lời lan xuống thành ngay trong ngày. Và ở chợ Cô Châu, có một đoàn thương nhân đang bị ép giá chỉ vì một tin đồn ngược hẳn: rằng Hứa gia sắp mất chỗ dựa. Người đứng ra chặn tin đồn ấy, không phải ngươi.' }
+  ];
+  var SCENE_CH14_BAO_LANH = [
+    { who: 'narrate', text: 'Chợ Cô Châu. Một đoàn thương nhân ngồi lặng quanh mấy xe hàng không bán được: ba hôm nay, các sạp lớn quanh chợ đồng loạt ép giá họ xuống một nửa, chỉ vì một câu đồn — "Hứa gia sắp mất chỗ dựa, hàng bảo lãnh bởi Hứa gia nay mai thành hàng vô chủ".' },
+    { who: 'cho_a', text: 'Cô nương U Nhàn, lão buôn bán ba mươi năm chưa từng van ai. Nhưng giá ép thế này, đoàn của lão về tới nhà là mất trắng. Người ta nói Hứa gia không còn ai chống lưng… lão tin cô nương, nhưng lão không chống nổi cả cái chợ này một mình.' },
+    { who: 'u_nhan', text: 'Bác không phải chống một mình. Đây là sổ bảo lãnh của Hứa gia cho đoàn này, ký từ đầu vụ, triện còn nguyên. Ai ép giá, cứ mang sổ này ra đối chiếu: hàng của đoàn là hàng Hứa gia bảo lãnh, giá theo lệ chợ ba năm nay, không theo tin đồn ba ngày.' },
+    { who: 'u_nhan', text: 'Còn chuyện "Hứa gia mất chỗ dựa" — Hứa gia chưa từng buôn bán bằng chỗ dựa. Hứa gia buôn bằng sổ sách sạch và trả tiền đúng hẹn. Ai muốn kiểm, gian hàng của ta mở sổ cho kiểm ngay tại chợ này, hôm nay.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ta có mặt ở đây chỉ để làm chứng một việc: sổ này là sổ thật, chữ này là chữ của nàng, và nàng nói câu nào, Hứa gia giữ câu ấy. Ngoài ra, việc ở chợ là việc của nàng — ta không chen vào."' },
+    { who: 'cho_a', text: 'Có cậu Giang đứng đây làm chứng bằng chữ viết, lại có sổ sách mở ra giữa chợ… Lão đi nói với các sạp ngay: giá trở lại lệ cũ, ai còn ép giá là tự mình chống lại cả Hứa gia lẫn Thanh Vân Tông. Cô nương, đoàn này nợ cô nương một ơn lớn.' },
+    { who: 'u_nhan', text: 'Không ai nợ ai, bác ạ. Cháu chỉ làm đúng phần việc của cháu. (quay sang ngươi, khẽ hơn) Phàm ca thấy không — huynh từ chối cho mượn lệnh ở trên núi, muội chặn tin đồn ở dưới chợ này. Hai việc, hóa ra là cùng một việc: không để cái tên của huynh bị người ta đem ra mua bán.' }
+  ];
+
+  /* ================= CUNG IV — CHƯƠNG 15: TRẬN LOẠN SÓNG =================
+     Nguyên văn từ ch15.js. Điểm ngắt engine: trận phá vòng vây 3 đợt chạy
+     giữa SCENE_CH15_CUU_DOAN và _END (cờ khóa cộng hưởng ch15ResonanceLock
+     bật suốt trận); hai chốt chặn chạy giữa SCENE_CH15_TRUY_DUOI và
+     SCENE_CH15_TRUY_DUOI_2. */
+  var SCENE_CH15_BAO_DONG = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện, giờ mùi. Một đệ tử hộ tống lao qua cửa điện, áo rách một mảng vai, hơi thở chưa kịp đều — cậu là người duy nhất trong đoàn việc tông hôm nay thoát ra được khỏi đường mòn.' },
+    { who: 'de_tu_ho_tong', text: 'Trưởng lão! Đoàn của đệ tử bị vây ở khoảng trống giữa đường mòn. Nhưng lạ lắm: chúng không đánh vào. Chúng dựng vòng, giữ khoảng cách, cứ như… đang chờ xem đoàn của đệ tử sẽ làm gì. Đệ tử chui qua khe vòng lúc trời chạng vạng mới thoát được.' },
+    { who: 'truong_lao_tong', text: 'Giữ vòng mà không giết, lại chọn đúng đoàn đệ tử đi việc tông — đó không phải cướp đường. Đó là thử trận. Chúng dựng một cái trận quanh đoàn của ngươi để đo thứ gì đó. Giang Phàm, ngươi nghe ra chúng muốn đo cái gì chưa?' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đo đệ tử. Nhưng đoàn chỉ là mồi. Thứ chúng thật sự muốn đo là người sẽ tới cứu — và cách người ấy phá trận. Đệ tử đi ngay. Xin trưởng lão dặn đoàn ở trong vòng: đừng ai phá vòng ra ngoài trước khi đệ tử tới."' },
+    { who: 'de_tu_ho_tong', text: 'Đệ tử dẫn đường cho sư huynh. Đường tắt qua bờ suối, đệ tử còn nhớ rõ. Chỉ mong… lúc tới nơi, vòng vây vẫn còn nguyên như lúc đệ tử thoát ra.' },
+    { who: 'truong_lao_tong', text: 'Đi đi. Và Giang Phàm — nhớ lấy: nếu đó đúng là một đợt thử trận nhắm vào ngươi, thì mọi đòn ngươi tung ra ở đó đều bị ghi lại. Đánh thế nào cho đáng, là việc của ngươi.' },
+    { who: 'narrate', text: 'Hai người rời tông ngay trong chiều, đi tắt xuống đường mòn. Từ xa, khoảng trống bị vây đã hiện ra qua kẽ lá: một vòng người áo xám đứng im đều tăm tắp quanh đoàn đệ tử — im lặng một cách không giống bất cứ toán cướp đường nào.' },
+    { who: 'narrate', text: 'Càng tới gần, tai ngươi càng nghe rõ: quanh khoảng trống ấy là một lớp sóng nhiễu dày, đều, có chủ ý — thứ sóng ngươi mới gặp ở quy mô nhỏ trên dải đất linh chương trước. Lần này, nó được dựng để chờ đúng một người.' }
+  ];
+  var SCENE_CH15_CUU_DOAN = [
+    { who: 'narrate', text: 'Ngươi bước vào khoảng trống. Ngay khắc chân ngươi chạm đất trong vòng, lớp sóng nhiễu quanh sân khép lại như một cái nắp: Tĩnh Âm trong ngực ngươi vẫn đầy, mà sóng khóa không đi ra được nửa bước — các nút chiêu cộng hưởng xám đi trong một vòng nhiễu xám quanh người.' },
+    { who: 'de_tu_b', text: 'Giang sư huynh! Huynh tới thật rồi! Bọn muội giữ trong vòng này nửa ngày, chúng không cho ra, cũng không đánh vào. Sư huynh — tai của huynh… ở đây nghe có gì không? Sao mặt huynh lại bình tĩnh thế?' },
+    { who: 'hero', mode: 'write', text: '(viết, giơ cho cả đoàn thấy) "Cộng hưởng ở đây bị khóa. Đừng chờ ta phát đòn nào. Hôm nay phá vòng bằng kiếm. Các ngươi giữ lưng cho nhau, nhìn theo kiếm của ta mà đánh — đoàn không thiếu một người nào được."' },
+    { who: 'chi_huy_tran', text: 'Tới rồi. Ghi lại hết: vòng nhiễu khóa được sóng của hắn — tốt. Giờ xem cho kỹ: một Giang Phàm không có cộng hưởng, còn lại bao nhiêu phần đáng sợ? Đợt một — vào.' },
+    { who: 'narrate', text: 'Vòng ngoài chuyển động: tay chân mang pháp khí loạn sóng cá nhân, vòng nhiễu nhỏ rung quanh từng tên. Phía sau chúng, hai tên cầm trận giữ hai mắt trận di động — còn mắt trận nào còn đứng, đợt địch còn được nạp lại nhịp.' },
+    { who: 'narrate', text: 'Không có vòng cộng hưởng nào che sân hôm nay. Sân khấu chỉ còn thân người và thanh kiếm sáng: Liên Hoàn cho cụm đông, Phá Quân cho mắt trận, Trảm giữ nhịp giữa các đợt.' },
+    { who: 'de_tu_b', text: 'Sư huynh cứ đánh phía trước! Sau lưng huynh để bọn muội giữ — hôm nay đoàn này không làm gánh nặng của huynh đâu!' }
+  ];
+  var SCENE_CH15_CUU_DOAN_END = [
+    { who: 'narrate', text: 'Mắt trận di động cuối cùng vỡ thành một đám hạt xám. Vòng nhiễu quanh khoảng trống hụt đi từng mảng rồi tan hẳn — và cùng lúc ấy, vòng người áo xám quanh đoàn đệ tử vỡ ra như một đội hình vừa nhận lệnh rút: gọn, nhanh, không một tiếng hô hoán thừa.' },
+    { who: 'de_tu_b', text: 'T… tan rồi. Sư huynh, huynh không dùng một đòn cộng hưởng nào thật… Bọn chúng khóa sóng của huynh suốt cả trận, mà huynh đánh như thể… như thể kiếm mới là thứ huynh quen tay nhất từ đầu vậy.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Cộng hưởng là một đường. Kiếm là đường khác. Chúng khóa được một đường, không khóa được người. Về kiểm lại đoàn: ai bị thương, xử lý trước. Việc còn lại để ta."' },
+    { who: 'chi_huy_tran', text: '(đứng ở rìa khoảng trống, nói vọng lại trước khi rút) Số liệu đủ rồi. Kiếm quyết của hắn: Liên Hoàn xử cụm, Phá Quân phá mắt, nhịp Trảm không hở một khắc. Báo về cho cung chủ: muốn bịt tai hắn thì dễ — muốn bịt kiếm của hắn, phải tính cách khác.' },
+    { who: 'narrate', text: 'Hắn nói câu ấy không hề hạ giọng. Chúng thử trận là để đo ngươi — và hắn muốn ngươi biết điều đó.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh, kẻ chỉ huy rút về hướng nam đường mòn — chính là tên vừa nói. Đoàn đã an toàn, đệ tử ở lại lo cho người bị thương. Sư huynh đuổi theo hắn đi — đừng để hắn mang hết số liệu về cho Huyết Bạc Cung!' },
+    { who: 'narrate', text: 'Dấu rút còn mới trên mặt đường mòn: vết chân đều, không hoảng loạn — một cuộc rút lui đã được chuẩn bị từ trước, kể cả đường rút. Kẻ chỉ huy này không định chạy thoát trong hỗn loạn. Hắn định được đuổi theo.' }
+  ];
+  var SCENE_CH15_TRUY_DUOI = [
+    { who: 'narrate', text: 'Đường mòn phía nam. Ngươi đuổi theo dấu rút chưa đầy một dặm thì chốt chặn thứ nhất hiện ra: hai tên áo xám đứng chắn ngang đường, pháp khí loạn sóng đã lên tay — không phải để thắng, chỉ để câu giờ cho kẻ đi trước.' },
+    { who: 'huyet_de', text: 'Chỉ huy dặn: giữ chân ngươi ở đây đủ lâu là xong việc. Bọn ta biết không thắng nổi ngươi — nhưng ngươi cũng đừng hòng qua nhanh. Mỗi khắc ngươi đứng đây, là một khắc hắn đi xa thêm một đoạn.' },
+    { who: 'narrate', text: 'Chúng đánh đúng như lời nói: giữ khoảng cách, né đòn chính, chỉ chực làm chậm bước chân ngươi. Nhưng Liên Hoàn ở thế đuổi theo là một thứ khác hẳn — kiếm thứ hai chạm đích ngay khi mục tiêu đang lùi.' }
+  ];
+  /* Điểm ngắt engine: HAI chốt chặn trên đường truy đuổi chạy giữa hai
+     nửa cảnh này (mỗi chốt một trận ngắn qua ống chạm trán). */
+  var SCENE_CH15_TRUY_DUOI_2 = [
+    { who: 'huyet_de', text: 'Qua… qua được cả chốt hai rồi à?! Chỉ huy tính thiếu rồi — hắn tính ngươi chậm lại vì trận vừa rồi. Hắn không tính ngươi càng đuổi càng nhanh…' },
+    { who: 'narrate', text: 'Cuối chặng đường mòn, bóng áo của kẻ chỉ huy đã hiện rõ phía trước — hắn đứng lại, quay người, tay cầm một pháp khí tròn nhỏ đang rung lên từng đợt sóng nhiễu dày đặc. Hắn không chạy nữa. Hắn chờ ngươi tới đúng tầm.' },
+    { who: 'chi_huy_tran', text: 'Đuổi kịp nhanh hơn ta tính nửa khắc. Tốt — số liệu cuối cùng tự nó tìm tới. Giang Phàm, trận hôm nay ngươi thắng. Nhưng nhớ kỹ cảm giác này: một ngày nào đó, vòng nhiễu sẽ không chỉ có một khoảng trống trên đường mòn đâu.' }
+  ];
+  var SCENE_CH15_TRUY_DUOI_END = [
+    { who: 'narrate', text: 'Pháp khí trong tay hắn vỡ tung thành một màn sóng nhiễu đặc quánh — không gây thương tích, chỉ che mắt và bịt mọi âm thanh trong mười nhịp thở. Khi màn nhiễu tan, khoảng đường trước mặt đã trống không: kẻ chỉ huy biến mất vào rừng như chưa từng đứng đó.' },
+    { who: 'narrate', text: 'Nhưng hắn để lại một thứ không kịp mang theo: một mảnh pháp khí loạn sóng vỡ, rơi ngay chỗ hắn vừa đứng, các đường trận văn trên mặt mảnh còn đang nguội dần. Đây không phải mảnh vụn của mắt trận ngoài sân — đây là lõi điều khiển của cả đợt thử trận.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi vào sổ tay) "Không bắt được người. Nhưng mảnh lõi này đáng giá hơn người: trận văn trên nó là chữ ký của kẻ chế tạo. Mang về đại điện — tông cần xem thứ này hơn cần nghe ta kể."' },
+    { who: 'de_tu_ho_tong', text: '(đuổi kịp tới nơi, thở dốc) Sư huynh! Đoàn đã rút về hướng tông an toàn cả rồi. Còn tên chỉ huy… (nhìn mảnh vỡ trên tay ngươi) hắn thoát, nhưng sư huynh cầm được cái đó — đệ tử thấy bọn chúng lúc rút, mặt tên nào cũng như vừa mất một thứ rất đắt.' },
+    { who: 'narrate', text: 'Trời sập tối trên đường mòn. Đợt thử trận đầu tiên của Huyết Bạc Cung khép lại: đoàn đệ tử nguyên vẹn, trận bị phá bằng kiếm thuần, và lõi điều khiển của chúng nằm trong tay tông môn.' },
+    { who: 'narrate', text: 'Chỉ còn một việc: mang mảnh lõi này về đại điện, và nghe tông định đối sách. Vì cả ngươi lẫn trưởng lão đều hiểu — chúng sẽ còn quay lại, ở quy mô không còn là "thử" nữa.' }
+  ];
+  var SCENE_CH15_BAO_CAO = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện, đêm. Mảnh lõi pháp khí vỡ đặt trên bàn, trận văn trên mặt nó vẫn le lói một thứ sáng xám yếu ớt khi có linh khí đi qua gần — như một con mắt chưa nhắm hẳn.' },
+    { who: 'truong_lao_tong', text: 'Đoàn về đủ, không thiếu một người. Trận phá bằng kiếm, không một đòn cộng hưởng. Và ngươi mang về được cả lõi điều khiển của chúng. Giang Phàm — ngồi xuống, kể lại từ đầu, bằng cách của ngươi. Ta đọc chậm cũng được.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Chúng dựng vòng nhiễu quanh một khoảng trống, khóa sóng của đệ tử, rồi đo cách đệ tử phá trận. Kẻ chỉ huy nói thẳng: muốn bịt tai đệ tử thì dễ, bịt kiếm của đệ tử phải tính cách khác. Đệ tử đuổi theo, hắn thoát bằng pháp khí dùng một lần — mảnh lõi này rơi lại."' },
+    { who: 'truong_lao_tong', text: 'Ta xem mảnh này rồi. Trận văn khắc tay, không phải hàng đúc sẵn: Huyết Bạc Cung đã có người chế được pháp khí loạn sóng theo đơn đặt — và đang thử nghiệm nó lên chính đệ tử của ta. Đây không còn là chuyện một hai toán cướp nữa.' },
+    { who: 'lieu_khuynh_tien', text: 'Trưởng lão, ý của con: từ nay các đoàn ra ngoài không đi lẻ nữa. Mỗi đoàn phải có ít nhất một người phá được trận bằng vật lý — kiếm, phá mắt trận, đánh vào người cầm trận — không trông chờ vào một mình Giang Phàm và tai nghe của chàng.' },
+    { who: 'truong_lao_tong', text: 'Theo ý ấy mà làm. Tông sẽ lập lệ mới cho đoàn ra ngoài ngay trong tháng này. Còn một việc ghi vào hồ sơ của tông, đọc cho ngươi nghe: "Huyết Bạc Cung học cách bịt tai Giang Phàm nhanh hơn ta tưởng. Nhưng hôm nay chúng cũng học thêm một điều — bịt được tai hắn, không bịt được kiếm của hắn."' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử ghi nhớ. Chúng đo đệ tử một lần, đệ tử cũng đo lại chúng một lần: vòng nhiễu của chúng khóa được sóng, nhưng phải dựng trước và phải có người cầm trận. Lần sau gặp lại, đệ tử sẽ tìm người cầm trận trước tiên."' },
+    { who: 'narrate', text: 'Trưởng lão gật đầu, cho cất mảnh lõi vào kho vật chứng của tông. Trước khi ngươi lui ra, ông nói thêm một câu — giọng nhẹ hơn hẳn lúc bàn việc: sau chuỗi ngày toàn trận và thỉnh cầu, sơn môn cho ngươi một đợt tĩnh tu.' },
+    { who: 'narrate', text: 'Ngoài núi, có một hệ quả không ai trong điện nhắc tới: mấy đợt thử trận liên tiếp những ngày qua đã làm kinh động một thứ ngủ rất lâu trong Thung Lũng Hồi Phong. Các đệ tử gác cổng sau núi bắt đầu đồn nhau rằng đêm xuống, trong thung lũng có tiếng kiếm ngân không người gảy.' },
+    { who: 'narrate', text: 'Nhưng chuyện ấy để sau. Trước mắt ngươi là điểm linh khí của tông, và một giai đoạn tu vi sắp đầy.' }
+  ];
+
+  /* ================= CUNG IV — CHƯƠNG 16: TĨNH TU VÀ LĨNH NGỘ =================
+     Nguyên văn từ ch16.js. Điểm ngắt engine: lần xuống bc_kiemtrung_sau
+     chạy sau SCENE_CH16_LINH_NGO; trận boss Trận Nhãn Kiếm Linh chạy sau
+     SCENE_CH16_KIEMTRUNG; đột phá q16_dot_pha qua tryBreakthrough sau
+     SCENE_CH16_DOT_PHA (không thiên kiếp, không thông cáo). */
+  var SCENE_CH16_TINH_TU = [
+    { who: 'truong_lao_tong', text: 'Ngồi xuống một lát đã. Sau trận loạn sóng, tai ngươi nghe cái gì cũng còn vương một lớp nhiễu — ta nhìn sắc mặt là biết. Sơn môn cho ngươi một đợt tĩnh tu: không việc tông, không thỉnh cầu, không ai được làm phiền ngươi ở điểm linh khí.' },
+    { who: 'truong_lao_tong', text: 'Tĩnh tu lần này không chỉ để hồi phục. Tu vi của ngươi đã gần đầy giai đoạn Sơ Kỳ — thổ nạp cho đầy hẳn đi. Nghe cho sạch lại trước, rồi hãy nghe cho sâu hơn. Hai việc ấy trông giống nhau mà khác nhau một trời.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử hiểu. Mấy ngày nay trong tiếng nào cũng có một sợi lệch tần rất mảnh — như cát trong nước. Đệ tử sẽ ngồi tới khi nước trong lại."' },
+    { who: 'narrate', text: 'Điểm linh khí của tông nằm ở sườn tây, nơi linh khí tụ thành một lớp sương mỏng quanh năm không tan. Ngươi ngồi xuống giữa lớp sương ấy, và Thanh Phong Chân Kinh bắt đầu vận hành: dải gió cuốn quanh người, lá ngọc theo gió mà lên — theo đúng tầng tâm pháp ngươi đang có, không nhanh hơn, không chậm hơn.' },
+    { who: 'narrate', text: 'Ngày thứ nhất, sợi lệch tần còn đó. Ngày thứ hai, mỏng đi. Sang ngày thứ ba, trong lúc chu thiên đi qua vòng cuối của buổi sớm, ngươi bỗng nghe thấy một thứ chưa từng nghe: không phải tiếng của một vật — mà là tiếng của chính hai quyển công pháp trong người ngươi, vận hành cùng nhau như hai nhạc cụ trong cùng một dàn.' },
+    { who: 'narrate', text: 'Và ở khoảng lặng giữa hai nhạc cụ ấy, có một khoảng trống. Rộng. Sâu. Như một giá sách còn thiếu nguyên một tầng trên cùng — chờ những quyển sách nặng hơn hai quyển ngươi đang cầm.' }
+  ];
+  var SCENE_CH16_LINH_NGO = [
+    { who: 'narrate', text: 'Ngươi mang điều vừa nghe được lên đại điện. Trưởng lão nghe ngươi viết xong, im lặng một lúc lâu — rồi đứng dậy, tự tay mở cánh cửa tàng kinh phía sau điện, cánh cửa mà đệ tử nội môn đi qua mỗi ngày nhưng ít ai được bước vào.' },
+    { who: 'truong_lao_tong', text: 'Thứ ngươi nghe thấy, các đời trưởng lão gọi là ngưỡng lĩnh ngộ. Từ Kim Đan trở đi, tai và tâm của người tu chạm được tới lớp của công pháp: hai quyển Hoàng cấp ngươi đang giữ chỉ là tầng dưới của giá sách ấy. Phía trên chúng là Huyền cấp.' },
+    { who: 'truong_lao_tong', text: 'Luật của tông, ta nói rõ một lần: từ Kim Đan, đệ tử được đọc tới Huyền cấp. Sách Huyền cấp nằm ở tàng kinh này — và nằm ở những nơi sâu hơn nữa, trong các bí cảnh mà tông chỉ giữ cửa chứ không giữ sách thay người tu. Ai đủ sức lấy, sách thuộc về người ấy.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử nghe thấy tầng trống ấy rồi. Nhưng sáng nay, khi chu thiên đi qua, đệ tử còn nghe một thứ khác nữa — ở rất sâu dưới Kiếm Trủng sau núi: một chu kỳ. Kiếm bay theo vòng, đều như hơi thở của một cái trận còn đang sống."' },
+    { who: 'truong_lao_tong', text: 'Ngươi nghe được tới đó rồi sao… Kiếm Ý Tàn Hồn ngươi thắng năm Trúc Cơ, hóa ra chỉ là kẻ giữ cửa. Dưới Kiếm Trủng còn một tầng sâu: lõi của một kiếm trận cổ, ngủ mà không chết. Tông phong cửa ấy nhiều đời vì không ai nghe được chu kỳ của nó — không nghe được, vào là chết trong trận của chính nó.' },
+    { who: 'truong_lao_tong', text: 'Nay thì khác. Tông cho phép ngươi xuống xác minh ngay trong đợt tĩnh tu này — với một điều kiện của ta: nghe không rõ thì rút, đừng cố. Khung Huyền của ngươi vừa mở ở tàng kinh này; nếu dưới ấy thật có thứ của Huyền cấp, nó là của người nghe được nó.' },
+    { who: 'narrate', text: 'Cụm kiếm cắm chắn động sau núi được dời ra. Phía sau là một cầu thang đá đi xuống bóng tối, và từ dưới ấy, chu kỳ kiếm trận vọng lên từng nhịp đều đặn — như một trái tim bằng sắt đang ngủ.' },
+    { who: 'narrate', text: 'Ngươi bước xuống. Đèn đá hai bên vách tự sáng lên theo bước chân, và nhịp chu kỳ dưới sâu nghe rõ dần: bảy thanh kiếm bay theo một vòng trận không đổi — một vũ điệu đã lặp lại không biết bao nhiêu năm, chờ một người nghe được nó.' }
+  ];
+  var SCENE_CH16_KIEMTRUNG = [
+    { who: 'narrate', text: 'Tầng sâu Kiếm Trủng. Hang dưới rộng và tối hơn tầng trên một nấc; tàn hồn kiếm ý giữ cửa vẫn mang luật cũ của Kiếm Trủng — âm gốc không ổn định, cộng hưởng chỉ chạm được một nửa. Nhưng thứ ở cuối hang thì khác hẳn.' },
+    { who: 'narrate', text: 'Cuối hang, một cột kiếm sáng xỉn xoay quanh một mắt trận đang phát sáng: Trận Nhãn Kiếm Linh — lõi điều khiển của cả kiếm trận cổ. Bảy thanh kiếm bay theo vòng quanh nó, đổi hướng sau mỗi chu kỳ, đường bay đều tới mức ngươi đọc trước được bằng tai.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi vào sổ tay) "Tàn hồn giữ cửa không có âm gốc ổn định. Nhưng cái này thì có — ổn định tới mức đáng sợ. Nó là một cái trận đang vận hành theo chu kỳ. Mà thứ vận hành theo chu kỳ… thì có thể bị đóng băng đúng chu kỳ."' },
+    { who: 'narrate', text: 'Như nghe được ý nghĩ ấy, cột kiếm bỗng gom toàn bộ kiếm của trận về một điểm phía trên mắt trận — chu kỳ tăng tốc nghe rõ bằng tai: chiêu lớn của nó đang nạp, và cửa sổ để ngắt nó chính là nhịp gom này. Định Âm giữ chu kỳ. Phong Âm khóa từng mắt trận phụ. Kiếm quyết kết liễu ở cửa sổ đứng yên.' },
+    { who: 'narrate', text: 'Không có chiêu nào trong ba chiêu ấy là điều kiện bắt buộc của trận này: né quạt kiếm, chờ nó tự hở một nhịp sau khi xả, rồi dồn đòn — đường chậm hơn vẫn là đường thắng. Nhưng hôm nay, lần đầu tiên, bậc Hưởng của ngươi là công cụ phá thế trận chứ không chỉ là đòn đánh.' }
+  ];
+  var SCENE_CH16_BENH_VUC = [
+    { who: 'narrate', text: 'Ngươi trở lên từ tầng sâu, tay cầm một vật gói trong vải thô: tàn quyển nhặt được bên cột kiếm đã gục của Trận Nhãn — bìa cháy dở, chỉ còn đọc được ba chữ ở gáy sách. Tin ngươi xuống tầng sâu và sống sót trở lên lan khắp tông trước cả khi ngươi về tới đại điện.' },
+    { who: 'narrate', text: 'Thanh Vân Đại Điện, chiều cùng ngày. Một vị trưởng lão giữ việc tàng kinh đứng ra giữa điện, giọng không cao nhưng từng chữ đều nặng — ông chất vấn chính sách của tông với ngươi, ngay trước mặt các trưởng lão khác.' },
+    { who: 'truong_lao_tong', text: 'Ta phải nói một câu khó nghe. Đệ tử này vào tông với hồ sơ vô linh căn, thân phận Hồn Sư từng giấu cả tông, nay lại được mở tàng kinh, mở cả tầng sâu Kiếm Trủng mà các đời trưởng lão còn phải cân nhắc. Tông dùng người thế này — xin hỏi các vị: là trọng dụng, hay là đang liều?' },
+    { who: 'lieu_khuynh_tien', text: 'Trưởng lão hỏi "tông dùng người thế này là trọng dụng hay là liều" — con xin đáp bằng một việc có thật. Ở Thăng Long Đạo, con đã thua chàng. Không phải thua vì chàng giấu nghề: con thua vì kiếm của chàng sạch hơn kiếm của con, ngay trước mặt cả đài.' },
+    { who: 'lieu_khuynh_tien', text: 'Từ ngày vào tông tới nay, chàng làm tạp dịch không thiếu một việc, giữ đài cho người khác Kết Đan mà không đòi một lời cảm ơn, phá trận cứu đoàn đệ tử bằng kiếm khi tai nghe bị khóa. Tông không "liều" khi mở tàng kinh cho một người như thế. Tông chỉ đang làm một việc rất muộn: đối xử với chàng đúng như chàng đã đối xử với tông.' },
+    { who: 'lieu_khuynh_tien', text: 'Còn hai chữ "vô linh căn" trong hồ sơ — con là con gái tông chủ, con nói câu này và chịu trách nhiệm về nó: hồ sơ ấy sai từ ngày đầu tiên. Sai ở cái thước, không sai ở con người. Ai còn muốn giữ hai chữ ấy để làm khó chàng, thì làm khó luôn cả con.' },
+    { who: 'truong_lao_tong', text: '…Liễu nha đầu nói tới mức này rồi. Ta giữ việc tàng kinh ba mươi năm, ta hỏi khó là bổn phận của ta — nhưng đáp án hôm nay, ta nghe rõ. Việc mở tàng kinh và tầng sâu cho Giang Phàm: ghi vào sổ của tông, từ nay là lệ, không phải ngoại lệ. Ai hỏi nữa, đọc sổ.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử không biết nói lời cảm ơn cho đủ. Chỉ ghi một câu: tàng kinh mở cho đệ tử, đệ tử sẽ dùng nó cho việc của tông. Tầng sâu mở cho đệ tử, những gì lấy được từ đó, tông có phần trong ấy trước tiên."' },
+    { who: 'narrate', text: 'Cả điện im lặng một khắc. Mười mấy năm, ngươi toàn tự mình đứng trước những lời chất vấn — bằng chữ viết, bằng kiếm, bằng sự im lặng. Hôm nay là lần đầu tiên có một người khác đứng ra, dùng tiếng nói của chính họ, nói thay cho ngươi — và nói trước khi ngươi kịp viết một chữ nào.' },
+    { who: 'lieu_khuynh_tien', text: '(lúc lui ra cửa điện, nói khẽ, chỉ đủ cho ngươi nghe) Đừng quen với việc có người nói thay, Giang Phàm. Ta nói thay ngươi được ở điện này — nhưng những nơi ngươi sắp đi, tiếng của ta không tới được. Tới lúc ấy, nhớ lấy ngày hôm nay: có người tin là tiếng của ngươi, dù phát ra bằng cách nào, cũng đáng được nghe.' },
+    { who: 'narrate', text: 'Tu vi của ngươi đã đầy giai đoạn từ đợt tĩnh tu. Chỉ còn một việc cuối của chương: lên đài, và bước qua ngưỡng Kim Đan Trung Kỳ — lặng lẽ, như mọi mốc lớn của đời ngươi từ trước tới nay.' }
+  ];
+  var SCENE_CH16_DOT_PHA = [
+    { who: 'narrate', text: 'Đài tông, buổi sớm. Không chuông lớn, không khán giả, không một lời tuyên cáo nào vang lên trời đất — đột phá một giai đoạn trong cùng đại cảnh giới không cần những thứ ấy. Chỉ có trưởng lão đứng giữ đài, như ông vẫn đứng cho mọi đệ tử tới lượt mình.' },
+    { who: 'truong_lao_tong', text: 'Vận công đi. Giai đoạn này không có kiếp nào chờ ngươi cả — thứ chờ ngươi là chính chu thiên của ngươi, đầy và chín từ đợt tĩnh tu. Ta giữ cửa. Ngươi cứ nghe cho sâu như ngươi vẫn nghe.' },
+    { who: 'narrate', text: 'Chu thiên khép lại vòng cuối trong tĩnh lặng gần như tuyệt đối — và ở khoảng lặng ấy, kim đan trong đan điền trầm xuống, đặc lại, sáng theo một cách khác hẳn: Kim Đan Trung Kỳ. Không cột sáng nào phóng lên trời. Chỉ có lớp sương ở điểm linh khí phía xa, cùng lúc ấy, tan ra một vòng tròn đều quanh hướng đài.' },
+    { who: 'truong_lao_tong', text: 'Xong rồi. Trung Kỳ. (ông nhìn ngươi một lúc rồi khẽ cười) Người ngoài nhìn vào sẽ nói mốc này của ngươi yên tĩnh quá. Chỉ ngươi và ta biết: để có được cái yên tĩnh này, ngươi vừa đi qua một trận loạn sóng, một tầng sâu không ai dám xuống, và một buổi chất vấn ở đại điện. Yên tĩnh, là phần thưởng của ngươi đấy.' },
+    { who: 'narrate', text: 'Tàn quyển trong tay ngươi — ba chữ ở gáy sách đọc rõ hơn dưới nắng sớm. Hành trình của nó và của ngươi, ở tầng sâu Kiếm Trủng, mới chỉ bắt đầu: tầng sâu ấy từ nay mở cho ngươi quay lại mỗi ngày.' }
+  ];
+
   /* ---------- Thoại thường trú của các nhân vật mới (phần 3) ---------- */
   IDLE_AFTER.tin_su = [
     { who: 'npc', text: 'Tiểu nhân chạy hai ngày một đêm không dám ngủ. Đại tiểu thư dặn: tin phải tới tay Giang công tử trước khi trời tối, trễ một khắc là mất một mạng.' },
@@ -1351,6 +1604,624 @@
     { who: 'narrate', text: 'Ngươi đứng dậy, bước lên cầu thang về phía ánh sáng. Ngoài kia, lời đồn vẫn còn — nhưng trong này, ngươi đã có một nơi để trở về, mỗi ngày một lượt, cho tới khi sự thật tự nó đứng vững.' }
   ];
 
+  /* ================= CUNG IV — CHƯƠNG 17: VẾT NỨT Ở THÁP =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch17.js
+     (thiết kế: docs/arc-iv-detail/17.md; hợp đồng arciv-work/CONTRACT-wave2.md mục A.9). */
+  var SCENE_CH17_TIN_TU_THAP = [
+    { who: 'narrate', text: 'Tin tới từ Trần Tư Linh, theo đường tin của Trần gia với Kiểm Trắc Tháp — và lần này, tin không nằm yên trên giấy được lâu.' },
+    { who: 'tran_tu_linh', text: 'Giang công tử, phải đi ngay. Sáng nay ở tháp có một người cha quê đưa con tới đo lần đầu. Thước không hiện một màu nào. Người của tháp tuyên thằng bé vô căn — rồi đòi nhà ông ta nộp lệ phí đo lại gấp năm lần, nói là "luật của tháp xưa nay".' },
+    { who: 'tran_tu_linh', text: 'Luật ấy không có trong quy củ nào ta từng đọc. Nhưng nhà quê thì biết đường nào mà cãi. Họ đã móc tới đồng bạc cuối cùng trong tay áo rồi đấy.' },
+    { who: 'tran_tu_linh', text: 'May mà Di Ninh có mặt ở sảnh hôm nay. Nàng chặn tay chấp sự lại ngay trước mặt mọi người, nói một câu mà cả sảnh nín thở: "Khoan thu. Đo lại trước chứng kiến — đó là quyền ghi trong quy củ của chính tháp này."' },
+    { who: 'tran_tu_linh', text: 'Chấp sự không dám trái mặt nàng — cửu phẩm… à, phẩm cấp của nàng vẫn còn nặng ký ở tháp lắm. Buổi đo lại được hẹn ngay chiều nay. Nhưng ta sợ người của tháp sẽ tìm cách khác để giữ phần thắng.' },
+    { who: 'tran_tu_linh', text: 'Công tử tới đó, không cần làm gì ầm ĩ đâu. Có mặt của công tử ở sảnh, nhiều việc tự nó phải đi cho ngay ngắn. Ta đi trước lo giấy tờ buổi đo — gặp nhau ở khuôn viên tháp.' },
+    { who: 'tran_tu_linh', text: 'À, còn một câu Di Ninh nhờ ta nhắn, nguyên văn: "Chàng không cần nói giúp ta câu nào. Chàng chỉ cần ở đó." — Nghe như nàng ấy đã liệu trước cả buổi chiều nay rồi đấy.' },
+    { who: 'narrate', text: 'Một người cha quê, một đứa trẻ chưa biết chữ "căn" viết thế nào, và một khoản lệ phí không có trong luật. Ngươi lên đường tới Kiểm Trắc Tháp.' }
+  ];
+  var SCENE_CH17_DO_LAI = [
+    { who: 'narrate', text: 'Sảnh tháp chiều nay đông hơn thường lệ: người cha quê ôm con đứng nép bên cột, Di Ninh đứng phía trước hai cha con như một bức tường mỏng, và chấp sự tháp ngồi sau án, mặt không biểu cảm.' },
+    { who: 'chap_su_thap', text: 'Theo lời yêu cầu của Hứa tiểu thư, tháp mở buổi đo lại, có chứng kiến. Nhưng ta nói trước: thước pha lê không nói dối. Đo lại bao nhiêu lần, kết quả vẫn là kết quả ấy thôi.' },
+    { who: 'di_ninh', text: 'Thước nói gì, đo xong sẽ biết. Còn lệ phí gấp năm lần — chấp sự cứ giữ nguyên ý định thu, để mọi người ở đây cùng nghe, cùng ghi lại.' },
+    { who: 'dan_thanh_a', text: 'Các vị đại nhân… tiểu nhân chỉ xin một điều: cho thằng bé đặt tay lên thước một lần nữa, trước mặt mọi người. Nó có căn hay không, tiểu nhân nhận hết. Chỉ xin đừng bắt nó nhận… bằng một cái giá nhà tiểu nhân không gánh nổi.' },
+    { who: 'thap_chu', text: 'Được. Đưa cậu bé lên trước thước. Mọi người lùi ra sau vạch. Buổi đo lại bắt đầu — theo đúng nghi thức của tháp, không thiếu một bước.' },
+    { who: 'narrate', text: 'Cậu bé rụt rè đặt bàn tay nhỏ lên mặt thước. Một hơi thở. Hai hơi thở. Rồi — thước pha lê rung lên. Không phải ánh sáng trỗi dậy: là cơn rung. Mặt pha lê chao đảo như mặt nước bị ném đá liên hồi, tiếng rung lệch đi thành một thứ âm thanh chói tai, và các vạch khắc trên thân thước nhảy loạn không theo một trật tự nào.' },
+    { who: 'chap_su_thap', text: 'Lùi lại! Lùi hết lại! Thước… thước chưa từng rung như thế này bao giờ — giữ tay ra khỏi nó, mau!' },
+    { who: 'narrate', text: 'Ngươi nghe rõ hơn mọi người trong sảnh: dưới tiếng rung loạn ấy là một nhịp trận văn đã lệch — một mắt văn của tháp chệch khỏi vị trí của nó sau nhiều năm không ai kiểm lại. Nếu cứ để rung tiếp, buổi đo này sẽ cho ra một kết quả sai nữa — và lần này, sai có chứng kiến. Trong tay ngươi có một chiêu sinh ra để giữ cho sự vật đứng yên đúng nhịp của nó.' }
+  ];
+  var SCENE_CH17_DO_LAI_XONG = [
+    { who: 'narrate', text: 'Vòng sáng lam trắng khép quanh thước pha lê — và cơn rung chết lặng giữa chừng, như một tiếng chuông bị giữ lại trong lòng bàn tay. Bụi đá quanh thước dừng giữa không trung. Sảnh tháp im tới mức nghe được tiếng thở của cậu bé.' },
+    { who: 'thap_chu', text: 'Trận văn… một mắt văn đã lệch. Bao nhiêu năm nay, không ai trong tháp nghĩ tới chuyện kiểm lại mắt văn của chính thước đo. Chấp sự — chỉnh lại mắt văn, ngay bây giờ, trước mặt mọi người.' },
+    { who: 'narrate', text: 'Mắt văn về đúng vị trí. Cậu bé đặt tay lên thước lần nữa — và lần này, một vạch sáng mỏng, yếu ớt nhưng rõ ràng, chầm chậm hiện lên trên mặt pha lê: nhất phẩm. Không cao. Nhưng là có. Là một con đường.' },
+    { who: 'dan_thanh_a', text: 'Có… có rồi! Con tôi có căn! Các vị thấy không — nó có căn! (ông quỳ sụp xuống ôm con, khóc không thành tiếng) Cảm ơn… cảm ơn các vị…' },
+    { who: 'hero', mode: 'write', text: '(viết) "Về đi. Cho nó ăn một bữa thật no. Từ hôm nay, nó là người có căn."' },
+    { who: 'di_ninh', text: '(nhìn vạch sáng nhất phẩm rất lâu, nói khẽ) Nhất phẩm. Sáng nay, cũng bàn tay này, cũng mặt thước này — phán là vô căn. Chỉ cách nhau một mắt văn lệch… và một khoản lệ phí gấp năm lần.' },
+    { who: 'chap_su_thap', text: 'Việc lệ phí… tháp sẽ hoàn lại cho nhà ông. Còn chuyện hôm nay — (hắn nhìn quanh sảnh đông người, hạ giọng) — Hứa tiểu thư, Giang công tử, xin nán lại một lát. Có vài câu, tháp cần nói cho rõ.' }
+  ];
+  var SCENE_CH17_CHAT_VAN = [
+    { who: 'chap_su_thap', text: 'Hứa Di Ninh. Ta hỏi thẳng: nàng lấy tư cách gì để chặn tay người của tháp giữa sảnh? Nàng được đo cao phẩm — nhưng nàng không phải người của tháp. Việc đo, việc thu, việc tuyên kết quả, xưa nay là việc của tháp.' },
+    { who: 'di_ninh', text: 'Tư cách của ta ghi ở quyển quy củ đặt trong chính sảnh này, điều thứ chín: người được đo, nếu không phục kết quả, có quyền xin đo lại trước chứng kiến, lệ phí theo giá niêm yết. Ta không chặn tay tháp. Ta đọc luật của tháp — to hơn một chút, để người cha quê kia cũng nghe thấy.' },
+    { who: 'chap_su_thap', text: 'Quy củ viết cho những trường hợp thước đọc chưa rõ. Còn trường hợp thước không hiện màu — xưa nay…' },
+    { who: 'di_ninh', text: 'Xưa nay sao? Xưa nay không ai kiểm lại mắt văn của thước — hôm nay cả sảnh này vừa chứng kiến điều đó. Chấp sự, ta không cãi với ông. Ta chỉ muốn hỏi một câu, và ông trả lời cho chính ông nghe là đủ: nếu mắt văn không lệch, và ta không có mặt sáng nay — thì đứa trẻ nhất phẩm kia, giờ này là gì?' },
+    { who: 'narrate', text: 'Chấp sự tháp im lặng rất lâu. Hắn nhìn về phía thước pha lê đang đứng yên lặng giữa sảnh — thứ thước mà cả đời hắn tin là không bao giờ sai.' },
+    { who: 'chap_su_thap', text: '…Là một đứa trẻ bị phán vô căn oan. (hắn thở dài) Tháp sẽ cho kiểm lại toàn bộ mắt văn, và treo lại bảng lệ phí cho dân thấy. Việc hôm nay, tháp ghi nhận — có công của Hứa tiểu thư.' },
+    { who: 'di_ninh', text: 'Ghi nhận cho đúng người, chấp sự. Người giữ thước đứng yên hôm nay không phải ta. (nàng quay sang ngươi, ánh mắt dừng lại một nhịp) Ta chỉ là người… đứng ra nói một câu. Còn lại, là của chàng.' },
+    { who: 'thap_chu', text: 'Đủ rồi. Chuyện của tháp, tháp tự sửa. Hứa tiểu thư — chủ trì ta nói một câu riêng: nàng hôm nay không chỉ cứu một đứa trẻ. Nàng vừa làm một việc mà người của tháp bao năm không ai dám làm: nghi ngờ chính cái thước của mình.' }
+  ];
+  var SCENE_CH17_DI_NINH = [
+    { who: 'narrate', text: 'Khuôn viên tháp, nắng cuối ngày. Di Ninh đứng dưới đài thước rất lâu, không đi. Nàng chờ mọi người về hết mới mở lời — và lời đầu tiên không phải về đứa trẻ.' },
+    { who: 'di_ninh', text: 'Giang Phàm. Hôm nay ta thắng. Ta thắng bằng luật của tháp, trước mặt người của tháp, không ai cãi lại được câu nào. Lẽ ra ta phải thấy vững lòng mới phải.' },
+    { who: 'di_ninh', text: 'Nhưng ta không vững. Ta cứ nghĩ mãi về mắt văn lệch kia. Một mắt văn — lệch đi có một chút — là đủ biến một đứa trẻ có căn thành phế nhân cả đời, và không một ai trong bao nhiêu năm thấy có gì lạ.' },
+    { who: 'di_ninh', text: 'Nếu thước có thể sai với đứa trẻ ấy… thì những gì thước từng nói về mọi người, có còn chắc nữa không? Về ta — cửu phẩm, lục phẩm, người ta vẫn gọi ta bằng những chữ ấy trước cả tên ta. Và về…' },
+    { who: 'narrate', text: 'Nàng dừng lại. Câu nói dở dang hướng về một buổi chiều rất xa, ở một cái sân khác — nơi một thiếu niên đặt tay lên đá, không hiện một màu nào, và cả sân quay đi. Nàng là người đứng gần nhất hôm ấy. Và là người quay đi đầu tiên.' },
+    { who: 'di_ninh', text: '…về một người từng bị phán vô căn, ngay trong sân nhà ta. Ta đã tin cái phán quyết ấy dễ dàng tới mức nào, chàng biết không? Ta tin ngay lập tức. Không một lần tự hỏi. Mười mấy năm qua, ta chưa từng tự hỏi lấy một lần.' },
+    { who: 'di_ninh', text: 'Ta chưa nói điều này với ai. Cũng chưa biết nói ra để làm gì — thước không đo lại được những năm đã qua. Nhưng hôm nay, đứng ở đây, ta muốn chàng là người đầu tiên nghe thấy: ta không còn chắc nữa. Ta không còn chắc vào thứ đã chia cả thiên hạ này ra làm hai nửa.' },
+    { who: 'di_ninh', text: 'Chàng đừng vội an ủi ta — ta biết chàng sẽ không viết thế, nhưng ta cứ nói trước. Ta không cần được tha thứ cho một việc ta còn chưa dám gọi tên. Ta chỉ cần… từ nay, mỗi lần đứng trước cái thước ấy, ta sẽ tự hỏi thêm một câu. Thế thôi. Bắt đầu từ hôm nay.' },
+    { who: 'narrate', text: 'Ngươi không viết gì cả. Ngươi chỉ lấy từ trong áo ra một tờ giấy đã cũ, gấp tư, mép giấy mềm đi vì được giữ quá lâu — tờ giấy nàng từng viết trong một ngày rất khác, với những chữ rất khác. Ngươi đặt nó vào tay nàng, nhẹ như trả lại một món đồ vốn chưa từng thuộc về mình.' },
+    { who: 'di_ninh', text: '(nàng nhìn tờ giấy trong tay mình rất lâu; khi ngẩng lên, mắt nàng đỏ, nhưng giọng lại bình tĩnh lạ thường) …Chàng giữ nó suốt bấy lâu nay à. Thôi. Từ nay, những gì ta viết cho chàng — ta sẽ viết những chữ khác. Chàng chờ xem.' }
+  ];
+  var SCENE_CH17_DONE = [
+    { who: 'narrate', text: 'Buổi chiều ở Kiểm Trắc Tháp khép lại: một đứa trẻ nhất phẩm ôm tay cha ra về, bảng lệ phí mới được treo lại giữa sảnh, và toàn bộ mắt văn của thước được niêm phong chờ kiểm lại.' },
+    { who: 'narrate', text: 'Còn một việc nữa không ai treo lên bảng: từ hôm nay, lượt lặp của tầng sâu Kiếm Trủng chính thức mở cho ngươi quay lại mỗi ngày, và phiếu treo thưởng ở thành làm mới đợt hai theo dải Kim Đan — những việc của một người đã đi xa hơn cái sân đo năm xưa rất nhiều.' },
+    { who: 'narrate', text: 'Trên đường về, ngươi ngoái nhìn tháp một lần. Thước pha lê đứng yên trong nắng tắt. Nó chưa từng nói dối — nó chỉ bị lệch, và chờ mãi một người chịu nghi ngờ nó.' },
+    { who: 'narrate', text: 'Chương 17 khép lại. Tu vi sự kiện +150 đã ghi nhận. Nhưng có những thứ không đo bằng tu vi: một vạch sáng nhất phẩm, và một vết nứt vừa mở ra trong lòng người con gái từng tin vào thước đo hơn cả tin vào mắt mình.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 18: CẢ VÙNG CHỜ MỘT LỆNH =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch18.js
+     (thiết kế: docs/arc-iv-detail/18.md; hợp đồng arciv-work/CONTRACT-wave2.md mục A.9). */
+  var SCENE_CH18_TRANH_CHAP = [
+    { who: 'narrate', text: 'Sân phủ thành hôm nay không giống một nơi xét việc: hai nhà Tạ — Đỗ ngồi hai phía án của quan phủ, người làm của hai nhà đứng chật cả sân, và dân thành chen nhau ngoài cổng chỉ để xem mặt người mà cả vùng đang chờ.' },
+    { who: 'quan_phu', text: 'Việc thế này: ở rìa đông thành có một mạch linh tuyền, nước của nó tưới được ruộng linh của cả hai nhà. Tạ gia giữ đầu nguồn từ đời ông cha. Đỗ gia dựng đập ở hạ lưu từ ba mươi năm nay. Năm nay nước ít — và hai nhà cùng nói một câu: phần nước kia là của nhà mình.' },
+    { who: 'gia_chu_ta', text: 'Quan phủ nghe cho rõ: nguồn là gốc. Không có nguồn, đập của Đỗ gia chỉ là một đống đá chắn ngang dòng cạn. Tạ gia ta giữ nguồn, giữ rừng đầu nguồn, tốn công tốn của — nước chảy xuống, nhà ta phải được phần trước.' },
+    { who: 'gia_chu_do', text: 'Nói thế thì ngược đời! Nước chảy qua đập nhà ta mới thành ruộng tốt được. Ba mươi năm nay ai giữ đập sau mỗi trận lũ? Ai vét bùn, ai chôn người chết đuối vì giữ đập? Giờ nước ít, Tạ gia lại đòi chặn ở trên — thế là muốn ruộng hạ lưu chết khát cả sao?' },
+    { who: 'quan_phu', text: 'Hai vị nghe ta nói hết đã… Phủ này tra sổ ba lượt rồi. Sổ nói: cả hai nhà đều có phần đúng, và cả hai nhà đều có chỗ lấn. Xử theo sổ, nhà nào cũng thua một nửa — mà nhà nào thua một nửa cũng sẽ không phục. Việc này… (ông nhìn về phía cổng, nơi ngươi vừa bước vào, và chợt thở phào như trút được gánh nặng) — Giang công tử tới rồi.' },
+    { who: 'narrate', text: 'Cả sân quay lại. Không ai hỏi ngươi tới làm gì. Việc ấy đã rõ từ trước khi ngươi bước qua cổng: cả vùng này đang chờ một người ra một lệnh — để khỏi ai phải tự mình xét đúng sai.' },
+    { who: 'gia_chu_ta', text: '(đứng dậy, chắp tay, giọng mềm hẳn đi) Giang công tử. Tạ gia ta không dám làm phiền công tử lâu. Chỉ xin công tử… nán lại sau buổi này một lát. Có một việc, ta chỉ dám nói khi không có tai của Đỗ gia.' },
+    { who: 'gia_chu_do', text: '(cười lạnh) Tạ gia khéo thật — chưa phân xử đã lo đi cửa sau. Đỗ gia ta không có cửa sau. Đỗ gia chỉ có một câu nói giữa sân này: người sắp phân xử cho cả vùng, thiên hạ chưa biết sức tới đâu. Vô địch của nhà ta đang ở ngoài sân — dám hay không dám, thử một trận cho mọi người cùng xem?' },
+    { who: 'dan_thanh_a', text: '(trong đám dân chen ở cổng, nói với người bên cạnh) Ủa, việc nước nôi của hai nhà lớn, sao cuối cùng lại đổ hết lên vai một mình cậu Giang thế? Cậu ấy có họ hàng gì với cái mạch tuyền kia đâu.' },
+    { who: 'dan_thanh_b', text: 'Thì thế mới là cái khó của cậu ấy. Hai nhà không ai chịu thua ai — chỉ chịu thua một người mà cả hai cùng phục. Mà người như thế, cả vùng này đếm được mấy ai? Thôi, cứ xem đi. Hôm nay sân phủ này còn nhiều chuyện hơn cả vụ nước.' }
+  ];
+  var SCENE_CH18_AP_LUC_HUA = [
+    { who: 'narrate', text: 'Sau buổi trình bày, Tạ gia chủ chờ ngươi ở hành lang vắng sau phủ. Ông ta không mang theo người làm, không mang theo quà — chỉ mang theo một câu nói đã chuẩn bị rất kỹ.' },
+    { who: 'gia_chu_ta', text: 'Giang công tử, ta nói thẳng, vì vòng vo với công tử là tự khinh mình. Vụ tuyền này, Tạ gia đang yếu thế: sổ sách nghiêng về Đỗ gia ở hai điểm. Nếu phiên xử theo sổ, nhà ta mất phần nước — mà mất nước một năm, ruộng linh của Tạ gia chết ba năm.' },
+    { who: 'gia_chu_ta', text: 'Ta biết công tử không thiếu tiền, không thiếu danh. Nhưng có một thứ công tử thiếu — và cả thành này đều biết: Hứa gia. Nhà vợ chưa cưới của công tử ở ngay trong thành này, mà thế lực thì mỏng. Một cơn sóng gió như vụ thung lũng năm xưa nữa thôi, Hứa gia chống được mấy lần?' },
+    { who: 'gia_chu_ta', text: 'Tạ gia ta hứa, bằng văn tự đóng triện đàng hoàng: từ nay, Hứa gia có việc, Tạ gia đứng ra trước. Người của ta gác đường cho đoàn xe Hứa gia. Kẻ nào động tới một người làm của Hứa gia, kẻ đó là địch của Tạ gia. Lâu dài. Không thời hạn.' },
+    { who: 'gia_chu_ta', text: 'Giá của nó — công tử nghe cho hết rồi hẵng giận — chỉ là một lệnh. Tại phiên phân xử, công tử chỉ cần cất đúng một lệnh: nước tuyền thuộc về nhà giữ nguồn. Một lệnh thôi. Công tử nói một câu, Hứa gia yên ổn cả đời. Công tử… nghĩ kỹ cho ta.' },
+    { who: 'gia_chu_ta', text: 'Ta biết công tử đang nghĩ gì: một lệnh của công tử nặng lắm, không nói bừa được. Đúng — vì nó nặng, nó mới đáng giá tới mức Tạ gia dám đổi cả sự bảo hộ lâu dài. Công tử càng ít nói, lệnh của công tử càng đắt. Ta là người buôn bán, ta tính không sai đâu.' },
+    { who: 'gia_chu_ta', text: 'Và ta nói thêm một câu thật lòng, ngoài sổ sách: nếu hôm nay công tử từ chối, Tạ gia cũng không trách. Nhà ta chỉ sợ một điều — sợ tới ngày Hứa gia gặp nạn thật, công tử nhìn lại buổi chiều hôm nay mà hối. Lúc ấy, lời hứa của ta chưa chắc còn đặt được lên bàn nữa.' },
+    { who: 'narrate', text: 'Lời hứa được viết rất "tốt": nó không chạm vào tiền, không chạm vào danh — nó chạm đúng vào sự an toàn của những người ngươi quý nhất. Và cái giá của nó cũng được tính rất khéo: một lệnh. Chỉ một lệnh. Như thể một lệnh là thứ rẻ nhất trên đời.' },
+    { who: 'choice', text: 'Trước lời hứa của Tạ gia chủ, ngươi sẽ…',
+      options: [
+        { label: 'Nghe hết, không hứa gì — gật đầu cho ông ta nói tiếp', action: 'ch18_hua_nghe' },
+        { label: 'Đặt bút xuống ngay tại chỗ — viết rõ: việc phân xử, xét bằng chứng cứ', action: 'ch18_hua_viet' }
+      ]
+    }
+  ];
+  var SCENE_CH18_AP_LUC_NGHE = [
+    { who: 'gia_chu_ta', text: '(mắt sáng lên) Công tử chịu nghe hết, thế là Tạ gia còn hy vọng. Ta không ép công tử hứa hôm nay. Lời hứa của ta để nguyên trên bàn — tới ngày phiên xử, nó vẫn còn nguyên giá trị.' },
+    { who: 'narrate', text: 'Ngươi không hứa, cũng không từ chối. Một lời hứa chưa được nhận — và cũng chưa bị khép lại. Nó sẽ còn lơ lửng trên đầu phiên phân xử, đúng như người đặt ra nó mong muốn.' }
+  ];
+  var SCENE_CH18_AP_LUC_VIET = [
+    { who: 'hero', mode: 'write', text: '(viết) "Việc phân xử, ta xét bằng chứng cứ. Hứa gia cảm ơn thịnh tình của Tạ gia — nhưng sự an toàn mua bằng một lệnh, ta không mua."' },
+    { who: 'gia_chu_ta', text: '(đọc xong, im lặng một lúc lâu, rồi cười gượng) …Ta buôn bán cả đời, chưa từng bị từ chối một món hàng nào mà trong lòng lại phục người từ chối tới thế. Thôi được. Lời hứa kia, ta vẫn để trên bàn — không phải để mua nữa. Là để Tạ gia nhớ hôm nay.' },
+    { who: 'narrate', text: 'Ngươi đã nói rõ — bằng chữ viết, trước khi phiên xử mở. Nhưng nói rõ với một nhà là một chuyện; cả vùng này vẫn chưa thôi chờ lệnh của ngươi.' }
+  ];
+  var SCENE_CH18_DAU_MO = [
+    { who: 'narrate', text: 'Giữa sân phủ, Đỗ gia đã cho dọn một khoảnh đất trống. Vô địch của nhà họ bước ra: thân hình như một bức tường, hai tay không cầm binh khí — thứ vũ khí của hắn là chính đôi tay và mặt đất dưới chân.' },
+    { who: 'vo_dich_doi_thu', text: 'Giang công tử. Ta là người giữ đài của Đỗ gia mười hai năm, chưa từng thua ở đất thành này. Hôm nay ta không đánh vì thù. Ta đánh để cả thành này nhìn cho rõ: người mà họ chờ ra lệnh, có thật xứng để ra lệnh hay không.' },
+    { who: 'gia_chu_do', text: 'Luật đấu nói trước mặt quan phủ: đấu tới điểm dừng, không lấy mạng. Thắng — Đỗ gia ta ngồi vào phiên phân xử, giữ hòa tới ngày xử, không một lời phàn nàn. Thua — cũng thế. Đỗ gia chỉ cần một điều: trận này phải đánh trước mặt thiên hạ.' },
+    { who: 'quan_phu', text: 'Phủ chứng kiến. Dân thành làm chứng. Hai bên vào vị trí — trận đấu bắt đầu khi trống nổi lên.' },
+    { who: 'dan_thanh_b', text: '(ngoài vòng người xem, níu tay áo người bên cạnh) Đánh thật đấy à? Trước mặt quan phủ luôn à? Trời ơi, tôi ở thành này bốn mươi năm, chưa thấy phủ mở sân cho ai đấu bao giờ… Hôm nay mà cậu Giang thắng, cái lệnh người ta chờ — nó còn nặng nữa.' },
+    { who: 'narrate', text: 'Trống nổi. Mặt đất dưới chân vô địch rung lên theo từng bước hắn tiến — một trường phái nặng và chậm, đối nghịch hẳn với kiếm của ngươi: trọng kích nện đất có báo trước dài, quét ngang hai nhịp nối nhau, và lớp hộ thể dựng theo chu kỳ mà kiếm thường chém không thủng. Muốn thắng hắn, phải đọc được nhịp của hắn — và chờ đúng cửa sổ khi hộ thể vừa hạ.' }
+  ];
+  var SCENE_CH18_DAU_XONG = [
+    { who: 'narrate', text: 'Đòn kết liễu tới đúng khoảnh khắc lớp hộ thể của vô địch vừa tan: hai vung kiếm nối tiếp không về thế đứng, rồi Phá Quân khép lại trận đấu. Vô địch của Đỗ gia lùi ba bước, chống tay xuống đất — và bật cười.' },
+    { who: 'vo_dich_doi_thu', text: 'Ha… ha ha! Mười hai năm giữ đài, hôm nay thua một người từ đầu tới cuối không nói một chữ nào. Ta thua tâm phục. Công tử — người như công tử mà chịu ra lệnh cho ai, kẻ đó phải là người thật sự đáng.' },
+    { who: 'gia_chu_do', text: '(đứng dậy, chắp tay, giọng khàn đi) Đỗ gia giữ lời. Ngồi vào phiên. Giữ hòa. — Và nói thêm một câu ngoài luật đấu: hôm nay ta mới hiểu vì sao cả vùng chờ lệnh của công tử. Vì công tử thắng mà không cần tới nó.' },
+    { who: 'narrate', text: 'Dư luận sau trận chạy khắp thành trước cả khi sân phủ dẹp xong: Giang Phàm thắng vô địch của Đỗ gia giữa ban ngày, trước hàng trăm con mắt — không cất một lời, không ra một lệnh. Từ hôm nay, vô địch của Đỗ gia vào danh sách đấu lại ở đài thách đấu của Thanh Vân Tông: hạng vô địch chính thức mở.' },
+    { who: 'dan_thanh_a', text: '(trong đám đông vừa tan, lắc đầu lia lịa) Thấy chưa, thấy chưa! Từ đầu tới cuối, cậu ấy không mở miệng một lần. Người ta chờ lệnh của cậu ấy đến thế — mà cậu ấy thắng bằng kiếm, không phải bằng miệng. Cái thành này từ nay nói chuyện phải lựa lời trước mặt cậu ấy đấy.' },
+    { who: 'quan_phu', text: '(gõ án, tuyên bố giữa sân) Phủ ghi lại: hai nhà cam kết ngồi vào phiên phân xử, giữ hòa cho tới ngày xử, không bên nào được động thủ trước. Ai trái cam kết này, phủ xử theo luật thành — và cả sân hôm nay làm chứng. Giải tán!' },
+    { who: 'narrate', text: 'Điểm lĩnh ngộ kiếm +60 — trận đấu dạy ngươi một thứ mà đấu với đệ tử tông không dạy được: đọc nhịp chờ của một đối thủ biết dựng tường. Việc còn lại trước phiên: gom chứng cứ. Lần này, ngươi tự tay đi.' }
+  ];
+  var SCENE_CH18_CHUNG_CU = [
+    { who: 'narrate', text: 'Ba điểm đến, ba thứ chứng cứ. Thứ nhất: nhà ghi chép mạch tuyền ở gần chợ — nơi giữ bản đồ dòng chảy của mạch tuyền qua từng năm hạn.' },
+    { who: 'cho_b', text: 'Công tử xem, đây là sổ chép nước của cha tôi để lại, tôi giữ tiếp mười năm nay. Năm nào hạn, dòng tuyền nhỏ đi — nhưng chưa năm nào nó đổi dòng. Nước vẫn chảy qua đất Tạ gia trước, rồi mới tới đập Đỗ gia. Chuyện ấy, sổ này nói rõ lắm.' },
+    { who: 'cho_a', text: '(người bán hàng rong ở chợ ghé tai) Công tử đi hỏi chuyện mạch tuyền à? Cả chợ này đều biết một điều mà hai nhà không nói ra: năm hạn nhất cách đây chín năm, chính Tạ gia đã mở nguồn cho nước xuống trước khi tới lượt nhà mình — cứu cả vụ mùa hạ lưu. Giờ hai nhà cãi nhau, không ai nhắc chuyện ấy nữa. Công tử hỏi sổ chép nước khắc rõ.' },
+    { who: 'narrate', text: 'Thứ hai: người giữ đập — một ông lão đã vét bùn ở đập Đỗ gia từ khi còn trẻ, tay chai tới mức không còn cảm giác ở đầu ngón.' },
+    { who: 'dan_thanh_a', text: 'Công tử hỏi thì tôi nói thật, dù là nói cho nhà khác nghe: đập này mà vỡ một lần, ruộng dưới chết không phải một nhà — chết cả mấy trăm hộ dân thường không họ Tạ cũng không họ Đỗ. Ba mươi năm cái đập đứng được, là nhờ người Đỗ gia bỏ tiền, bỏ người. Phần ấy, sổ nào cũng không ghi đâu, công tử ạ.' },
+    { who: 'narrate', text: 'Thứ ba: sổ thuế của phủ thành, quan phủ tự tay mở cho ngươi xem — khoản thuế nước mà hai nhà đã đóng, năm chẵn năm lẻ, không năm nào giống năm nào.' },
+    { who: 'quan_phu', text: 'Công tử thấy rồi đấy. Ba thứ chứng cứ, ba sự thật — và cả ba đều đúng. Tạ gia đúng ở nguồn. Đỗ gia đúng ở đập. Dân thường đúng ở chỗ: họ chỉ cần nước chảy, nhà nào giữ cũng được. Phiên này mà xử cho một nhà thắng hết… thì kẻ thua không phải một nhà đâu, công tử.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi vào sổ tay của mình) "Không có kẻ sai để vạch mặt. Chỉ có một dòng nước phải chia sao cho cả vùng còn sống được với nhau."' },
+    { who: 'dan_thanh_a', text: '(trước khi ngươi đi, ông lão giữ chặt tay áo ngươi) Công tử… tôi là người của Đỗ gia, mà tôi nói câu này với công tử: xử thế nào thì xử, đừng để cái đập bị bỏ không. Đập mà không có người giữ, mùa lũ tới, kẻ chết không phải người của hai nhà đâu. Là dân thường chúng tôi trước nhất.' },
+    { who: 'narrate', text: 'Ngươi gấp sổ lại. Chương này sẽ không thắng bằng cách vạch mặt kẻ sai như những lần trước — vì lần này, không có kẻ sai. Chỉ có một án lệ phải dựng lên bằng chứng cứ, thay cho một lệnh mà cả vùng đang chờ.' }
+  ];
+  var SCENE_CH18_CHO_PHIEN = [
+    { who: 'narrate', text: 'Ngày phiên phân xử. Dân thành tới phủ từ khi trời còn chưa sáng hẳn — không phải vì vụ nước, mà vì ai cũng muốn tận mắt xem Giang Phàm sẽ cất lệnh thế nào.' },
+    { who: 'u_nhan', text: 'Phàm ca. Muội tới với tư cách người của Hứa gia — nhà muội ngồi ở hàng ghế nhân chứng, không phải hàng ghế chờ được bảo vệ. (nàng nói khẽ, chỉ đủ hai người nghe) Lời hứa của Tạ gia, muội có nghe phong thanh rồi. Huynh xử thế nào, Hứa gia đứng cùng huynh thế ấy. Đừng vì nhà muội mà bán thứ không nên bán.' },
+    { who: 'gia_chu_ta', text: '(gặp ngươi ở cổng phủ, chắp tay, không nhắc nửa chữ về lời hứa) Giang công tử. Tạ gia ngồi vào phiên, nghe công tử xử — dù kết quả thế nào.' },
+    { who: 'gia_chu_do', text: 'Đỗ gia cũng thế. Sau trận hôm ấy, nhà ta không còn gì phải giấu nữa. Cứ xử theo chứng cứ — Đỗ gia nghe.' },
+    { who: 'quan_phu', text: 'Hai nhà đã có mặt. Nhân chứng đã có mặt. Dân thành… (ông nhìn ra sân chật kín người, lắc đầu mà cười) — cũng đã có mặt đông hơn cả ngày hội. Mời Giang công tử vào trong. Phiên phân xử bắt đầu.' },
+    { who: 'narrate', text: 'Ngươi bước vào giữa sân phủ, trong tay không có gì ngoài bút và giấy. Cả vùng nín thở chờ một lệnh. Thứ họ sắp nhận được — không phải là một lệnh.' }
+  ];
+  var SCENE_CH18_DONE = [
+    { who: 'narrate', text: 'Đêm trước phiên phân xử, tin về trận đấu ở sân phủ đã đi khắp thành và bắt đầu leo lên đường núi về phía Thanh Vân Tông — mỗi người kể lại, trận đấu dài thêm một đoạn, và sự im lặng của ngươi nặng thêm một phần.' },
+    { who: 'narrate', text: 'Tu vi sự kiện +150 của chương đã ghi nhận. Nhưng thứ chương này để lại trong tay ngươi không phải tu vi: là ba thứ chứng cứ đều đúng, một lời hứa chưa khép lại hẳn — và một phiên phân xử mà cả vùng đang đếm từng ngày.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 19: LỆNH KHÔNG CHO MƯỢN =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch19.js
+     (thiết kế: docs/arc-iv-detail/19.md; hợp đồng arciv-work/CONTRACT-wave2.md mục A.9). */
+  var SCENE_CH19_PHAN_XU = [
+    { who: 'narrate', text: 'Phiên phân xử mở. Giữa sân phủ, một án thư dài được đặt lên bàn của quan phủ — không phải một lệnh, mà là một bản án viết tay, từng điều một, mỗi điều đều ghi rõ dựa trên chứng cứ nào.' },
+    { who: 'quan_phu', text: '(đọc to, chậm rãi) "Điều một: đầu nguồn mạch tuyền thuộc quyền giữ của Tạ gia, như sổ chép nước mười năm đã ghi. Điều hai: đập hạ lưu thuộc quyền giữ của Đỗ gia — ba mươi năm công giữ đập không ai được xóa. Điều ba: nước chia theo mùa — mùa hạn, hạ lưu được phần trước để ruộng dân không chết; mùa lũ, đầu nguồn giữ quyền xả theo hiệu lệnh của người giữ đập."' },
+    { who: 'quan_phu', text: '"Điều bốn: phần chung — khúc tuyền giữa hai nhà — do cả hai nhà cùng canh, thuế nước đóng theo phần nước mỗi nhà dùng, sổ thuế của phủ làm chứng. Điều năm: án này không phải lệnh của một người. Nó là chứng cứ tự nói. Ai không phục, cứ mang chứng cứ khác tới."' },
+    { who: 'narrate', text: 'Cả sân im phăng phắc. Người ta đã chờ một lệnh — ngắn, nặng, và có thể mượn được. Thứ họ nhận được là năm điều phải đọc, phải nghĩ, và không mượn đi đâu được cả. Sự thất vọng lướt qua sân một nhịp… rồi những cái gật đầu bắt đầu từ hàng ghế dân thường: vì bản án này, nhà nào cũng phải làm việc, và ruộng của ai cũng có nước.' },
+    { who: 'dan_thanh_b', text: '(hàng ghế dân thường, nói khẽ với chồng mình) Ông nghe kỹ chưa — mùa hạn, ruộng hạ lưu được nước trước. Là ruộng của nhà mình đấy. Mười mấy năm đi xem xử, tôi chưa từng nghe một bản án nào nhắc tới ruộng của dân thường trước cả ruộng của hai nhà lớn…' },
+    { who: 'dan_thanh_a', text: 'Tôi giữ đập cho Đỗ gia mà tôi phải gật đầu với cái án này. Nó không cho nhà nào thắng hết — nó bắt cả hai nhà phải làm việc như đã từng làm ba mươi năm nay. Thế là công bằng. Ai không phục cái này, là người ấy chỉ muốn thắng, không muốn yên.' },
+    { who: 'chinh_ngon', text: '(từ hàng ghế nhân chứng, chậm rãi) Lão phu là người ngoài hai nhà, chỉ xin nói một câu với tư cách người làm chứng lâu năm ở thành này: bản án này là văn bản phân xử đầu tiên mà lão phu đọc xong không thấy ai bị ép phải thua cả người lẫn việc. Hai nhà cứ theo đó mà làm — thành này sẽ yên được nhiều năm.' },
+    { who: 'gia_chu_ta', text: '(đứng dậy, chắp tay) Tạ gia… nhận án. Phần nguồn là của nhà ta, phần việc cũng là của nhà ta — công bằng. (ông liếc sang phía đối diện, hạ giọng) Chỉ không biết có nhà nào quen thắng hết, nay phải chia, có nuốt nổi không.' },
+    { who: 'gia_chu_do', text: '(mặt sầm xuống, đứng phắt dậy) Hay. Hay cho một bản án "chứng cứ tự nói". Đỗ gia ta giữ đập ba mươi năm, chôn hai người vì cái đập ấy — nay quyền thu phí qua đập bị cắt, chia cho cả vùng "cùng canh". Giang Phàm! Ngươi không cất lệnh — vì ngươi không dám đứng về phía nào hết, đúng không?!' },
+    { who: 'u_nhan', text: '(từ hàng ghế Hứa gia, đứng lên, giọng rõ ràng) Đỗ gia chủ. Chàng không đứng về phía nào — chàng đứng về phía chứng cứ. Nếu Đỗ gia có chứng cứ khác, cứ mang ra giữa sân này. Còn nếu chỉ có giọng to… thì sân này hôm nay đã nghe đủ giọng to rồi.' },
+    { who: 'gia_chu_do', text: '(cười gằn, phất áo) Được. Được lắm. Án đã tuyên thì cứ tuyên. Nhưng nhớ lấy: có những việc không xử được bằng giấy. Đoàn nhân chứng của phiên này — (hắn nhìn lướt qua hàng ghế nhân chứng, dừng lại đúng một nhịp) — đường về hôm nay, mong là yên ổn.' },
+    { who: 'narrate', text: 'Câu nói ấy không phải lời đe dọa thành tiếng — nó là một dấu hiệu. Đoàn nhân chứng đang lục tục rời phủ theo phố nam về phía cổng thành: người giữ đập già, người ghi chép sổ nước, những người thường đã dám đứng ra nói sự thật. Ngươi đứng dậy, đi theo họ. Ngay bây giờ.' }
+  ];
+  var SCENE_CH19_PHUC_KICH_MO = [
+    { who: 'narrate', text: 'Phố nam, đoạn đường vắng giữa hai dãy kho. Đoàn nhân chứng vừa đi qua khúc quanh thì hai đầu phố cùng lúc bị chặn: người của phía thua và tay chân thuê, mặt che kín, tay cầm binh khí không giấu giếm.' },
+    { who: 'dan_c', text: '(giọng run, nhưng vẫn đứng chắn trước xe chứng cứ) Các ngươi… các ngươi muốn gì? Sổ sách đã nộp hết cho phủ rồi, đánh chúng tôi thì án cũng không đổi được đâu!' },
+    { who: 'dan_thanh_a', text: 'Tôi giữ đập ba mươi năm, chưa từng cầm dao chĩa vào ai! Hôm nay các ngươi đánh người làm chứng giữa ban ngày — cả thành này sẽ nhớ mặt các ngươi, dù các ngươi che kín tới đâu!' },
+    { who: 'narrate', text: 'Từ trên lầu các kho hai bên phố, vài cánh cửa sổ hé mở rồi đóng sập lại. Không ai dám xuống. Đoàn nhân chứng chỉ có một mình ngươi đứng giữa họ và hai đầu phố.' },
+    { who: 'narrate', text: 'Tên đi đầu không đáp. Hắn chỉ giơ tay — và đợt người đầu tiên lao vào đoàn nhân chứng. Chúng không tới để đổi án. Chúng tới để từ nay, không ai trong thành này dám đứng ra làm chứng nữa.' },
+    { who: 'dan_thanh_b', text: '(người đàn bà đi cùng đoàn, ôm chặt bọc sổ sách vào ngực, hét lên với lũ người bịt mặt) Sổ này là công sức mười năm của chồng tôi! Các ngươi muốn đốt nó thì bước qua xác tôi trước! — Giang công tử, chúng tôi đứng sau lưng công tử, không chạy đâu!' },
+    { who: 'narrate', text: 'Ngươi rút kiếm. Đợt một là tay chân thuê đánh vào hai bên sườn đoàn. Đợt hai sẽ nhắm thẳng vào xe chứng cứ và kiệu của nhân chứng già. Và ở đợt cuối, tên đầu lĩnh sẽ tự ra mặt — quanh hông hắn, một pháp khí lạ đang tỏa ra vòng nhiễu mỏng: đòn cộng hưởng vào gần hắn sẽ lệch đi. Nhưng kiếm — kiếm thì không lệch.' }
+  ];
+  var SCENE_CH19_PHUC_KICH_XONG_A = [
+    { who: 'narrate', text: 'Đợt cuối tan. Tên đầu lĩnh bị đánh bật khỏi phố, vòng nhiễu quanh hông hắn vỡ theo từng mảnh khi hắn tháo chạy về phía cổng. Đoàn nhân chứng — không một người bị thương. Xe chứng cứ còn nguyên. Kiệu của ông lão còn nguyên.' },
+    { who: 'dan_c', text: '(ngồi bệt xuống vệ đường, cười mà như khóc) Tôi làm chứng ba mươi năm cho cái thành này… chưa lần nào được ai đưa về tận cổng như hôm nay. Công tử — kiếm của công tử vừa giữ không phải mấy cái mạng già này đâu. Nó giữ cái việc "dám nói thật" cho cả thành này đấy.' },
+    { who: 'dan_thanh_b', text: 'Dân ở hai dãy phố đều thấy hết rồi, công tử. Thấy ai phục kích ai, và thấy ai đứng ra chắn. Chuyện này, từ mai, cả thành sẽ tự kể cho nhau nghe — không cần ai tuyên bố gì thêm nữa.' },
+    { who: 'dan_thanh_a', text: 'Tôi về đập ngay đêm nay, công tử. Không phải trốn — là về nói với người của Đỗ gia ở đập rằng: ai ra lệnh đánh nhân chứng thì tự chịu, còn cái đập này, người giữ đập không bỏ. Nước của cả vùng không thể trả giá cho cơn giận của một nhà.' }
+  ];
+  var SCENE_CH19_PHUC_KICH_XONG_B = [
+    { who: 'narrate', text: 'Đợt cuối tan — nhưng chậm một nhịp. Tên đầu lĩnh tháo chạy về phía cổng, để lại sau lưng một phố xáo trộn: xe chứng cứ lật nghiêng, sổ sách văng ra được nhặt lại gần đủ, và ông lão giữ đập bị thương ở vai khi kiệu đổ, máu thấm qua áo.' },
+    { who: 'dan_c', text: '(giữ chặt vết thương, lắc đầu khi ngươi định đỡ) Không sao… không sao. Xương già này còn chịu được. (ông cười gượng) Tôi chỉ tiếc — suýt nữa thì cái việc "dám nói thật" ở thành này đã phải trả giá đắt hơn thế này nhiều. Công tử tới chậm một chút nữa thôi…' },
+    { who: 'dan_thanh_b', text: '(dìu ông lão, quay lại nói với ngươi, mắt đỏ hoe) Công tử… ông nhà tôi làm chứng xong rồi. Dù có thế này, ông ấy vừa bảo tôi: phiên sau có cần người giữ đập ra nói, ông ấy vẫn ra. Công tử nghe xem — người ta dám thế là vì hôm nay có người đứng chắn cho họ.' },
+    { who: 'narrate', text: 'Bản án đã tuyên vẫn đứng — không một trang sổ nào mất. Nhưng từ hôm nay, ngươi biết rõ một điều: giữ cho người ta dám nói thật, là một việc phải trả bằng kiếm, không phải bằng giấy.' }
+  ];
+  var SCENE_CH19_TUYEN_QUY_TAC = [
+    { who: 'narrate', text: 'Trước cổng thành, giữa đám đông vừa chứng kiến cả phiên xử lẫn vụ phục kích, ngươi dừng lại. Ngươi lấy ra một tờ giấy trắng, đặt lên mặt án lưu động của phủ mà quan phủ cho người khiêng theo — và viết, chậm rãi, từng chữ một, trước mặt tất cả.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Lệnh của ta không cho mượn. Việc của ai, người đó xét bằng chứng cứ. Ai muốn mượn lệnh của ta để khỏi phải tự xét — người đó, từ nay, đừng tìm tới ta nữa."' },
+    { who: 'narrate', text: 'Không ai đọc to tờ giấy ấy lên. Từng người trong đám đông tự đọc — và sự im lặng sau đó khác hẳn sự im lặng chờ lệnh ở đầu phiên: đó là im lặng của những người vừa hiểu ra rằng thứ họ chờ bấy lâu nay sẽ không bao giờ tới, và rằng có lẽ như thế mới là đúng.' },
+    { who: 'u_nhan', text: '(đứng trong đám đông phía Hứa gia, nói vừa đủ cho những người quanh nghe, mắt không rời tờ giấy) Nghe cho kỹ đấy. Có người từng ngỏ ý đổi cả sự bảo hộ lâu dài cho Hứa gia lấy một lệnh của chàng. Hôm nay cả thành đã thấy câu trả lời rồi. Từ nay, ai muốn qua Hứa gia ta — cứ đi bằng chứng cứ như mọi người.' },
+    { who: 'quan_phu', text: '(cầm tờ giấy lên bằng hai tay) Tờ này, phủ sẽ cho chép lại, đóng triện của phủ, treo ở cổng thành. Không phải như một lệnh — (ông nhìn ngươi) — như một án lệ. Để từ nay, ai tới phủ xin "một lệnh cho xong", người ta chỉ vào tờ này mà đáp.' },
+    { who: 'gia_chu_ta', text: '(chắp tay, nói đủ để ngươi nghe) Công tử… lời hứa của Tạ gia hôm trước, ta xin rút lại cách nói của nó. Hứa gia có việc, Tạ gia vẫn đứng ra — không phải để mua gì nữa. Là vì hôm nay, nhà ta học được một điều từ công tử.' },
+    { who: 'dan_thanh_a', text: '(trong đám đông, nói với người bên cạnh, không hề nhỏ tiếng) Từ nay ai hỏi ta vụ tuyền xử thế nào, ta chỉ nói một câu: không có lệnh nào cả. Chỉ có chứng cứ — và một tờ giấy treo ở cổng thành.' }
+  ];
+  var SCENE_CH19_VET_RAN = [
+    { who: 'narrate', text: 'Đưa đoàn nhân chứng qua cổng xong, ngươi quay lại lấy đồ bỏ quên ở quán nước ngoài cổng — và dừng bước sau hàng cây. Cách đó không xa, gia chủ Đỗ gia đang đứng nói chuyện với một người lạ mặt quay lưng về phía thành.' },
+    { who: 'narrate', text: 'Ngươi không nghe rõ lời. Nhưng tai ngươi nghe được thứ khác: quanh người lạ ấy có một tần số rất khẽ, rất quen — thứ sóng lệch của pháp khí loạn sóng, cùng họ với vòng nhiễu quanh hông tên đầu lĩnh phục kích ban chiều. Và khi người lạ quay nửa mặt, ngươi thấy bên hông hắn đeo một pháp khí nhỏ, mặt khắc vệt đỏ thẫm như máu khô.' },
+    { who: 'narrate', text: 'Huyết Bạc Cung. Chúng không cần ra mặt nữa — chúng chỉ cần một nhà thế lực vừa thua án, vừa mất mặt, đang khát một chỗ dựa. Đỗ gia chủ nhận từ tay người lạ một vật nhỏ, gật đầu rất nhanh. Người lạ quay đi, lẫn vào đường mòn ngoài thành trước khi ngươi kịp lại gần.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi vào sổ tay) "Đỗ gia — pháp khí loạn sóng — Huyết Bạc Cung. Vết rạn đã mở. Ghi lại ngày hôm nay."' },
+    { who: 'narrate', text: 'Một chi tiết nữa mà chỉ người nghe được tần số mới nhận ra: sóng lệch quanh người lạ kia mạnh và đều hơn hẳn vòng nhiễu của tên đầu lĩnh ban chiều. Đó không phải pháp khí của một tên tay chân. Đó là đồ của kẻ cầm đầu một đường dây — kẻ đã đứng ngoài cổng thành này, giữa ban ngày, như thể chẳng sợ ai nhìn thấy.' },
+    { who: 'narrate', text: 'Ngươi không đuổi theo. Một mình, ngoài cổng thành, đuổi theo lúc này chỉ đánh động cả đường dây. Việc này phải về tới đại điện Thanh Vân Tông trước đã.' }
+  ];
+  var SCENE_CH19_AN_DINH = [
+    { who: 'narrate', text: 'Đại điện Thanh Vân Tông. Ngươi trình lại toàn bộ vụ việc bằng văn bản: bản án năm điều, vụ phục kích đoàn nhân chứng, tờ quy tắc treo ở cổng thành — và cuộc gặp ngoài cổng mà chỉ mình ngươi chứng kiến.' },
+    { who: 'truong_lao_tong', text: 'Ta đọc hết rồi, cả phần ngươi ghi thêm ở cuối: "kẻ lạ mang pháp khí loạn sóng, sóng đều và mạnh hơn đồ của tay chân". Chi tiết ấy là quý nhất trong cả bản trình này. Nó nói rằng kẻ đứng sau không còn giấu mình kỹ như trước nữa — chúng đang cần đồng minh gấp, tới mức để lộ cả người cầm đầu đường dây.' },
+    { who: 'truong_lao_tong', text: 'Xử một vụ tranh chấp mà không cho ai mượn lệnh, lại còn giữ được người làm chứng sống sót — việc này, tông ghi nhận cho ngươi. Còn tờ quy tắc kia… (ông gật đầu chậm rãi) Nó sẽ đi xa hơn vụ tuyền này nhiều. Từ nay, kẻ nào muốn mượn tiếng của Thanh Vân Tông qua ngươi, đều phải đọc nó trước.' },
+    { who: 'truong_lao_tong', text: 'Riêng việc Đỗ gia tiếp xúc kẻ lạ: từ hôm nay, tông ấn định thế này — ngoài mặt giữ lễ với Đỗ gia như thường, không đánh động. Trong ngầm, mọi đoàn của tông và của các nhà liên quan ra khỏi thành đều tăng cảnh giác gấp đôi. Kẻ địch đã chọn cách đánh vào đoàn người đi đường — thì đoàn người đi đường là nơi ta phải giữ chắc nhất.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử ghi nhớ. Các đoàn hộ tống từ nay — đệ tử xin nhận phần để mắt tới đường mòn ngoài thành."' },
+    { who: 'truong_lao_tong', text: 'Ngồi xuống một lát đã. (ông rót trà, chậm rãi) Giữ một bản án cho yên, và giữ một cái tâm cho yên — là cùng một việc. Án không lệch vì người xử không nghiêng. Tâm không nghiêng vì người giữ không tham phần thắng của ai. Hôm nay ngươi làm được cả hai. Ghi nhớ cái cảm giác ấy — nó là tâm pháp, không nằm trong sách nào của tông đâu.' },
+    { who: 'truong_lao_tong', text: 'Được. Nghỉ đi. Nhưng nhớ lấy câu này của ta: ngươi vừa đặt ra một quy tắc cho cả vùng. Sống với một quy tắc mình đặt ra — khó hơn đặt ra nó nhiều. Những ngày tới sẽ thử ngươi ở đúng chỗ ấy.' },
+    { who: 'narrate', text: 'Chương 19 khép lại. Quy tắc "lệnh không cho mượn" từ hôm nay là luật sống của ngươi tới cuối chặng đường — và ngoài kia, trên đường mòn, những đoàn người sắp lên đường mà chưa biết mình sẽ cần tới nó.' }
+  ];
+  var SCENE_CH19_DONE = [
+    { who: 'narrate', text: 'Tờ quy tắc ở cổng thành được chép thành ba bản trong đêm đầu tiên: một bản treo ở cổng, một bản giữ ở phủ, và một bản — không ai biết bằng cách nào — đã tới tay các nhà thế lực trong vùng trước cả khi trời sáng.' },
+    { who: 'narrate', text: 'Từ hôm nay, lượt lặp hộ vệ áp tải vào bảng việc tông và treo thưởng: áp tải nhân chứng, văn thư và người làm chứng giữa thành và tông — trận hộ vệ của chương này từ nay là một việc làm được lặp lại, với phần thưởng theo dải Kim Đan.' },
+    { who: 'narrate', text: 'Tu vi sự kiện +150 đã ghi nhận. Nhưng thứ chương này để lại không nằm trong sổ tu vi: nó là một câu viết tay treo ở cổng thành, và một vết rạn ngoài cổng thành đang mở dần về phía bóng tối.' },
+    { who: 'narrate', text: 'Và ở một nơi khác trong thành, có một thế lực vừa nhận ra: người thanh niên không bao giờ cất lời ấy vừa tự tay đóng cánh cửa mà mọi kẻ muốn mượn lệnh đang xếp hàng chờ. Từ nay, muốn đối phó với hắn, chúng phải tìm một cánh cửa khác — chẳng hạn, cánh cửa của chính cơ quan nắm mọi hồ sơ thiên hạ.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 20: RẠN NỨT TRONG CÁC =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch20.js
+     (thiết kế: docs/arc-iv-detail/20.md; hợp đồng arciv-work/CONTRACT-wave2.md mục A.9). */
+  var SCENE_CH20_RAN_NUT_A = [
+    { who: 'narrate', text: 'Tĩnh Quan Lâu, phòng kín phía bắc — căn phòng của lần đầu ngươi tự mình nói ra thân phận. Trần Chính Đạo cho người đóng cửa, tự tay rót trà, và không để ký lục quan vào ghi chép. Lần này, ông tới với tư cách một người báo ơn, không phải người của các.' },
+    { who: 'tran_chinh_dao', text: 'Cậu Giang, ta báo trước cho cậu một việc mà lẽ ra người của các không được báo: ta đang bị chất vấn trong nội bộ. Câu hỏi đặt trên bàn của các là thế này — "Hồ sơ Giang Phàm: vì sao chỉ ghi, mà không xử lý?"' },
+    { who: 'tran_chinh_dao', text: 'Người chất vấn là Bạch Kính Đường. Ông ấy không ác. Ông ấy chỉ tin một điều suốt hai mươi năm: mọi Hồn Sư trong thiên hạ đều phải nằm trong một danh sách có người trông coi. Cậu thì nằm trong danh sách — nhưng là do chính cậu tự đọc cho ghi, hôm ấy, ngay tại phòng này.' },
+    { who: 'tran_chinh_dao', text: 'Ta đã đáp thay cậu một câu trong buổi chất vấn: "Người tự mình nói ra sự thật về mình, không phải là một hồ sơ cần xử lý. Đó là một đối tác." Câu ấy giữ được ta tới hôm nay — nhưng không giữ được mãi. Họ muốn một hình thức trông coi nào đó đặt lên cậu, cho "đúng lệ".' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ông báo trước cho ta — các mà biết, ông sẽ bị tội. Vì sao?"' },
+    { who: 'tran_chinh_dao', text: '(cười khẽ) Vì ngày cậu nói "ta là Hồn Sư" ở phòng này, cậu đã tin ta trước. Nợ niềm tin, trả bằng niềm tin — đó là lệ của riêng ta, không phải lệ của các. Cậu nghe tiếp đây: người của ta sẽ gặp cậu ở Vọng Châu khách điếm, nói rõ cái mà họ gọi là "quản thúc mềm". Nghe cho hết, rồi hãy đáp.' },
+    { who: 'tran_chinh_dao', text: 'Thêm một việc nữa, để cậu liệu đường: người của Bạch Kính Đường đã bắt đầu đứng ở những nơi cậu hay qua lại. Không theo dõi lén — đứng công khai, ghi chép công khai. Họ muốn cậu tự thấy, tự khó chịu, rồi tự tới lầu mà thương lượng. Đó là cách các ép người ta nhận "bảo hộ" từ bao đời nay.' },
+    { who: 'narrate', text: 'Ngươi đứng dậy ra về. Ở cửa lầu, người tiếp khách cúi chào ngươi bằng lễ của một đối tác được các công nhận — thứ lễ mà không một hồ sơ "theo dõi" nào nhận được. Cùng một tòa lầu, hai cách đối đãi, và ngươi vừa thấy cả hai trong một buổi sáng.' },
+    { who: 'narrate', text: 'Đường tự nói ra năm xưa đang trả lãi theo cách không ai tính trước: khi hậu quả tới, ngươi là người được biết TRƯỚC — từ chính miệng người đứng giữa cơn rạn nứt.' }
+  ];
+  var SCENE_CH20_RAN_NUT_B = [
+    { who: 'narrate', text: 'Tin đồn tới tai ngươi ở chợ Cô Châu Thành trước, như mọi tin xấu khác kể từ ngày thân phận của ngươi bị tung ra ở chính cái chợ này: "Thiên Cơ Các sắp đặt người trông coi Hồn Sư họ Giang", "nghe đâu ông già giữ hồ sơ bị hỏi tội vì nó". Mỗi người kể một kiểu. Không kiểu nào tử tế.' },
+    { who: 'cho_a', text: 'Cậu Giang! Cậu nghe gì chưa — người ta nói các sắp cử người đi theo cậu như đi theo tù nhân ấy! Cái bọn tung tin về cậu dạo trước, giờ lại có cớ mới để nói rồi. Cậu… cậu lên lầu mà hỏi cho ra nhẽ đi, đừng để chúng nó nói thay cậu mãi thế!' },
+    { who: 'narrate', text: 'Tĩnh Quan Lâu tiếp ngươi bằng một người tiếp khách lạ mặt, một ấm trà đã nguội, và một câu trả lời tập sẵn: "Việc nội bộ của các, không tiện bàn với người ngoài." Người ngoài. Sau tất cả những gì đã xảy ra ở tòa lầu này, ngươi vẫn chỉ là người ngoài khi họ muốn thế.' },
+    { who: 'tiep_khach', text: 'Giang công tử, giám sát sứ có lời nhắn duy nhất cho công tử hôm nay: hồ sơ của công tử đang được "xem xét lại theo lệ". Khi nào có kết quả, các sẽ báo. Ngoài ra… xin công tử đừng nghe tin đồn ở chợ. Tin đồn ở chợ, công tử biết rõ hơn ai hết là nó đáng tin tới đâu.' },
+    { who: 'narrate', text: 'Chỉ khi ngươi đã ra tới cửa, ký lục quan năm xưa — người từng gạch sửa hồ sơ theo lời ngươi — mới đuổi theo, dúi vào tay ngươi một mảnh giấy nhỏ, không triện, không chữ ký: "Họp kín. Trần Chính Đạo bị chất vấn vì hồ sơ của cậu. Bạch Kính Đường chủ trương quản thúc mềm. Cẩn thận."' },
+    { who: 'ky_luc_quan', text: '(nói rất nhanh, rất khẽ) Tôi chỉ làm được thế này thôi. Lần trước cậu sửa hồ sơ bằng sự thật — lần này, họ định sửa cậu bằng lệ. Người của Trần Chính Đạo sẽ tìm cậu ở Vọng Châu khách điếm. Tới đó mà nghe phần còn lại.' },
+    { who: 'narrate', text: 'Mảnh giấy không triện kia nặng hơn mọi văn bản ngươi từng cầm ở lầu này. Nó nói một điều mà không dòng nào trong đó viết ra: trong tòa lầu nắm mọi bí mật thiên hạ, vẫn có người sẵn sàng mạo hiểm vì một kẻ bị chính lầu ấy đẩy ra ngoài danh sách tử tế.' },
+    { who: 'dan_thanh_b', text: '(một người đàn bà bán vải ở chợ kéo tay áo ngươi lại, hạ giọng) Cậu Giang, tôi nói câu này cậu đừng giận: người ta đồn cậu sắp bị các "trông coi" — mà tôi thì thấy, từ ngày cậu chữa hồn công khai, chợ này yên hơn hẳn. Ai trông coi ai, thiên hạ tự biết cả. Cậu cứ đi đứng cho đàng hoàng như bấy lâu nay là được.' },
+    { who: 'narrate', text: 'Đường bị lộ năm xưa cũng trả lãi theo cách của nó: khi hậu quả tới, ngươi là người biết SAU CÙNG — qua tin đồn, qua một cánh cửa khép hờ, và qua một mảnh giấy không ai dám ký tên.' }
+  ];
+  var SCENE_CH20_BAO_TIN_A = [
+    { who: 'narrate', text: 'Vọng Châu khách điếm, gian phòng cuối hành lang. Người chờ ngươi là một thuộc hạ cũ của Trần Chính Đạo — người đã từng đứng gác kho hồ sơ của các, nay nói năng như người nhà.' },
+    { who: 'gac_kho', text: 'Giang công tử, ông chủ dặn tôi nói nguyên văn, không thêm bớt: Bạch Kính Đường đã trình lên các một đề xuất tên là "quản thúc mềm". Mọi đoàn có công tử đi cùng phải khai báo lộ trình với các trước khi đi. Đổi lại, các "bảo hộ" công tử: thế lực nào muốn mượn danh, mượn lệnh của công tử, các đứng ra chặn.' },
+    { who: 'gac_kho', text: 'Ông chủ nói thêm một câu không có trong đề xuất: quản thúc mềm và mượn lệnh — là cùng một ý đồ ở hai quy mô. Kẻ muốn mượn lệnh của công tử thì mượn một câu. Các muốn "bảo hộ" công tử thì mượn cả đường đi của công tử. Mượn nhỏ, mượn lớn — vẫn là mượn.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Nói lại với ông chủ của ngươi: ta nghe rõ rồi. Lời đáp của ta sẽ tới lầu bằng văn bản, như mọi lần."' },
+    { who: 'gac_kho', text: 'Tôi sẽ chuyển nguyên văn. (hắn đứng dậy, rồi dừng lại ở cửa) Công tử… trong các bây giờ chia hai nửa thật rồi. Nửa theo ông Bạch, nửa theo ông chủ tôi. Công tử đáp thế nào, là một nửa trong các sẽ dùng đáp án ấy làm vũ khí đánh nửa kia. Cân nhắc cho kỹ.' },
+    { who: 'gac_kho', text: 'Một việc cuối, ông chủ dặn riêng: ca chữa hồn công khai ở tông của công tử vẫn theo lịch như thường — đừng hủy vì chuyện này. Ông chủ nói: "Cứ để hắn làm việc của hắn trước mặt thiên hạ. Thiên hạ chứng kiến càng nhiều, hồ sơ càng khó bị ai sửa." Tôi chuyển hết lời rồi, công tử.' },
+    { who: 'narrate', text: 'Ngươi ngồi lại một mình với ấm trà. Hồ sơ của ngươi — thứ bắt đầu từ một vệt hồn lực ở thung lũng — giờ đã thành vũ khí trong một cuộc đấu mà ngươi không hề chọn tham gia. Và lời khuyên khôn ngoan nhất ngươi nhận được hôm nay lại là: cứ tiếp tục làm việc của mình, giữa ban ngày, trước mặt mọi người.' }
+  ];
+  var SCENE_CH20_BAO_TIN_B = [
+    { who: 'narrate', text: 'Vọng Châu khách điếm, gian phòng cuối hành lang. Người chờ ngươi không phải người của các — là Trần Tư Linh, và nàng tới bằng đường vòng qua chợ, như một người biết mình đang bị để ý.' },
+    { who: 'tran_tu_linh', text: 'Giang công tử, nghe ta nói cho nhanh, việc này không viết vào thư được. Bạch Kính Đường đã trình lên Thiên Cơ Các một đề xuất: "quản thúc mềm". Mọi đoàn có công tử đi cùng phải khai báo với các trước. Đổi lại, các đứng ra "bảo hộ" công tử — chặn các thế lực muốn mượn danh, mượn lệnh của công tử.' },
+    { who: 'tran_tu_linh', text: 'Nghe thì tử tế, đúng không? Nhưng công tử ngẫm mà xem: quản thúc mềm và mượn lệnh là cùng một ý đồ, chỉ khác quy mô. Kẻ mượn lệnh thì mượn một câu nói. Các mà "bảo hộ" — là mượn cả đường đi nước bước của công tử, mượn vô thời hạn, lại còn được mang tiếng là ơn.' },
+    { who: 'tran_tu_linh', text: 'Còn một việc nữa, ta chỉ nghe được qua người quen trong các: Trần Chính Đạo đang bị chất vấn vì sao hồ sơ của công tử "chỉ ghi mà không xử lý". Ông ấy cãi cho công tử trong buổi họp kín — một mình. Bị lộ hay tự lộ, tới hồi hậu quả thì ai cũng phải trả giá thay phần của mình, công tử ạ.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Cảm ơn nàng. Lời đáp của ta sẽ tới lầu bằng văn bản — lần này, ta muốn nó tới tay cả hai phía trong các."' },
+    { who: 'tran_tu_linh', text: 'Vậy thì viết cho khéo vào. Trong các giờ chia hai nửa rồi — đáp án của công tử sẽ thành vũ khí cho một nửa đánh nửa kia, dù công tử có muốn hay không. (nàng đứng dậy, kéo khăn che mặt) Ta đi đường chợ về. Công tử đi đường sau. Từ nay gặp nhau… cũng phải lựa chỗ như thế này đấy.' },
+    { who: 'narrate', text: 'Ngươi ra khỏi khách điếm bằng cửa sau, theo đúng lời nàng dặn — và nhận ra, không cần ai tuyên bố, quản thúc mềm thực ra đã bắt đầu rồi: bắt đầu từ việc những người quý ngươi phải lựa đường mà đi.' }
+  ];
+  var SCENE_CH20_GIAM_SAT = [
+    { who: 'narrate', text: 'Không cần ai báo nữa — từ hôm nay, ngươi tự thấy. Ở cổng nam thành, hai người mặc áo của Thiên Cơ Các đứng ghi chép từng đoàn xe ra vào, không giấu giếm: đoàn nào có ngươi đi cùng, bút của họ dừng lại lâu hơn một nhịp.' },
+    { who: 'ky_luc_quan', text: '(người ký lục trẻ đứng ở cổng, thấy ngươi thì cúi đầu rất thấp, giọng lí nhí) Giang công tử… tôi chỉ làm theo lệnh trên. Ghi chép đoàn ra vào thành — đoàn nào cũng ghi, không phải riêng… (nàng không nói hết câu, vì chính nàng cũng không tin câu ấy)' },
+    { who: 'dan_thanh_a', text: '(người giữ đập đi qua cổng, nói to cốt để mọi người cùng nghe) Ối chà, từ ngày có người của các đứng cổng, trộm cướp ở thành này chắc sợ lắm nhỉ? Hay là chúng chỉ sợ mỗi một người — người không hề trộm cướp gì của ai?' },
+    { who: 'narrate', text: 'Ở đài tông cũng thế: một người của các đứng xem các buổi luyện công từ xa, phép tắc, im lặng, và ghi chép. Đệ tử trong tông bắt đầu tránh nhắc tới tên ngươi khi có mặt họ — không phải vì sợ ngươi. Vì sợ cho ngươi. Sự hiện diện ấy không đánh ai, không cấm ai. Nó chỉ làm mọi thứ xung quanh ngươi chậm lại một nhịp, như nước chảy qua một con đập vô hình.' },
+    { who: 'de_tu_a', text: '(một đệ tử trẻ ở đài tông ghé lại, nói khẽ) Giang sư huynh… người của các đứng xem buổi luyện sáng nay, đệ và mấy người nữa cố ý luyện dở đi, sợ họ ghi chép gì về tông. Trưởng lão biết chuyện, phạt cả bọn chép quy củ: "Tông này không có gì phải giấu. Luyện dở trước mặt khách — mới là điều đáng ghi." Đệ kể để sư huynh biết: trong tông, mọi người đứng về phía sư huynh cả.' },
+    { who: 'narrate', text: 'Quản thúc mềm là như thế đó: không xiềng, không khóa — chỉ là một con mắt không bao giờ chớp, đặt ở mọi nơi ngươi đi qua. Ngươi thu hết vào mắt, rồi quay về tông. Ở đó, một ca chữa hồn công khai đang chờ — ca cuối cùng trước khi ngươi đưa lời đáp tới lầu.' }
+  ];
+  var SCENE_CH20_HON_LOAN_MO = [
+    { who: 'narrate', text: 'Sân luyện của Thanh Vân Tông, một buổi chữa hồn công khai như nhiều buổi từ ngày dịch vụ hồn mở ra. Người bệnh hôm nay là một đệ tử trẻ bị tổn thương thần hồn trong chuyến đi đường mòn — chuyến đi mà đoàn của cậu ta bị dư chấn loạn sóng quét qua.' },
+    { who: 'de_tu_b', text: 'Giang sư huynh, đệ đi cùng đoàn áp tải hôm ấy. Lúc sóng loạn quét qua, đệ chỉ thấy tai ù đi một lúc rồi thôi. Nhưng từ hôm đó, đêm nào đệ cũng nghe trong đầu có tiếng gì đó… gõ. Gõ không theo nhịp nào cả. Đệ không ngủ được nữa, sư huynh.' },
+    { who: 'truong_lao_tong', text: 'Ca này, ngươi chữa trước mặt mọi người như thường lệ. (ông hạ giọng) Nhưng ta nói trước: hồn của đứa trẻ này không giống các ca trước. Ta đứng đây không phải để xem — là để phòng. Bắt đầu đi.' },
+    { who: 'de_tu_a', text: '(đồng môn đi cùng đoàn hôm ấy, đứng trong vòng người xem, giọng nghẹn lại) Giang sư huynh, hôm sóng loạn quét qua, chính đệ kéo cậu ấy ra khỏi vùng nhiễu. Cậu ấy mê đi một lúc rồi tỉnh, còn cười nói được — ai cũng tưởng không sao. Tới đêm thứ hai cậu ấy mới bắt đầu đập đầu vào gối mà khóc vì tiếng gõ. Sư huynh… cứu cậu ấy với. Cả đoàn nợ cậu ấy một mạng ở chỗ kéo xe hôm ấy đấy.' },
+    { who: 'narrate', text: 'Ngươi đặt tay, vận hồn lực, và nghe. Thoạt đầu là nhịp quen thuộc của một thần hồn bị chấn động. Rồi — dưới nhịp ấy — một thứ khác trồi lên: một tần số lệch, méo, gõ loạn không theo bất cứ trật tự nào, hệt như tiếng gõ trong đầu cậu đệ tử. Nó không nằm yên cho ngươi chỉnh. Nó vùng lên.' },
+    { who: 'oan_hon', text: 'Đau… đau… thả… ra… nhịp… vỡ… hết… rồi…' },
+    { who: 'narrate', text: 'Đệ tử trẻ bật dậy, mắt mở trừng mà không thấy gì, hai tay ôm đầu. Hồn của cậu ta đang loạn — không phải oán hồn từ ngoài vào, mà là chính thần hồn bị dư chấn loạn sóng xô lệch tới mức tự nó thành một thực thể lệch tần, đang đau và đang vùng vẫy trong chính thân xác của mình. Muốn cứu cậu ta, trước hết phải giữ cho nhịp loạn ấy đứng yên: Định Âm — giữ nhịp, đủ lâu, giữa lúc nó quấy phá mạnh nhất.' }
+  ];
+  var SCENE_CH20_HON_LOAN_XONG_A = [
+    { who: 'narrate', text: 'Nhịp cuối cùng được giữ đứng yên — và đường sóng méo trong tai ngươi duỗi thẳng ra, chậm rãi, như một sợi dây đàn được nới về đúng âm. Tiếng gõ loạn im bặt. Đệ tử trẻ ngã xuống, ngủ thiếp đi ngay giữa sân — giấc ngủ đầu tiên của cậu ta sau nhiều đêm, sâu và yên.' },
+    { who: 'oan_hon', text: 'Hết… đau… rồi… cảm… ơn…' },
+    { who: 'de_tu_b', text: '(tỉnh lại sau một lúc, giọng còn mơ màng) Im rồi… trong đầu đệ im hẳn rồi. Sư huynh — đệ nghe được tiếng gió ngoài sân. Chỉ tiếng gió thôi. Đẹp quá…' },
+    { who: 'truong_lao_tong', text: 'Ngươi vừa làm một việc mà ta chưa từng thấy Hồn Sư nào làm: không trấn, không phá — ngươi chữa cho một cái hồn đang loạn bằng cách giữ nhịp cho nó tự đứng dậy. Việc này… (ông nhìn quanh sân chật kín đệ tử) đã có hàng trăm người chứng kiến. Tốt. Rất tốt cho việc sắp tới.' },
+    { who: 'narrate', text: 'Tin về ca chữa chạy khỏi sân tông nhanh hơn mọi tin đồn từng chạy khỏi cái chợ dưới thành — vì lần này, người kể là hàng trăm đệ tử tận mắt chứng kiến, và câu chuyện không cần thêm một chút ác ý nào vẫn đủ khiến người nghe phải im lặng. Hồn lực của ngươi sau ca này cũng dày thêm một phần rõ rệt: giữ nhịp cho một hồn loạn tới cùng là một lượt rèn mà không bí cảnh nào cho được.' }
+  ];
+  var SCENE_CH20_HON_LOAN_XONG_B = [
+    { who: 'narrate', text: 'Ngươi không giữ nổi nhịp tới cùng — và chọn cách nhanh hơn: dồn hồn lực phá tan tần số lệch ngay tại đỉnh loạn của nó. Tiếng gõ trong đầu đệ tử trẻ vỡ ra như mặt băng nứt. Cậu ta ngã xuống, mê đi, nhưng hơi thở đã đều: thần hồn bị phá mất một phần mảnh lệch, lành lại sẽ chậm hơn, và yếu hơn trước một chút.' },
+    { who: 'de_tu_b', text: '(tỉnh lại, sờ lên trán, giọng khàn) Hết gõ rồi, sư huynh… Đầu đệ nhẹ, mà trống. Như vừa mất một cái gì đó không gọi tên được. Nhưng hết đau — hết đau là được rồi, sư huynh đừng tự trách.' },
+    { who: 'truong_lao_tong', text: 'Phá cũng là một cách cứu — người còn sống, hồn còn lành được, chỉ là chậm hơn. (ông nhìn quanh sân chật kín đệ tử) Và việc ngươi vừa làm, dù theo cách nào, cũng đã có hàng trăm người chứng kiến. Điều đó, lúc này, quan trọng hơn cả cách ngươi chọn.' },
+    { who: 'de_tu_a', text: '(dìu bạn mình xuống sân, quay lại chắp tay với ngươi, nói to cho cả vòng người nghe) Dù là cách nào — cậu ấy còn sống, còn là người của đoàn. Giang sư huynh, ơn này đoàn áp tải chúng tôi ghi. Ai hỏi chuyện hôm nay, chúng tôi kể đúng như mắt thấy: một Hồn Sư cứu người giữa ban ngày, trước mặt cả tông.' },
+    { who: 'narrate', text: 'Tin về ca chữa chạy khỏi sân tông nhanh hơn mọi tin đồn từng chạy khỏi cái chợ dưới thành — vì lần này, người kể là hàng trăm đệ tử và cả một đoàn áp tải tận mắt chứng kiến. Hồn lực của ngươi sau ca này cũng dày thêm, dù không trọn vẹn như khi giữ được nhịp tới cùng.' }
+  ];
+  var SCENE_CH20_GHI_NHAN_A = [
+    { who: 'narrate', text: 'Chưa đầy một ngày sau ca chữa hồn ở sân tông, người của Thiên Cơ Các tới — nhưng lần này không phải người giám sát. Trần Chính Đạo đích thân mang theo một văn bản đóng triện của các, đọc to ngay giữa đại điện, trước mặt trưởng lão và các đệ tử có mặt.' },
+    { who: 'tran_chinh_dao', text: '"Thiên Cơ Các ghi nhận: Giang Phàm, đệ tử Thanh Vân Tông — Hồn Sư, phẩm bốn. Tư cách hành nghề hồn sư của người này được các bảo chứng trước thiên hạ. Mọi hồ sơ cũ về người này, từ nay xếp vào loại: hồ sơ của một người hành nghề hợp lệ — không phải hồ sơ theo dõi."' },
+    { who: 'tran_chinh_dao', text: '(gấp văn bản lại, nói riêng với ngươi) Đây là cách ta dùng cậu làm khiên cho chính cậu, cậu Giang: cãi nhau trong các là việc của ta, nhưng một khi tư cách của cậu đã thành văn bản có triện, Bạch Kính Đường muốn "xử lý" cậu thì phải xử lý cả uy tín của các trước. Phẩm hồn bốn — cậu xứng đáng từ lâu. Chỉ là hôm nay, nó mới được nói ra đúng lúc cần nhất.' },
+    { who: 'truong_lao_tong', text: 'Thanh Vân Tông nhận văn bản này, và ghi vào sổ của tông một dòng tương ứng. Từ nay, các ca hồn khó của cả vùng — người bệnh từ các nhà thế lực đưa tới — sẽ qua sân của tông này, qua tay đệ tử của ta. Dịch vụ hồn cấp tông môn: mở từ hôm nay.' },
+    { who: 'ky_luc_quan', text: '(người ký lục đi theo đoàn của các, ghé lại lúc ra về, nói nhanh) Giang công tử — tôi là người ghi biên bản ca chữa hôm qua ở sân tông cho các. Tôi ghi đúng từng chữ những gì mắt thấy, không bớt một chữ nào. Lần này, không ai sửa được hồ sơ của công tử nữa đâu. Vì nó không còn là hồ sơ nữa — nó là chuyện cả vùng đều biết.' },
+    { who: 'narrate', text: 'Phẩm hồn 3 → 4. Không phải ngươi chọn khoảnh khắc này — khoảnh khắc này chọn ngươi, giữa một cuộc đấu nội bộ mà ngươi không khởi xướng. Nhưng cái tên được ghi vào văn bản, lần này, được ghi đúng: một Hồn Sư. Không phải một vệt lạ trong hồ sơ của ai.' }
+  ];
+  var SCENE_CH20_GHI_NHAN_B = [
+    { who: 'narrate', text: 'Chưa đầy một ngày sau ca chữa hồn ở sân tông, tin về ca chữa ấy đã chạy khắp thành — và Thiên Cơ Các im lặng. Không văn bản, không người tới. Sự im lặng ấy chính là câu trả lời của họ: hồ sơ của ngươi vẫn là "theo dõi", và sẽ còn là theo dõi tới khi nào họ muốn.' },
+    { who: 'truong_lao_tong', text: 'Vậy thì tông lên tiếng thay. (trưởng lão đứng dậy giữa đại điện, giọng vang khắp sân) Nghe cho rõ đây, các đệ tử: từ hôm nay, Thanh Vân Tông ghi nhận trước thiên hạ — Giang Phàm, đệ tử của tông này, là Hồn Sư phẩm bốn. Tông bảo chứng cho tư cách hành nghề của hắn. Kẻ nào — dù là thế lực nào — muốn gọi hắn là "lai lịch bất minh", kẻ đó phải bước qua cửa điện này mà nói.' },
+    { who: 'truong_lao_tong', text: '(quay sang ngươi, hạ giọng) Thiên Cơ Các ghi nhận hay không, là việc của các. Tông ghi nhận, là việc của nhà mình. Phẩm hồn bốn của ngươi không do triện của ai cấp — nó do chính tay ngươi chữa từng ca một mà thành. Triện chỉ là thứ đuổi theo sau, sớm hay muộn.' },
+    { who: 'hoa_huong_than', text: 'Trưởng lão, đệ tử xin ghi lời tuyên bố này vào sổ đại điện, và cho người chép gửi tới các nhà trong vùng ngay hôm nay. Từ nay các ca hồn khó của cả vùng sẽ đưa tới tông — dịch vụ hồn cấp tông môn, đệ tử xin nhận phần sắp xếp.' },
+    { who: 'de_tu_b', text: '(đệ tử vừa được chữa, được đồng môn dìu tới trước điện, quỳ xuống dù vai còn run) Đệ tử không biết nói gì cho phải. Chỉ xin ghi một câu vào sổ của tông: mạng này, thần hồn này — là Giang sư huynh giữ lại cho đệ tử, giữa sân, trước mặt mọi người. Sau này ai hỏi đệ tử về Hồn Sư họ Giang, đệ tử chỉ kể lại ngày hôm nay.' },
+    { who: 'narrate', text: 'Phẩm hồn 3 → 4 — lần này không bằng triện của các, mà bằng tiếng nói của chính tông môn ngươi thuộc về. Không phải ngươi chọn khoảnh khắc này. Nhưng phía đứng ra ghi nhận cho ngươi, lần này, là phía chưa từng để kẻ khác nói thay ngươi một lần nào.' }
+  ];
+  var SCENE_CH20_LOI_DAP = [
+    { who: 'narrate', text: 'Tĩnh Quan Lâu. Lời đáp của ngươi được đặt lên án dài trong phòng kín — một tờ văn bản viết tay, ngắn, và được gửi tới cả hai phía trong các cùng một lúc, đúng như ngươi đã định.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ta từ chối quản thúc mềm. Nguyên tắc của ta đã treo ở cổng Cô Châu Thành: lệnh của ta không cho mượn — và đường đi của ta cũng thế. Các muốn biết gì về các đoàn có ta đi cùng, cứ hỏi thẳng Thanh Vân Tông, như hai thế lực ngang hàng hỏi nhau. Ta chữa hồn cho người bệnh của mọi nhà, không trừ nhà nào. Ngoài ra, không còn gì để ghi."' },
+    { who: 'tran_chinh_dao', text: '(đọc xong, gật đầu rất chậm) Ngắn. Và không chừa một kẽ nào cho ai mượn. Cậu Giang — cậu vừa áp cái quy tắc ở cổng thành lên chính Thiên Cơ Các. Có người trong các sẽ nổi giận. Cũng có người — như ta — sẽ dùng tờ này làm khiên cho cậu trong mọi buổi họp từ nay.' },
+    { who: 'bach_kinh_duong', text: '(lão giám sát sứ cầm tờ văn bản lên, đọc lại lần thứ hai, rồi đặt xuống rất nhẹ) Hai mươi năm giữ hồ sơ, ta chưa từng bị một Hồn Sư từ chối mà… không tìm được một chữ nào để trách. (ông đứng dậy) Lời đáp này, ta ghi vào hồ sơ của cậu — nguyên văn. Đề xuất quản thúc mềm: rút lại. Không phải vì ta đổi ý — mà vì một người đã tự đặt luật cho mình và sống đúng luật ấy, thì không cần ai trông coi nữa.' },
+    { who: 'narrate', text: 'Ngoài cửa lầu, người giám sát từng đứng ghi chép ở cổng thành sáng nay đã không còn ở vị trí của hắn. Không ai tuyên bố gì về việc ấy. Có những thắng lợi không cần ai tuyên bố: chỉ là một buổi sáng, một vị trí trống, và những đoàn xe lại ra vào cổng thành như chưa từng bị ai đếm.' },
+    { who: 'narrate', text: 'Rạn nứt trong các chưa lành — nó sẽ còn đi theo ngươi sang những chặng sau. Nhưng từ hôm nay, vị thế của ngươi trong vết rạn ấy đã khác: không còn là một hồ sơ chờ xử lý, mà là một Hồn Sư phẩm bốn, có tông môn đứng sau, và một quy tắc mà ngay cả Thiên Cơ Các cũng vừa phải ghi lại nguyên văn.' }
+  ];
+  var SCENE_CH20_DONE = [
+    { who: 'narrate', text: 'Tin cuối ngày: dịch vụ hồn cấp tông môn nhận ca đầu tiên ngay trong tuần — người bệnh từ một nhà thế lực ở tận phía tây vùng, đưa tới bằng xe ngựa, trả công theo dải Kim Đan. Lượt lặp luyện hồn ở Tàn Tích tầng sâu cũng có thêm hồ sơ ca "hồn loạn" cho những ai muốn thử giữ nhịp như ngươi đã làm.' },
+    { who: 'narrate', text: 'Ở Cô Châu Thành đêm ấy, tờ quy tắc ở cổng thành có thêm một tờ giấy nhỏ được ai đó dán ngay bên dưới — không triện, không ký tên, chỉ một dòng chữ của dân thành: "Người này chữa hồn cho con tôi. Ai trông coi người này, là trông coi cả nhà tôi."' },
+    { who: 'narrate', text: 'Chương 20 khép lại. Tu vi sự kiện +200 đã ghi nhận — khoản lớn nhất của chặng. Ngươi đứng giữa sân tông lúc trời tối, nghe tiếng gió chạy qua mái điện: một âm thanh thẳng, đều, không lệch một nhịp nào. Sau lưng ngươi, trong các, một vết rạn vẫn còn đó. Trước mặt ngươi, những đoàn người sắp lên đường — và lần này, có cả những con mắt đang chờ xem ngươi sẽ đi cùng họ thế nào.' }
+  ];
+  /* SCENE_CH20_SOUL_SERVICE — cảnh dịch vụ lặp, sản xuất đợt 2,
+     KHÔNG thuộc kịch bản khóa prep (hợp đồng đợt 2 mục A.9/B.3):
+     ca hồn nặng đưa tới tông, Giang Phàm trấn bằng Định Âm, tông ghi công. */
+  var SCENE_CH20_SOUL_SERVICE = [
+    { who: 'narrate', text: 'Một ca hồn nặng nữa được đưa tới tông — người bệnh là khách của một nhà thế lực, hồn lệch nhịp không ngừng từ sau những đợt loạn sóng gần đây.' },
+    { who: 'hoa_huong_than', text: 'Ca này để ta ghi sổ dịch vụ cấp tông. Sư đệ giữ nhịp cho người ta như đã giữ ở ca trước — chậm thôi, hồn người này yếu, không chịu được sóng mạnh.' },
+    { who: 'de_tu_b', text: 'Đệ đứng ngoài cửa mà còn nghe tiếng hồn lệch ấy rít qua tai. Trong phòng mà sư huynh vẫn đứng yên được như thế…' },
+    { who: 'hoa_huong_than', text: 'Nhịp đã thẳng lại rồi. Tốt — Định Âm của sư đệ bây giờ là tay nghề của tông, không còn là việc phải giấu nữa. Khoản công của ca này ta ghi vào sổ cho sư đệ.' },
+    { who: 'narrate', text: 'Ca hồn khép lại trong yên lặng. Trên sổ dịch vụ cấp tông của Thanh Vân Tông, thêm một dòng ghi công — và cái tên Giang Phàm, lần này, được viết thẳng ở cột người chữa.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 21: NGƯỜI THAY MẶT NHÀ HỌ HỨA =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch21.js
+     (thiết kế: docs/arc-iv-detail/21.md; hợp đồng arciv-work/CONTRACT-wave3.md mục A.4). */
+  var SCENE_CH21_DOAN_THUONG = [
+    { who: 'narrate', text: 'Chợ Cô Châu, giờ Tỵ. Đoàn thương nhân phương nam mà Hứa U Nhàn bảo lãnh từ dạo trước bị vây giữa chợ: ba nhà buôn lớn của thành cùng một sáng đồng loạt hạ giá mua xuống còn sáu phần, lại nâng giá nguyên liệu đoàn cần lên gấp rưỡi — và tin đồn "đoàn sắp vỡ nợ" đã chạy khắp các sạp hàng trước cả khi đoàn kịp mở kiện hàng đầu tiên.' },
+    { who: 'truong_doan', text: 'Cô nương Hứa, lão phu buôn bán ba mươi năm chưa gặp cảnh này. Cùng một buổi sáng, nhà nào cũng nói một giá như đã hẹn nhau từ đêm qua. Đoàn của lão mà bán theo giá này, về tới nhà là trắng tay.' },
+    { who: 'ep_gia', text: 'Giá chợ là giá chợ, ai ép ai bao giờ. Hàng của đoàn các người chất đống thế kia, để thêm một ngày là hao một ngày. Bán thì bán, không bán thì cứ để đấy — bọn ta không thiếu hàng để mua.' },
+    { who: 'u_nhan', text: 'Ông nói đúng một nửa: giá chợ là giá chợ. Nhưng giá chợ không hẹn nhau qua đêm. Ba nhà, một giá, lệch nhau không tới một hào — sổ của các ông sẽ tự nói thay các ông, khỏi cần ta nói.' },
+    { who: 'u_nhan', text: 'Trưởng đoàn, ông cứ cho người giữ nguyên kiện hàng, một món cũng không bán dưới giá niêm yết của phủ. Phần còn lại để ta. Chuyện này thắng bằng sổ, không thắng bằng tiếng cãi nhau giữa chợ.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Cần ta làm gì?"' },
+    { who: 'u_nhan', text: 'Việc chân tay, và là việc quan trọng nhất: về phủ lấy cuốn sổ thuế ba năm của phủ thành mà cha ta giữ, rồi mời lão chủ sạp vải đầu chợ — người bán giá thật ở chợ này lâu nhất — tới làm chứng giá. Hồ sơ đủ ba thứ ấy, ta mới dựng được án.' },
+    { who: 'u_nhan', text: 'Đi đi, Phàm ca. Ở đây cứ để muội. Mấy ông này quen ép người bằng tiếng nói to — tiếc là hôm nay người họ gặp lại là người quen nghe sổ hơn nghe tiếng.' },
+    { who: 'narrate', text: 'Nàng đã làm việc từ trước khi ngươi tới, và nàng không hề chờ được cứu. Ngươi quay về phủ Hứa lấy sổ — vai của ngươi trong trận này là vai phụ, và là vai phụ có chủ đích.' }
+  ];
+  var SCENE_CH21_SO_SACH = [
+    { who: 'narrate', text: 'Sân sau phủ Hứa. Ba cuốn sổ trải trên bàn đá: sổ thuế ba năm của phủ thành, bảng giá niêm yết năm nay, và sổ hàng của đoàn thương. U Nhàn chấm bút, đối chiếu từng trang — tay nàng nhanh và chắc như tay một người đã làm việc này mười năm.' },
+    { who: 'u_nhan', text: 'Đây. Giá niêm yết của phủ cho tơ sống là mười hai lượng một cân. Ba nhà kia đang mua vào giá bảy lượng hai — dưới niêm yết bốn phần. Một nhà làm thế là gian thương. Ba nhà cùng làm một ngày, luật thành gọi bằng tên khác.' },
+    { who: 'u_nhan', text: 'Sổ thuế ba năm còn rõ hơn: cứ năm nào đoàn này vào thành, giá mua của ba nhà ấy cũng tụt đúng một nhịp như hôm nay — rồi tháng sau lại nhích lên. Ép có mùa, có lệ, có hẹn nhau. Sổ thuế không biết nói dối giùm ai cả.' },
+    { who: 'dan_thanh_a', text: 'Lão bán ở chợ này hai mươi sáu năm, giá thật thế nào lão thuộc như thuộc giá nhà mình. Cô nương cần lão ra phủ thành nói một câu, lão đi. Ép giá kiểu này, mai mốt tới lượt sạp của lão thôi.' },
+    { who: 'u_nhan', text: 'Cảm ơn lão trượng. Một câu của người bán giá thật lâu năm, nặng hơn mười tờ đơn của Hứa gia — vì Hứa gia có phần trong đoàn này, lời của ta người ta còn ngờ được, lời của lão thì không.' },
+    { who: 'hero', mode: 'write', text: '(Ngươi đặt lên bàn bản chép tay đối chiếu ba cuốn sổ mà ngươi vừa chép xong, trang nào khớp trang nào đều ghi rõ ở mép giấy.)' },
+    { who: 'u_nhan', text: 'Khớp hết. Tốt — hồ sơ thế này đem ra phủ thành, người đuối lý không phải là ta. Phàm ca chép sổ nhanh hơn cả thư lại của phủ đấy.' },
+    { who: 'u_nhan', text: 'Nhưng nghe muội dặn trước một câu, câu này quan trọng hơn cả hồ sơ: nếu chúng thua lý ở phủ thành, chúng sẽ đánh vào hàng thật. Đòn ấy chúng đã dùng với một đoàn khác ba năm trước — thua án, nhưng đoàn kia mất trắng hai xe hàng ngoài cổng.' },
+    { who: 'u_nhan', text: 'Cho nên khi muội vào phủ thành đối chất, huynh đừng vào theo. Huynh ra cổng thành, đứng với đoàn hàng từ đầu buổi. Mặt trận của muội là sổ sách. Mặt trận của huynh là hai xe hàng ấy — mỗi người thắng phần của mình, Hứa gia mới thắng cả hai.' },
+    { who: 'narrate', text: 'Nàng chia việc như một người tướng chia quân: rõ ràng, không thừa một lời, và tuyệt đối không để ngươi đứng vào phần việc của nàng. Ngươi gói hồ sơ, rồi đi về phía cổng thành.' }
+  ];
+  var SCENE_CH21_DOI_CHAT_PHU = [
+    { who: 'narrate', text: '(Tiếng chuông nhỏ ngân lên — mặt trận bên kia.) Phủ thành. Quan phủ ngồi giữa, ba nhà buôn ngồi một bên, Hứa U Nhàn đứng một mình bên còn lại, trước mặt là ba cuốn sổ và bản đối chiếu. Nàng không mang theo một hộ vệ nào.' },
+    { who: 'ep_gia', text: 'Bẩm quan, giá cả là việc của chợ, thuận mua vừa bán. Hứa gia đem sổ sách ra đây, chẳng qua là thua lỗ rồi muốn đổ tội cho người buôn bán lương thiện.' },
+    { who: 'u_nhan', text: 'Lương thiện thì không sợ sổ. Trang mười hai, sổ thuế năm ngoái: ba nhà các ông mua tơ của đoàn này giá mười một lượng tám. Trang mười hai năm nay, cùng một ngày: bảy lượng hai. Quan phủ cứ hỏi các ông ấy xem, tơ năm nay kém hơn tơ năm ngoái ở chỗ nào mà mất bốn phần giá.' },
+    { who: 'u_nhan', text: 'Và đây là lời chứng giá của người bán lâu năm nhất chợ này, có điểm chỉ. Ép giá đồng loạt để bóp chết một đoàn thương có bảo lãnh — điều thứ chín trong luật thành viết rõ lắm. Ta không xin quan xử nhẹ hay nặng. Ta chỉ xin quan đọc sổ.' },
+    { who: 'narrate', text: 'Quan phủ không nói gì. Ông chỉ lật sổ — từ trang thuế năm nay ngược về ba năm trước, chậm rãi, trước mặt cả sảnh. Mỗi trang ông lật qua, sắc mặt của ba nhà buôn lại xám thêm một phần. Sổ sách, khi được đọc đúng cách, tự nó là một bản án.' },
+    { who: 'ep_gia', text: 'Cô… cô nương Hứa, việc giá cả trong nhà buôn với nhau, có khi là hiểu lầm trong lúc truyền lời… để bọn ta về bàn lại với nhau, chưa chắc đã phải phiền tới luật thành…' },
+    { who: 'narrate', text: 'Trong sảnh phủ, thế cờ đã nghiêng hẳn. Nhưng tin đuối lý chạy ra khỏi phủ thành nhanh hơn cả người đưa tin — và ở ngoài cổng thành, có những kẻ vừa nghe tin ấy vừa rút đao ra khỏi vỏ.' }
+  ];
+  var SCENE_CH21_PHU_CAT = [
+    { who: 'narrate', text: '(Tiếng chuông nhỏ.) Phủ thành, cùng khắc ấy. Quan phủ đã cầm tới cuốn sổ thuế thứ hai. Ba nhà buôn không còn ai ngồi thẳng lưng được nữa.' },
+    { who: 'u_nhan', text: 'Các ông còn một đường lui tử tế: rút lại giá ép trước khi quan đọc tới trang cuối, bồi thường ba ngày neo hàng cho đoàn, và từ nay giá mua của đoàn này theo đúng niêm yết. Ta không cần các ông mất mặt. Ta cần đoàn của ta đi tiếp được.' },
+    { who: 'ep_gia', text: '…Bọn ta nghe theo cô nương. Giá ép rút lại hết, bồi thường theo lệ. Chỉ xin cô nương nói với quan một tiếng, đừng ghi án vào sổ thành…' },
+    { who: 'narrate', text: 'Ở phủ, nàng đã thắng gần xong. Ngoài cổng thành, đợt phá đoàn thứ hai vừa ập tới — đợt này có kẻ tu vi Kim Đan dẫn đầu.' }
+  ];
+  var SCENE_CH21_KHOP_CUA = [
+    { who: 'narrate', text: 'Xe hàng cuối cùng lăn qua cổng thành, kiện linh dược trên xe còn nguyên niêm phong, sáng nhẹ trong nắng chiều. Đúng khắc ấy, Hứa U Nhàn từ phủ thành đi ra, tay cầm tờ phán quyết đã đóng triện đỏ.' },
+    { who: 'truong_doan', text: 'Cô nương! Hàng còn nguyên, người còn đủ — lão phu đi buôn ba mươi năm, hôm nay mới thấy một đoàn hàng được giữ bằng cả sổ sách lẫn kiếm như thế này.' },
+    { who: 'truong_doan', text: 'Lão nói thật một câu: lúc đao kiếm rút ra ngoài cổng, lão tưởng chuyến này mất trắng rồi. Ai ngờ hàng về được tới kho, mà tờ phán quyết của phủ thành còn về trước cả hàng. Đoàn này từ nay chỉ nhận một nhà bảo lãnh — nhà họ Hứa.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Bên ta xong. Còn nàng?"' },
+    { who: 'u_nhan', text: 'Thắng. Giá ép rút hết, bồi thường đủ, và quan phủ ghi vào biên bản: từ nay đoàn này vào thành, giá theo niêm yết, ai ép nữa là phạm luật thành chứ không còn là chuyện chợ. Chúng đánh vào hàng là đòn cuối cùng của kẻ đã biết mình thua lý.' },
+    { who: 'u_nhan', text: 'Huynh giữ được hàng, muội giữ được án. Thiếu một trong hai, hôm nay Hứa gia đều mất — mất hàng thì mất của, mất án thì từ nay đoàn nào cũng bị ép như thế. May là mỗi người đều thắng đúng phần của mình.' },
+    { who: 'narrate', text: 'Đoàn thương nhân cúi chào hai người rồi cho xe vào kho. Tin về buổi đối chất theo chân đoàn hàng lan ra khắp chợ trước cả bữa cơm chiều.' }
+  ];
+  var SCENE_CH21_DANH_GIA = [
+    { who: 'narrate', text: 'Sân phủ Hứa, trước bữa tối. Hứa Chính Ngôn cho gọi cả nhà ra sân, và mời trưởng đoàn thương ở lại. Ông đứng giữa sân, nhìn con gái mình một lúc lâu — cái nhìn của một người cha vừa nhận ra con mình đã lớn tới mức nào.' },
+    { who: 'chinh_ngon', text: 'Hôm nay, trước mặt người nhà và khách của Hứa gia, ta nói một lời cho rõ: từ nay, việc làm ăn của Hứa gia ở thành này, Hứa U Nhàn thay mặt ta mà quyết. Lời của nó ở chợ, ở phủ thành, là lời của Hứa gia.' },
+    { who: 'chinh_ngon', text: 'Bao năm nay ta cứ nghĩ nhà này phải có người gánh thay ta khi ta già đi, mà mắt ta cứ nhìn đi đâu xa. Người gánh được, nó ở ngay trong nhà này, thắng án bằng sổ sách ngay giữa phủ thành cho cả thành nhìn thấy.' },
+    { who: 'u_nhan', text: 'Cha… con chỉ làm phần việc con vẫn làm bấy lâu. Có điều từ nay, con làm với danh phận rõ ràng — thế thì càng phải cẩn thận hơn, không được để mất mặt nhà mình.' },
+    { who: 'chinh_ngon', text: 'Ừ. Cứ cẩn thận như hôm nay là được. Thắng mà không dồn người ta tới đường cùng, chừa cho người ta một đường lui tử tế — ấy mới là cách làm ăn bền của nhà này.' },
+    { who: 'chinh_ngon', text: 'Còn con, Phàm nhi. Ta cảm ơn con một điều hơi lạ: cảm ơn vì con đã không làm thay nó. Con thừa sức dẹp cả chợ ấy trong một buổi, nhưng nếu con làm thế, hôm nay nó vẫn chỉ là "con bé được người ta cứu". Con đứng đúng chỗ của con, nên nó mới đứng được vào chỗ của nó.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Việc của nàng, nàng tự thắng. Ta chỉ giữ phần của ta — như nàng đã chia từ đầu."' },
+    { who: 'u_nhan', text: 'Nghe thấy chưa, cha? Người ngoài cứ bảo chàng câm là thiệt. Thật ra người biết mình nên đứng ở đâu và nên im lặng lúc nào, hiếm lắm.' },
+    { who: 'narrate', text: 'Bữa tối hôm ấy, chỗ ngồi của U Nhàn ở bàn chính được dời lên một bậc. Không ai trong nhà nói gì về sự thay đổi ấy — mọi người chỉ lặng lẽ ngồi vào chỗ mới của mình, như thể nó vẫn luôn ở đó.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 22: ĐỘT PHÁ TRƯỚC CHUYẾN ĐI =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch22.js
+     (thiết kế: docs/arc-iv-detail/22.md; hợp đồng arciv-work/CONTRACT-wave3.md mục A.4).
+     PHAN_CONG_CHOICE nằm giữa mảng SCENE_CH22_NHAN_VIEC — giữ nguyên vị trí như prep. */
+  var PHAN_CONG_CHOICE = {
+    who: 'choice', text: 'Bốn hướng của đoàn đều đã có người. Chỉ còn sườn trái — hướng mỏng nhất, kề vách đá — là chưa chốt người giữ. Ngươi phân công…',
+    options: [
+      { label: 'Đệ tử kỳ cựu giữ sườn trái, lớp trẻ ở giữa đoàn', action: 'phancong_ky_cuu' },
+      { label: 'Hai đệ tử trẻ giữ sườn trái, kỳ cựu đoạn hậu', action: 'phancong_tre' },
+      { label: 'Chia đều kỳ cựu và trẻ cho mọi hướng', action: 'phancong_deu' }
+    ]
+  };
+  var SCENE_CH22_THAM_BAO = [
+    { who: 'narrate', text: 'Đại điện Thanh Vân Tông. Thám báo của tông quỳ giữa điện, áo còn nguyên bụi đường và một vết rách dài ở tay áo. Trước mặt trưởng lão, hắn trải lên bàn một tấm trận đồ vẽ tay — nét bút run, nhưng từng mắt trận đều có ghi chú.' },
+    { who: 'tham_bao', text: 'Bẩm trưởng lão, đệ tử theo tuyến hộ tống đi trước ba ngày, về tới nơi chỉ dám nói một câu: chúng không còn thử nữa. Quanh đoạn đường mòn giữa hai vách đá, Huyết Bạc Cung đã dựng xong một vòng trận loạn sóng hoàn chỉnh — mắt trận nối nhau thành vòng kín, không còn là mấy mắt đơn lẻ như dạo trước.' },
+    { who: 'tham_bao', text: 'Đoàn hộ tống của tông đi việc ở thành, về là phải qua đúng đoạn đường ấy. Không có đường vòng — hai bên là vách và rừng già, xe và vật tư không qua được. Chúng chọn chỗ này là đã tính sẵn từ lâu.' },
+    { who: 'tham_bao', text: 'Đệ tử đếm được mười hai mắt trận đã lộ mặt, chưa kể những mắt còn giấu trong vách đá. Mắt nào cũng có người của chúng canh theo ca — đây không phải trận dựng vội để hù dọa, đây là trận dựng để giữ lâu dài, chờ đúng đoàn của ta.' },
+    { who: 'truong_lao_tong', text: 'Nói rõ ba điều ta cần nghe: trận này khác trận thử nghiệm ở chương trước thế nào?' },
+    { who: 'tham_bao', text: 'Khác ở ba chỗ, đệ tử ghi cả vào trận đồ. Một: trận thử là để đo sức ta; trận này dựng để giết — mắt trận đặt dày ở hai đầu đoạn đường, khép vào là không còn lối ra. Hai: nó có người điều trận ngồi ở trung tâm, trận sống theo tay người ấy, không phải trận chết chạy theo khuôn.' },
+    { who: 'tham_bao', text: 'Ba: trận đóng mở theo nhịp. Có những khắc vòng nhiễu mỏng đi rõ rệt — như người điều trận phải nghỉ tay, hoặc các mắt trận lệch nhịp nhau một thoáng. Cửa sổ ấy ngắn, nhưng có thật. Đệ tử nấp ngoài vành hai đêm mới dám chắc điều này.' },
+    { who: 'tham_bao', text: 'Đệ tử xin nói thêm một câu ngoài trận đồ: trên đường rút về, đệ tử thấy người của chúng khiêng thêm mắt trận mới ra vành. Chúng vẫn đang gia cố. Trận này mỗi ngày một dày hơn — đoàn đi càng sớm, nó càng mỏng được một phần.' },
+    { who: 'truong_lao_tong', text: 'Ngươi làm tốt. Lui xuống chữa thương đi. — Còn ngươi, Giang Phàm: lời nói là một chuyện, mắt thấy là chuyện khác. Ra vành tuyến, tự xác minh một mắt trận cho ta. Đừng vào sâu. Thấy đủ rồi thì về.' },
+    { who: 'narrate', text: 'Ngươi xuống núi, đi dọc tuyến hộ tống tới vành đoạn đường giữa hai vách. Từ xa, tai ngươi đã nghe thấy nó trước cả mắt: một nhịp chu kỳ rất quen — cùng họ tiếng với kiếm trận cổ dưới Kiếm Trủng, chỉ khác là thứ này đang thức, và đang chờ.' },
+    { who: 'narrate', text: 'Rồi bụi cây hai bên đường động đậy. Đội thám báo của Huyết Bạc Cung cũng đang ở vành trận này — và chúng đã thấy ngươi cùng lúc ngươi thấy chúng.' }
+  ];
+  var SCENE_CH22_VANH_TRAN = [
+    { who: 'narrate', text: 'Mắt trận vành gãy nhịp rồi tắt hẳn dưới một đòn Định Âm khóa đúng chu kỳ của nó — hệt như cách ngươi từng đóng băng chu kỳ của Trận Nhãn dưới Kiếm Trủng, chỉ khác là lần này ở giữa rừng, và kẻ địch là người thật đang nhìn ngươi làm điều đó.' },
+    { who: 'huyet_de', text: 'Ngươi… ngươi nghe được cả nhịp của mắt trận à? Tên nghe tiếng của bọn ta nói rồi — bảo sao tả sứ dặn không được để ngươi tới gần vành trận…' },
+    { who: 'huyet_de', text: 'Rút! Mắt vành mất rồi, ở lại là chết vô ích! Về báo với người điều trận: con cá ấy nó phá mắt bằng cái tai của nó!' },
+    { who: 'hero', mode: 'write', text: '(Ngươi nhặt mảnh trận đồ vành vừa rơi từ tay tên thám báo địch, gói lại cẩn thận. Trên mảnh giấy, nhịp đóng mở của vòng trận được ghi bằng những ký hiệu mà giờ ngươi đã nghe hiểu được một nửa.)' },
+    { who: 'narrate', text: 'Đội thám báo địch rút vào rừng. Có một tên trong chúng, lúc giao đấu, né được nhịp đầu của Liên Hoàn của ngươi một cách khác thường — như thể hắn nghe được chiêu của ngươi trước khi nó tới. Ngươi ghi nhớ điều ấy, như ghi nhớ một hạt giống lạ trong đất quen.' },
+    { who: 'narrate', text: 'Xác minh đã xong: thám báo nói thật từng chữ. Trận hoàn chỉnh, có người điều, có cửa sổ mỏng nhịp. Ngươi quay về tông với mảnh trận đồ vành trong tay áo.' }
+  ];
+  var SCENE_CH22_TICH_LUY = [
+    { who: 'narrate', text: 'Những ngày cuối chặng, sơn môn bận rộn khác thường: vật tư được đóng kiện ở kho, xe được kiểm lại từng chiếc nan, và đệ tử nào cũng biết chuyến hộ tống sắp tới không phải chuyến đi thường. Ngươi thổ nạp ở điểm linh khí tông, làm nốt những việc tông còn dang dở, để tu vi đầy dần tới bờ giai đoạn Trung Kỳ.' },
+    { who: 'truong_lao_tong', text: 'Chuyến đi này là chuyến lớn đầu tiên của tông từ khi ngươi Kết Đan. Người ta nhìn vào đoàn, là nhìn vào bộ mặt của Thanh Vân Tông. Làm cho trọn — nhưng nhớ: mạng người trong đoàn nặng hơn mặt mũi của tông. Gặp thế phải bỏ hàng cứu người, cứ bỏ, về ta chịu trách nhiệm lời ăn tiếng nói.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử nhớ. Hàng mất còn làm lại được. Người mất thì không."' },
+    { who: 'de_tu_a', text: 'Sư huynh, mấy đứa nhỏ bọn đệ lần đầu được đi hộ tống xa thế này, đứa nào cũng mong được phân vào hướng của huynh giữ. Ở gần huynh, nghe nói là… yên tâm lạ lắm, dù huynh chẳng nói câu nào.' },
+    { who: 'narrate', text: 'Ngươi gật đầu với chúng, rồi quay lại điểm linh khí. Chu thiên chạy đều trong tiếng ồn ào xa dần của một sơn môn đang chuẩn bị cho chiến trận.' }
+  ];
+  var SCENE_CH22_NHAN_VIEC = [
+    { who: 'narrate', text: 'Điểm rơi cổng tông. Đoàn hộ tống đã xếp hàng chờ sẵn: người và vật tư của tông đi việc lớn ở thành, xe nối xe, đệ tử đứng theo đội hình. Trưởng lão trao cho ngươi thẻ lệnh hộ tống ngay trước mặt cả đoàn.' },
+    { who: 'truong_lao_tong', text: 'Đoàn này giao cho ngươi. Trên đường, lời của ngươi — bằng cách nào ngươi nói ra cũng được — là lệnh của đoàn. Giờ ngươi hãy phân công các hướng giữ đoàn, theo đúng mảnh trận đồ vành ngươi mang về: địch sẽ đánh vào đâu, ngươi là người biết rõ nhất trong chúng ta.' },
+    { who: 'de_tu_ho_tong', text: 'Bẩm sư huynh, đội hình đoàn thế này: hướng trước có đội tiên phong, hướng sau có đội đoạn hậu, sườn phải kề rừng có hai đệ tử kỳ cựu. Chỉ còn sườn trái kề vách đá là mỏng nhất — đường hẹp, đứng được ít người. Xin sư huynh chốt người giữ hướng ấy.' },
+    { who: 'de_tu_ho_tong', text: 'Sườn trái khó ở chỗ: chỗ đứng chỉ vừa hai người chen nhau, sau lưng là vách, trước mặt là bụi rậm — địch từ trong bụi đánh ra thì người giữ hướng ấy gần như không có đường lùi. Ai giữ hướng ấy là giữ ở chỗ thiệt nhất của đoàn.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Các hướng khác giữ nguyên. Riêng sườn trái — để ta quyết."' },
+    { who: 'truong_lao_tong', text: 'Chốt đi, Giang Phàm. Đừng chọn theo cảm tình, cũng đừng chọn theo ý muốn làm đẹp lòng ai. Cứ theo trận đồ trong tay ngươi mà chọn — và nhớ lấy mình đã chọn gì, vì trên đường, chính ngươi là người phải sống cùng lựa chọn ấy.' },
+    PHAN_CONG_CHOICE,
+    { who: 'truong_lao_tong', text: 'Ngươi đã chốt thì cứ thế mà đi. Ta chỉ nói thêm một điều, không phải để ngươi đổi ý: không có cách phân công nào là không có giá. Quân có hạn, hướng nào dày lên thì hướng khác mỏng đi. Người làm tướng là người dám chịu cái giá của chính phân công của mình.' },
+    { who: 'truong_lao_tong', text: 'Và nhớ lấy câu này cho chuyến đi: trong vùng trận loạn sóng, tai của ngươi sẽ là thứ vô dụng nhất trên đường — sóng loạn, khóa không tới, nghe gì cũng nhiễu. Nhưng cũng chính vì thế, nó có thể thành thứ quý nhất. Ngươi sẽ tự hiểu khi ở trong đó.' },
+    { who: 'narrate', text: 'Phân công đã ghi vào sổ đoàn. Những người được giao giữ sườn trái đứng thẳng người hơn một chút khi nghe tên mình — họ chưa biết, và ngươi cũng chưa biết, cái giá của tờ phân công này sẽ hiện hình ở đâu.' }
+  ];
+  var SCENE_CH22_DOT_PHA = [
+    { who: 'narrate', text: 'Đài tông, tảng sáng. Tu vi giai đoạn Trung Kỳ đã đầy. Lần đột phá này không có mây tụ, không có chuông tự ngân — chỉ có kim đan trong đan điền sáng lên một nấc, chu thiên chạy qua một vòng rộng hơn, và tai nghe của ngươi sâu thêm một lớp nữa: từ nay, giữa tiếng nhiễu loạn của vạn vật, ngươi bắt đầu phân được nhịp nào là nhịp thật, nhịp nào là nhịp giả do người ta dựng lên.' },
+    { who: 'truong_lao_tong', text: 'Kim Đan Hậu Kỳ. Tốt. Giai đoạn trong đại cảnh giới thì không cần thiên kiếp, cũng chẳng cần ai tuyên cáo — đan của ngươi tự biết nó đã đi tới đâu. Ngươi thấy mình khác gì không?' },
+    { who: 'hero', mode: 'write', text: '(viết) "Nghe rõ hơn. Giữa nhiều tiếng lẫn nhau, đệ tử bắt đầu tách được từng tiếng một."' },
+    { who: 'de_tu_b', text: 'Chúc mừng sư huynh! Cả quảng trường nghe tin từ lúc chuông điểm canh — bọn đệ cược nhau xem huynh đột phá trước chuyến đi hay sau, ai cũng mong là trước. Giờ thì đoàn đi chuyến này, ai cũng yên tâm hơn một bậc.' },
+    { who: 'truong_lao_tong', text: 'Đi chuẩn bị đi. Đoàn lên đường là vào việc lớn ngay — ngươi giờ là người mạnh nhất trong đoàn, và cũng là người mà kẻ điều trận bên kia muốn đo sức nhất. Đừng để hắn được như ý quá sớm.' },
+    { who: 'narrate', text: 'Ngươi xuống đài. Dưới chân núi, đoàn hộ tống đã sẵn sàng — và ở rất xa phía trước, trên đoạn đường giữa hai vách đá, một vòng trận hoàn chỉnh đang vận hành theo nhịp, chờ đoàn đi vào.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 23: VÒNG VÂY LOẠN SÓNG =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch23.js
+     (thiết kế: docs/arc-iv-detail/23.md; hợp đồng arciv-work/CONTRACT-wave3.md mục A.4).
+     LUA_CHON_CHOICE nằm ở cuối mảng SCENE_CH23_LUA_CHON, trước dòng narrate chốt — giữ nguyên vị trí như prep. */
+  var LUA_CHON_CHOICE = {
+    who: 'choice', text: 'Người bị thương cần được giữ mạng ngay. Từ mỏm đá ngoài vùng trận này, một đòn bậc Hưởng của ngươi sẽ khóa được sóng, giữ người và phá thế vây cho cả hướng đã sụp — nhưng đoàn hộ tống và cả đội địch, hàng trăm nhân chứng, sẽ thấy và nghe hết. Ngươi sẽ…',
+    options: [
+      { label: 'Phát đòn bậc Hưởng — cứu người, dù cả trăm người sẽ nghe thấy', action: 'ch23_phat_huong' },
+      { label: 'Giữ bí mật — đánh tiếp bằng kiếm trong thế yếu', action: 'ch23_giu_bi_mat' }
+    ]
+  };
+  var SCENE_CH23_HO_TONG = [
+    { who: 'narrate', text: 'Đoàn hộ tống rời cổng tông lúc trời vừa sáng. Đội hình đi đúng tờ phân công ngươi đã chốt: tiên phong phía trước, đoạn hậu phía sau, sườn phải kề rừng, sườn trái kề vách — và ngươi đi giữa đoàn, nơi nhìn được cả bốn hướng. Đường mòn buổi sớm yên tĩnh, chim rừng kêu như mọi ngày.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh, đoàn đã vào đội hình. Tới trạm nghỉ giữa đường là nghỉ một khắc, kiểm lại xe và người rồi đi tiếp đoạn hai vách. Đệ đi đầu đoàn — có gì lạ, đệ báo trước tiên.' },
+    { who: 'de_tu_a', text: 'Lần đầu đệ đi hộ tống xa thế này đấy, sư huynh. Ở nhà đệ còn một ruộng linh thảo mới gieo, em gái đệ bảo chờ đệ về gặt cùng. Về chuyến này, đệ tính xin sư phụ cho xuống núi thăm nhà một chuyến.' },
+    { who: 'de_tu_b', text: 'Ngươi thì lúc nào cũng tính chuyện về nhà. Nhưng mà… ừ, đi chuyến này về, ta cũng muốn thăm nhà. Mẹ ta gửi thư lên núi ba lần rồi, thư nào cũng hỏi một câu: bao giờ con về ăn cơm.' },
+    { who: 'de_tu_a', text: 'Thì về chứ sao. Đi chuyến này xong là về. Sư huynh đi giữa đoàn thế kia, ai mà làm gì được đoàn mình — đúng không, sư huynh?' },
+    { who: 'hero', mode: 'write', text: '(viết) "Giữ đội hình. Thấy gì lạ, báo ngay — đừng tự xử lý một mình."' },
+    { who: 'narrate', text: 'Đoàn tới trạm nghỉ giữa đường. Nước suối trong, nắng lên cao, mọi người uống nước, kiểm lại dây xe, cười nói như một chuyến đi thường. Yên bình tới mức chính sự yên bình ấy làm ngươi nghe kỹ hơn: ở rất xa phía trước, giữa tiếng chim và tiếng suối, có một khoảng lặng không thuộc về rừng.' },
+    { who: 'de_tu_ho_tong', text: 'Đoàn đủ người, xe đủ hàng, ngựa còn khỏe. Nghỉ xong là đi đoạn cuối — qua hai vách đá là thấy đồng bằng, tới đó coi như thoát đoạn khó nhất. Lên đường thôi, sư huynh.' },
+    { who: 'narrate', text: 'Đoàn rời trạm nghỉ, đi vào đoạn đường hẹp giữa hai vách đá. Bóng vách che mất nắng. Và khoảng lặng mà ngươi nghe thấy lúc nãy — nó đang khép lại quanh đoàn, từ cả hai đầu.' }
+  ];
+  var SCENE_CH23_VONG_VAY_MO = [
+    { who: 'narrate', text: 'Mắt trận đầu tiên bật sáng trong vách đá bên trái. Rồi mắt thứ hai ở đầu đường phía trước. Rồi phía sau. Từng mắt một, theo một thứ tự lạnh lùng và chính xác, vòng trận loạn sóng hoàn chỉnh khép lại quanh đoàn hộ tống — đúng như tấm trận đồ thám báo đã vẽ.' },
+    { who: 'huyet_de', text: 'Khép vòng rồi! Hai đầu đường đã khóa! Người điều trận có lệnh: không cần bắt sống ai hết — đoàn này, hôm nay không ai ra khỏi đoạn đường này!' },
+    { who: 'mo_cuu_u', text: '(tiếng lệnh vọng qua trận, trầm và đều, không thấy người) Đừng vội. Cứ để chúng nếm vùng nhiễu trước. Kẻ cầm đoàn ấy — tai của hắn trong này chỉ là một cái tai điếc. Đánh từ hai đầu, dồn dần vào giữa.' },
+    { who: 'narrate', text: 'Ngươi thử khóa sóng: Tĩnh Âm dâng lên rồi vỡ vụn giữa chừng — sóng trong vùng trận loạn tới mức không một tần số nào đứng yên đủ lâu để khóa. Cộng hưởng đã bị vô hiệu, đúng như trưởng lão dặn. Từ giờ, trong tay ngươi chỉ còn kiếm và công pháp.' },
+    { who: 'hero', mode: 'write', text: '(Ngươi rút thẻ lệnh, viết vội mấy chữ giơ cao cho cả đoàn thấy: "Bỏ cộng hưởng. Kiếm và công pháp. Phá mắt trận ven đường trước — đừng để nhiễu phủ kín đoàn.")' },
+    { who: 'de_tu_ho_tong', text: 'Rõ! Tất cả nghe lệnh sư huynh: giữ đội hình, tựa vào xe, không ai tự ý xông ra! Đợt đầu chúng đánh từ hai đầu — giữ cho đoàn không đứt đôi là thắng nửa trận rồi!' },
+    { who: 'narrate', text: 'Đợt khép vòng ập tới từ cả hai đầu đoạn đường cùng một lúc. Các mắt trận ven đường vẫn đang bật thêm — phá được mắt nào, vùng nhiễu mỏng đi ở chỗ ấy một phần.' }
+  ];
+  var SCENE_CH23_DOI_TRAN = [
+    { who: 'narrate', text: 'Đợt thứ hai không đánh đều nữa. Địch rút bớt ở hai đầu, dồn quân vào giữa đoàn — vào đúng hướng mỏng nhất. Đồng đội ở các hướng khác bị ghìm chặt tại chỗ, không ai sang cứu được ai: người điều trận đang dùng quân số để ép đoàn tự xé mình ra.' },
+    { who: 'de_tu_a', text: 'Sư huynh! Hướng giữa chúng đông quá — chúng không đánh qua được xe đâu, nhưng chúng đang trèo qua xe! Đệ giữ được, đệ còn giữ được… một lúc nữa thôi!' },
+    { who: 'narrate', text: 'Ngươi vận Quy Nhất. Trên nền nhiễu xám phủ kín đoạn đường, bảy điểm sao Bắc Đẩu hiện lên — sáng, rõ, và hoàn toàn không bị nhiễu: đồ sao dẫn kiếm đi theo linh khí của chính ngươi, thứ không đi qua tầng sóng mà trận này làm loạn. Cả đoạn đường, địch lẫn ta, đều ngẩng lên nhìn bảy điểm sao ấy một khắc.' },
+    { who: 'mo_cuu_u', text: '(tiếng lệnh vọng qua trận, lần đầu mất đi vẻ đều đặn) Đợt ba — xả sóng kiếm theo nhịp đóng của trận. Đừng cho hắn đứng yên vận chiêu lần thứ hai. Dồn thêm người vào hướng mỏng nhất của chúng. Ngay bây giờ.' },
+    { who: 'narrate', text: 'Từ trung tâm trận, những đợt kiếm xỉn bay tới theo nhịp đóng mở của vòng nhiễu — và đúng như thám báo đã nói: mỗi khi trận mở một cửa sổ, nhiễu quanh các mắt trận mỏng đi một thoáng. Ấy là lúc áp sát phá mắt.' },
+    { who: 'hero', mode: 'write', text: '(Thẻ lệnh giơ lên giữa trận: "Cửa sổ mở — theo ta phá mắt. Ai ở hướng nào giữ nguyên hướng ấy.")' },
+    { who: 'narrate', text: 'Ngươi thắng mọi đợt mình trực tiếp đối mặt. Nhưng trận này không đánh với một người — nó đánh với cả đoàn cùng một lúc. Và ở đầu kia của đoàn, nơi ngươi không có mặt, quân số áp đảo của địch vừa chạm tới giới hạn của hướng mỏng nhất.' }
+  ];
+  var SCENE_CH23_HUONG_SUP = [
+    { who: 'narrate', text: 'Tiếng hét từ sườn trái vọng lại không giống tiếng hét trong trận nữa. Địch đã giấu một đội thứ ba trong bụi rậm kề vách — đội ấy không tham gia hai đợt đầu, chỉ chờ tới khi đoàn dồn hết sức vào giữa mới đánh thẳng vào sườn trái, hướng mỏng nhất của đoàn.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh! Sườn trái bị xuyên rồi! Người giữ hướng ấy ngã xuống rồi — còn thở, nhưng máu ra nhiều lắm! Đoàn co về mỏm đá ở rìa trận đi, ở đó còn giữ được một mặt!' },
+    { who: 'narrate', text: 'Đoàn co cụm về mỏm đá nhô ra ở rìa vùng trận, kéo theo người bị thương. Ngươi là người cuối cùng rút về, kiếm chắn ngang lối hẹp. Sau lưng ngươi, vòng nhiễu của trận vẫn phủ kín đoạn đường — nhưng mỏm đá này nằm ngoài mép của nó một chút. Rất ít. Vừa đủ.' }
+  ];
+  var SCENE_CH23_HUONG_SUP_A = [
+    { who: 'narrate', text: 'Người ngã xuống ở sườn trái là đệ tử kỳ cựu mà chính ngươi đã phân công giữ hướng ấy ở cổng tông. Anh ta đã đứng một mình ở chỗ hẹp nhất lâu hơn bất kỳ ai khác có thể đứng — khi được kéo về mỏm đá, tay anh ta vẫn còn nắm chặt kiếm, và câu đầu tiên anh ta thều thào được là: "Đoàn… còn đủ không?"' },
+    { who: 'de_tu_b', text: 'Sư huynh kỳ cựu bị thương nặng nhất ở sườn trái — đòn ấy mà trúng đệ thì đệ không còn nằm đây thở được đâu. Anh ấy che cho cả đoạn xe phía sau. Sư huynh… phải cứu anh ấy.' }
+  ];
+  var SCENE_CH23_HUONG_SUP_B = [
+    { who: 'narrate', text: 'Người ngã xuống ở sườn trái là một trong hai đệ tử trẻ mà chính ngươi đã phân công giữ hướng ấy ở cổng tông — cậu trai mới buổi sáng còn nói chuyện ruộng linh thảo và chuyến về thăm nhà. Cậu giữ được hướng ấy tới khi người bạn cùng giữ bị thương nhẹ phải rút vào trong, rồi đứng một mình thêm một quãng dài nữa mới ngã.' },
+    { who: 'de_tu_b', text: 'Là nó đấy, sư huynh — sáng nay nó còn hỏi huynh "ai mà làm gì được đoàn mình". Nó còn thở, nhưng yếu lắm rồi. Đệ xin huynh… bằng cách nào cũng được, cứu nó.' }
+  ];
+  var SCENE_CH23_HUONG_SUP_C = [
+    { who: 'narrate', text: 'Người ngã xuống ở sườn trái là đệ tử trẻ trong cặp mà ngươi đã chia đều cho hướng ấy. Khi đội giấu trong bụi ập ra, đệ tử kỳ cựu cùng giữ hướng đã kéo cậu ra sau lưng mình — nhưng quân số quá đông, một đòn xuyên qua cả hai lớp người: kỳ cựu bị thương ở vai, còn cậu trẻ hứng phần nặng nhất.' },
+    { who: 'de_tu_b', text: 'Chia đều mà vẫn không đều được với quân số của chúng, sư huynh. Hai người giữ một hướng, chúng đánh bằng sáu người. Cậu ấy còn thở — nhưng cứ thế này thì không lâu nữa đâu.' }
+  ];
+  var SCENE_CH23_LUA_CHON = [
+    { who: 'narrate', text: 'Mỏm đá. Người bị thương nằm giữa vòng người của đoàn, hơi thở thưa dần — ngự y đi theo đoàn lắc đầu: trong vùng nhiễu này, đan dược và chân khí đều chậm lại, giữ được tới khi phá vây thì may rủi. Sau lưng đoàn là vách đá. Trước mặt là vòng trận vẫn đang khép thêm từng mắt.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh, đệ nói thật tình hình: đánh bằng kiếm, ta phá được vây — đệ tin huynh. Nhưng phá xong vòng vây thì người này… đệ không dám nói chắc. Còn nếu huynh dùng thứ tiếng ấy — đệ từng nghe ở đài Kết Đan rồi — thì người này sống. Đệ chỉ không biết cái giá cho huynh là bao nhiêu.' },
+    { who: 'de_tu_b', text: 'Sư huynh, cả đoàn này ai cũng biết huynh là người thế nào rồi, giấu hay không giấu… Nhưng thôi, đệ không nói thay huynh được. Mạng người nằm đây, và bí mật mười hai năm của huynh — huynh chọn đi, chọn xong bọn đệ theo tới cùng.' },
+    { who: 'narrate', text: 'Từ mỏm đá này — điểm duy nhất ngoài vùng nhiễu mà ngươi đang đứng — sóng của ngươi sẽ đi thẳng, không bị loạn, tới đúng mảng vách đang nứt phía trên người bị thương và tới mắt trận cuối đang ép hướng đã sụp. Một đòn bậc Hưởng ở đây cứu được người. Và cũng ở đây, số người chứng kiến sẽ đông hơn mọi lần ngươi từng cất tiếng cộng lại.' },
+    { who: 'de_tu_ho_tong', text: 'Đệ cho người dọn trống quanh người bị thương rồi, sư huynh. Huynh quyết thế nào, đoàn cũng đã sẵn sàng: hoặc là cùng nghe một tiếng mà cả đời này không quên được, hoặc là cùng xông ra theo kiếm của huynh một lần nữa.' },
+    { who: 'narrate', text: 'Ngươi nghe, bằng cái tai đã nghe suốt mười hai năm sóng gió của đời mình: nhịp thở của người bị thương đang mỏng đi từng nhịp một — và ngoài kia, nhịp của vòng trận vẫn đều đặn, lạnh lùng, không hề vội. Thời gian để cân nhắc, tự nó đang cạn.' },
+    LUA_CHON_CHOICE,
+    { who: 'narrate', text: 'Ngươi nhìn người đang nằm thở thưa dần giữa vòng người, rồi nhìn ra vòng trận đang khép. Mười hai năm im lặng — và một mạng người. Lựa chọn này, không ai làm thay ngươi được.' }
+  ];
+  var SCENE_CH23_KHEP = [
+    { who: 'narrate', text: 'Quyết định đã định. Đoàn nín thở quanh mỏm đá — người thì nhìn ngươi, người thì nhìn ra vòng trận. Trận vây vẫn chưa vỡ, người bị thương vẫn đang chờ, và khắc tiếp theo thuộc về chương cuối của cung này.' },
+    { who: 'narrate', text: 'Ở đâu đó giữa trung tâm vòng trận, người điều trận cũng đang chờ. Hắn chưa biết ngươi sắp làm gì. Thật ra — đến lúc này, chính ngươi cũng chỉ vừa mới biết.' }
+  ];
+  /* ================= CUNG IV — CHƯƠNG 24: MANH MỐI CỨNG ĐẦU TIÊN =================
+     Cài NGUYÊN VĂN từng dòng từ bản thảo khóa tools/work/arc-iv-prep/scripts/ch24.js
+     (thiết kế: docs/arc-iv-detail/24.md; hợp đồng arciv-work/CONTRACT-wave3.md mục A.4).
+     SCENE_CH24_PHAT_HUONG chứa dòng mode:'say' DUY NHẤT của toàn cung IV. */
+  var SCENE_CH24_PHAT_HUONG = [
+    { who: 'narrate', text: 'Ngươi rời vị trí an toàn của đoàn. Một mình, ngươi đi dọc mép vùng nhiễu tới điểm ngoài trận ở hướng đã sụp — nơi mảng vách đá bị trận làm nứt đang treo ngay phía trên người giữ hướng bị thương. Mỗi bước chân của ngươi, cả đoàn lẫn đội địch đều nhìn theo. Không ai hiểu ngươi định làm gì. Trừ một người ở rất xa, giữa trung tâm trận, vừa đứng thẳng dậy.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh đi đâu vậy?! Hướng ấy còn một mắt trận đang ép, vách đá trên đầu người bị thương nứt toác ra rồi — đá mà đổ xuống thì không đan dược nào kịp nữa đâu!' },
+    { who: 'narrate', text: 'Mảng vách kêu răng rắc. Người bị thương nằm bất động trong vùng đổ, hơi thở chỉ còn là một sợi chỉ. Ngươi đứng vào đúng điểm sóng ngoài trận khóa được, hít một hơi — và cả mười hai năm im lặng của ngươi dồn về một khoảnh khắc. Lần này, ngươi không viết. Ngươi nói.' },
+    /* ★ CÂU CẤT LỜI DUY NHẤT CỦA CUNG IV — Sổ Dư Âm ctx ch24_lenh_cuu_nguoi ★ */
+    { who: 'hero', mode: 'say', text: 'KÉO NGƯỜI RA!' },
+    { who: 'narrate', text: 'Tiếng nói ấy không lớn. Nhưng nó đi cùng sóng đứng của Định Âm: mảng vách đang đổ khựng lại giữa đà rơi như bị một bàn tay vô hình giữ chặt, bụi đá treo lơ lửng giữa trời — và cùng một động tác giữ ấy, nhịp thở của người trọng thương được sóng đứng nâng đỡ, đều trở lại, không tắt. Định Âm giữ đá. Định Âm giữ người. Cả chiến trường im đi một nhịp dài.' },
+    { who: 'huyet_de', text: 'Tiếng… tiếng gì vậy? Vách đá đứng yên giữa trời kìa! Hắn giữ được cả đá lẫn người cùng một lúc — người điều trận ơi, trận của ta… trận của ta không nhiễu được tiếng ấy!' },
+    { who: 'narrate', text: 'Đoàn chớp lấy khoảnh khắc: người bị thương được kéo ra khỏi vùng đổ đúng lúc mảng vách rơi xuống khoảng đất trống, ầm một tiếng như núi lở. Đợt địch cuối cố lao vào phá thế cứu người giữa các nhịp giữ — và kiếm của ngươi xử lý từng đợt áp sát ở những khoảng nghỉ, không rời vị trí một bước.' },
+    { who: 'narrate', text: 'Khi người bị thương đã an toàn, ngươi quay lại mắt trận cuối cùng của vòng vây. Phong Âm: một ấn vàng lớn khép xuống miệng vỡ của trận — vòng nhiễu của cả đoạn đường tan theo từng mảng từ điểm phong ấn lan ra ngoài, như băng vỡ trên mặt sông đầu xuân. Tiếng nhiễu mười hai mắt trận tắt dần. Đoạn đường yên tĩnh trở lại.' },
+    { who: 'narrate', text: 'Ở trung tâm trận — nơi vừa tan đi mắt trận cuối — có một bóng người áo xám đứng lặng giữa khói bụi, nhìn về phía ngươi rất lâu. Người điều trận đã thấy và nghe tất cả. Hắn không ra lệnh thêm một lời nào nữa. Hắn chỉ đứng đó, như một người vừa nghe được thứ mình đã tìm suốt mười hai năm.' },
+    { who: 'de_tu_ho_tong', text: 'Sống rồi! Người giữ hướng sống rồi — thở đều rồi! Sư huynh… cả đoàn vừa nghe thấy huynh nói. Một câu thôi. Mà đệ thề, cả đời này đệ không quên được tiếng ấy đứng ở đâu, lúc nào.' },
+    { who: 'narrate', text: 'Hàng trăm con người — đoàn hộ tống của tông, và cả tàn quân của Huyết Bạc Cung đang rút chạy — đều đã nghe. Tin về một câu nói ở đoạn đường giữa hai vách đá này sẽ đi nhanh hơn bất kỳ đoàn người nào. Sổ Dư Âm của ngươi vừa ghi thêm trang nặng nhất từ trước tới nay.' }
+  ];
+  var SCENE_CH24_GIU_BI_MAT = [
+    { who: 'narrate', text: 'Ngươi không rời mỏm đá. Bí mật mười hai năm ở lại trong ngực ngươi, nguyên vẹn — và cái giá của nó được trả ngay bằng máu: muốn ra khỏi vòng vây này, đoàn chỉ còn một cách là đánh xuyên ra bằng kiếm, trong thế yếu, qua đúng hướng quân địch đông nhất.' },
+    { who: 'de_tu_ho_tong', text: 'Rõ lệnh sư huynh! Nhóm còn khỏe nhất theo huynh đánh xuyên ra trước, nhóm sau cõng người bị thương theo sau! Ai còn cầm được kiếm thì cầm — đoạn đường này, hôm nay ta tự mở bằng tay mình!' },
+    { who: 'narrate', text: 'Đợt xuyên phá đầu tiên mở được nửa đoạn đường. Người bị thương được cõng đi giữa đội hình — mỗi bước xóc là một lần hơi thở của cậu yếu đi trông thấy. Trong vùng nhiễu, không có gì giữ cậu lại ngoài bàn tay của đồng đội và ý chí của chính cậu.' },
+    { who: 'de_tu_ho_tong', text: 'Đợt hai chúng tăng cường thêm người ở đầu ra! Sư huynh, đoàn không dừng lại được — dừng là bị khép vòng lần nữa. Cứ tiến, đệ lo phía sau cho!' },
+    { who: 'narrate', text: 'Đoàn tiến như một mũi kiếm duy nhất: người khỏe che người yếu, người cõng thương binh đi giữa, kiếm của ngươi mở đường ở mũi nhọn. Mắt trận hai bên đường vẫn xả nhiễu xuống — nhưng một đoàn đã quyết không dừng lại thì nhiễu loạn chỉ còn là tiếng ồn.' },
+    { who: 'huyet_de', text: 'Tên cầm trận của chúng xuống sân rồi kìa! Hắn nói: kẻ cầm đoàn của tông không dám dùng tiếng thật của mình, thì để hắn dạy cho cả đoàn biết thế nào là trận loạn sóng!' },
+    { who: 'narrate', text: 'Tên cầm trận xuống sân với bộ kiếm xỉn theo họ loạn sóng và một chiêu quạt kiếm trận thu nhỏ. Đợt cuối cùng của trận vây dồn cả vào một điểm — và ngươi dồn cả mười hai năm luyện kiếm của mình vào một đòn: Quy Nhất. Bảy điểm sao hiện trên nền nhiễu, kiếm lớn nhất của Thất Tinh chém tan thế trận cuối cùng như chém qua một tấm màn ướt.' },
+    { who: 'de_tu_b', text: 'Vỡ rồi! Đường mở rồi! Đưa người bị thương ra trước — nhanh lên, cậu ấy lạnh tay rồi! Sư huynh, ra được rồi… nhưng cậu ấy nặng hơn lúc ở mỏm đá nhiều lắm.' },
+    { who: 'narrate', text: 'Đoàn thoát ra khỏi đoạn đường giữa hai vách. Người giữ hướng còn sống — nhưng thương nặng hơn hẳn, hồi phục sẽ chậm, và dấu vết của ngày hôm nay sẽ đi theo cậu một quãng dài. Không một nhân chứng nào nghe thấy gì ngoài tiếng kiếm. Bí mật giữ được. Cái giá là máu — đúng như bản chất của lựa chọn này từ đầu.' }
+  ];
+  var SCENE_CH24_THA_MANG = [
+    { who: 'narrate', text: 'Mép đoạn đường, dưới gốc cây bị kiếm khí chém cụt nửa tán. Mạc Cửu U nằm tựa vào thân cây, áo xám đẫm máu — người điều trận của vòng vây, kẻ mà tàn quân của chính hắn đã bỏ lại khi rút qua đường rừng. Trận đã tan. Tiếng chim rừng quay lại như chưa từng có gì xảy ra.' },
+    { who: 'mo_cuu_u', text: 'Tới rồi à. Ta nghe tiếng chân ngươi từ lúc ngươi còn cách mười bước — nghề của ta là nghe, ngươi quên sao. Đứng xa thế làm gì. Kiếm của ngươi hôm nay phá được cả trận của ta, chẳng lẽ lại ngại một kẻ sắp chết.' },
+    { who: 'mo_cuu_u', text: 'Làm đi cho gọn. Cung chủ thua một trận, mất một tả sứ — sổ sách của bà ấy tự khắc cân bằng được. Ta chỉ xin một điều: đừng có thương hại. Ta ghét nhất là chết dưới tay một kẻ đang thương hại mình.' },
+    { who: 'narrate', text: 'Ngươi bước tới. Ngươi rút — không phải kiếm. Ngươi rút băng vải và thuốc trị thương trong túi đoàn, quỳ xuống, băng lại vết thương đang rỉ máu ở sườn hắn, cầm máu bằng đúng áp lực cần thiết. Rồi ngươi đặt xuống cạnh tay hắn một bình đan dược của tông, đứng dậy, và quay lưng đi. Không một lời. Không một chữ viết.' },
+    { who: 'mo_cuu_u', text: '…Ngươi làm cái gì thế này. Ta dựng trận giết cả đoàn của ngươi. Ta là kẻ ở bến đò năm ấy cười nhìn nhà ngươi tan nát — ngươi biết rõ điều đó từ chương trước cơ mà. Băng bó cho ta? Để đan lại cho ta? Ngươi điên rồi à, Giang Phàm?' },
+    { who: 'mo_cuu_u', text: 'Hay là… ngươi cũng giống phụ thân ngươi. Năm ấy ở bến đò, ông ta cũng từng làm một việc ngu ngốc y hệt thế này, với một người còn không đáng được làm thế hơn ta. Ta tưởng mười hai năm thù hận phải mài ngươi thành thứ khác rồi chứ.' },
+    { who: 'narrate', text: 'Ngươi không quay lại. Tiếng của hắn đuổi theo lưng ngươi thêm mấy bước đường — lần đầu tiên kể từ khi ngươi biết hắn, trong giọng nói khói trà trầm lạnh ấy có một thứ không còn lạnh nữa. Hắn gọi với theo, gấp gáp như sợ ngươi đi khuất khỏi tầm tiếng.' },
+    { who: 'mo_cuu_u', text: 'Đứng lại! Giang Phàm — đứng lại. Ngươi muốn biết về bến đò, đúng không? Mười hai năm nay ngươi tu, ngươi luyện, ngươi im lặng — một nửa là vì đêm ấy. Vậy thì nghe đây. Ta trả ngươi một thứ, không phải vì ta tốt. Vì kẻ bị bỏ lại thì không còn nợ cung của mình nữa.' }
+  ];
+  var SCENE_CH24_MANH_MOI = [
+    { who: 'mo_cuu_u', text: 'Đêm ấy ở bến đò ngang trên sông Bạc, đoàn của phụ thân ngươi không đi lặng lẽ như sổ sách của Cô Châu Thành ghi đâu. Đi theo đoàn có một người của quan phủ đi kèm — một người ghi chép chính thức, nhiệm vụ của hắn là ghi lại từng việc xảy ra trên chuyến đi ấy, từng giờ, từng người, từng câu nói.' },
+    /* [ĐỀ XUẤT] Tên người ghi chép chính thức của vụ bến đò: THẨM MẶC SINH — tên mới do đội soạn cảnh đặt, chờ Bui duyệt. */
+    { who: 'mo_cuu_u', text: 'Tên hắn là Thẩm Mặc Sinh. Ghi nhớ lấy — mười hai năm nay cái tên ấy không xuất hiện trong bất kỳ cuốn sổ nào ngươi có thể chạm tới, vì người ta đã gạch hắn khỏi mọi sổ sách của thành này còn kỹ hơn gạch tên phụ thân ngươi.' },
+    { who: 'mo_cuu_u', text: 'Và nghe cho rõ câu này, vì ta chỉ nói một lần: cuốn hồ sơ gốc mà Thẩm Mặc Sinh ghi đêm ấy không bị hủy. Nó không cháy, không chìm xuống sông Bạc. Nó nằm trong tay Thiên Cơ Các — nằm trong kho hồ sơ mà các ngươi có đi qua cửa của chúng cả trăm lần cũng không thấy được.' },
+    { who: 'mo_cuu_u', text: 'Ta không biết hắn còn sống hay đã chết, cũng không biết hồ sơ ấy bị khóa ở tầng nào của các. Ta chỉ biết có thế — và biết rằng cung chủ của ta giữ kín điều này còn kỹ hơn cả tung tích của ngươi. Giờ thì đi đi. Món nợ tha mạng này… ta chưa biết sẽ trả ngươi thế nào. Nhưng ta không quên nợ bao giờ.' },
+    { who: 'narrate', text: 'Hắn không nói thêm nữa. Mười hai năm, vô số manh mối mềm — một ngọc bội, một cái tên bị quên, những lời nửa chừng — và hôm nay, lần đầu tiên: một cái tên cụ thể, một cuốn hồ sơ cụ thể, một nơi cất giữ cụ thể. Tuyến phụ thân của ngươi vừa chuyển từ hạt giống sang một đường truy vết có đích.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đưa hắn về trạm nghỉ. Chữa cho hắn tử tế. Món nợ này — để ta tự tính sau."' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh… đưa cả tả sứ của chúng về trạm của ta ạ? …Vâng. Đệ hiểu rồi. Huynh đã quyết thì đoàn làm theo. Hai người, khiêng cáng — nhẹ tay thôi, người ta còn là người bệnh của đoàn này từ giờ.' },
+    { who: 'narrate', text: 'Đoàn lên đường về tông, thêm một chiếc cáng không ai ngờ tới. Trên cáng, kẻ điều trận của địch nhắm mắt — không rõ là ngủ, là mê, hay là lần đầu tiên sau mười hai năm, không phải nghe ngóng bất cứ điều gì.' }
+  ];
+  var SCENE_CH24_LEN_DUONG = [
+    { who: 'narrate', text: 'Đại điện Thanh Vân Tông. Ngươi trình lại toàn bộ vụ việc: trận loạn sóng hoàn chỉnh, người điều trận bị bỏ lại, đoàn an toàn về tới nơi, và cái tên vừa nghe được ở mép đoạn đường. Trưởng lão nghe hết, không ngắt lời một lần nào.' },
+    { who: 'truong_lao_tong', text: 'Trận hoàn chỉnh có người điều, dựng để giết đoàn của tông ta giữa đường — đây không còn là chuyện thử sức nữa. Tông sẽ ghi việc này vào sổ đối ngoại với Huyết Bạc Cung, từng chữ. Còn người ngươi tha… tha đúng. Một kẻ bị chính chủ của mình bỏ lại, đôi khi nói thật hơn mọi thám báo.' },
+    { who: 'truong_lao_tong', text: 'Hành trình sông Bạc của ngươi, ta chuẩn y. Nhưng đi có chuẩn bị: hồ sơ nằm trong tay Thiên Cơ Các thì chuyến đi ấy không chỉ là đường sông. Ngươi xuống thành từ biệt người nhà họ Hứa đi — chuyến này đi, không hẹn ngày về sớm đâu.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử đi sông Bạc. Cái tên nghe được hôm nay, đệ tử sẽ lần tới tận cùng — hồ sơ ở đâu, đệ tử tới đó."' },
+    { who: 'narrate', text: 'Cùng lúc ấy, ở Cô Châu Thành — tin từ đoạn đường giữa hai vách đá đã về tới chợ trước cả đoàn người. Tin đi nhanh hơn người, và như mọi tin đồn, nó lớn lên một chút sau mỗi miệng người kể lại.' },
+    { who: 'dan_thanh_a', text: 'Lão nghe người trong đoàn nói tận tai: giữa trận, cái cậu câm của tông ấy mở miệng nói đúng một câu — thế là vách đá đứng yên giữa trời, người trọng thương đang thoi thóp tự nhiên thở đều trở lại! Lão bán ở chợ này ba chục năm, chuyện lạ nghe nhiều, mà chuyện này…' },
+    { who: 'dan_thanh_b', text: 'Thôi đi ông, đá nào đứng yên giữa trời được. Nhưng mà người sống thì đúng là sống thật — cả đoàn về đủ người, cái ấy thì không đồn sai được. Còn tiếng nói hay tiếng gió, ai ở đó mới biết. Có điều từ nay, chắc không còn ai dám gọi cậu ấy là "câm" nữa đâu.' },
+    { who: 'narrate', text: 'Ở thành, người ta bắt đầu kể về "một câu nói giữ được cả đá lẫn người". Ở tông, sổ sách ghi lại một trận vây và một cái tên. Còn ngươi — ngươi còn một việc cuối cùng ở thành này trước khi lên đường.' }
+  ];
+  var SCENE_CH24_TU_BIET = [
+    { who: 'narrate', text: 'Sân phủ Hứa, chiều muộn. Hứa U Nhàn tiếp ngươi ở chiếc bàn đá nơi nàng vẫn đối chiếu sổ sách — nhưng lần này, con dấu việc nhà của Hứa gia đặt ngay ngắn trên bàn, bên cạnh sổ của nàng. Người thay mặt nhà tiễn khách của nhà: một cảnh tượng mà vài năm trước, không ai trong phủ này tưởng tượng nổi.' },
+    { who: 'u_nhan', text: 'Muội nghe tin về chuyến sông Bạc rồi. Lần này huynh đi, không phải đi làm việc cho ai, cũng không phải trốn ai — huynh đi tìm sự thật của chính nhà mình. Tới lượt muội ở lại giữ nhà, như huynh từng giữ cho muội cái sân này bao nhiêu năm.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Nhà này giờ có nàng thay mặt. Ta đi, lòng yên hơn mọi chuyến trước."' },
+    { who: 'u_nhan', text: 'Yên thì cứ yên, nhưng đừng yên quá mà quên đường về. Việc ở thành này muội gánh được — đoàn thương, sổ sách, cả mấy nhà buôn gian kia nữa, muội xử lý được hết. Phần của huynh là đi cho tới nơi, rồi về kể muội nghe bằng… cách nào của huynh cũng được.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Khi hồ sơ ấy mở ra, người đầu tiên ta muốn cho biết — là nàng."' },
+    { who: 'u_nhan', text: 'Vậy thì hẹn thế. Đi đi, Phàm ca. Sông Bạc mười hai năm trước lấy của huynh nhiều thứ lắm. Lần này đi, lấy lại cho đủ — muội ở đây chờ tin, không chờ ai thay huynh về đâu.' },
+    { who: 'narrate', text: 'Hai người đứng dậy. Không ai nói thêm lời nào thừa. Nàng tiễn ngươi tới cổng phủ — cổng của một nhà mà giờ nàng là người thay mặt, tiễn một người đi tìm quá khứ của chính nhà mình. Thế ngang hàng mới của hai người, đứng vững trong im lặng chiều hôm ấy.' }
+  ];
+  var SCENE_CH24_DONE = [
+    { who: 'narrate', text: 'Cung IV khép lại ở đây: ngươi đứng ở Kim Đan Hậu Kỳ, tu vi giai đoạn 450 trên 1.200 — con đường tới Viên Mãn còn dài, và từ nay nó đi qua những vùng đất mà mười hai năm trước phụ thân ngươi đã đi qua.' },
+    { who: 'hero', mode: 'write', text: '(viết, tự ghi vào trang cuối của sổ tay) "Sông Bạc. Một người ghi chép. Một cuốn hồ sơ chưa từng bị hủy. Mười hai năm — đủ lâu rồi."' },
+    { who: 'narrate', text: 'Ở Thanh Vân Tông, đoàn hộ tống đã về, người bị thương đang hồi phục, và việc cày cuốc của dải Kim Đan mở ra trước mặt: đài thách đấu hạng vô địch, tầng sâu Kiếm Trủng, những mắt trận vỡ còn lại trên tuyến hộ tống. Ở Cô Châu Thành, một tin đồn về một câu nói vẫn đang lớn lên từng ngày.' },
+    { who: 'narrate', text: 'Còn ở một nơi rất xa, trong kho hồ sơ của Thiên Cơ Các, một cuốn sổ cũ nằm yên trong bóng tối — chưa biết rằng sau mười hai năm, cuối cùng đã có người lên đường đi tìm nó.' }
+  ];
+  /* SCENE_CH24_LEN_DUONG_TIN_B — cảnh sản xuất đợt 3,
+     KHÔNG thuộc kịch bản khóa prep (hợp đồng đợt 3 mục A.4a):
+     2 dòng thay thế cho đoạn tin lan ở SCENE_CH24_LEN_DUONG khi người
+     chơi đi đường giữ bí mật — tin chỉ kể trận phá vây bằng kiếm và
+     Quy Nhất chém tan thế trận cuối (đã khóa ở SCENE_CH24_GIU_BI_MAT),
+     không thêm tình tiết cốt truyện nào khác. */
+  var SCENE_CH24_LEN_DUONG_TIN_B = [
+    { who: 'dan_thanh_a', text: 'Lão nghe người trong đoàn kể lại tận tai: đoàn bị vây kín giữa hai vách đá, thế mà đánh xuyên ra được bằng kiếm hẳn hoi — đòn cuối là một chiêu kiếm lớn, bảy điểm sáng như sao hiện trên nền trời, chém tan cả thế trận cuối cùng của chúng nó! Không có phép màu nào đâu, toàn là kiếm thật người thật đấy.' },
+    { who: 'dan_thanh_b', text: 'Ừ, lão cũng hỏi kỹ rồi: không một ai nghe thấy một tiếng nói nào lạ cả. Chỉ có người sống trở về là thật — cả đoàn về đủ, người bị thương nặng nhất cũng còn thở. Kiếm mà giữ được người như thế, thì cần gì tới tiếng nói.' }
+  ];
+  /* SCENE_KY_NGO_BON_LOI — cảnh sản xuất đợt 3,
+     KHÔNG thuộc kịch bản khóa prep (hợp đồng đợt 3 mục A.4b):
+     cảnh kỳ ngộ của ô 23 Bôn Lôi Thiểm Kích theo khung bản đồ tích hợp
+     mục 5.3 — giông bất chợt ở đường mòn, sét đánh cây cổ thụ, trang
+     tàn quyển trong hốc cháy còn ấm điện quang, đệ tử đồng hành chứng
+     kiến. Cả hai lựa chọn ở cuối cảnh đều dẫn tới học bộ (xử lý ở mục B). */
+  var SCENE_KY_NGO_BON_LOI = [
+    { who: 'narrate', text: 'Đường mòn đang nắng chang chang thì mây đen kéo tới không một dấu báo trước. Gió quật nghiêng cả hàng cây, mưa chưa kịp rơi mà tóc gáy đã dựng lên — trong không khí có một thứ mùi khét rất nhẹ, như mùi của một nhịp điện đang chờ được gõ xuống.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh, giông này lạ lắm — mây chỉ tụ đúng trên đầu đoạn đường này thôi. Ta nép vào phía vách đá đi, kẻo…' },
+    { who: 'narrate', text: 'Một tiếng nổ xé trời. Tia sét đánh thẳng xuống cây cổ thụ ven đường, ngay trước mặt hai người — thân cây tách ra một hốc đen ngòm, khói bốc lên cuồn cuộn, mà ngọn lửa bén vào vỏ khô lại tắt ngấm ngay trong cơn gió, chỉ để lại những đường điện quang mỏng chạy ngoằn ngoèo quanh miệng hốc như chưa tan hết.' },
+    { who: 'narrate', text: 'Trong hốc cây cháy, có một vật gì đó không cháy. Một trang tàn quyển — giấy đã vàng, mép đã sém — nằm ép vào thớ gỗ còn ấm, và từng chữ trên trang giấy đang sáng lên theo đúng nhịp điện quang còn sót lại, như thể chính tia sét vừa rồi đã viết chúng ở đó từ rất lâu, chỉ chờ một người tới đọc.' },
+    { who: 'de_tu_ho_tong', text: 'Sư huynh… huynh thấy không? Chữ trên trang ấy — nó chạy theo hình tia sét. Đệ đi đường mòn này bao nhiêu năm, chưa từng nghe ai kể chuyện sét đánh mà để lại sách trong cây bao giờ…' },
+    { who: 'hero', mode: 'write', text: '(viết) "Lùi lại hai bước. Điện quang chưa tan hết — đừng chạm tay vào vội."' },
+    { who: 'narrate', text: 'Ngươi nghe trang tàn quyển trước khi chạm vào nó: nhịp điện còn ấm trong từng nét chữ gõ rất khẽ, đều, và quen — cùng một họ nhịp với thứ ngươi từng nghe trong chu kỳ của những vật cổ xưa. Đây không phải sách của người thường để lại. Đây là một đòn lôi đang ngủ trong một trang giấy.' },
+    { who: 'choice', text: 'Trang tàn quyển trong hốc cây cháy vẫn còn ấm điện quang. Ngươi…', options: [ { label: 'Nhận trang tàn quyển, ghi nhớ nhịp sét vào lòng', action: 'kyngo_bon_loi_nhan' }, { label: 'Đọc kỹ tại chỗ cho tới khi điện quang tắt hẳn', action: 'kyngo_bon_loi_doc' } ] }
+  ];
   var STORY = {
     IDLE_BEFORE: IDLE_BEFORE, IDLE_AFTER: IDLE_AFTER,
     SCENE_TEST: SCENE_TEST, SCENE_WRITE_BRANCH: SCENE_WRITE_BRANCH,
@@ -1415,7 +2286,56 @@
     SCENE_BC_TAPSAU_INVITE: SCENE_BC_TAPSAU_INVITE, SCENE_BC_TAPSAU_INTRO: SCENE_BC_TAPSAU_INTRO,
     SCENE_BC_KIEMTRUNG_INTRO: SCENE_BC_KIEMTRUNG_INTRO, SCENE_BC_HOIPHONG_INTRO: SCENE_BC_HOIPHONG_INTRO,
     SCENE_BC_HOIPHONG_THU: SCENE_BC_HOIPHONG_THU, SCENE_BC_HOIPHONG_TRANTOI: SCENE_BC_HOIPHONG_TRANTOI,
-    SCENE_C10_SOUL_A: SCENE_C10_SOUL_A, SCENE_C10_SOUL_B: SCENE_C10_SOUL_B
+    SCENE_C10_SOUL_A: SCENE_C10_SOUL_A, SCENE_C10_SOUL_B: SCENE_C10_SOUL_B,
+    SCENE_CH13_TRO_LAI: SCENE_CH13_TRO_LAI, SCENE_CH13_DE_NGHI: SCENE_CH13_DE_NGHI,
+    SCENE_CH13_DAI_THACH: SCENE_CH13_DAI_THACH, SCENE_CH13_DAI_THACH_2: SCENE_CH13_DAI_THACH_2,
+    SCENE_CH13_TINH_ANH_END: SCENE_CH13_TINH_ANH_END, SCENE_CH13_THINH_CAU: SCENE_CH13_THINH_CAU,
+    SCENE_CH13_VE_THANH: SCENE_CH13_VE_THANH,
+    SCENE_CH14_HAI_THINH_CAU: SCENE_CH14_HAI_THINH_CAU, SCENE_CH14_SO_DAT: SCENE_CH14_SO_DAT,
+    SCENE_CH14_NHAN_CHUNG: SCENE_CH14_NHAN_CHUNG, SCENE_CH14_HIEN_TRUONG: SCENE_CH14_HIEN_TRUONG,
+    SCENE_CH14_HIEN_TRUONG_END: SCENE_CH14_HIEN_TRUONG_END, SCENE_CH14_TU_CHOI: SCENE_CH14_TU_CHOI,
+    SCENE_CH14_BAO_LANH: SCENE_CH14_BAO_LANH,
+    SCENE_CH15_BAO_DONG: SCENE_CH15_BAO_DONG, SCENE_CH15_CUU_DOAN: SCENE_CH15_CUU_DOAN,
+    SCENE_CH15_CUU_DOAN_END: SCENE_CH15_CUU_DOAN_END, SCENE_CH15_TRUY_DUOI: SCENE_CH15_TRUY_DUOI,
+    SCENE_CH15_TRUY_DUOI_2: SCENE_CH15_TRUY_DUOI_2, SCENE_CH15_TRUY_DUOI_END: SCENE_CH15_TRUY_DUOI_END,
+    SCENE_CH15_BAO_CAO: SCENE_CH15_BAO_CAO,
+    SCENE_CH16_TINH_TU: SCENE_CH16_TINH_TU, SCENE_CH16_LINH_NGO: SCENE_CH16_LINH_NGO,
+    SCENE_CH16_KIEMTRUNG: SCENE_CH16_KIEMTRUNG, SCENE_CH16_BENH_VUC: SCENE_CH16_BENH_VUC,
+    SCENE_CH16_DOT_PHA: SCENE_CH16_DOT_PHA,
+    SCENE_CH17_TIN_TU_THAP: SCENE_CH17_TIN_TU_THAP, SCENE_CH17_DO_LAI: SCENE_CH17_DO_LAI,
+    SCENE_CH17_DO_LAI_XONG: SCENE_CH17_DO_LAI_XONG, SCENE_CH17_CHAT_VAN: SCENE_CH17_CHAT_VAN,
+    SCENE_CH17_DI_NINH: SCENE_CH17_DI_NINH, SCENE_CH17_DONE: SCENE_CH17_DONE,
+    SCENE_CH18_TRANH_CHAP: SCENE_CH18_TRANH_CHAP, SCENE_CH18_AP_LUC_HUA: SCENE_CH18_AP_LUC_HUA,
+    SCENE_CH18_AP_LUC_NGHE: SCENE_CH18_AP_LUC_NGHE, SCENE_CH18_AP_LUC_VIET: SCENE_CH18_AP_LUC_VIET,
+    SCENE_CH18_DAU_MO: SCENE_CH18_DAU_MO, SCENE_CH18_DAU_XONG: SCENE_CH18_DAU_XONG,
+    SCENE_CH18_CHUNG_CU: SCENE_CH18_CHUNG_CU, SCENE_CH18_CHO_PHIEN: SCENE_CH18_CHO_PHIEN,
+    SCENE_CH18_DONE: SCENE_CH18_DONE, SCENE_CH19_PHAN_XU: SCENE_CH19_PHAN_XU,
+    SCENE_CH19_PHUC_KICH_MO: SCENE_CH19_PHUC_KICH_MO, SCENE_CH19_PHUC_KICH_XONG_A: SCENE_CH19_PHUC_KICH_XONG_A,
+    SCENE_CH19_PHUC_KICH_XONG_B: SCENE_CH19_PHUC_KICH_XONG_B, SCENE_CH19_TUYEN_QUY_TAC: SCENE_CH19_TUYEN_QUY_TAC,
+    SCENE_CH19_VET_RAN: SCENE_CH19_VET_RAN, SCENE_CH19_AN_DINH: SCENE_CH19_AN_DINH,
+    SCENE_CH19_DONE: SCENE_CH19_DONE, SCENE_CH20_RAN_NUT_A: SCENE_CH20_RAN_NUT_A,
+    SCENE_CH20_RAN_NUT_B: SCENE_CH20_RAN_NUT_B, SCENE_CH20_BAO_TIN_A: SCENE_CH20_BAO_TIN_A,
+    SCENE_CH20_BAO_TIN_B: SCENE_CH20_BAO_TIN_B, SCENE_CH20_GIAM_SAT: SCENE_CH20_GIAM_SAT,
+    SCENE_CH20_HON_LOAN_MO: SCENE_CH20_HON_LOAN_MO, SCENE_CH20_HON_LOAN_XONG_A: SCENE_CH20_HON_LOAN_XONG_A,
+    SCENE_CH20_HON_LOAN_XONG_B: SCENE_CH20_HON_LOAN_XONG_B, SCENE_CH20_GHI_NHAN_A: SCENE_CH20_GHI_NHAN_A,
+    SCENE_CH20_GHI_NHAN_B: SCENE_CH20_GHI_NHAN_B, SCENE_CH20_LOI_DAP: SCENE_CH20_LOI_DAP,
+    SCENE_CH20_DONE: SCENE_CH20_DONE, SCENE_CH20_SOUL_SERVICE: SCENE_CH20_SOUL_SERVICE,
+    SCENE_CH21_DOAN_THUONG: SCENE_CH21_DOAN_THUONG, SCENE_CH21_SO_SACH: SCENE_CH21_SO_SACH,
+    SCENE_CH21_DOI_CHAT_PHU: SCENE_CH21_DOI_CHAT_PHU, SCENE_CH21_PHU_CAT: SCENE_CH21_PHU_CAT,
+    SCENE_CH21_KHOP_CUA: SCENE_CH21_KHOP_CUA, SCENE_CH21_DANH_GIA: SCENE_CH21_DANH_GIA,
+    PHAN_CONG_CHOICE: PHAN_CONG_CHOICE,
+    SCENE_CH22_THAM_BAO: SCENE_CH22_THAM_BAO, SCENE_CH22_VANH_TRAN: SCENE_CH22_VANH_TRAN,
+    SCENE_CH22_TICH_LUY: SCENE_CH22_TICH_LUY, SCENE_CH22_NHAN_VIEC: SCENE_CH22_NHAN_VIEC,
+    SCENE_CH22_DOT_PHA: SCENE_CH22_DOT_PHA, LUA_CHON_CHOICE: LUA_CHON_CHOICE,
+    SCENE_CH23_HO_TONG: SCENE_CH23_HO_TONG, SCENE_CH23_VONG_VAY_MO: SCENE_CH23_VONG_VAY_MO,
+    SCENE_CH23_DOI_TRAN: SCENE_CH23_DOI_TRAN, SCENE_CH23_HUONG_SUP: SCENE_CH23_HUONG_SUP,
+    SCENE_CH23_HUONG_SUP_A: SCENE_CH23_HUONG_SUP_A, SCENE_CH23_HUONG_SUP_B: SCENE_CH23_HUONG_SUP_B,
+    SCENE_CH23_HUONG_SUP_C: SCENE_CH23_HUONG_SUP_C, SCENE_CH23_LUA_CHON: SCENE_CH23_LUA_CHON,
+    SCENE_CH23_KHEP: SCENE_CH23_KHEP, SCENE_CH24_PHAT_HUONG: SCENE_CH24_PHAT_HUONG,
+    SCENE_CH24_GIU_BI_MAT: SCENE_CH24_GIU_BI_MAT, SCENE_CH24_THA_MANG: SCENE_CH24_THA_MANG,
+    SCENE_CH24_MANH_MOI: SCENE_CH24_MANH_MOI, SCENE_CH24_LEN_DUONG: SCENE_CH24_LEN_DUONG,
+    SCENE_CH24_TU_BIET: SCENE_CH24_TU_BIET, SCENE_CH24_DONE: SCENE_CH24_DONE,
+    SCENE_CH24_LEN_DUONG_TIN_B: SCENE_CH24_LEN_DUONG_TIN_B, SCENE_KY_NGO_BON_LOI: SCENE_KY_NGO_BON_LOI
   };
   global.VSLC_STORY = STORY;
   if (typeof module !== 'undefined' && module.exports) module.exports = STORY;

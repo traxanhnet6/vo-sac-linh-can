@@ -686,7 +686,7 @@
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
   var questNav = null; // tự tìm đường làm nhiệm vụ: { targetMap, hx, hy, leg, replans, lastMap, lockMsg }
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
-  var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old'];
+  var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old', 'mac_cuu_u']; // ARCIV A.3: mac_cuu_u (chỉ huy trận, sheet đã chép)
   var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks',
     /* Thư viện vật thể chi tiết (đợt chi tiết bản đồ + đợt cây cỏ phần 3):
        tranh có sẵn trong assets/props, vẽ theo kích thước thật neo đáy. */
@@ -729,6 +729,11 @@
   ASSETS.bgByMap.bc_hoiphong_mo = loadImg('assets/bg-bc_hoiphong_mo.png');
   ASSETS.bgByMap.dai_dau_kiem = loadImg('assets/bg-dai_dau_kiem.png'); // Đài Đấu Kiếm (Mục F 2026-11-02): nền đá liền mạch sinh từ lưới thật, kiểm chứng bằng verify-bgs
   CHAR_LOOKS.forEach(function (id) { ASSETS.chars[id] = loadImg('assets/chars/' + id + '.png'); });
+  /* Cung IV đợt 1: sheet tấn công (gốc + biến thể kiếm chỉ) và sheet pháp
+     quyết của người chơi — nạp cùng đợt, vẽ qua playerAnim (mục ARCIV_FX). */
+  ASSETS.atk = { nam: loadImg('assets/chars/player_nam-atk.png'), nu: loadImg('assets/chars/player_nu-atk.png'),
+    namKc: loadImg('assets/chars/player_nam-atk-kiemchi.png'), nuKc: loadImg('assets/chars/player_nu-atk-kiemchi.png'),
+    namPq: loadImg('assets/chars/player_nam-pq.png'), nuPq: loadImg('assets/chars/player_nu-pq.png') };
   // Chân dung thoại (gói phụ 4): cắt từ khung mặt trước của chính tấm
   // hình từng look (assets/portraits) — nạp trước cùng đợt để đổi người
   // nói là ảnh hiện ngay, không nhấp nháy tải.
@@ -738,12 +743,17 @@
   // đạt chuẩn thì KHÔNG được sinh vào thế giới (xem spawnMonstersForMap).
   var MONSTER_LOOKS = ['son_lang', 'doc_vu_xa', 'thiet_giap_tru', 'phong_ung', 'lang_vuong', 'son_chu',
     // Quái bí cảnh (làn C): cùng quy tắc ASSETS.monsBad — loài nào nạp hỏng thì loại khỏi diện sinh.
-    'dong_xa', 'thuy_xa_tinh', 'thach_tuong', 'thach_tuong_thu_ve', 'tan_anh_vo_cuc', 'kiem_linh', 'kiem_y_tan_hon', 'oan_binh', 'oan_hon_chien_truong'];
+    'dong_xa', 'thuy_xa_tinh', 'thach_tuong', 'thach_tuong_thu_ve', 'tan_anh_vo_cuc', 'kiem_linh', 'kiem_y_tan_hon', 'oan_binh', 'oan_hon_chien_truong',
+    'tran_nhan_kiem_linh', 'ho_tran_kiem_linh']; // ARCIV A.2: hai boss cung IV có sheet riêng đã chép
   MONSTER_LOOKS.forEach(function (id) {
     var im = loadImg('assets/monsters/' + id + '.png');
     im.onerror = function () { ASSETS.monsBad[id] = true; }; // tệp hình lỗi/không có -> loài bị loại khỏi diện săn
     ASSETS.mons[id] = im;
   });
+  // ARCIV A.2: loài dùng chung sheet loài gốc (chưa có sheet riêng — khai trong hợp đồng mục E)
+  ASSETS.mons.tan_hon_kiem_y_sau = ASSETS.mons.kiem_y_tan_hon;
+  ASSETS.mons.lang_nhiem_song = ASSETS.mons.son_lang;
+  ASSETS.bgByMap.bc_kiemtrung_sau = loadImg('assets/bg-bc_kiemtrung_sau.png');
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
   var DIR_ROW = { down: 0, up: 1, right: 2, left: 3 }; // hàng trong sheet nhân vật
@@ -751,7 +761,7 @@
   // Nhân vật đã chuyển sang sheet 8 hướng (ô 96x120, hàng = dir8, cột = khung;
   // bề rộng = số cột x 96, cao 960 — xem isChar8).
   // Nhân vật chưa có trong bảng này vẫn dùng sheet cũ 128x320 (ô 64x80, DIR_ROW).
-  var CHAR8 = { player_nam: true, player_nu: true, u_nhan: true, di_ninh: true, luc_tranh: true, anh_phung: true, chinh_ngon: true, elder: true, villager_m: true, villager_f: true, villager_old: true };
+  var CHAR8 = { player_nam: true, player_nu: true, u_nhan: true, di_ninh: true, luc_tranh: true, anh_phung: true, chinh_ngon: true, elder: true, villager_m: true, villager_f: true, villager_old: true, mac_cuu_u: true };
   var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
   var DIR8_EVEN_DIR = { 0: 'down', 2: 'right', 4: 'up', 6: 'left' }; // hàng chẵn -> tên hướng 4 chính
   var dir8 = 0;          // hướng HIỂN THỊ riêng của người chơi (0..7); `facing` 4 hướng vẫn là hướng logic
@@ -946,6 +956,13 @@
     lieu_khuynh_tien: 'Con gái tông chủ Thanh Vân Tông', hoa_huong_than: 'Đại đệ tử Thanh Vân Tông',
     de_tu_a: 'Đệ tử Thanh Vân Tông', de_tu_b: 'Đệ tử Thanh Vân Tông',
     tin_su: 'Người đưa tin của Hứa gia', gia_nhan: 'Gia nhân Hứa gia',
+    /* Cung IV đợt 1: tin_su_b = người đưa tin thứ hai (nhà thế lực còn lại trong vụ tranh đất/hôn sự, ch.14); chi_huy_tran = kẻ chỉ huy đợt thử trận của Huyết Bạc Cung (ch.15) — cả hai là vai phụ dùng diện mạo chung theo tiền lệ mã phụ. */
+    tin_su_b: 'Người đưa tin của nhà thế lực thứ hai', chi_huy_tran: 'Chỉ huy đợt thử trận của Huyết Bạc Cung',
+    /* Cung IV đợt 2 (ch.17–20): chấp sự tháp / quan phủ / hai gia chủ / vô địch Đỗ Gia. */
+    chap_su_thap: 'Chấp sự Kiểm Trắc Tháp', quan_phu: 'Quan phủ Cô Châu Thành',
+    gia_chu_ta: 'Gia chủ Tạ gia', gia_chu_do: 'Gia chủ Đỗ gia', vo_dich_doi_thu: 'Vô địch của Đỗ gia',
+    /* Cung IV đợt 3 (ch.21–24): trưởng đoàn thương / đại diện nhà buôn / thám báo tông. */
+    truong_doan: 'Trưởng Đoàn Thương', ep_gia: 'Đại Diện Nhà Buôn', tham_bao: 'Thám Báo Tông',
     mo_cuu_u: 'Tả sứ Huyết Bạc Cung', huyet_de: 'Đệ tử Huyết Bạc Cung',
     de_tu_ho_tong: 'Đệ tử Thanh Vân Tông', bach_kinh_duong: 'Giám sát sứ Thiên Cơ Các',
     ky_luc_quan: 'Ký lục quan Thiên Cơ Các', tiep_khach: 'Người của phân đà Thiên Cơ Các',
@@ -963,8 +980,10 @@
     duoc_su: 'villager_f', phap_khi_chu: 'villager_m', dan_thanh_a: 'villager_m', dan_thanh_b: 'villager_f',
     gia_nhan: 'villager_m', thap_chu: 'elder', thi_sinh_a: 'villager_m', thi_sinh_b: 'villager_f',
     truong_lao_tong: 'elder', lieu_khuynh_tien: 'di_ninh', tap_dich_truong: 'villager_old',
-    de_tu_a: 'villager_m', de_tu_b: 'player_nam', hoa_huong_than: 'player_nam', tin_su: 'villager_m',
-    de_tu_ho_tong: 'villager_m', huyet_de: 'villager_m', mo_cuu_u: 'luc_tranh', tiep_khach: 'villager_f',
+    de_tu_a: 'villager_m', de_tu_b: 'player_nam', hoa_huong_than: 'player_nam', tin_su: 'villager_m', tin_su_b: 'villager_m', chi_huy_tran: 'luc_tranh',
+    de_tu_ho_tong: 'villager_m', huyet_de: 'villager_m', mo_cuu_u: 'mac_cuu_u', tiep_khach: 'villager_f',
+    chap_su_thap: 'elder', quan_phu: 'elder', gia_chu_ta: 'villager_m', gia_chu_do: 'elder', vo_dich_doi_thu: 'luc_tranh',
+    truong_doan: 'villager_old', ep_gia: 'villager_m', tham_bao: 'villager_m',
     bach_kinh_duong: 'elder', ky_luc_quan: 'villager_f', gac_kho: 'villager_m'
   };
   /* Chân dung của một dòng thoại (gói phụ 4 — lệnh Bui 10:02 ngày
@@ -1002,6 +1021,9 @@
     hoa_huong_than: 'Hoa Hướng Thần', tap_dich_truong: 'Quản Sự Tạp Dịch',
     thap_chu: 'Chủ Trì Kiểm Trắc Tháp', chu_kien_tham: 'Chu Kiến Thâm',
     tin_su: 'Người Đưa Tin Hứa Gia', gia_nhan: 'Gia Nhân Hứa Gia',
+    tin_su_b: 'Người Đưa Tin Thứ Hai', chi_huy_tran: 'Kẻ Chỉ Huy Đợt Thử Trận',
+    chap_su_thap: 'Chấp Sự Tháp', quan_phu: 'Quan Phủ', gia_chu_ta: 'Gia Chủ Tạ Gia', gia_chu_do: 'Gia Chủ Đỗ Gia', vo_dich_doi_thu: 'Vô Địch Đỗ Gia',
+    truong_doan: 'Trưởng Đoàn Thương', ep_gia: 'Đại Diện Nhà Buôn', tham_bao: 'Thám Báo Tông',
     mo_cuu_u: 'Mạc Cửu U', huyet_de: 'Đệ Tử Huyết Bạc Cung',
     bach_kinh_duong: 'Bạch Kính Đường', ky_luc_quan: 'Ký Lục Quan',
     tiep_khach: 'Người Tiếp Khách Phân Đà', gac_kho: 'Người Gác Kho',
@@ -1621,6 +1643,9 @@
     atkFigs.forEach(function (af) { draws.push({ depth: af.py + TILE, kind: 'atkfig', f: af }); }); // kẻ địch đánh đêm (gói phụ 8)
     if (tlFight) draws.push({ depth: tlFight.fig.y + TILE, kind: 'tlfig', f: tlFight.fig }); // hình chiếu Thăng Long (gói phụ 13)
     if (hhtFight) { draws.push({ depth: hhtFight.boss.y + TILE, kind: 'hhtboss', f: hhtFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // Mục F: Hoa Hướng Thần + vòng đệ tử đứng xem trên đài
+    if (daiFight) { draws.push({ depth: daiFight.boss.y + TILE, kind: 'daiboss', f: daiFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // ARCIV ch.13: đài thách đấu dùng chung vòng khán giả quanh đài
+    if (arcFig) arcFig.figs.forEach(function (fg) { if (!fg.dead) draws.push({ depth: fg.y + TILE, kind: 'arcfig', f: fg }); }); // ARCIV ch.14/15: figure người của trận kịch bản dã ngoại
+    if (arcFig && arcFig.escorts) arcFig.escorts.forEach(function (es) { draws.push({ depth: es.y + TILE, kind: 'arcfig', f: es }); }); // ARCIV đợt 2 ch.19: nhân chứng hộ tống vẽ qua cùng nhánh arcfig (thanh máu + nhãn tên)
     (defR.signs || SIGNS).forEach(function (s) { draws.push({ depth: (s.y + 1) * TILE, kind: 'sign', s: s }); });
     draws.push({ depth: py + TILE, kind: 'player' });
     draws.sort(function (a, b) { return a.depth - b.depth; });
@@ -1772,6 +1797,45 @@
         ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(hbx - 1, hby - 1, 48, 7);
         ctx.fillStyle = hf.hp / hf.hpMax > 0.35 ? '#7ec850' : '#e04c3c'; ctx.fillRect(hbx, hby, 46 * Math.max(0, hf.hp / hf.hpMax), 5);
         labels.push({ key: 'hht_boss', name: 'Hoa Hướng Thần', title: 'Đại đệ tử Thanh Vân Tông', cx: hf.x + 16, wantY: hf.y - 48 - 30, color: '#ffe9b0' });
+      } else if (d.kind === 'daiboss' || d.kind === 'arcfig') {
+        // ARCIV đợt 1b: đấu thủ đài thách đấu + figure người của trận
+        // kịch bản dã ngoại — cùng ống vẽ nhân vật 8 hướng như hhtboss,
+        // nhưng nhãn/thanh máu/diện mạo lấy từ chính figure (HHT khóa
+        // cứng Hoa Hướng Thần). Dấu ĐỊNH (vòng tím) / PHONG (khung
+        // vàng) vẽ như đường quái để người chơi đọc trạng thái.
+        var df = d.f;
+        if (df.monsterLook) {
+          // ARCIV đợt 2 ch.20: entity hồn loạn dùng HÌNH QUÁI — vẽ theo
+          // ống quái (khung đứng yên của loài + lớp flash của drawMonster)
+          // rồi phủ thanh máu + nhãn như figure thường.
+          var pseudo = { species: df.monsterLook, x: df.x, y: df.y, state: 'alive', hp: df.hp, hpMax: df.hpMax, flashT: df.flashT || 0, resVibT: df.resVibT || 0, holdT: df.holdT || 0, sealT: df.sealT || 0, kbT: 0, kbx: 0, kby: 0, shakeT: 0, atkAnimT: 0, face: 1, rank: 'boss', name: df.name, lairX: 0, lairY: 0, movingNow: false, deathT: 0 };
+          drawMonster(pseudo, labels);
+          var mbx = df.x + 16 - 23, mby = df.y - 30;
+          ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(mbx - 1, mby - 1, 48, 7);
+          ctx.fillStyle = df.hp / df.hpMax > 0.35 ? '#b48ce8' : '#e04c3c'; ctx.fillRect(mbx, mby, 46 * Math.max(0, df.hp / df.hpMax), 5);
+          return;
+        }
+        var dvx = df.resVibT > 0 ? Math.sin(tNow / 16) * 2.6 * Math.min(1, df.resVibT / 0.2) : 0;
+        ctx.fillStyle = 'rgba(24,34,18,0.28)';
+        ctx.beginPath(); ctx.ellipse(df.x + 16, df.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var dfim = ASSETS.chars[df.look];
+        if (imgReady(dfim)) {
+          var dfMoving = Math.abs(df.x - (df._lx || df.x)) > 0.1 || Math.abs(df.y - (df._ly || df.y)) > 0.1;
+          var dfsrc = charSrc(df.look, dfim, df.dir, DIR8_ROW4[df.dir] || 0, dfMoving ? (Math.floor(df.walkT * 8) % charCycleFrames(df.look)) : 0, 0);
+          ctx.drawImage(dfim, dfsrc.x, dfsrc.y, dfsrc.w, dfsrc.h, df.x - 16 + dvx, df.y - 48, 64, 80);
+        } else {
+          drawSprite(S.charSprite(df.look, df.dir, 0), df.x + dvx, df.y - 8, 2);
+        }
+        df._lx = df.x; df._ly = df.y;
+        if (df.flashT > 0) { ctx.fillStyle = 'rgba(255,80,60,' + (0.35 * df.flashT / 0.18).toFixed(3) + ')'; ctx.fillRect(df.x - 14 + dvx, df.y - 46, 60, 78); }
+        if (df.holdT > 0) { ctx.strokeStyle = 'rgba(170,120,255,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(df.x + 16, df.y + 10, 24, 0, Math.PI * 2); ctx.stroke(); }
+        if (df.sealT > 0) { ctx.strokeStyle = 'rgba(255,214,120,0.9)'; ctx.lineWidth = 2; ctx.strokeRect(df.x - 8, df.y - 34, 48, 62); }
+        if (df.champ && df.shieldT > 0) { ctx.strokeStyle = 'rgba(255,214,150,' + (0.65 + 0.25 * Math.sin(tNow / 140)) + ')'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.ellipse(df.x + 16, df.y + 8, 30, 40, 0, 0, Math.PI * 2); ctx.stroke(); } // đợt 2 ch.18: vòng khiên HỘ THỂ quanh quán quân
+        if (df.injured) { ctx.fillStyle = 'rgba(190,40,30,0.30)'; ctx.fillRect(df.x - 12, df.y + 18, 56, 10); } // đợt 2 ch.19: nhân chứng bị thương nằm lại — dải đỏ ngang thân
+        var dbx = df.x + 16 - 23, dby = df.y - 62;
+        ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(dbx - 1, dby - 1, 48, 7);
+        ctx.fillStyle = df.hp / df.hpMax > 0.35 ? '#7ec850' : '#e04c3c'; ctx.fillRect(dbx, dby, 46 * Math.max(0, df.hp / df.hpMax), 5);
+        labels.push({ key: 'df_' + df.name, name: df.name, title: df.title || '', cx: df.x + 16, wantY: df.y - 48 - 30, color: '#ffe9b0' });
       } else if (d.kind === 'hhtaud') {
         // Đệ tử đứng xem (Mục F): đứng yên ngoài bệ đấu, nhúc nhích theo
         // nhịp thở (lệch dọc ±1,5px theo pha riêng), mặt hướng vào đài —
@@ -1809,6 +1873,8 @@
           // Sheet mới: hàng dir8, cột = pha bước 1..4 (đứng yên cột 0).
           // Sheet cũ: hàng DIR_ROW theo facing, cột = pha%2 khi đi, 0 khi đứng.
           var psrc = charSrc(look, plim, facing, dir8, moving ? stepPhase : 0, moving ? stepPhase % 2 : 0);
+          var bf = (typeof bodyFrameNow === 'function') ? bodyFrameNow() : null;
+          if (bf) { ctx.drawImage(bf.im, bf.x, bf.y, 96, 120, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80); pTop = py + 32 - 80 + walkBobY; labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' }); return; }
           // Nhún thân theo pha bước (walkBobY): chỉ dời HÌNH VẼ theo chiều
           // dọc, bóng chân và ô logic giữ nguyên trên mặt đất.
           ctx.drawImage(plim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
@@ -1935,9 +2001,23 @@
     // Giữ thế giữa trận (đứng yên khi đang giao chiến) dùng cùng hào quang
     // này ở mức mờ hơn — dấu hiệu người chơi đang hồi Tĩnh Mặc bằng thế thủ.
     if ((meditating || encStance) && fxOn()) {
+      // ARCIV 6.2: Thanh Phong theo tầng — T1 nhuốm ngọc, T2 +4 lá, T3 dải rộng+vòng đất, T4 xoắn kép 8 lá + vệt bốc
+      var __tpTier = state ? ((L.techniqueOf(state, 'thanh_phong') || {}).tier || 0) : 0;
+      if (__tpTier >= 2) {
+        var __leafN = __tpTier >= 4 ? 8 : __tpTier >= 3 ? 6 : 4;
+        for (var __li = 0; __li < __leafN; __li++) {
+          var __la = tNow / 900 + __li * (Math.PI * 2 / __leafN) * (__tpTier >= 4 && __li % 2 ? -1 : 1);
+          var __lx = px + 16 + Math.cos(__la) * 30, __ly = py + 18 + Math.sin(__la) * 12;
+          ctx.save(); ctx.translate(__lx, __ly); ctx.rotate(__la + tNow / 300);
+          ctx.fillStyle = 'rgba(140,220,160,0.75)'; ctx.beginPath(); ctx.ellipse(0, 0, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(200,240,215,0.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke(); ctx.restore();
+        }
+        if (__tpTier >= 3) { ctx.strokeStyle = 'rgba(200,240,215,0.18)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(px + 16, py + 28, 38, 13, 0, 0, Math.PI * 2); ctx.stroke(); }
+        if (__tpTier >= 4 && Math.floor(tNow / 3500) !== Math.floor((tNow - 16) / 3500)) spawnLeaves(px + 16, py + 16, 2, 34);
+      }
       var ma = tNow / 620;
       var medAlpha = 0.55 + (dnPhase ? dnPhase.night * 0.3 : 0);
-      ctx.strokeStyle = 'rgba(150,220,255,' + medAlpha.toFixed(3) + ')'; ctx.lineWidth = dnPhase && dnPhase.night > 0.5 ? 2.6 : 2;
+      ctx.strokeStyle = (__tpTier >= 1 ? 'rgba(200,240,215,' : 'rgba(150,220,255,') + medAlpha.toFixed(3) + ')'; ctx.lineWidth = __tpTier >= 3 ? 5 : (dnPhase && dnPhase.night > 0.5 ? 2.6 : 2);
       ctx.beginPath(); ctx.arc(px + 16, py + 18, 25, ma, ma + Math.PI * 1.25); ctx.stroke();
       ctx.beginPath(); ctx.arc(px + 16, py + 18, 31, -ma * 0.8, -ma * 0.8 + Math.PI * 0.9); ctx.stroke();
     }
@@ -1952,6 +2032,15 @@
       } else if (p.kind === 'smoke') {
         ctx.fillStyle = 'rgba(' + p.col + ',' + (al * 0.34) + ')';
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      } else if (p.kind === 'leaf') {
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot || 0);
+        ctx.fillStyle = 'rgba(' + p.col + ',' + al + ')';
+        ctx.beginPath(); ctx.ellipse(0, 0, p.r * 2.2, p.r, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(200,240,215,' + al + ')'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(-p.r * 2, 0); ctx.lineTo(p.r * 2, 0); ctx.stroke();
+        ctx.restore();
+      } else if (p.kind === 'star') {
+        drawStarShape(p.x, p.y, 0.8, p.col, p.core || '235,245,255', al);
       } else {
         ctx.fillStyle = 'rgba(' + p.col + ',' + al + ')';
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
@@ -1977,6 +2066,10 @@
     bossPillar = null;
     pillars.forEach(drawPillar);
     drawStreaks();
+    drawArcFx(); arcDrawEyes(); arcDrawCycle(); drawTechFx(); arcDrawWave2();
+    // ARCIV ch.15 (điểm yếu F.6 đã khai, nay bổ sung): vòng nhiễu xám quanh
+    // NHÂN VẬT khi cộng hưởng bị khóa bởi trạng thái cảnh.
+    if (state && state.flags && (state.flags.ch15ResonanceLock || state.flags.arcResLocked)) drawResJammingRing();
     // Lớp phủ ngày đêm: SAU toàn bộ thế giới, TRƯỚC giao diện (vẽ trong hệ
     // tọa độ thế giới ngay trước restore). Độ tối là hàm liên tục theo giờ
     // (js/logic.js dayPhaseAt) và bị chặn ở trần NIGHT_DARK_MAX nên đêm vẫn
@@ -2422,6 +2515,16 @@
       resolveThangLong(action);
     } else if (action.indexOf('hht_') === 0) {
       resolveDuelHht(action);
+    } else if (action.indexOf('ch18_') === 0) {
+      resolveCh18Choice(action); // ARCIV đợt 2: lựa chọn thái độ chương 18 (B.4)
+    } else if (action.indexOf('phancong_') === 0) {
+      resolvePhanCong(action); // ARCIV đợt 3: phân công giữ đoàn ch.22 (B.4) — vật thể choice nằm GIỮA mảng cảnh, resolver TUYỆT ĐỐI không say()
+    } else if (action.indexOf('ch23_') === 0) {
+      resolveCh23Choice(action); // ARCIV đợt 3: lựa chọn mỏm đá ch.23 (B.4) — choice nằm giữa mảng cảnh, không say()
+    } else if (action.indexOf('kyngo_') === 0) {
+      resolveKyNgoChoice(action); // ARCIV đợt 3: lựa chọn cuối cảnh kỳ ngộ ô 23 (B.9) — choice ở cuối mảng cảnh, không say()
+    } else if (action.indexOf('arc_') === 0) {
+      resolveArcChoice(action); // ARCIV đợt 1b: đài thách đấu lặp + ghép bí pháp tàng kinh
     } else if (action.indexOf('chi_') === 0) {
       resolveChiAmbush(action);
     } else if (action.indexOf('guard_') === 0) {
@@ -2511,6 +2614,8 @@
     if (tlFight) return; // gói phụ 13: đang trong ải Thăng Long — tương tác khóa, chỉ kiếm và thân pháp
     if (hhtFight) return; // Mục F: đang trong trận đài — tương tác khóa, chỉ đánh nhau
     if (dlg) { if (dlgTypeFinish()) return; if (dlg.who !== 'choice') nextLine(); return; }
+    if (daiFight) return; // ARCIV ch.13: đang trong trận đài thách đấu — tương tác khóa (sau khối dlg để thoại giữa trận vẫn tiến bằng phím E)
+    if (arcFig) return; // ARCIV ch.14/15: đang trong trận kịch bản dã ngoại — tương tác khóa
     var ft = frontTile();
     var pt = playerTile();
     // Chương 1 (gói phụ sau chơi thử live 02/11): khi chưa đo mà đang đứng
@@ -2619,7 +2724,18 @@
       // Nhánh riêng của Mục F: bia kiếm chỉ hiện chữ qua toast (như biển
       // chỉ đường) — không mở thoại, không sinh câu nói mới ngoài đường
       // lồng tiếng (khai HANDLED_PROPS ở test-voice-coverage mục 5).
+      // ARCIV ch.13: sau q13_de_nghi, bia kiếm là ĐIỂM VÀO thang thách
+      // đấu lặp (bậc vo_dich giữ khóa cho chương 18) — lựa chọn qua
+      // dòng choice (không lồng tiếng như mọi lựa chọn của người chơi).
       sfxUi();
+      if (L.challengeOpen && L.challengeOpen(state)) {
+        return say([{ who: 'choice', text: 'Kiếm Bia Đài Đấu Kiếm — mặt bia khắc tên các đời đại đệ tử từng thắng tỉ thí trên đài này. Thang thách đấu đã mở: ngươi sẽ thách đấu bậc nào?', options: [
+          { label: 'Thách đấu: Đệ tử nội môn', action: 'arc_dai_open_noi_mon' },
+          { label: 'Thách đấu: Tinh anh nội môn (thắng có mảnh bí pháp ô 03)', action: 'arc_dai_open_tinh_anh' },
+          { label: (L.questReached && L.questReached(state, 'q18_chung_cu')) ? 'Thách đấu: Vô Địch Đỗ Gia — hạng quán quân (thắng có mảnh bí pháp ô 07)' : 'Thách đấu: Quán quân đài (chưa mở — mở sau trận đấu công khai ở Cô Châu)', action: 'arc_dai_open_vo_dich' },
+          { label: 'Chỉ xem bia, chưa thách đấu', action: 'arc_dai_open_leave' }
+        ] }]);
+      }
       toast('Kiếm Bia Đài Đấu Kiếm — mặt bia khắc tên các đời đại đệ tử từng thắng tỉ thí trên đài này. Tên trên cùng là của chính Hoa Hướng Thần.', 4200);
       return;
     }
@@ -2636,7 +2752,7 @@
     // 9 prop bí cảnh: nhánh riêng trước nhánh fallback chung (cổng giọng).
     if (p && p.id === 'bc_gate_thuyliem') return bcGateInteract('bc_thuyliem');
     if (p && p.id === 'cua_tan_tich') return bcTanTichInteract();
-    if (p && p.id === 'bc_gate_kiemtrung') return bcGateInteract('bc_kiemtrung');
+    if (p && p.id === 'bc_gate_kiemtrung') return bcGateKiemTrungInteract();
     if (p && p.id === 'bc_gate_hoiphong') return bcGateInteract('bc_hoiphong_mo');
     if (p && p.id === 'vach_nut') return bcVachInteract();
     if (p && p.id === 'cua_phe_thuoc') return bcPheInteract();
@@ -2644,6 +2760,10 @@
     if (p && p.id === 'cua_mo_that') return bcMoThatInteract();
     if (p && p.id === 'thu_trong_mo') return bcLetterInteract();
     if (p && p.interact) return say([{ who: 'narrate', text: 'Ngươi xem xét ' + (p.name || 'vật này') + ' — lúc này chưa có việc gì với nó.' }]);
+    // ARCIV ch.14: sau trận giữ đất, hiện trường (47,38) thành điểm hái
+    // dược nhỏ VĨNH VIỄN (một lượt mỗi ngày game) — cài bằng điểm tương
+    // tác engine tại chỗ vì RESOURCE_NODES là dữ kiện logic đã chốt.
+    if (state.map === 'duong_mon' && state.flags.q14SiteDone && Math.max(Math.abs(pt.x - 47), Math.abs(pt.y - 38)) <= 1) return arcSiteHarvest();
     // Cuối interact(): điểm hái kề (Chebyshev <= 1, kể cả ô thân cây trang trí).
     var nd = grindNearestNode();
     if (nd) return grindHarvest(nd);
@@ -2947,6 +3067,43 @@
       n = guideNpcDefById('thanh_van_tong', 'u_nhan');
       return n ? guideMkNpcTarget('thanh_van_tong', n) : null;
     }
+    if (q.id === 'q14_dieu_tra') {
+      // ARCIV: ba pha nối tiếp — chưa xem sổ thì đích là điểm sổ đất ở
+      // phủ thành (26,39); đã xem sổ thì đích là hiện trường đất linh
+      // trên đường mòn (47,38), nơi nhân chứng + trận giữ đất chờ sẵn.
+      if (!f.q14SoDat) return { map: 'co_chau', x: 26, y: 39, kind: 'point', targetId: null, name: 'Sổ đất ở phủ thành', ax: 26 * TILE + 16, ay: 39 * TILE, hx: 26, hy: 39 };
+      return { map: 'duong_mon', x: 47, y: 38, kind: 'point', targetId: null, name: 'Hiện trường đất linh', ax: 47 * TILE + 16, ay: 38 * TILE, hx: 47, hy: 38 };
+    }
+    if (q.id === 'q17_do_lai') {
+      // ARCIV đợt 2 B.12: thước chưa rung -> gặp chủ trì ở tháp nội (23,9);
+      // thước đang rung -> đích là vùng giữ thước phía bắc sảnh (19,8).
+      var rq = f.q17RulerShaking ? { x: 19, y: 8 } : { x: 23, y: 9 };
+      return { map: 'thap_noi', x: rq.x, y: rq.y, kind: 'point', targetId: null, name: f.q17RulerShaking ? 'Thước pha lê lớn' : 'Chủ trì tháp', ax: rq.x * TILE + 16, ay: rq.y * TILE, hx: rq.x, hy: rq.y };
+    }
+    if (q.id === 'q19_phan_ung') {
+      return { map: 'co_chau', x: 51, y: 64, kind: 'point', targetId: null, name: 'Đoàn nhân chứng ở phố nam', ax: 51 * TILE + 16, ay: 64 * TILE, hx: 51, hy: 64 };
+    }
+    if (q.id === 'q20_ran_nut') {
+      // soulPublic: gặp Trần Chính Đạo (26,16); chưa công khai: gặp ký lục quan (36,8).
+      var rn = f.soulPublic ? { x: 26, y: 16 } : { x: 36, y: 8 };
+      return { map: 'thien_co_lau', x: rn.x, y: rn.y, kind: 'point', targetId: null, name: f.soulPublic ? 'Trần Chính Đạo' : 'Ký lục quan', ax: rn.x * TILE + 16, ay: rn.y * TILE, hx: rn.x, hy: rn.y };
+    }
+    if (q.id === 'q20_doi_sach') {
+      if (f.ch20SoulDone) return { map: 'thien_co_lau', x: 27, y: 16, kind: 'point', targetId: null, name: 'Trần Chính Đạo', ax: 27 * TILE + 16, ay: 16 * TILE, hx: 27, hy: 16 };
+      return { map: 'thanh_van_tong', x: 60, y: 27, kind: 'point', targetId: null, name: 'Đại điện Thanh Vân Tông', ax: 60 * TILE + 16, ay: 27 * TILE, hx: 60, hy: 27 };
+    }
+    if (q.id === 'q22_dot_pha') {
+      // ARCIV đợt 3 B.8: đích là Đài Trúc Cơ phía bắc tông (60,6).
+      return { map: 'thanh_van_tong', x: 60, y: 6, kind: 'point', targetId: null, name: 'Đài Trúc Cơ', ax: 60 * TILE + 16, ay: 6 * TILE, hx: 60, hy: 6 };
+    }
+    if (q.id === 'q24_lenh_cuu_nguoi') {
+      // ARCIV đợt 3 B.8: đích là đệ tử hộ tống dth_tran ở đoạn hai vách (45,43).
+      return { map: 'duong_mon', x: 45, y: 43, kind: 'point', targetId: null, name: 'Đệ Tử Hộ Tống', ax: 45 * TILE + 16, ay: 43 * TILE, hx: 45, hy: 43 };
+    }
+    if (q.id === 'q24_tha_mang' || q.id === 'q24_manh_moi') {
+      // ARCIV đợt 3 B.8: đích là Mạc Cửu U (mcu_tran) ở mép đoạn đường (43,45).
+      return { map: 'duong_mon', x: 43, y: 45, kind: 'point', targetId: null, name: 'Mạc Cửu U', ax: 43 * TILE + 16, ay: 45 * TILE, hx: 43, hy: 45 };
+    }
     return null;
   }
   /* Phân giải mục tiêu của bước nhiệm vụ hiện tại:
@@ -3088,6 +3245,10 @@
     else state.tuvi = (state.tuvi || 0) + n;
   }
   function talkTo(npc) {
+    // ARCIV đợt 2: NPC tiêm chỉ-đứng-nhìn (nhân chứng phố nam + người
+    // theo dõi Thiên Cơ Các) — một câu lảng tránh qua toast (arcIvNpcLine).
+    var arcLine2 = arcIvNpcLine(npc.id);
+    if (arcLine2) { toast(arcLine2, 4200); return; }
     // Mục H — nhịp GẶP GỠ XÃ HỘI của nhiệm vụ phụ sq_post_dong_mon: chào
     // hỏi một đồng môn ở quảng trường tông (Hoa Hướng Thần / đệ tử A / đệ
     // tử B tại thanh_van_tong) sau mốc Trúc Cơ thì ghi nhận bước gặp gỡ.
@@ -3108,6 +3269,15 @@
     if (npc.id === 'truong_lao' && !state.flags.tested && (state.quest === 'q_trac' || state.quest === 'q_voice')) return touchStele();
     // Điểm chạm theo nhiệm vụ/cửa hàng của chương 3 (ưu tiên hơn thoại thường).
     if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q3_cong_phap') return receiveManuals();
+    // ARCIV đợt 2 ch.20: chủ quán là người báo tin ở thành — nhánh này
+    // phải đứng TRƯỚC nhánh làm ca khách điếm thường trú ở dưới, nếu
+    // không nhánh thường trú sẽ nuốt mất điểm chạm cốt truyện.
+    if (npc.id === 'chu_quan' && state.map === 'co_chau' && state.quest === 'q20_bao_tin') {
+      return say(state.flags.soulPublic ? ST.SCENE_CH20_BAO_TIN_A : ST.SCENE_CH20_BAO_TIN_B, function () {
+        state.quest = 'q20_giam_sat'; refreshHUD(); saveNow();
+        toast('Tin đã rõ: người của Thiên Cơ Các đang theo dõi các đoàn ra vào thành. Đi xuống phố nam gần cổng thành mà xem.', 4600);
+      });
+    }
     if (npc.id === 'chu_quan' && (state.flags.innWork || 0) < 2 && L.walletOpen(state)) return say(ST.SCENE_INN);
     if (npc.id === 'duoc_su') {
       var delDuoc = grindDeliveryForNpc('duoc_su');
@@ -3263,6 +3433,253 @@
       return say([{ who: 'truong_lao_tong', text: 'Việc chuẩn bị ta đã giao rồi: dược dẫn ở bãi bắc Thung Lũng Hồi Phong, Yêu Đan cấp 2 trong tay con thú giữ dược, và tu vi phải đầy Trúc Cơ Viên Mãn. Thiếu thứ nào, lo cho đủ thứ ấy trước.' }]);
     }
     if (npc.id === 'truong_lao_tong' && state.quest === 'q11_vat_dan') return refineKetDanDan();
+    /* ---------- Cung IV (chương 13–16) — điểm chạm theo hợp đồng A.1 ---------- */
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q13_tro_lai_tong') {
+      return say(ST.SCENE_CH13_TRO_LAI, function () { state.quest = 'q13_de_nghi'; refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q13_de_nghi') {
+      return say(ST.SCENE_CH13_DE_NGHI, function () { arcEnterDaiStory(); });
+    }
+    if (npc.id === 'u_nhan' && state.map === 'co_chau' && state.quest === 'q13_ve_thanh') {
+      return say(ST.SCENE_CH13_VE_THANH, function () {
+        arcClaimToast('q13_done');
+        state.quest = 'q14_hai_thinh_cau'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 13. Về Thanh Vân Đại Điện — hai thư thỉnh cầu nữa đang chờ.', 4200);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q14_hai_thinh_cau') {
+      return say(ST.SCENE_CH14_HAI_THINH_CAU, function () { state.quest = 'q14_dieu_tra'; refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'dan_c' && state.map === 'duong_mon' && state.quest === 'q14_dieu_tra' && state.flags.q14SoDat && !state.flags.q14WitnessSeen) {
+      // Nhân chứng giữ đất do engine tiêm vào npcsLive tại (45,38) cạnh
+      // hiện trường (duong_mon không có NPC này trong dữ kiện bản đồ).
+      return say(ST.SCENE_CH14_NHAN_CHUNG, function () {
+        state.flags.q14WitnessSeen = true; refreshHUD(); saveNow();
+        say(ST.SCENE_CH14_HIEN_TRUONG, function () { arcStartCh14SiteFight(); });
+      });
+    }
+    if (npc.id === 'dan_c' && state.map === 'duong_mon' && state.quest === 'q14_dieu_tra' && state.flags.q14WitnessSeen && !state.flags.q14SiteDone) {
+      // Đã nghe nhân chứng nhưng trận giữ đất chưa khép (thua/đang dở):
+      // nói lại với lão là vào thẳng hiện trường đánh tiếp.
+      return say(ST.SCENE_CH14_HIEN_TRUONG, function () { arcStartCh14SiteFight(); });
+    }
+    if (npc.id === 'hoa_huong_than' && state.map === 'thanh_van_tong' && state.quest !== 'q7_hoa_huong_than' && L.challengeOpen && L.challengeOpen(state) &&
+        !(state.flags.soulExposed && (state.flags.soulSectPaidFor || 0) < L.chapterOfQuest(state)) &&
+        !(L.arcIvSectSoulServiceDue && L.arcIvSectSoulServiceDue(state))) {
+      // ARCIV ch.13: Hoa Hướng Thần GIỮ SỔ đài (theo cảnh DE_NGHI) —
+      // điểm vào thang thách đấu lặp tại quảng trường tông. Bậc
+      // vo_dich mở từ q18_chung_cu (đợt 2, B.8). Điều kiện loại trừ
+      // cuối: khi dịch vụ hồn CẤP TÔNG đến hạn thì nhánh dịch vụ (ở
+      // dưới, sau nhánh ch.11) phải thắng menu đài này. Dòng choice
+      // không lồng tiếng.
+      return say([{ who: 'choice', text: 'Hoa Hướng Thần đang giữ sổ Đài Thách Đấu, ngón tay lật trang ghi tên người thách đấu. Ngươi sẽ…', options: [
+        { label: 'Thách đấu: Đệ tử nội môn', action: 'arc_dai_open_noi_mon' },
+        { label: 'Thách đấu: Tinh anh nội môn (thắng có mảnh bí pháp ô 03)', action: 'arc_dai_open_tinh_anh' },
+        { label: (L.questReached && L.questReached(state, 'q18_chung_cu')) ? 'Thách đấu: Vô Địch Đỗ Gia — hạng quán quân (thắng có mảnh bí pháp ô 07)' : 'Thách đấu: Quán quân đài (chưa mở)', action: 'arc_dai_open_vo_dich' },
+        { label: 'Trò chuyện', action: 'arc_dai_open_leave' }
+      ] }]);
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q14_tu_choi') {
+      return say(ST.SCENE_CH14_TU_CHOI, function () { state.quest = 'q14_bao_lanh'; refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'cho_a' && state.map === 'co_chau' && state.quest === 'q14_bao_lanh') {
+      return say(ST.SCENE_CH14_BAO_LANH, function () {
+        arcClaimToast('q14_done');
+        state.quest = 'q15_bao_dong'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 14. Tới điểm hẹn ở hiện trường đất linh trên đường mòn (47,38).', 4200);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q15_bao_cao') {
+      return say(ST.SCENE_CH15_BAO_CAO, function () {
+        arcClaimToast('q15_done');
+        state.quest = 'q16_tinh_tu'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 15. Boss dã ngoại Hộ Trận Kiếm Linh đã mở ở Thung Lũng Hồi Phong (chu kỳ 5 ngày).', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q16_tinh_tu') {
+      return say(ST.SCENE_CH16_TINH_TU, function () {
+        state.flags.ch16TinhTuSeen = true; refreshHUD(); saveNow();
+        toast('Hãy thổ nạp (phím T) tại điểm linh khí sườn tây tông (31,61) cho tới khi tu vi đầy giai đoạn.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q16_linh_ngo') {
+      return say(ST.SCENE_CH16_LINH_NGO, function () { refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q16_benh_vuc') {
+      return say(ST.SCENE_CH16_BENH_VUC, function () {
+        // KHÓA THỨ TỰ (A.1): khoản +300 của q16_pre_break PHẢI nhận
+        // TRƯỚC khi thử đột phá ở q16_dot_pha.
+        arcClaimToast('q16_pre_break');
+        state.quest = 'q16_dot_pha'; refreshHUD(); saveNow();
+        toast('Lên Đài Trúc Cơ ở phía bắc tông (60,6) để đột phá Kim Đan Trung Kỳ.', 4200);
+      });
+    }
+    /* ---------- Cung IV đợt 2 (chương 17–20) — điểm chạm theo hợp đồng B.3 ---------- */
+    if (npc.id === 'ttl_thap' && state.quest === 'q17_tin_tu_thap') {
+      return say(ST.SCENE_CH17_TIN_TU_THAP, function () {
+        state.quest = 'q17_do_lai'; refreshHUD(); saveNow();
+        toast('Vào tháp nội gặp chủ trì tháp để bắt đầu buổi đo lại.', 4200);
+      });
+    }
+    if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q17_do_lai' && !state.flags.q17RulerShaking) {
+      return say(ST.SCENE_CH17_DO_LAI, function () {
+        state.flags.q17RulerShaking = true; refreshHUD(); saveNow();
+        toast('Thước pha lê đang rung loạn! Đứng gần thước lớn phía bắc sảnh (vùng x 16–23, y 6–10), tích Tĩnh Âm bằng cách đứng yên lắng nghe, rồi dùng Định Âm (phím 4) — uy lực cần 140.', 5600);
+      });
+    }
+    if (npc.id === 'thap_chu' && state.map === 'thap_noi' && state.quest === 'q17_do_lai' && state.flags.q17RulerShaking) {
+      toast('Thước vẫn đang rung loạn — đứng gần thước lớn phía bắc sảnh, tích Tĩnh Âm bằng đứng yên lắng nghe rồi dùng Định Âm (phím 4); uy lực cần 140.', 4600);
+      return;
+    }
+    if ((npc.id === 'chap_su_thap' || npc.id === 'thap_chu') && state.quest === 'q17_chat_van') {
+      return say(ST.SCENE_CH17_CHAT_VAN, function () {
+        state.quest = 'q17_di_ninh'; refreshHUD(); saveNow();
+        toast('Ra khuôn viên tháp gặp Hứa Di Ninh.', 4200);
+      });
+    }
+    if (npc.id === 'dn_thap' && state.quest === 'q17_di_ninh') {
+      return say(ST.SCENE_CH17_DI_NINH, function () {
+        say(ST.SCENE_CH17_DONE, function () {
+          arcClaimToast('q17_done');
+          state.quest = 'q18_tranh_chap'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 17. Tới sân phủ Cô Châu Thành — vụ tranh chấp hai nhà đang chờ phân xử.', 4600);
+        });
+      });
+    }
+    if (npc.id === 'quan_phu_phu' && state.quest === 'q18_tranh_chap') {
+      return say(ST.SCENE_CH18_TRANH_CHAP, function () { state.quest = 'q18_ap_luc'; refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'gct_phu' && state.quest === 'q18_ap_luc') {
+      if (!state.flags.ch18FightStarted) return say(ST.SCENE_CH18_AP_LUC_HUA); // điểm lựa chọn ch18_hua_nghe / ch18_hua_viet (B.4)
+      return say(ST.SCENE_CH18_DAU_MO, function () { arcStartCh18ChampFight(); }); // đã thua một lần: mở lại trận quán quân luôn
+    }
+    if (npc.id === 'quan_phu_phu' && state.quest === 'q18_cho_phien') {
+      return say(ST.SCENE_CH18_CHO_PHIEN, function () {
+        say(ST.SCENE_CH18_DONE, function () {
+          arcClaimToast('q18_done');
+          state.quest = 'q19_phan_xu'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 18. Phiên phân xử mở ngay tại sân phủ — nói chuyện với quan phủ.', 4600);
+        });
+      });
+    }
+    if (npc.id === 'quan_phu_phu' && state.quest === 'q19_phan_xu') {
+      return say(ST.SCENE_CH19_PHAN_XU, function () {
+        state.quest = 'q19_phan_ung'; refreshHUD(); saveNow();
+        toast('Bản án đã tuyên. Hộ tống đoàn nhân chứng rời phủ xuống phố nam — đi theo họ xuống phía nam thành.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q19_an_dinh') {
+      return say(ST.SCENE_CH19_AN_DINH, function () {
+        arcClaimToast('q19_an_dinh');
+        say(ST.SCENE_CH19_DONE, function () {
+          arcClaimToast('q19_done');
+          state.quest = 'q20_ran_nut'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 19: Lệnh không cho mượn. Tới Thiên Cơ Lâu — có tin về vết rạn trong các.', 4600);
+        });
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q20_doi_sach' && !state.flags.ch20SoulDone) {
+      if (!state.flags.ch20SoulStarted) {
+        return say(ST.SCENE_CH20_HON_LOAN_MO, function () { arcStartCh20SoulFight(); });
+      }
+      arcStartCh20SoulFight(); // đã bắt đầu mà chưa xong (thua thử lại): mở trận luôn
+      return;
+    }
+    if (npc.id === 'tran_chinh_dao' && state.map === 'thien_co_lau' && state.quest === 'q20_ran_nut' && state.flags.soulPublic) {
+      return say(ST.SCENE_CH20_RAN_NUT_A, function () {
+        state.quest = 'q20_bao_tin'; refreshHUD(); saveNow();
+        toast('Tới Cô Châu Thành gặp người báo tin ở khách điếm Vọng Châu (69,27).', 4200);
+      });
+    }
+    if (npc.id === 'ky_luc_quan' && state.map === 'thien_co_lau' && state.quest === 'q20_ran_nut' && !state.flags.soulPublic) {
+      return say(ST.SCENE_CH20_RAN_NUT_B, function () {
+        state.quest = 'q20_bao_tin'; refreshHUD(); saveNow();
+        toast('Tới Cô Châu Thành gặp người báo tin ở khách điếm Vọng Châu (69,27).', 4200);
+      });
+    }
+    if (npc.id === 'tran_chinh_dao' && state.map === 'thien_co_lau' && state.quest === 'q20_doi_sach' && state.flags.ch20SoulDone) {
+      return say(ST.SCENE_CH20_LOI_DAP, function () {
+        state.flags.q20WatchersGone = true; refreshHUD();
+        say(ST.SCENE_CH20_DONE, function () {
+          arcClaimToast('q20_done');
+          state.quest = 'q20_done'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 20: Rạn nứt trong các. Phẩm hồn 4 đã được ghi nhận, dịch vụ hồn cấp tông đã mở ở quảng trường tông.', 4800);
+        });
+      });
+    }
+    /* ---------- Cung IV đợt 3 (chương 21–24) — điểm chạm theo hợp đồng B.3 ---------- */
+    if (npc.id === 'un_cho' && state.quest === 'q21_doan_thuong') {
+      return say(ST.SCENE_CH21_DOAN_THUONG, function () {
+        state.quest = 'q21_so_sach'; refreshHUD(); saveNow();
+        toast('Về phủ Hứa lấy sổ thuế ba năm — U Nhàn đang chờ ở sân phủ (16,36).', 4200);
+      });
+    }
+    if (npc.id === 'un_phu' && state.quest === 'q21_so_sach') {
+      return say(ST.SCENE_CH21_SO_SACH, function () {
+        state.quest = 'q21_doi_chat'; refreshHUD(); saveNow();
+        toast('Hồ sơ đã đủ ba thứ. Ra cổng nam thành (51,74) đứng với đoàn hàng — giữ xe hàng trong lúc U Nhàn đối chất ở phủ thành.', 4600);
+      });
+    }
+    if (npc.id === 'chinh_ngon' && state.map === 'co_chau' && state.quest === 'q21_danh_gia') {
+      return say(ST.SCENE_CH21_DANH_GIA, function () {
+        arcClaimToast('q21_done');
+        state.quest = 'q22_tham_bao'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 21: Người thay mặt nhà họ Hứa. Về Thanh Vân Đại Điện — thám báo của tông vừa về tới nơi.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q22_tham_bao') {
+      return say(ST.SCENE_CH22_THAM_BAO, function () {
+        refreshHUD(); saveNow();
+        toast('Ra vành tuyến trên đường mòn tự xác minh một mắt trận — đoạn hai vách quanh (44,44). Đừng vào sâu.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q22_tich_luy') {
+      return say(ST.SCENE_CH22_TICH_LUY, function () {
+        state.quest = 'q22_nhan_viec'; refreshHUD(); saveNow();
+        toast('Tới điểm rơi cổng tông (61,87) nhận thẻ lệnh hộ tống và phân công các hướng giữ đoàn.', 4600);
+      });
+    }
+    if (npc.id === 'dth_cong' && state.quest === 'q22_nhan_viec') {
+      // Cảnh có PHAN_CONG_CHOICE nằm giữa mảng: lựa chọn chỉ ghi cờ qua
+      // resolvePhanCong rồi nextLine() chạy nốt 3 dòng sau (B.4); claim
+      // q22_pre_break (+250) nổ ở callback CUỐI cảnh này, trước mốc đột
+      // phá ở q22_dot_pha đúng khóa thứ tự của chương 22.
+      return say(ST.SCENE_CH22_NHAN_VIEC, function () {
+        arcClaimToast('q22_pre_break');
+        state.quest = 'q22_dot_pha'; refreshHUD(); saveNow();
+        toast('Phân công đã ghi vào sổ đoàn. Lên Đài Trúc Cơ ở phía bắc tông (60,6) để đột phá Kim Đan Hậu Kỳ trước chuyến đi.', 4600);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q24_len_duong' && !state.flags.q24Reported) {
+      return say(arcCh24LenDuongLines(), function () {
+        state.flags.q24Reported = true; refreshHUD(); saveNow();
+        toast('Việc đã báo cáo xong. Xuống Cô Châu Thành từ biệt Hứa U Nhàn ở sân phủ Hứa trước khi lên đường sông Bạc.', 4600);
+      });
+    }
+    if (npc.id === 'un_phu' && state.quest === 'q24_len_duong') {
+      if (!state.flags.q24Reported) { toast('Hãy về Thanh Vân Đại Điện báo cáo trưởng lão trước, rồi mới xuống thành từ biệt U Nhàn.', 4200); return; }
+      return say(ST.SCENE_CH24_TU_BIET, function () {
+        say(ST.SCENE_CH24_DONE, function () {
+          arcClaimToast('q24_done');
+          state.quest = 'q24_done'; refreshHUD(); saveNow();
+          toast('Hoàn thành chương 24: Manh mối cứng đầu tiên — cung IV khép lại ở Kim Đan Hậu Kỳ.', 5200);
+        });
+      });
+    }
+    if (npc.id === 'dth_tran' && state.quest === 'q24_lenh_cuu_nguoi') {
+      return arcStartCh24Path(); // rẽ theo flags.ch24Path (B.7); thiếu cờ -> giữ bí mật, không ghi sổ
+    }
+    if (npc.id === 'mcu_tran' && state.quest === 'q24_tha_mang') {
+      return say(ST.SCENE_CH24_THA_MANG, function () {
+        state.quest = 'q24_manh_moi'; refreshHUD(); saveNow();
+      });
+    }
+    if (npc.id === 'mcu_tran' && state.quest === 'q24_manh_moi') {
+      return say(ST.SCENE_CH24_MANH_MOI, function () {
+        state.quest = 'q24_len_duong'; refreshHUD(); saveNow();
+        toast('Manh mối đã rõ: một cái tên, một cuốn hồ sơ, một nơi cất giữ. Về Thanh Vân Đại Điện báo cáo trưởng lão.', 4600);
+      });
+    }
     if (npc.id === 'tap_dich_truong' && state.map === 'thanh_van_tong') {
       var chNow = L.chapterOfQuest(state);
       if ((chNow === 9 || chNow === 11) && (state.flags.sectJobPaidFor || 0) < chNow) {
@@ -3327,6 +3744,19 @@
         refreshHUD(); saveNow();
       });
     }
+    // ARCIV đợt 2 ch.20: dịch vụ hồn CẤP TÔNG (sau phẩm hồn 4) — đặt
+    // ngay sau nhánh dịch vụ hồn chương 11 sẵn có của NPC này (B.3).
+    // [ĐỀ XUẤT SỐ] +30 hồn lực, +50 Linh Thạch qua addLinhThach.
+    if (npc.id === 'hoa_huong_than' && state.map === 'thanh_van_tong' && L.arcIvSectSoulServiceDue && L.arcIvSectSoulServiceDue(state)) {
+      return say(ST.SCENE_CH20_SOUL_SERVICE, function () {
+        state.soulPower = (state.soulPower || 0) + 30;
+        var rsv = L.addLinhThach(state, 50);
+        state.flags.soulGrandPaidFor = L.chapterOfQuest(state);
+        if (rsv.ok) toast('Tông ghi công ca hồn cấp tông: +30 hồn lực, +50 Linh Thạch (số dư: ' + L.fmtNum(rsv.balance) + ').', 4600);
+        else toast('Tông ghi công ca hồn cấp tông: +30 hồn lực.', 4000);
+        refreshHUD(); saveNow();
+      });
+    }
     if (npc.id === 'u_nhan' && state.map === 'hb_valley') return say(ST.SCENE_UNHAN_HOI_PHONG);
     if (npc.id === 'u_nhan' && state.map === 'co_chau' && state.quest === 'q11_u_nhan' && !state.flags.uNhanCityMet) {
       return say(ST.SCENE_CH11_U_NHAN, function () {
@@ -3357,6 +3787,14 @@
     if (npc.id === 'cho_a' && state.map === 'co_chau' && state.flags.ch9SayRescue && !state.flags.benhSeen && L.chapterOfQuest(state) >= 11) {
       return say(ST.SCENE_CH11_BENH, function () { state.flags.benhSeen = true; refreshHUD(); saveNow(); });
     }
+    // ARCIV đợt 2 ch.18: điểm gom chứng cứ ở chợ — đặt SAU nhánh ch.11
+    // sẵn có của cho_a và TRƯỚC nhánh bảng săn ở dưới (đúng hợp đồng B.3).
+    if (npc.id === 'cho_a' && state.map === 'co_chau' && state.quest === 'q18_chung_cu') {
+      return say(ST.SCENE_CH18_CHUNG_CU, function () {
+        state.quest = 'q18_cho_phien'; refreshHUD(); saveNow();
+        toast('Chứng cứ đã gom đủ — về sân phủ Cô Châu dự phiên phân xử.', 4200);
+      });
+    }
     // Hệ cày (sau mọi nhánh cốt truyện, trước thoại thường trú): giao
     // hàng việc tông qua NPC, rồi bảng qua NPC hiện có (không có vật
     // thể bảng vật lý — báo điều phối viên, không tự bịa vật thể).
@@ -3384,6 +3822,10 @@
       sectOpts.push({ label: 'Trò chuyện', action: 'grind_idle' });
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: sectOpts }]);
     }
+    // ARCIV: trưởng lão/tàng kinh — dạy ô 19 (đủ điều kiện thì tự dạy
+    // khi thăm), ô 09 + điểm ghép dải Kim Đan sau q16_linh_ngo. Chỉ
+    // toast/lựa chọn, không thêm dòng thoại người nói mới.
+    if (npc.id === 'truong_lao_tong' && arcIvElderExtras()) return;
     var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
     if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
     // Chốt chặn cuối: NPC chưa có thoại riêng vẫn phải đáp lại — ấn E mà im
@@ -3746,7 +4188,8 @@
     if (opts && opts.kind === 'word') b.resVibT = 0.2;
     var bc = hhtBossCenter();
     addDmgFloat(bc.x, bc.y - 26, '-' + power, (opts && opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 20, targetKey: 'hhtboss' });
-    spawnStreak(bc.x, bc.y - 4, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, (opts && opts.crit) ? '255,226,150' : '170,230,255', !!(opts && opts.crit));
+    if (opts && opts.kind === 'sword') presentSwordHit(bc.x, bc.y + 12, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, opts.move || 'tram', !!(opts && opts.crit), opts.hitIdx || 0);
+    else spawnStreak(bc.x, bc.y - 4, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, (opts && opts.crit) ? '255,226,150' : '170,230,255', !!(opts && opts.crit));
     spawnParts(bc.x, bc.y, 6, '190,235,200', 34, false);
     if (fxOn() && Math.random() < 0.5) spawnPetals(bc.x - 10, bc.y - 16, 2);
     sfxHitBlade();
@@ -3765,10 +4208,11 @@
     faceMonster(b);
     sfxSword();
     var gain = L.techniqueGain(state, 'that_tinh', 2);
-    if (gain.tierUps && gain.tierUps.length) { addFloat(px + 16, py - 24, 'Kiếm quyết lên tầng ' + gain.tier + '!', '255,232,160'); sfxBell(); }
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp('that_tinh', gain.tier);
+    startSwordBody(mv.id, tNow, r.hits > 1 ? tNow + 120 : null);
     for (var i = 0; i < r.hits; i++) {
-      if (i === 0) applyHitToHhtBoss(r.power, { kind: 'sword', move: mv.id });
-      else f.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id });
+      if (i === 0) applyHitToHhtBoss(r.power, { kind: 'sword', move: mv.id, hitIdx: 0 });
+      else f.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id, hitIdx: i });
       if (!hhtFight || f.result) return;
     }
     refreshHUD();
@@ -3789,6 +4233,7 @@
     if (!r.ok) { toast(r.reason); return; }
     L.recordSpeech(state, 7, skill + '-ti-thi-hoa-huong-than-dai-dau-kiem', 'dai-dau-kiem');
     var bc = hhtBossCenter();
+    startResBody(false);
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
     // Hoa Hướng Thần không có dòng MONSTER_DEFS: âm gốc lấy 340 Hz —
     // đúng cao độ gầm boss mà hhtBossStrike đã dùng cho tiếng của hắn.
@@ -3887,7 +4332,7 @@
     if (b.holdT > 0) b.holdT = Math.max(0, b.holdT - dt);
     if (b.sealT > 0) b.sealT = Math.max(0, b.sealT - dt);
     for (var i = f.pendingHits.length - 1; i >= 0; i--) {
-      if (tNow >= f.pendingHits[i].at) { var ph = f.pendingHits.splice(i, 1)[0]; applyHitToHhtBoss(ph.power, { kind: ph.kind, move: ph.move }); if (!hhtFight || f.result) return; }
+      if (tNow >= f.pendingHits[i].at) { var ph = f.pendingHits.splice(i, 1)[0]; applyHitToHhtBoss(ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 }); if (!hhtFight || f.result) return; }
     }
     if (f.phase === 'done') {
       f.t += dt;
@@ -3991,6 +4436,1832 @@
     audienceCount: function () { return HHT_AUDIENCE.length; },
     arena: function () { return { x0: HHT_ARENA.x0, y0: HHT_ARENA.y0, x1: HHT_ARENA.x1, y1: HHT_ARENA.y1 }; }
   };
+
+  /* ================= ARCIV ĐỢT 1b — CHUỖI TRẬN KỊCH BẢN CHƯƠNG 13–16 =================
+     Cài toàn bộ neo mục A của arciv-work/CONTRACT-wave1.md vào game.js:
+     đài thách đấu ch.13 (nhân bản ống HHT), trận figure người dã ngoại
+     ch.14/15, đồng hồ chiêu cho boss Trận Nhãn (ch.16) + Hộ Trận (boss
+     dã ngoại) chạy trên hệ chạm trán sẵn có, và các điểm gọi helper của
+     worker dữ liệu. KHÔNG thêm dòng thoại người nói mới nào ngoài các
+     cảnh đã chốt trong story.js (lựa chọn/toast không qua ống lồng
+     tiếng theo tiền lệ dự án). */
+
+  function arcFaceTo(x, y) {
+    var dx = x - (px + 16), dy = y - (py + 16);
+    if (Math.abs(dx) >= Math.abs(dy)) facing = dx >= 0 ? 'right' : 'left';
+    else facing = dy >= 0 ? 'down' : 'up';
+    dir8 = L.dir8FromVector(dx, dy, dir8);
+  }
+  // Trừ máu người chơi cho các hệ trận TỰ CHẾ (daiFight/arcFig) — không
+  // dùng hurtPlayer vì hàm đó đòi enc của hệ chạm trán. Trả true khi
+  // người chơi gục để bên gọi tự xử lý thua.
+  function arcHurtPlayer(dmg) {
+    if (!state || dmg <= 0 || state.hp <= 0) return state ? state.hp <= 0 : false;
+    var before = state.hp;
+    state.hp = Math.max(0, state.hp - dmg);
+    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
+    if (before - state.hp >= state.hpMax * 0.05) hurtT = 0.33;
+    playerHurtT = 0.07; sfxHurt(); shakeWorld(0.12); refreshHUD();
+    return state.hp <= 0;
+  }
+  // Thưởng sự kiện cung IV qua helper của logic + thông báo gọn.
+  function arcClaimToast(key) {
+    var r = L.claimArcIvStoryReward(state, key);
+    if (!r || !r.ok) return r;
+    var parts = [];
+    if (r.tuvi > 0) parts.push('+' + fmtAmt(r.tuvi) + ' tu vi');
+    if (r.swordInsight > 0) parts.push('+' + r.swordInsight + ' điểm lĩnh ngộ Thất Tinh');
+    if (parts.length) toast('Thưởng sự kiện: ' + parts.join(' · ') + '.', 4200);
+    if (r.tierUps && r.tierUps.length) presentTechTierUp('that_tinh', r.tierUps[r.tierUps.length - 1]);
+    return r;
+  }
+  // Mảnh bí pháp theo nguồn hạ boss (luật gần hoàn thành nhất do logic quyết).
+  function arcIvBossFragmentToast(sourceId) {
+    var d = L.arcIvFragmentDropFor(state, sourceId);
+    if (!d) return;
+    var nm = (L.TECHNIQUE_DEFS[d.setId] || {}).name || d.setId;
+    toast('Mảnh bí pháp rơi ra: ' + nm + ' (' + d.count + '/' + d.needed + ')' + (d.complete ? ' — đủ mảnh! Tới tàng kinh các ở đại điện để ghép bộ.' : '.'), 4600);
+    refreshHUD(); saveNow();
+  }
+  function arcIvBcBossFragment(realmId) {
+    var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau' }[realmId];
+    if (src) arcIvBossFragmentToast(src);
+  }
+  // Kỳ ngộ (A.3): chỉ nối bộ đếm + tập bộ; cảnh kỳ ngộ để đợt sau.
+  function arcKyNgo(activity) {
+    if (!state || !L.kyNgoOnAction) return;
+    var r = L.kyNgoOnAction(state, Math.random(), Math.random(), activity);
+    if (!r || !r.triggered) return;
+    if (r.setId) {
+      /* ARCIV đợt 3 (B.9): kỳ ngộ ô 23 Bôn Lôi Thiểm Kích có CẢNH riêng —
+         khi thoại đang rảnh, không trong trận nào và cảnh chưa chạy lần
+         nào thì HOÃN học: chạy SCENE_KY_NGO_BON_LOI, lựa chọn cuối cảnh
+         (resolveKyNgoChoice) mới học bộ. Mọi trường hợp còn lại giữ
+         nguyên hành vi học ngay + toast ở dưới — học không bao giờ mất. */
+      if (r.setId === 'bon_loi_thiem_kich' && !state.flags.kyNgoBonLoiSceneDone && !dlg && !arcFig && !enc && !daiFight && !hhtFight && !tlFight) {
+        state.flags.kyNgoBonLoiSceneDone = true;
+        refreshHUD(); saveNow();
+        say(ST.SCENE_KY_NGO_BON_LOI);
+        return;
+      }
+      var lr = L.nguHanhLearn(state, r.setId);
+      if (lr && lr.ok) { sfxQuest(); toast('Kỳ ngộ! Một luồng linh cơ chợt tới — ngươi lĩnh ngộ được bí pháp ' + ((L.TECHNIQUE_DEFS[r.setId] || {}).name || r.setId) + '!', 5200); }
+    } else if (r.fallbackSet) {
+      var fr = L.nguHanhAddFragment(state, r.fallbackSet);
+      if (fr && fr.ok) toast('Kỳ ngộ! Ngươi nhặt được một mảnh tàn thiên của ' + ((L.TECHNIQUE_DEFS[r.fallbackSet] || {}).name || r.fallbackSet) + ' (' + fr.count + '/' + fr.needed + ').', 4600);
+    }
+    refreshHUD(); saveNow();
+  }
+  // Nhân chứng giữ đất q14: duong_mon không có NPC dan_c trong dữ kiện
+  // bản đồ — engine tiêm vào npcsLive theo pha nhiệm vụ tại (45,38).
+  function arcIvMaybeInjectWitness() {
+    if (!state || state.map !== 'duong_mon') return;
+    if (state.quest !== 'q14_dieu_tra' || !state.flags.q14SoDat || state.flags.q14SiteDone) return;
+    if (npcsLive.some(function (n) { return n.id === 'dan_c'; })) return;
+    npcsLive.push({ id: 'dan_c', name: 'Lão Giữ Đất', look: 'villager_old', x: 45, y: 38, dir: 'right' });
+  }
+  /* ---------- ARCIV đợt 2 (ch.17–20): tiêm NPC theo quest/cờ (B.2) ----------
+     Danh sách tiêm có quản lý vòng đời riêng: NPC nào điều kiện không còn
+     đúng trên bản đồ hiện tại thì bị gỡ khỏi npcsLive (khác nhân chứng
+     q14 ở trên — NPC đó do dữ kiện pha của bản đồ giữ tới hết hiện trường).
+     Mọi ô tiêm đã dò walkable bằng logic.js (xem REPORT-wave2-B). */
+  var ARCIV2_INJECTED = ['ttl_thap', 'chap_su_thap', 'dn_thap', 'quan_phu_phu', 'gct_phu', 'gcd_phu', 'nc_chung_a', 'nc_chung_b', 'gs_cac_a', 'gs_cac_b', 'gs_cac_c'];
+  function arcIv2WantedNpcs() {
+    if (!state) return [];
+    var q = state.quest, f = state.flags || {}, out = [];
+    function add(id, name, look, map, x, y, dir) { if (state.map === map) out.push({ id: id, name: name, look: look, x: x, y: y, dir: dir || 'down' }); }
+    if (q === 'q17_tin_tu_thap') add('ttl_thap', 'Trần Tư Linh', 'di_ninh', 'kiem_trac_thap', 33, 13, 'left');
+    if (q === 'q17_do_lai' || q === 'q17_chat_van') add('chap_su_thap', 'Chấp Sự Tháp', 'elder', 'thap_noi', 21, 10, 'down');
+    if (q === 'q17_di_ninh') add('dn_thap', 'Hứa Di Ninh', 'di_ninh', 'kiem_trac_thap', 31, 14, 'right');
+    if (q === 'q18_tranh_chap' || q === 'q18_ap_luc' || q === 'q18_cho_phien' || q === 'q19_phan_xu') {
+      add('quan_phu_phu', 'Quan Phủ', 'elder', 'co_chau', 51, 29, 'down');
+      if (q === 'q18_tranh_chap' || q === 'q18_ap_luc') {
+        add('gct_phu', 'Gia Chủ Tạ Gia', 'villager_m', 'co_chau', 49, 30, 'right');
+        add('gcd_phu', 'Gia Chủ Đỗ Gia', 'elder', 'co_chau', 53, 30, 'left');
+      }
+    }
+    if (q === 'q19_phan_ung' && !f.ch19AmbushStarted) {
+      add('nc_chung_a', 'Nhân Chứng', 'villager_old', 'co_chau', 50, 60, 'down');
+      add('nc_chung_b', 'Nhân Chứng', 'villager_f', 'co_chau', 52, 60, 'down');
+    }
+    if (f.q20WatchersSeen && !f.q20WatchersGone) {
+      add('gs_cac_a', 'Người Lạ', 'villager_m', 'co_chau', 50, 72, 'up');
+      add('gs_cac_b', 'Người Lạ', 'villager_f', 'co_chau', 53, 72, 'up');
+      add('gs_cac_c', 'Đệ Tử Lạ Mặt', 'villager_m', 'thanh_van_tong', 63, 57, 'up');
+    }
+    return out;
+  }
+  function arcIvMaybeInjectWave2() {
+    if (!state) return;
+    var want = arcIv2WantedNpcs();
+    var wantIds = want.map(function (w) { return w.id; });
+    for (var i = npcsLive.length - 1; i >= 0; i--) {
+      if (ARCIV2_INJECTED.indexOf(npcsLive[i].id) >= 0 && wantIds.indexOf(npcsLive[i].id) < 0) npcsLive.splice(i, 1);
+    }
+    want.forEach(function (w) {
+      if (!npcsLive.some(function (n) { return n.id === w.id; })) npcsLive.push(w);
+    });
+  }
+  /* ---------- ARCIV đợt 3 (ch.21–24): tiêm NPC theo quest (B.2) ----------
+     Cùng khuôn quản lý vòng đời của đợt 2. Mọi ô tiêm đã tự dò walkable
+     bằng logic.js (xem REPORT-wave3-B): un_cho (76,34) đúng ô neo hợp
+     đồng (hint người chơi là ô kề (76,35)); td_cho (77,34) kề đông của
+     un_cho; un_phu (16,36) sân phủ; dth_cong (61,87) điểm rơi cổng tông;
+     dth_tran (45,43); mcu_tran (43,45) — cả hai ô quanh đoạn hai vách
+     đều đi được (ô (44,44) ở giữa bị footprint gốc thông chiếm nên
+     KHÔNG dùng làm ô đứng). */
+  var ARCIV3_INJECTED = ['un_cho', 'td_cho', 'un_phu', 'dth_cong', 'dth_tran', 'mcu_tran'];
+  function arcIv3WantedNpcs() {
+    if (!state) return [];
+    var q = state.quest, out = [];
+    function add(id, name, look, map, x, y, dir) { if (state.map === map) out.push({ id: id, name: name, look: look, x: x, y: y, dir: dir || 'down' }); }
+    if (q === 'q21_doan_thuong') {
+      add('un_cho', 'Hứa U Nhàn', 'u_nhan', 'co_chau', 76, 34, 'left');
+      add('td_cho', 'Trưởng Đoàn Thương', 'villager_old', 'co_chau', 77, 34, 'left');
+    }
+    if (q === 'q21_so_sach' || q === 'q24_len_duong') add('un_phu', 'Hứa U Nhàn', 'u_nhan', 'co_chau', 16, 36, 'up');
+    if (q === 'q22_nhan_viec') add('dth_cong', 'Đệ Tử Hộ Tống', 'villager_m', 'thanh_van_tong', 61, 87, 'down');
+    if (q === 'q24_lenh_cuu_nguoi') add('dth_tran', 'Đệ Tử Hộ Tống', 'villager_m', 'duong_mon', 45, 43, 'left');
+    if (q === 'q24_tha_mang' || q === 'q24_manh_moi') add('mcu_tran', 'Mạc Cửu U', 'mac_cuu_u', 'duong_mon', 43, 45, 'right');
+    return out;
+  }
+  function arcIvMaybeInjectWave3() {
+    if (!state) return;
+    var want = arcIv3WantedNpcs();
+    var wantIds = want.map(function (w) { return w.id; });
+    for (var i = npcsLive.length - 1; i >= 0; i--) {
+      if (ARCIV3_INJECTED.indexOf(npcsLive[i].id) >= 0 && wantIds.indexOf(npcsLive[i].id) < 0) npcsLive.splice(i, 1);
+    }
+    want.forEach(function (w) {
+      if (!npcsLive.some(function (n) { return n.id === w.id; })) npcsLive.push(w);
+    });
+    // GỘP CUNG IV (2026-11-04): khi bản tiêm U Nhàn (un_cho / un_phu)
+    // đang hoạt động trên co_chau thì ẩn hình U Nhàn TĨNH (16,35) của
+    // bản đồ — bản tĩnh không có pha ẩn nên sẽ đứng kề bản tiêm thành
+    // hai hình giống hệt nhau (un_phu neo (16,36) ngay dưới ô tĩnh).
+    // Bản tiêm rút thì khôi phục hình tĩnh từ dữ kiện bản đồ. Chỉ áp
+    // cho co_chau: hình tĩnh U Nhàn ở các bản đồ khác là lần xuất hiện
+    // riêng theo truyện, không trùng bản tiêm nào.
+    if (state.map === 'co_chau') {
+      var injectedUNhan = wantIds.indexOf('un_cho') >= 0 || wantIds.indexOf('un_phu') >= 0;
+      var si = -1;
+      for (var k = 0; k < npcsLive.length; k++) if (npcsLive[k].id === 'u_nhan') { si = k; break; }
+      if (injectedUNhan && si >= 0) npcsLive.splice(si, 1);
+      if (!injectedUNhan && si < 0) {
+        var udef = (L.activeMap().npcs || []).filter(function (n) { return n.id === 'u_nhan'; })[0];
+        if (udef) { var upp = L.npcPosFor(state, udef); npcsLive.push({ id: udef.id, name: udef.name, look: udef.look, x: upp.x, y: upp.y, dir: upp.dir }); }
+      }
+    }
+  }
+  /* Câu đáp duy nhất của các NPC tiêm chỉ-đứng-nhìn (nhân chứng phố nam +
+     người theo dõi Thiên Cơ Các): một câu lảng tránh, hiện qua toast —
+     thoại mới chỉ qua cảnh story.js, ngoại lệ duy nhất là toast (đầu hợp
+     đồng đợt 2), nên các câu này KHÔNG mở say() nội tuyến mới. */
+  function arcIvNpcLine(id) {
+    if (id === 'nc_chung_a' || id === 'nc_chung_b') return 'Nhân chứng phố nam chỉ lắc đầu: "Chuyện ở phủ, quan phủ đã ghi cả rồi… chúng tôi chỉ mong về nhà cho yên."';
+    if (id === 'gs_cac_a' || id === 'gs_cac_b') return 'Người lạ lảng ánh mắt đi nơi khác, bước chân rảo nhanh hơn — rõ ràng không muốn bị hỏi chuyện.';
+    if (id === 'gs_cac_c') return 'Người đệ tử lạ mặt quay lưng đi thẳng, thẻ bài bên hông khuất vào tay áo — không để lại một lời.';
+    if (id === 'td_cho') return 'Trưởng đoàn thương nắm chặt tay áo, mắt không rời kiện hàng: "Hàng còn nguyên kiện nào, lão giữ nguyên kiện ấy — chỉ chờ cô nương Hứa phân xử cho đoàn một đường sống."';
+    return null;
+  }
+
+  /* ---------- Đài thách đấu (chương 13 + thang lặp) ---------- */
+  var daiFight = null, daiLastStage = 'nm1';
+  var DAI_SKILLS = {
+    star1: { name: 'Thất Tinh Tụ', telegraph: 0.6, dmgPct: 0.08, color: '255,214,150' },
+    rain: { name: 'Kiếm Vũ', telegraph: 0.6, dmgPct: 0.05, color: '170,220,255' }
+  };
+  var DAI_FIGHTERS = {
+    nm1: { name: 'Đệ tử nội môn — trận một', title: 'Đài Thách Đấu · trận nội môn thứ nhất', look: 'villager_m', hp: 380, atk: 9, interval: 1.5, speed: 60, skills: false },
+    nm2: { name: 'Đệ tử nội môn — trận hai', title: 'Đài Thách Đấu · trận nội môn thứ hai', look: 'villager_f', hp: 460, atk: 10, interval: 1.5, speed: 62, skills: false },
+    tinh_anh_story: { name: 'Tinh anh nội môn', title: 'Đài Thách Đấu · trận tinh anh (chương 13)', look: 'player_nam', hp: 900, atk: 13, interval: 1.4, speed: 64, skills: true },
+    noi_mon: { name: 'Đệ tử nội môn', title: 'Đài Thách Đấu · bậc nội môn (thách đấu lặp)', look: 'villager_m', hp: 520, atk: 11, interval: 1.5, speed: 62, skills: false },
+    tinh_anh: { name: 'Tinh anh nội môn', title: 'Đài Thách Đấu · bậc tinh anh (thách đấu lặp)', look: 'player_nam', hp: 980, atk: 14, interval: 1.4, speed: 64, skills: true },
+    /* Đợt 2 B.8: hạng quán quân — [ĐỀ XUẤT SỐ] hp 1250 / atk 16 / speed 54. */
+    vo_dich: { name: 'Vô Địch Đỗ Gia', title: 'Đài Thách Đấu · hạng quán quân (thách đấu lặp)', look: 'luc_tranh', hp: 1250, atk: 16, interval: 1.4, speed: 54, skills: true }
+  };
+  function daiCenter() { var b = daiFight.boss; return { x: b.x + 16, y: b.y + 16 }; }
+  function daiSnapshot() {
+    return { hp: state.hp, silence: state.silence, tuvi: state.tuvi, linhThach: state.linhThach, sectMerit: state.sectMerit,
+             bag: JSON.parse(JSON.stringify(state.bag || {})), x: state.x, y: state.y };
+  }
+  function arcEnterDaiStory() {
+    if (daiFight || !state) return;
+    state.flags.daiPre = daiSnapshot();
+    hhtTeleport('dai_dau_kiem', 19, 19, 'up', function () {
+      say(ST.SCENE_CH13_DAI_THACH, function () { startDaiFight('nm1'); });
+    });
+  }
+  function arcEnterDaiRepeat(rankId) {
+    if (daiFight || !state) return;
+    state.flags.daiPre = daiSnapshot();
+    hhtTeleport('dai_dau_kiem', 19, 19, 'up', function () { startDaiFight(rankId); });
+  }
+  function startDaiFight(stage) {
+    if (!state || state.map !== 'dai_dau_kiem') return;
+    var def = DAI_FIGHTERS[stage]; if (!def) return;
+    daiLastStage = stage;
+    daiFight = { mode: (stage === 'noi_mon' || stage === 'tinh_anh' || stage === 'vo_dich') ? 'repeat' : 'story', stage: stage,
+      phase: 'intro', t: 0, result: null, pendingHits: [],
+      boss: { x: 19 * TILE, y: 10 * TILE, hp: def.hp, hpMax: def.hp, atk: def.atk, atkInterval: def.interval, speed: def.speed,
+              look: def.look, name: def.name, title: def.title, skills: def.skills,
+              dir: 'down', walkT: 0, flashT: 0, resVibT: 0, atkT: 1.2, atkAnimT: 0, holdT: 0, sealT: 0,
+              phase: 'chase', t: 0, skillId: '', used1: false, used2: false, stars: [] } };
+    var bc = daiCenter();
+    if (!SET || SET.current.fxRings) rings.push({ x: bc.x, y: bc.y, r: 6, a: 0.9 });
+    spawnParts(bc.x, bc.y, 10, '190,235,200', 26, true);
+    var bb = $('boss-banner');
+    if (bb) { bb.classList.remove('hidden', 'compact', 'fading'); $('boss-name').textContent = def.name; $('boss-title').textContent = def.title; $('boss-phase').textContent = ''; updateDaiBossBar(); clearTimeout(showBossBanner._h); showBossBanner._h = setTimeout(function () { bb.classList.add('compact'); }, 2200); }
+    musicBoss(true);
+    tlSub(def.name + ' đã vào thế trên Đài Đấu Kiếm.', 2.6);
+    refreshHUD(); saveNow();
+  }
+  function updateDaiBossBar() {
+    if (!daiFight) return;
+    var f = $('boss-hp-fill');
+    if (f) f.style.width = Math.max(0, daiFight.boss.hp / daiFight.boss.hpMax * 100) + '%';
+  }
+  function daiAnnounceSkill(id) {
+    var f = daiFight; if (!f) return;
+    var sk = DAI_SKILLS[id]; if (!sk) return;
+    var bc = daiCenter();
+    addDmgFloat(bc.x, bc.y - 62, sk.name + '!', sk.color, { size: 18, life: 1.5, targetKey: 'daiboss' });
+    if (!SET || SET.current.fxRings) rings.push({ x: bc.x, y: bc.y, r: 8, a: 0.9 });
+    spawnPillar(bc.x, bc.y + 20, { dur: Math.min(1.2, sk.telegraph), h: 104 });
+    if (id === 'star1') sfxHhtStar1(); else sfxHhtStar2();
+  }
+  function daiHitPlayer(pct) {
+    var dmg = Math.max(1, Math.round((state.hpMax || 100) * pct));
+    state.hp = Math.max(0, state.hp - dmg);
+    playerHurtT = 0.07; hurtT = 0.33; hitStop(0.07); shakeWorld(0.3); sfxHurt();
+    spawnParts(px + 16, py + 6, 8, '255,90,70', 40, false);
+    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
+    refreshHUD();
+    if (state.hp <= 0 && daiFight && !daiFight.result) daiLose();
+  }
+  function daiBossStrike() {
+    var f = daiFight; if (!f) return;
+    var b = f.boss;
+    b.atkAnimT = 0.35;
+    sfxSword();
+    var bc = daiCenter(), pcx = px + 16, pcy = py + 16;
+    spawnStreak((bc.x + pcx) / 2, (bc.y + pcy) / 2, Math.atan2(pcy - bc.y, pcx - bc.x), '190,235,200', false);
+    if (arcHurtPlayer(Math.max(1, Math.round(b.atk * (0.85 + Math.random() * 0.3)))) && daiFight && !f.result) daiLose();
+  }
+  function applyHitToDaiBoss(power, opts) {
+    var f = daiFight; if (!f || f.result) return;
+    var b = f.boss;
+    if (b.phase === 'tele') power = Math.max(1, Math.round(power * 0.35)); // đang báo chiêu: kiếm thế hộ thân gạt bớt (như HHT)
+    b.hp = Math.max(0, b.hp - power);
+    b.flashT = 0.18;
+    if (opts && opts.kind === 'word') b.resVibT = 0.2;
+    var bc = daiCenter();
+    addDmgFloat(bc.x, bc.y - 26, '-' + power, (opts && opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 20, targetKey: 'daiboss' });
+    if (opts && opts.kind === 'sword') presentSwordHit(bc.x, bc.y + 12, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, opts.move || 'tram', !!(opts && opts.crit), opts.hitIdx || 0);
+    else spawnStreak(bc.x, bc.y - 4, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, (opts && opts.crit) ? '255,226,150' : '170,230,255', !!(opts && opts.crit));
+    spawnParts(bc.x, bc.y, 6, '190,235,200', 34, false);
+    sfxHitBlade();
+    updateDaiBossBar();
+    if (b.hp <= 0) daiWin();
+  }
+  function daiCastSword() {
+    var f = daiFight; if (!f || f.result) return;
+    var b = f.boss;
+    var d = Math.hypot((b.x + 16) - (px + 16), (b.y + 16) - (py + 16));
+    if (d > 1.9 * TILE) { toast('Đối thủ còn xa — lại gần thêm để xuất kiếm.'); return; }
+    var mv = bestSwordMove();
+    var r = L.castSword(state, mv.id);
+    if (!r.ok) { toast(r.reason); return; }
+    arcFaceTo(b.x + 16, b.y + 16);
+    sfxSword();
+    var gain = L.techniqueGain(state, 'that_tinh', 2);
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp('that_tinh', gain.tier);
+    startSwordBody(mv.id, tNow, r.hits > 1 ? tNow + 120 : null);
+    for (var i = 0; i < r.hits; i++) {
+      if (i === 0) applyHitToDaiBoss(r.power, { kind: 'sword', move: mv.id, hitIdx: 0 });
+      else f.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id, hitIdx: i });
+      if (!daiFight || f.result) return;
+    }
+    refreshHUD();
+  }
+  function daiCastWord(skill) {
+    var f = daiFight; if (!f || f.result) return;
+    var b = f.boss;
+    var d = Math.hypot((b.x + 16) - (px + 16), (b.y + 16) - (py + 16));
+    if (d > 3.2 * TILE) { toast('Đối thủ còn xa — sóng chưa khóa tới được.'); return; }
+    arcFaceTo(b.x + 16, b.y + 16);
+    var silenceBefore = state.silence;
+    var r = L.castWord(state, skill);
+    if (!r.ok) { toast(r.reason); return; }
+    L.recordSpeech(state, L.chapterOfQuest(state), skill + '-dai-thach-dau', 'dai-dau-kiem');
+    var bc = daiCenter();
+    startResBody(false);
+    var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
+    if (skill === 'pha') { castResonanceFx('pha', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); shakeWorld(0.35); }
+    else if (skill === 'chan') { castResonanceFx('chan', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); shakeWorld(0.35); }
+    else if (skill === 'dinh') { spawnPillar(bc.x, bc.y + 30, { top: 'purple', dur: 0.85, h: 105 }); castResonanceFx('dinh', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); b.holdT = b.atkInterval; }
+    else if (skill === 'phong') { spawnPillar(bc.x, bc.y + 30, { dur: 0.9, h: 112 }); castResonanceFx('phong', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); shakeWorld(0.12); b.sealT = b.atkInterval * 2; }
+    addDmgFloat(bc.x, bc.y - 40, wf[0], wf[1], { size: 22, life: 0.9 });
+    if (skill === 'pha' || skill === 'chan' || skill === 'phong') applyHitToDaiBoss(r.power, { kind: 'word', skill: skill });
+    refreshHUD();
+  }
+  function daiWin() {
+    var f = daiFight; if (!f || f.result) return;
+    f.result = 'win'; f.phase = 'done'; f.t = 0;
+    var bc = daiCenter();
+    spawnPillar(bc.x, bc.y + 28, { dur: 1.1, h: 118 });
+    spawnPetals(bc.x, bc.y - 10, 6);
+    sfxCrowd('win');
+  }
+  function daiLose() {
+    var f = daiFight; if (!f || f.result) return;
+    f.result = 'lose'; f.phase = 'done'; f.t = 0;
+    hideBossBanner(); musicBoss(false);
+    sfxCrowd('gasp');
+  }
+  function daiFinishWin() {
+    var f = daiFight; if (!f) return;
+    var stage = f.stage, bc = daiCenter();
+    if (f.mode === 'story' && stage === 'nm1') { startDaiFight('nm2'); return; }
+    if (f.mode === 'story' && stage === 'nm2') {
+      f.phase = 'between'; f.result = null;
+      say(ST.SCENE_CH13_DAI_THACH_2, function () { startDaiFight('tinh_anh_story'); });
+      return;
+    }
+    daiFight = null; tlSub(null); hideBossBanner(); musicBoss(false);
+    delete state.flags.daiPre;
+    if (f.mode === 'story') {
+      // Đòn kết liễu Phá Quân là TRÌNH DIỄN khép trận (không phải điều
+      // kiện thắng — trận đã thắng bằng đường kiếm thường cũng tới đây).
+      presentSwordHit(bc.x, bc.y + 12, -Math.PI / 2, 'pha_quan', false, 0);
+      spawnPillar(bc.x, bc.y + 28, { dur: 1.2, h: 124 });
+      hhtTeleport('thanh_van_tong', 62, 57, 'up', function () {
+        say(ST.SCENE_CH13_TINH_ANH_END, function () {
+          state.quest = 'q13_thinh_cau_dau'; refreshHUD(); saveNow();
+          toast('Có thư thỉnh cầu đang chờ ở cổng tông phía nam. Thang thách đấu lặp đã mở — gặp Hoa Hướng Thần ở quảng trường để thách đấu lại.', 4600);
+        });
+      });
+      return;
+    }
+    var r = L.daiThachDauRecordWin(state, stage);
+    hhtTeleport('thanh_van_tong', 62, 57, 'up', function () {
+      if (r && r.ok) {
+        var msg = 'Thắng bậc ' + (stage === 'tinh_anh' ? 'tinh anh' : stage === 'vo_dich' ? 'quán quân' : 'nội môn') + ' tại Đài Thách Đấu (lần thắng thứ ' + r.wins + ').';
+        if (r.fragment) msg += ' Nhận 1 mảnh bí pháp ' + (stage === 'vo_dich' ? 'ô 07' : 'ô 03') + ' (' + r.fragment.count + '/' + r.fragment.needed + ').';
+        // LƯU Ý hợp đồng B.6: daiThachDauRecordWin ĐÃ tự cộng mảnh ô 03
+        // qua nguHanhAddFragment cho bậc tinh anh — engine KHÔNG gọi
+        // thêm arcIvFragmentDropFor('dai_thach_dau:tinh_anh') ở đây để
+        // tránh cộng trùng hai mảnh cho một lần thắng.
+        toast(msg, 4600);
+      } else toast('Trận thắng chưa được ghi sổ đài: ' + ((r && r.reason) || 'lỗi không rõ') + '.', 4200);
+      refreshHUD(); saveNow();
+    });
+  }
+  function daiFinishLose() {
+    var pre = state.flags.daiPre;
+    daiFight = null; tlSub(null);
+    if (pre) {
+      state.hp = pre.hp; state.silence = pre.silence; state.tuvi = pre.tuvi;
+      state.linhThach = pre.linhThach; state.sectMerit = pre.sectMerit;
+      state.bag = JSON.parse(JSON.stringify(pre.bag || {}));
+    } else state.hp = Math.max(1, Math.round(state.hpMax * 0.25));
+    if (state.hp <= 0) state.hp = Math.max(1, Math.round(state.hpMax * 0.25));
+    px = 19 * TILE; py = 19 * TILE; state.x = 19; state.y = 19; state.dir = 'up'; facing = 'up';
+    dir8 = DIR8_ROW4[facing] || 0;
+    refreshHUD(); saveNow();
+    // Chỉ dòng LỰA CHỌN (không lồng tiếng — tiền lệ hhtFinishLose).
+    say([{ who: 'choice', text: 'Đối thủ thu kiếm đứng chờ giữa đài. Tông môn không phạt kẻ thua một trận thách đấu — chỉ chờ ngươi đứng dậy. Ngươi sẽ…', options: [
+      { label: 'Đấu lại ngay trên đài', action: 'arc_dai_retry' },
+      { label: 'Về quảng trường tông, thách đấu lại sau', action: 'arc_dai_leave' }
+    ] }]);
+  }
+  function daiBossStep(gx, gy, speed, dt) {
+    var b = daiFight.boss;
+    var cx = b.x + 16, cy = b.y + 16;
+    var dx = gx - cx, dy = gy - cy, d = Math.hypot(dx, dy);
+    if (d < 2) return true;
+    var step = Math.min(d, speed * dt);
+    var nx = b.x + dx / d * step, ny = b.y + dy / d * step;
+    nx = Math.max(HHT_ARENA.x0 * TILE, Math.min(HHT_ARENA.x1 * TILE, nx));
+    ny = Math.max(HHT_ARENA.y0 * TILE, Math.min(HHT_ARENA.y1 * TILE, ny));
+    b.walkT += dt * (Math.abs(nx - b.x) + Math.abs(ny - b.y) > 0 ? 1 : 0);
+    b.x = nx; b.y = ny;
+    b.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    return false;
+  }
+  function updateDaiFight(dt) {
+    var f = daiFight; if (!f || dt <= 0) return;
+    var b = f.boss;
+    if (b.flashT > 0) b.flashT = Math.max(0, b.flashT - dt);
+    if (b.resVibT > 0) b.resVibT = Math.max(0, b.resVibT - dt);
+    if (b.atkAnimT > 0) b.atkAnimT = Math.max(0, b.atkAnimT - dt);
+    if (b.holdT > 0) b.holdT = Math.max(0, b.holdT - dt);
+    if (b.sealT > 0) b.sealT = Math.max(0, b.sealT - dt);
+    for (var i = f.pendingHits.length - 1; i >= 0; i--) {
+      if (tNow >= f.pendingHits[i].at) { var ph = f.pendingHits.splice(i, 1)[0]; applyHitToDaiBoss(ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 }); if (!daiFight || f.result) return; }
+    }
+    if (f.phase === 'done') { f.t += dt; if (f.t >= 1.4) { if (f.result === 'win') daiFinishWin(); else daiFinishLose(); } return; }
+    if (f.phase === 'between') return;
+    if (f.phase === 'intro') { f.t += dt; if (f.t >= 0.8) { f.phase = 'fight'; f.t = 0; } return; }
+    if (!moving) state.silence = L.silenceGain('meditate', dt, state.silence);
+    var pcx = px + 16, pcy = py + 16, bcx = b.x + 16, bcy = b.y + 16;
+    var dist = Math.hypot(bcx - pcx, bcy - pcy);
+    var pct = b.hp / b.hpMax;
+    if (b.phase === 'chase') {
+      var want = null;
+      if (b.skills && !b.used2 && pct <= 0.6) want = 'rain';
+      else if (b.skills && !b.used1 && pct <= 0.85) want = 'star1';
+      if (want) {
+        b.phase = 'tele'; b.t = 0; b.skillId = want;
+        if (want === 'star1') b.used1 = true; else b.used2 = true;
+        daiAnnounceSkill(want);
+        if (want === 'rain') { b.stars = []; for (var wi = 0; wi < 3; wi++) b.stars.push({ at: 0.6 + wi * 0.35, tx: 0, ty: 0, locked: false, done: false }); }
+        return;
+      }
+      if (dist > 40) daiBossStep(pcx, pcy, b.speed, dt);
+      else if (!(b.holdT > 0 || b.sealT > 0)) {
+        b.atkT -= dt;
+        if (b.atkT <= 0) { b.atkT = b.atkInterval; daiBossStrike(); if (!daiFight || f.result) return; }
+      }
+      b.dir = pcx < bcx ? 'left' : 'right';
+    } else if (b.phase === 'tele') {
+      b.t += dt;
+      var sk = DAI_SKILLS[b.skillId];
+      if (b.skillId === 'rain') {
+        for (var wj = 0; wj < b.stars.length; wj++) {
+          var wv = b.stars[wj];
+          if (!wv.locked && b.t >= wv.at - sk.telegraph) { wv.locked = true; wv.tx = pcx; wv.ty = pcy; }
+          if (!wv.done && b.t >= wv.at) {
+            wv.done = true;
+            spawnStreak(wv.tx, wv.ty - 14, Math.PI / 2, '170,220,255', false);
+            spawnParts(wv.tx, wv.ty, 3, '255,190,90', 40, false);
+            if (Math.hypot(pcx - wv.tx, pcy - wv.ty) < 36) { daiHitPlayer(sk.dmgPct); if (!daiFight || f.result) return; }
+          }
+        }
+        if (b.t >= 1.9) { b.phase = 'chase'; b.t = 0; b.atkT = Math.max(b.atkT, 0.7); }
+      } else if (b.t >= sk.telegraph) {
+        // Thất Tinh Tụ của tinh anh: quạt 7 tia quanh người chơi, báo
+        // trước NGẮN 0,6s (MONSTER_DEFS khai telegraphSec 0.6).
+        sfxSword(); sfxChan();
+        for (var si = 0; si < 7; si++) {
+          var ang = -Math.PI / 2 + (si - 3) * 0.32;
+          spawnStreak(pcx + Math.cos(ang) * 26, pcy + Math.sin(ang) * 26, ang, '255,244,200', si === 3);
+          spawnParts(pcx + Math.cos(ang) * 30, pcy + Math.sin(ang) * 30, 2, '255,190,90', 40, false);
+        }
+        shakeWorld(0.3); hitStop(0.07);
+        if (dist < 120) { daiHitPlayer(sk.dmgPct); if (!daiFight || f.result) return; }
+        b.phase = 'chase'; b.t = 0; b.atkT = Math.max(b.atkT, 0.7);
+      }
+    }
+    updateDaiBossBar();
+  }
+
+  /* ---------- Trận figure người dã ngoại (chương 14 + 15) ----------
+     Đối thủ là NGƯỜI (côn đồ thuê, tay chân Huyết Bạc Cung, chỉ huy)
+     nên không có loài trong MONSTER_DEFS đã chốt — figure vẽ bằng
+     sheet nhân vật như hhtboss, đánh thời gian thực tại chỗ trên bản
+     đồ dã ngoại. Mắt trận đi qua hệ arcEyes sẵn có; mắt của các trận
+     này mang thêm trường hp (chỉ figure-trận dùng) để KIẾM phá được. */
+  var arcFig = null;
+  function arcFigMake(spec) {
+    return { x: spec.tx * TILE, y: spec.ty * TILE, look: spec.look, name: spec.name, title: spec.title || '',
+      hp: spec.hp, hpMax: spec.hp, atk: spec.atk, interval: spec.interval || 1.5, speed: spec.speed || 55,
+      atkT: 1.0, holdT: 0, sealT: 0, flashT: 0, resVibT: 0, atkAnimT: 0, dir: 'down', walkT: 0,
+      dead: false, fled: false, fleeing: false, fleeT: 0,
+      noKill: !!spec.noKill, fleeAt: spec.fleeAt || 0.3,
+      /* Đợt 2: champ (quán quân ch.18) / jam (đầu lĩnh nhiễu ch.19) /
+         soulChaos (hồn loạn ch.20) / monsterLook (vẽ theo ống quái). */
+      champ: !!spec.champ, jam: !!spec.jam, soulChaos: !!spec.soulChaos, monsterLook: spec.monsterLook || null,
+      /* Đợt 3: listener (tên nghe tiếng ch.22 — né đòn kiếm ĐẦU TIÊN). */
+      listener: !!spec.listener, listenerHeard: false,
+      species: spec.monsterLook || null,
+      homeX: spec.tx * TILE, homeY: spec.ty * TILE,
+      shieldT: 0, shieldCd: 4, shieldFloatT: 0, zoneT: 3, sweep: null, waveT: 3 };
+  }
+  function arcFigStart(cfg) {
+    arcFig = { id: cfg.id, waves: cfg.waves, wave: -1, figs: [], phase: 'fight', usedDinh: 0, usedPhong: 0,
+               eyeBoost: cfg.eyeBoost || 0, eyesAtWave: cfg.eyesAtWave || {}, requireEyesDown: !!cfg.requireEyesDown,
+               onWin: cfg.onWin, onLose: cfg.onLose || null, pendingHits: [],
+               /* Đợt 2: vùng báo trước (trấn địa / sóng lệch), hộ tống +
+                  xe văn thư (ch.19), hồn loạn (ch.20). */
+               zones: [], jamFloatT: 0,
+               escorts: (cfg.escorts || []).map(function (e) {
+                 return { x: e.tx * TILE, y: e.ty * TILE, look: e.look, name: e.name, title: '', species: null,
+                   hp: e.hp, hpMax: e.hp, injured: false, dir: 'down', walkT: 0, flashT: 0, resVibT: 0, holdT: 0, sealT: 0, atkAnimT: 0, dead: false,
+                   anchorX: 51 * TILE, anchorY: 62 * TILE, safeX: 51 * TILE, safeY: 74 * TILE, seed: Math.random() * 6.3 };
+               }),
+               cartCfg: cfg.cart || null, cart: null, cartSpawned: false,
+               soulChaos: cfg.soulChaos || null, soulHolds: 0,
+               /* Đợt 3: xe hàng tổng quát (cfg.carts — điểm giữ xe đọc từ
+                  cfg này; xe văn thư đợt 2 đi qua cfg.cart cũ, hành vi
+                  giữ nguyên), mắt chịu Định Âm đóng băng (eyeDinhFreeze),
+                  vùng sóng kiếm điều trận theo nhịp (cmdZones), điểm giữ
+                  cứu người (rescueHold). Xe 'tilting' khai tilt:true thì
+                  bắt đầu đếm 6 giây ngay khi trận mở. */
+               eyeDinhFreeze: !!cfg.eyeDinhFreeze,
+               cmdZones: cfg.cmdZones || null, cmdZoneT: cfg.cmdZones ? (cfg.cmdZones.every || 7) : 0,
+               rescueHold: cfg.rescueHold || null, rescueHolds: 0,
+               carts: (cfg.carts || []).map(function (c) {
+                 return { x: c.tx * TILE + 16, y: c.ty * TILE + 16, hp: c.hp, hpMax: c.hp, state: c.tilt ? 'tilting' : 'intact', t: c.tilt ? 6 : 0, flashT: 0, targetable: c.targetable !== false };
+               }) };
+    arcFig.carts.forEach(function (ct) { if (ct.state === 'tilting') addFloat(ct.x, ct.y - 44, 'XE HÀNG ĐANG TRƯỢT!', '255,190,120'); });
+    arcFigNextWave();
+  }
+  function arcFigNextWave() {
+    var f = arcFig; if (!f) return;
+    f.wave++;
+    if (f.wave >= f.waves.length) {
+      if (f.requireEyesDown && arcEyesStanding() > 0) { f.phase = 'eyes'; f.figs = []; return; }
+      /* Đợt 3 ch.24 đường phát hưởng: hết đợt + mắt xuống mà điểm giữ
+         cứu người chưa đủ số lần Định Âm -> pha 'holds' khép trận (không
+         còn địch, người chơi Định Âm tại điểm giữ cho đủ). */
+      if (f.rescueHold && f.rescueHolds < f.rescueHold.need) { f.phase = 'holds'; f.figs = []; addFloat(px + 16, py - 34, 'GIỮ ĐIỂM CỨU NGƯỜI CHO ĐỦ!', '170,220,255'); return; }
+      arcFigWin(); return;
+    }
+    f.figs = f.waves[f.wave].map(arcFigMake);
+    // Đợt 2 ch.19: xe văn thư xuất hiện ở đầu đợt 2, đồng hồ nghiêng 6 giây.
+    if (f.cartCfg && f.wave === 1 && !f.cartSpawned) {
+      f.cartSpawned = true;
+      f.cart = { x: 51 * TILE + 16, y: 64 * TILE + 16, state: 'tilting', t: 6 };
+      addFloat(f.cart.x, f.cart.y - 44, 'XE VĂN THƯ ĐANG NGHIÊNG!', '255,190,120');
+    }
+    var eyes = f.eyesAtWave[f.wave];
+    if (eyes) eyes.forEach(function (e) { var eye = arcAddEye(e.tx * TILE + 16, e.ty * TILE + 16, { mobile: !!e.mobile, label: 'Mắt trận' }); eye.hp = 260; });
+    if (f.wave > 0) addFloat(px + 16, py - 30, 'ĐỢT ' + (f.wave + 1) + '!', '255,190,120');
+    f.phase = 'fight';
+  }
+  function arcFigWin() {
+    var f = arcFig; if (!f) return;
+    var cb = f.onWin;
+    arcFig = null; arcEyes.length = 0;
+    if (cb) cb(f); // đợt 2: onWin đọc được escorts/cart của trận vừa khép (biến thể kết A/B)
+  }
+  function arcFigLose() {
+    var fLose = arcFig;
+    arcFig = null; arcEyes.length = 0;
+    if (state.flags.ch15ResonanceLock) { state.flags.ch15ResonanceLock = false; } // tắt cờ khóa ch.15 khi trận khép (kể cả thua)
+    state.hp = Math.round(state.hpMax * 0.25);
+    defeatGraceT = 3;
+    var medPt = L.activeMap().meditate;
+    if (medPt) fadeTransition(function () {
+      px = medPt.x * TILE; py = medPt.y * TILE;
+      state.x = medPt.x; state.y = medPt.y;
+      refreshHUD(); saveNow();
+    });
+    toast('Ngươi gục xuống... Khi tỉnh lại, ngươi đã ở nơi an toàn gần nhất với 25% máu. Trận này chưa khép — quay lại điểm hẹn để đánh lại.', 5600);
+    refreshHUD(); saveNow();
+    if (fLose && fLose.onLose) fLose.onLose(); // đợt 2: móc thua riêng của trận (vd ch.19 mở lại kích hoạt phục kích)
+  }
+  function arcFigStep(fig, gx, gy, speed, dt) {
+    var cx = fig.x + 16, cy = fig.y + 16;
+    var dx = gx - cx, dy = gy - cy, d = Math.hypot(dx, dy);
+    if (d < 2) return true;
+    var step = Math.min(d, speed * dt);
+    var nx = fig.x + dx / d * step, ny = fig.y + dy / d * step;
+    var moved = false;
+    if (L.isWalkable(Math.floor((nx + 16) / TILE), Math.floor((fig.y + 30) / TILE), npcsLive)) { fig.x = nx; moved = true; }
+    if (L.isWalkable(Math.floor((fig.x + 16) / TILE), Math.floor((ny + 30) / TILE), npcsLive)) { fig.y = ny; moved = true; }
+    if (moved) { fig.walkT += dt; fig.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
+    return false;
+  }
+  function arcFigStrike(fig) {
+    fig.atkAnimT = 0.35;
+    sfxSword();
+    var fx = fig.x + 16, fy = fig.y + 16, pcx = px + 16, pcy = py + 16;
+    spawnStreak((fx + pcx) / 2, (fy + pcy) / 2, Math.atan2(pcy - fy, pcx - fx), '200,210,220', false);
+    if (arcHurtPlayer(Math.max(1, Math.round(fig.atk * (0.85 + Math.random() * 0.3))))) arcFigLose();
+  }
+  function arcFigEyeFactor() {
+    var f = arcFig;
+    if (!f || !f.eyeBoost) return 1;
+    /* Đợt 3 (cfg.eyeDinhFreeze): mắt đang đóng băng KHÔNG nạp nhịp cho
+       địch — hệ số chỉ áp khi còn mắt chưa phong ấn VÀ chưa đóng băng.
+       Các trận cũ không có cờ này: giữ nguyên đường arcEyesStanding. */
+    if (f.eyeDinhFreeze) return arcEyes.some(function (e) { return !e.sealed && !(e.frozenT > 0); }) ? f.eyeBoost : 1;
+    return arcEyesStanding() > 0 ? f.eyeBoost : 1;
+  }
+  /* Đợt 3 ch.21: địch đánh XE HÀNG (cfg.carts) — xe mất máu như nhân
+     chứng đợt 2 nhưng KHÔNG có trạng thái bị thương: hp về 0 là xe mất
+     (state 'lost', vẽ vỡ/nghiêng + kiện hàng rơi ở khối vẽ xe đợt 3
+     trong arcDrawWave2). */
+  function arcFigCartStrike(fig, ct) {
+    fig.atkAnimT = 0.35;
+    sfxSword();
+    var fx = fig.x + 16, fy = fig.y + 16;
+    spawnStreak((fx + ct.x) / 2, (fy + ct.y) / 2, Math.atan2(ct.y - fy, ct.x - fx), '200,210,220', false);
+    var dmg = Math.max(1, Math.round(fig.atk * (0.85 + Math.random() * 0.3)));
+    ct.hp = Math.max(0, ct.hp - dmg);
+    ct.flashT = 0.18;
+    addDmgFloat(ct.x, ct.y - 26, '-' + dmg, '255,170,120', { size: 16, targetKey: 'arccart' });
+    spawnParts(ct.x, ct.y, 4, '170,140,100', 26, false);
+    if (ct.hp <= 0 && ct.state !== 'lost') {
+      ct.state = 'lost';
+      addFloat(ct.x, ct.y - 44, 'XE MẤT!', '255,120,100');
+      spawnParts(ct.x, ct.y, 14, '170,140,100', 34, false);
+      sfxHurt();
+    }
+  }
+  function arcFigEscortStrike(fig, esc) {
+    fig.atkAnimT = 0.35;
+    sfxSword();
+    var fx = fig.x + 16, fy = fig.y + 16, ex = esc.x + 16, ey = esc.y + 16;
+    spawnStreak((fx + ex) / 2, (fy + ey) / 2, Math.atan2(ey - fy, ex - fx), '200,210,220', false);
+    var dmg = Math.max(1, Math.round(fig.atk * (0.85 + Math.random() * 0.3)));
+    esc.hp = Math.max(0, esc.hp - dmg);
+    esc.flashT = 0.18;
+    addDmgFloat(ex, ey - 26, '-' + dmg, '255,170,120', { size: 16, targetKey: 'arcfig' });
+    spawnParts(ex, ey, 4, '190,200,210', 26, false);
+    if (esc.hp <= 0 && !esc.injured) {
+      esc.injured = true; esc.title = 'Bị thương';
+      addFloat(ex, ey - 40, 'BỊ THƯƠNG!', '255,120,100');
+      sfxHurt();
+    }
+  }
+  function updateArcFig(dt) {
+    var f = arcFig; if (!f || dt <= 0) return;
+    var i, fig;
+    for (i = f.pendingHits.length - 1; i >= 0; i--) {
+      if (tNow >= f.pendingHits[i].at) { var ph = f.pendingHits.splice(i, 1)[0]; arcFigApplyHit(ph.tgt, ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 }); if (!arcFig) return; }
+    }
+    // Đợt 3: mắt bị Định Âm đóng băng (cfg.eyeDinhFreeze) đếm ngược thời gian băng.
+    arcEyes.forEach(function (e) { if (e.frozenT > 0) e.frozenT = Math.max(0, e.frozenT - dt); });
+    if (f.phase === 'eyes') {
+      if (arcEyesStanding() <= 0) {
+        if (f.rescueHold && f.rescueHolds < f.rescueHold.need) { f.phase = 'holds'; addFloat(px + 16, py - 34, 'MẮT ĐÃ XUỐNG — GIỮ ĐIỂM CỨU NGƯỜI CHO ĐỦ!', '170,220,255'); }
+        else arcFigWin();
+      }
+      return;
+    }
+    if (f.phase === 'holds') { if (f.rescueHold && f.rescueHolds >= f.rescueHold.need) arcFigWin(); return; }
+    var pcx = px + 16, pcy = py + 16;
+    if (f.jamFloatT > 0) f.jamFloatT = Math.max(0, f.jamFloatT - dt);
+    /* Vùng báo trước (trấn địa của quán quân + sóng lệch của hồn loạn):
+       đếm ngược, hết giờ thì nổ tại chỗ — người chơi còn trong vùng mới
+       trúng đòn theo % máu tối đa (mọi đòn đều né được bằng rời vùng). */
+    for (i = f.zones.length - 1; i >= 0; i--) {
+      var zn = f.zones[i];
+      zn.t -= dt;
+      if (zn.t <= 0) {
+        f.zones.splice(i, 1);
+        rings.push({ x: zn.x, y: zn.y, r: 10, a: 0.9 });
+        spawnParts(zn.x, zn.y, 10, zn.kind === 'soul' ? '150,190,255' : '220,120,80', 34, false);
+        shakeWorld(0.22);
+        if (Math.hypot(pcx - zn.x, pcy - zn.y) <= zn.r) {
+          if (arcHurtPlayer(Math.max(1, Math.round((state.hpMax || 100) * zn.dmgPct)))) { arcFigLose(); return; }
+        }
+      }
+    }
+    /* Xe văn thư (ch.19, đợt 2): đồng hồ nghiêng 6 giây — Định Âm giữ
+       được thì 'saved' (xem arcFigCastWord), hết giờ thì 'tipped'. */
+    if (f.cart && f.cart.state === 'tilting') {
+      f.cart.t -= dt;
+      if (f.cart.t <= 0) {
+        f.cart.state = 'tipped'; f.cart.t = 0;
+        addFloat(f.cart.x, f.cart.y - 44, 'XE ĐỔ!', '255,120,100');
+        spawnParts(f.cart.x, f.cart.y, 12, '170,140,100', 32, false);
+        sfxHurt();
+      }
+    }
+    /* Xe hàng tổng quát (đợt 3, cfg.carts): cùng đồng hồ trượt 6 giây
+       như xe văn thư — Định Âm giữ được thì 'saved', hết giờ 'tipped'. */
+    (f.carts || []).forEach(function (ct) {
+      if (ct.flashT > 0) ct.flashT = Math.max(0, ct.flashT - dt);
+      if (ct.state === 'tilting') {
+        ct.t -= dt;
+        if (ct.t <= 0) {
+          ct.state = 'tipped'; ct.t = 0;
+          addFloat(ct.x, ct.y - 44, 'XE ĐỔ!', '255,120,100');
+          spawnParts(ct.x, ct.y, 12, '170,140,100', 32, false);
+          sfxHurt();
+        }
+      }
+    });
+    /* Vùng sóng kiếm điều trận (đợt 3 ch.23 chặng 2, cfg.cmdZones): mỗi
+       ~7 giây đặt một vùng báo trước tại ô người chơi — dùng lại mảng
+       zones + đường sát thương/vẽ zones của đợt 2 (báo 0,9 giây, nổ
+       10% hpMax). */
+    if (f.cmdZones) {
+      f.cmdZoneT -= dt;
+      if (f.cmdZoneT <= 0) {
+        f.cmdZoneT = f.cmdZones.every || 7;
+        f.zones.push({ x: pcx, y: pcy, r: 2.2 * TILE, t: 0.9, dur: 0.9, dmgPct: 0.10, kind: 'cmd' });
+        addFloat(pcx, pcy - 34, 'SÓNG KIẾM ĐIỀU TRẬN!', '255,150,110');
+        // Gộp cung IV: chỉ huy trận không có thân riêng — nhịp phát lúc
+        // ra chiêu bung tại các MẮT TRẬN chưa phong ấn (tay của hắn).
+        arcEyes.forEach(function (e) { if (!e.sealed) arcBossCastFx(e.x, e.y, '216,180,255', false); });
+      }
+    }
+    /* Nhân chứng hộ tống (ch.19): địch trong 3 ô thì chạy về điểm an
+       toàn cổng nam (51,74); yên thì lảng vảng quanh đoàn (51,62). */
+    f.escorts.forEach(function (esc) {
+      if (esc.flashT > 0) esc.flashT = Math.max(0, esc.flashT - dt);
+      if (esc.injured) return;
+      var ex = esc.x + 16, ey = esc.y + 16, threat = false;
+      f.figs.forEach(function (fg) { if (!fg.dead && !fg.fleeing && Math.hypot(fg.x + 16 - ex, fg.y + 16 - ey) <= 3 * TILE) threat = true; });
+      if (threat) arcFigStep(esc, esc.safeX + 16, esc.safeY + 16, 62, dt);
+      else {
+        var wx = esc.anchorX + Math.sin(tNow / 2400 + esc.seed) * 26, wy = esc.anchorY + Math.cos(tNow / 2900 + esc.seed) * 18;
+        if (Math.hypot(wx - ex, wy - ey) > 12) arcFigStep(esc, wx, wy, 26, dt);
+      }
+    });
+    var anyAlive = false;
+    for (i = 0; i < f.figs.length; i++) {
+      fig = f.figs[i];
+      if (fig.flashT > 0) fig.flashT = Math.max(0, fig.flashT - dt);
+      if (fig.resVibT > 0) fig.resVibT = Math.max(0, fig.resVibT - dt);
+      if (fig.atkAnimT > 0) fig.atkAnimT = Math.max(0, fig.atkAnimT - dt);
+      if (fig.holdT > 0) fig.holdT = Math.max(0, fig.holdT - dt);
+      if (fig.sealT > 0) fig.sealT = Math.max(0, fig.sealT - dt);
+      if (fig.shieldT > 0) fig.shieldT = Math.max(0, fig.shieldT - dt);
+      if (fig.shieldFloatT > 0) fig.shieldFloatT = Math.max(0, fig.shieldFloatT - dt);
+      if (fig.dead) continue;
+      if (fig.fleeing) {
+        fig.fleeT += dt;
+        arcFigStep(fig, fig.x + 16 + (fig.x + 16 - pcx) * 4, fig.y + 16 + (fig.y + 16 - pcy) * 4, fig.speed * 1.7, dt);
+        if (fig.fleeT > 2.2 || Math.hypot(fig.x + 16 - pcx, fig.y + 16 - pcy) > 300) fig.dead = true;
+        else anyAlive = true;
+        continue;
+      }
+      anyAlive = true;
+      var dist = Math.hypot(fig.x + 16 - pcx, fig.y + 16 - pcy);
+      if (fig.holdT > 0 || fig.sealT > 0) continue;
+      /* Hồn loạn (ch.20): không đuổi đánh người chơi — sạt chậm quanh
+         sân và xả SÓNG LỆCH theo chu kỳ ~6 giây (vùng báo trước tại ô
+         người chơi + người chơi nghe được sóng lệch nên Tĩnh Âm dâng). */
+      if (fig.soulChaos) {
+        fig.waveT -= dt;
+        if (fig.waveT <= 0) {
+          fig.waveT = 6;
+          f.zones.push({ x: pcx, y: pcy, r: 2.2 * TILE, t: 0.9, dur: 0.9, dmgPct: 0.10, kind: 'soul' });
+          arcBossCastFx(fig.x + 16, fig.y + 16, '150,190,255', false); // gộp cung IV: nhịp phát lúc thực thể hồn loạn xả SÓNG LỆCH
+          state.silence = Math.min(L.SILENCE_MAX || 100, (state.silence || 0) + 30);
+          addFloat(pcx, pcy - 34, 'NGHE SÓNG LỆCH — TĨNH ÂM DÂNG!', '150,200,255');
+          refreshHUD();
+        }
+        var swx = fig.homeX + 16 + Math.sin(tNow / 3400) * 42, swy = fig.homeY + 16 + Math.cos(tNow / 4100) * 26;
+        if (Math.hypot(swx - (fig.x + 16), swy - (fig.y + 16)) > 10) arcFigStep(fig, swx, swy, 20, dt);
+        continue;
+      }
+      /* Quán quân (ch.18): chu kỳ HỘ THỂ + TRẤN ĐỊA + QUÉT ĐÔI. */
+      if (fig.champ) {
+        if (fig.shieldT <= 0) {
+          fig.shieldCd -= dt;
+          if (fig.shieldCd <= 0) {
+            fig.shieldT = 3; fig.shieldCd = 9;
+            addFloat(fig.x + 16, fig.y - 34, 'HỘ THỂ!', '255,214,150');
+            rings.push({ x: fig.x + 16, y: fig.y + 16, r: 8, a: 0.9 });
+            arcBossCastFx(fig.x + 16, fig.y + 16, '255,214,150', false); // gộp cung IV: nhịp phát lúc chiêu ra cho HỘ THỂ
+          }
+        }
+        fig.zoneT -= dt;
+        if (fig.zoneT <= 0) {
+          fig.zoneT = 7;
+          if (dist <= 6 * TILE) {
+            f.zones.push({ x: pcx, y: pcy, r: 2.2 * TILE, t: 1.2, dur: 1.2, dmgPct: 0.12, kind: 'champ' });
+            addFloat(pcx, pcy - 34, 'NÉ!', '255,150,110');
+            arcBossCastFx(fig.x + 16, fig.y + 16, '255,214,150', false); // gộp cung IV: nhịp phát tại quán quân khi TRẤN ĐỊA ra chiêu
+          }
+        }
+        if (fig.sweep) {
+          var sw = fig.sweep;
+          sw.t -= dt;
+          if (sw.t <= 0) {
+            if (Math.hypot(fig.x + 16 - pcx, fig.y + 16 - pcy) <= 48) { arcFigStrike(fig); if (!arcFig) return; }
+            // Nhịp hai: sau nhịp một 0,4 giây là báo trước 0,3 giây (nhanh hơn nhịp một) rồi mới đánh.
+            if (sw.phase === 1) { fig.sweep = { phase: 2, t: 0.4 + 0.3 }; arcBossCastFx(fig.x + 16, fig.y + 16, '255,214,150', false); } // gộp cung IV: nhịp phát QUÉT ĐÔI nhịp hai
+            else fig.sweep = null;
+          }
+          continue;
+        }
+      }
+      /* Chọn mục tiêu: nhân chứng chưa ngã trong 5,5 ô và gần hơn
+         người chơi thì địch đánh nhân chứng, ngược lại đánh người chơi. */
+      var tgtX = pcx, tgtY = pcy, tgtEsc = null, tgtCart = null;
+      if (f.escorts.length) {
+        var bestEsc = null, bestEscD = 5.5 * TILE;
+        f.escorts.forEach(function (esc) {
+          if (esc.injured) return;
+          var ed = Math.hypot(esc.x + 16 - (fig.x + 16), esc.y + 16 - (fig.y + 16));
+          if (ed < bestEscD) { bestEscD = ed; bestEsc = esc; }
+        });
+        if (bestEsc && bestEscD < dist) { tgtEsc = bestEsc; tgtX = bestEsc.x + 16; tgtY = bestEsc.y + 16; }
+      }
+      /* Đợt 3 ch.21: xe hàng (cfg.carts) là mục tiêu như nhân chứng đợt
+         2 — địch trong 5,5 ô quanh xe và gần xe hơn người chơi thì đánh
+         xe (đọc từ cfg.carts qua f.carts; xe đã mất/'saved' không còn
+         là mục tiêu, xe đang trượt vẫn bị đánh). */
+      if (f.carts && f.carts.length && !tgtEsc) {
+        var bestCart = null, bestCartD = 5.5 * TILE;
+        f.carts.forEach(function (ct) {
+          if (!ct.targetable || ct.state === 'lost' || ct.state === 'saved') return;
+          var cd = Math.hypot(ct.x - (fig.x + 16), ct.y - (fig.y + 16));
+          if (cd < bestCartD) { bestCartD = cd; bestCart = ct; }
+        });
+        if (bestCart && bestCartD < dist) { tgtCart = bestCart; tgtX = bestCart.x; tgtY = bestCart.y; }
+      }
+      var tdist = Math.hypot(fig.x + 16 - tgtX, fig.y + 16 - tgtY);
+      if (tdist > 40) arcFigStep(fig, tgtX, tgtY, fig.speed, dt);
+      else {
+        fig.atkT -= dt;
+        if (fig.atkT <= 0) {
+          fig.atkT = fig.interval * arcFigEyeFactor();
+          if (fig.champ) { fig.sweep = { phase: 1, t: 0.45 }; arcBossCastFx(fig.x + 16, fig.y + 16, '255,214,150', false); } // gộp cung IV: nhịp phát lúc QUÉT ĐÔI ra chiêu
+          else if (tgtCart) arcFigCartStrike(fig, tgtCart);
+          else if (tgtEsc) arcFigEscortStrike(fig, tgtEsc);
+          else { arcFigStrike(fig); if (!arcFig) return; }
+        }
+      }
+    }
+    if (!anyAlive && arcFig) arcFigNextWave();
+  }
+  function arcFigTargets() {
+    var out = [];
+    if (!arcFig) return out;
+    arcFig.figs.forEach(function (fig) { if (!fig.dead && !fig.fleeing) out.push({ kind: 'fig', fig: fig, x: fig.x + 16, y: fig.y + 16 }); });
+    arcEyes.forEach(function (e) { if (!e.sealed && e.hp != null) out.push({ kind: 'eye', eye: e, x: e.x, y: e.y }); });
+    return out;
+  }
+  function arcFigNearest(rangeTiles, kinds) {
+    var pcx = px + 16, pcy = py + 16, best = null, bd = rangeTiles * TILE;
+    arcFigTargets().forEach(function (t) {
+      if (kinds && kinds.indexOf(t.kind) < 0) return;
+      var d = Math.hypot(t.x - pcx, t.y - pcy);
+      if (d <= bd) { bd = d; best = t; }
+    });
+    return best;
+  }
+  function arcFigApplyHit(tgt, power, opts) {
+    opts = opts || {};
+    if (!tgt) return;
+    var crit = Math.random() < 0.10;
+    var dmg = crit ? Math.round(power * 1.6) : power;
+    if (tgt.kind === 'eye') {
+      var e = tgt.eye;
+      // Đợt 3: mắt đang đóng băng chịu kiếm x1,5 (chỉ mắt có frozenT —
+      // mắt của các trận cũ không bao giờ có trường này).
+      if (e.frozenT > 0) dmg = Math.round(dmg * 1.5);
+      e.hp -= dmg;
+      addDmgFloat(e.x, e.y - 26, '-' + dmg, '200,208,220', { size: 17, targetKey: 'arceye' });
+      spawnParts(e.x, e.y, 4, '148,163,184', 22, false);
+      sfxHitBlade();
+      if (e.hp <= 0) {
+        var ix = arcEyes.indexOf(e); if (ix >= 0) arcEyes.splice(ix, 1);
+        rings.push({ x: e.x, y: e.y, r: 10, a: 0.95 });
+        spawnParts(e.x, e.y, 14, '148,163,184', 34, false);
+        addFloat(e.x, e.y - 34, 'MẮT VỠ!', '200,208,220');
+        sfxSealBreak(170);
+      }
+      return;
+    }
+    var fig = tgt.fig;
+    // Đợt 3 ch.22: tên NGHE TIẾNG (spec listener) — lần trúng kiếm ĐẦU
+    // TIÊN vào hắn bị né hẳn (không sát thương, chỉ một lần mỗi trận).
+    if (fig.listener && !fig.listenerHeard && opts.kind === 'sword') {
+      fig.listenerHeard = true;
+      addFloat(fig.x + 16, fig.y - 44, 'NGHE ĐƯỢC NHỊP!', '255,214,150');
+      addDmgFloat(fig.x + 16, fig.y - 26, 'NÉ!', '255,214,150', { size: 17, targetKey: 'arcfig' });
+      spawnParts(fig.x + 16, fig.y + 16, 4, '200,210,220', 26, false);
+      sfxSword();
+      return;
+    }
+    // Đợt 2 ch.18: HỘ THỂ của quán quân — kiếm đánh vào lúc khiên dựng
+    // chỉ còn 25% uy lực (cộng hưởng không bị giảm: cửa sổ chờ khiên hạ
+    // là bài nhịp của trận, không khóa cứng đường thắng).
+    if (fig.champ && fig.shieldT > 0 && opts.kind === 'sword') {
+      dmg = Math.max(1, Math.round(dmg * 0.25));
+      if (fig.shieldFloatT <= 0) { fig.shieldFloatT = 0.8; addFloat(fig.x + 16, fig.y - 40, 'HỘ THỂ!', '255,214,150'); }
+    }
+    // Đợt 2 ch.19: quầng nhiễu của đầu lĩnh — đòn CỘNG HƯỞNG vào hắn
+    // giảm 50% (kiếm không bị ảnh hưởng), chữ nổi giới hạn nhịp 1,5s.
+    if (fig.jam && opts.kind === 'word') {
+      dmg = Math.max(1, Math.round(dmg * 0.5));
+      var fJam = arcFig;
+      if (fJam && fJam.jamFloatT <= 0) { fJam.jamFloatT = 1.5; addFloat(fig.x + 16, fig.y - 40, 'SÓNG NHIỄU!', '190,170,255'); }
+    }
+    if (fig.noKill && fig.hp - dmg <= Math.round(fig.hpMax * fig.fleeAt)) {
+      fig.hp = Math.round(fig.hpMax * fig.fleeAt);
+      fig.fleeing = true; fig.fleeT = 0;
+      addFloat(fig.x + 16, fig.y - 30, 'RÚT LUI!', '255,190,120');
+      addDmgFloat(fig.x + 16, fig.y - 26, '-' + dmg, (opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 19, targetKey: 'arcfig' });
+      return;
+    }
+    fig.hp = Math.max(0, fig.hp - dmg);
+    fig.flashT = 0.18;
+    if (opts.kind === 'word') fig.resVibT = 0.2;
+    addDmgFloat(fig.x + 16, fig.y - 26, '-' + dmg, (opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 19, targetKey: 'arcfig' });
+    if (opts.kind === 'sword') presentSwordHit(fig.x + 16, fig.y + 28, Math.atan2((py + 16) - (fig.y + 16), (px + 16) - (fig.x + 16)) + Math.PI, opts.move || 'tram', crit, opts.hitIdx || 0);
+    spawnParts(fig.x + 16, fig.y + 16, 5, '190,200,210', 30, false);
+    sfxHitBlade();
+    if (fig.hp <= 0) {
+      fig.dead = true;
+      spawnParts(fig.x + 16, fig.y + 20, 12, '170,180,190', 32, false);
+      spawnSmoke(fig.x + 16, fig.y + 12, 3);
+    }
+  }
+  function arcFigCastSword() {
+    var f = arcFig; if (!f) return;
+    var tgt = arcFigNearest(1.9, null);
+    if (!tgt) { toast('Chưa có mục tiêu trong tầm kiếm — lại gần đối thủ hoặc mắt trận.'); return; }
+    var mv = bestSwordMove();
+    var r = L.castSword(state, mv.id);
+    if (!r.ok) { toast(r.reason); return; }
+    arcFaceTo(tgt.x, tgt.y);
+    sfxSword();
+    var gain = L.techniqueGain(state, 'that_tinh', 2);
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp('that_tinh', gain.tier);
+    startSwordBody(mv.id, tNow, r.hits > 1 ? tNow + 120 : null);
+    for (var i = 0; i < r.hits; i++) {
+      if (i === 0) arcFigApplyHit(tgt, r.power, { kind: 'sword', move: mv.id, hitIdx: 0 });
+      else f.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id, hitIdx: i, tgt: tgt });
+      if (!arcFig) return;
+    }
+    refreshHUD();
+  }
+  function arcFigCastWord(skill) {
+    var f = arcFig; if (!f) return;
+    if (state.flags.ch15ResonanceLock || state.flags.arcResLocked) { toast('Vòng nhiễu loạn sóng khóa chặt cộng hưởng — sóng không tới được. Đã học bậc Hưởng cũng vô dụng ở đây; dùng kiếm quyết và công pháp!'); return; }
+    if (skill === 'dinh' && f.usedDinh >= 2 && !f.soulChaos && !f.rescueHold) { toast('Trận này đã dùng Định Âm hai lần — uy lực hưởng cần khoảng lặng dài mới tụ lại được.'); return; }
+    if (skill === 'phong' && f.usedPhong >= 1) { toast('Trận này đã dùng Phong Âm một lần — ấn hưởng không thể chồng thêm ấn.'); return; }
+    // Đợt 2 ch.19: Định Âm giữ XE VĂN THƯ — điểm đặc biệt xử lý TRƯỚC
+    // khi chọn figure: xe đang nghiêng và người chơi trong 3,2 ô quanh
+    // xe thì đòn Định này thuộc về xe, không thuộc về địch gần đó.
+    if (skill === 'dinh' && f.cart && f.cart.state === 'tilting' && Math.hypot(f.cart.x - (px + 16), f.cart.y - (py + 16)) <= 3.2 * TILE) {
+      arcFaceTo(f.cart.x, f.cart.y);
+      var cartSilenceBefore = state.silence;
+      var rc = L.castWord(state, 'dinh');
+      if (!rc.ok) { toast(rc.reason); return; }
+      f.usedDinh++;
+      startResBody(false);
+      spawnPillar(f.cart.x, f.cart.y + 14, { top: 'purple', dur: 0.85, h: 105 });
+      castResonanceFx('dinh', f.cart.x, f.cart.y, { silenceBefore: cartSilenceBefore, baseFreq: 300, target: null });
+      f.cart.state = 'saved';
+      addFloat(f.cart.x, f.cart.y - 44, 'GIỮ ĐƯỢC XE!', '255,224,150');
+      addDmgFloat(f.cart.x, f.cart.y - 40, (WORD_FLOAT.dinh || ['ĐỊNH!', '170,220,255'])[0], '170,220,255', { size: 22, life: 0.9 });
+      refreshHUD();
+      return;
+    }
+    /* Đợt 3: Định Âm giữ XE HÀNG tổng quát (cfg.carts) — cùng khuôn xe
+       văn thư đợt 2 nhưng điểm giữ đọc từ f.carts: xe nào đang 'tilting'
+       và người chơi trong 3,2 ô quanh xe thì đòn Định thuộc về xe ấy. */
+    if (skill === 'dinh' && f.carts && f.carts.length) {
+      var tiltCart = null;
+      f.carts.forEach(function (ct) { if (ct.state === 'tilting' && Math.hypot(ct.x - (px + 16), ct.y - (py + 16)) <= 3.2 * TILE) tiltCart = ct; });
+      if (tiltCart) {
+        arcFaceTo(tiltCart.x, tiltCart.y);
+        var cartSilenceBefore3 = state.silence;
+        var rc3 = L.castWord(state, 'dinh');
+        if (!rc3.ok) { toast(rc3.reason); return; }
+        f.usedDinh++;
+        startResBody(false);
+        spawnPillar(tiltCart.x, tiltCart.y + 14, { top: 'purple', dur: 0.85, h: 105 });
+        castResonanceFx('dinh', tiltCart.x, tiltCart.y, { silenceBefore: cartSilenceBefore3, baseFreq: 300, target: null });
+        tiltCart.state = 'saved';
+        addFloat(tiltCart.x, tiltCart.y - 44, 'GIỮ ĐƯỢC XE!', '255,224,150');
+        addDmgFloat(tiltCart.x, tiltCart.y - 40, (WORD_FLOAT.dinh || ['ĐỊNH!', '170,220,255'])[0], '170,220,255', { size: 22, life: 0.9 });
+        refreshHUD();
+        return;
+      }
+    }
+    /* Đợt 3 ch.24 (cfg.rescueHold): Định Âm GIỮ ĐIỂM CỨU NGƯỜI — người
+       chơi trong 3,2 ô quanh điểm giữ thì đòn Định tính một lần giữ
+       (nới giới hạn usedDinh như khuôn soulChaos đợt 2 ở đầu hàm); đủ
+       số lần giữ mà trận đã hết đợt/mắt thì pha 'holds' tự khép thắng
+       ở updateArcFig, đang còn đợt thì giữ tích lũy sẵn. */
+    if (skill === 'dinh' && f.rescueHold) {
+      var rhX = f.rescueHold.tx * TILE + 16, rhY = f.rescueHold.ty * TILE + 16;
+      if (Math.hypot(rhX - (px + 16), rhY - (py + 16)) <= 3.2 * TILE) {
+        arcFaceTo(rhX, rhY);
+        var rhSilenceBefore = state.silence;
+        var rrh = L.castWord(state, 'dinh');
+        if (!rrh.ok) { toast(rrh.reason); return; }
+        f.usedDinh++;
+        startResBody(false);
+        spawnPillar(rhX, rhY + 14, { top: 'purple', dur: 0.85, h: 105 });
+        castResonanceFx('dinh', rhX, rhY, { silenceBefore: rhSilenceBefore, baseFreq: 300, target: null });
+        f.rescueHolds++;
+        rings.push({ x: rhX, y: rhY, r: 10, a: 0.9 });
+        addFloat(rhX, rhY - 52, 'GIỮ! (' + f.rescueHolds + '/' + (f.rescueHold.need || 2) + ')', '170,220,255');
+        addDmgFloat(rhX, rhY - 40, (WORD_FLOAT.dinh || ['ĐỊNH!', '170,220,255'])[0], '170,220,255', { size: 22, life: 0.9 });
+        refreshHUD();
+        return;
+      }
+    }
+    /* Đợt 3 (cfg.eyeDinhFreeze): Định Âm vào MẮT trận của cfg này KHÔNG
+       đi đường "mắt không chịu Định" ở dưới — đòn Định tiêu hao như
+       thường và đóng băng mắt 4 giây (hết eyeFactor, kiếm x1,5 lúc
+       băng — xem arcFigEyeFactor/arcFigApplyHit). */
+    if (skill === 'dinh' && f.eyeDinhFreeze) {
+      var eyeFr = arcFigNearest(3.2, null);
+      if (eyeFr && eyeFr.kind === 'eye') {
+        arcFaceTo(eyeFr.x, eyeFr.y);
+        var eyeSilenceBefore = state.silence;
+        var rfe = L.castWord(state, 'dinh');
+        if (!rfe.ok) { toast(rfe.reason); return; }
+        f.usedDinh++;
+        startResBody(false);
+        spawnPillar(eyeFr.x, eyeFr.y + 14, { top: 'purple', dur: 0.85, h: 105 });
+        castResonanceFx('dinh', eyeFr.x, eyeFr.y, { silenceBefore: eyeSilenceBefore, baseFreq: 300, target: null });
+        eyeFr.eye.frozenT = 4;
+        addFloat(eyeFr.x, eyeFr.y - 44, 'MẮT ĐÓNG BĂNG!', '170,220,255');
+        addDmgFloat(eyeFr.x, eyeFr.y - 40, (WORD_FLOAT.dinh || ['ĐỊNH!', '170,220,255'])[0], '170,220,255', { size: 22, life: 0.9 });
+        refreshHUD();
+        return;
+      }
+    }
+    // PHONG ưu tiên mắt trận trong tầm (đường thắng b của ch.14: phong
+    // ấn NGAY GIỮA TRẬN) — đúng ngữ cảnh arcPhongContext đã dựng.
+    var eyeTgt = null;
+    if (skill === 'phong') eyeTgt = arcFigNearest(3.2, ['eye']);
+    var tgt = eyeTgt || arcFigNearest(3.2, ['fig']);
+    if (!tgt) { toast('Chưa có mục tiêu trong tầm sóng 3,2 ô.'); return; }
+    // Mắt trận không có nhịp sóng để Phá/Chấn/Định — kiểm tra TRƯỚC khi
+    // castWord tiêu Tĩnh Âm (kiếm phá mắt, Phong Âm phong ấn mắt).
+    if (skill !== 'phong' && tgt.kind !== 'fig') { toast('Mắt trận không chịu Phá/Chấn/Định Âm — dùng kiếm phá nó, hoặc Phong Âm phong ấn.'); return; }
+    arcFaceTo(tgt.x, tgt.y);
+    var silenceBefore = state.silence;
+    var r = L.castWord(state, skill);
+    if (!r.ok) { toast(r.reason); return; }
+    startResBody(false);
+    var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
+    if (skill === 'phong') {
+      f.usedPhong++;
+      arcEyes.forEach(function (e) { if (!e.sealed && Math.hypot(e.x - (px + 16), e.y - (py + 16)) <= 3.2 * TILE) arcSealEye(e); });
+      if (tgt.kind === 'fig') { tgt.fig.sealT = tgt.fig.interval * 2; arcFigApplyHit(tgt, r.power, { kind: 'word', skill: 'phong' }); }
+      spawnPillar(px + 16, py + 30, { dur: 0.9, h: 112 });
+    } else if (skill === 'dinh') {
+      f.usedDinh++;
+      tgt.fig.holdT = tgt.fig.interval;
+      spawnPillar(tgt.x, tgt.y + 14, { top: 'purple', dur: 0.85, h: 105 });
+      castResonanceFx('dinh', tgt.x, tgt.y + 14, { silenceBefore: silenceBefore, baseFreq: 300, target: tgt.fig });
+      // Đợt 2 ch.20: Định Âm GIỮ NHỊP hồn loạn — không giới hạn 2 lần
+      // (đã nới ở đầu hàm); đủ số lần giữ thì trận khép theo đường A.
+      if (f.soulChaos && tgt.fig.soulChaos) {
+        f.soulHolds++;
+        addFloat(tgt.x, tgt.y - 52, 'GIỮ! (' + f.soulHolds + '/' + (f.soulChaos.need || 3) + ')', '170,220,255');
+        if (f.soulHolds >= (f.soulChaos.need || 3)) { refreshHUD(); arcFigSoulHoldWin(); return; }
+      }
+    } else {
+      castResonanceFx(skill, tgt.x, tgt.y + 14, { silenceBefore: silenceBefore, baseFreq: 300, target: tgt.fig });
+      shakeWorld(0.3);
+      arcFigApplyHit(tgt, r.power, { kind: 'word', skill: skill });
+    }
+    addDmgFloat(tgt.x, tgt.y - 40, wf[0], wf[1], { size: 22, life: 0.9 });
+    refreshHUD();
+  }
+
+  /* ---------- Kịch bản trận chương 14 + 15 ---------- */
+  function arcStartCh14SiteFight() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    var eye = arcAddEye(47 * TILE + 16, 38 * TILE + 16, { label: 'Mắt trận loạn sóng' });
+    eye.hp = 300;
+    arcFigStart({ id: 'ch14_site', eyeBoost: 0.7, requireEyesDown: true,
+      waves: [[
+        { tx: 45, ty: 38, look: 'villager_m', name: 'Tay chân thuê', title: 'Nhóm giữ đất thuê', hp: 620, atk: 14, interval: 1.5, speed: 56 },
+        { tx: 49, ty: 38, look: 'villager_m', name: 'Tay chân thuê', title: 'Nhóm giữ đất thuê', hp: 660, atk: 14, interval: 1.5, speed: 56 },
+        { tx: 45, ty: 40, look: 'villager_f', name: 'Tay chân thuê', title: 'Nhóm giữ đất thuê', hp: 700, atk: 15, interval: 1.5, speed: 58 },
+        { tx: 49, ty: 40, look: 'player_nam', name: 'Tên cầm đầu nhóm thuê', title: 'Nhóm giữ đất thuê', hp: 760, atk: 15, interval: 1.4, speed: 58 }
+      ]],
+      onWin: function () {
+        state.flags.q14SiteDone = true;
+        say(ST.SCENE_CH14_HIEN_TRUONG_END, function () {
+          state.quest = 'q14_tu_choi'; refreshHUD(); saveNow();
+          toast('Hiện trường đã yên vĩnh viễn — nơi đây thành điểm hái dược nhỏ (tương tác tại chỗ, một lượt mỗi ngày). Về đại điện báo lại trưởng lão.', 4800);
+        });
+      } });
+    toast('Mắt trận loạn sóng đang chạy giữa hiện trường: còn nó đứng, nhịp đánh của nhóm thuê nhanh hơn hẳn. Hai đường thắng: hạ cả nhóm rồi phong ấn mắt — hoặc phong ấn mắt NGAY GIỮA TRẬN bằng Phong Âm khi đứng gần mắt.', 5600);
+  }
+  function arcStartCh15Rescue() {
+    if (arcFig || !state) return;
+    // Cờ khóa cộng hưởng ch.15 (A.4): BẬT khi vào trận, TẮT khi trận
+    // khép (arcFigWin qua onWin / arcFigLose đều tắt).
+    state.flags.ch15ResonanceLock = true; refreshHUD();
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch15_rescue', eyeBoost: 0.8,
+      eyesAtWave: { 1: [{ tx: 44, ty: 35, mobile: true }, { tx: 50, ty: 41, mobile: true }] },
+      waves: [
+        [
+          { tx: 44, ty: 34, look: 'villager_m', name: 'Tay chân Huyết Bạc Cung', title: 'Đợt thử trận', hp: 600, atk: 14, interval: 1.5, speed: 56 },
+          { tx: 50, ty: 34, look: 'villager_m', name: 'Tay chân Huyết Bạc Cung', title: 'Đợt thử trận', hp: 600, atk: 14, interval: 1.5, speed: 56 },
+          { tx: 47, ty: 44, look: 'villager_f', name: 'Tay chân Huyết Bạc Cung', title: 'Đợt thử trận', hp: 640, atk: 14, interval: 1.5, speed: 56 }
+        ],
+        [
+          { tx: 43, ty: 38, look: 'villager_m', name: 'Tên cầm trận', title: 'Giữ mắt trận di động', hp: 700, atk: 15, interval: 1.5, speed: 58 },
+          { tx: 51, ty: 38, look: 'villager_m', name: 'Tên cầm trận', title: 'Giữ mắt trận di động', hp: 700, atk: 15, interval: 1.5, speed: 58 }
+        ],
+        [
+          { tx: 44, ty: 42, look: 'villager_m', name: 'Tay chân Huyết Bạc Cung', title: 'Đợt thử trận', hp: 720, atk: 15, interval: 1.4, speed: 58 },
+          { tx: 50, ty: 42, look: 'villager_f', name: 'Tay chân Huyết Bạc Cung', title: 'Đợt thử trận', hp: 720, atk: 15, interval: 1.4, speed: 58 },
+          { tx: 47, ty: 34, look: 'luc_tranh', name: 'Kẻ Chỉ Huy Đợt Thử Trận', title: 'Huyết Bạc Cung', hp: 1500, atk: 16, interval: 1.4, speed: 60, noKill: true, fleeAt: 0.35 }
+        ]
+      ],
+      onWin: function () {
+        state.flags.ch15ResonanceLock = false; refreshHUD();
+        say(ST.SCENE_CH15_CUU_DOAN_END, function () {
+          state.quest = 'q15_truy_duoi'; refreshHUD(); saveNow();
+          toast('Chỉ huy đã rút về hướng nam đường mòn — đuổi theo tới điểm cuối chặng quanh (45,50)!', 4200);
+        });
+      } });
+    toast('Vòng nhiễu loạn sóng đã khép: cộng hưởng bị KHÓA — chỉ kiếm quyết và công pháp dùng được. Hai mắt trận di động ở đợt hai: còn mắt đứng thì đợt địch nạp nhịp nhanh hơn; phá mắt bằng kiếm là đường tắt.', 5600);
+  }
+  function arcStartCh15Chase(n) {
+    if (arcFig || !state) return;
+    if (n === 1) {
+      arcFigStart({ id: 'ch15_chase1', waves: [[
+        { tx: 44, ty: 51, look: 'villager_m', name: 'Tay chân chốt chặn', title: 'Huyết Bạc Cung', hp: 480, atk: 12, interval: 1.5, speed: 58 },
+        { tx: 47, ty: 52, look: 'villager_m', name: 'Tay chân chốt chặn', title: 'Huyết Bạc Cung', hp: 480, atk: 12, interval: 1.5, speed: 58 }
+      ]], onWin: function () {
+        say(ST.SCENE_CH15_TRUY_DUOI_2, function () { arcStartCh15Chase(2); });
+      } });
+    } else {
+      arcFigStart({ id: 'ch15_chase2', waves: [[
+        { tx: 42, ty: 53, look: 'villager_m', name: 'Tay chân chốt chặn', title: 'Huyết Bạc Cung', hp: 520, atk: 13, interval: 1.5, speed: 58 },
+        { tx: 45, ty: 55, look: 'villager_f', name: 'Tay chân chốt chặn', title: 'Huyết Bạc Cung', hp: 520, atk: 13, interval: 1.5, speed: 58 }
+      ]], onWin: function () {
+        state.flags.ch15ChaseDone = true;
+        // Chỉ huy thoát bằng BÙNG NHIỄU ở cuối chặng (43,54) — không
+        // chết; mảnh lõi pháp khí vỡ rơi lại đã nằm trong cảnh END.
+        var bx = 43 * TILE + 16, by = 54 * TILE + 16;
+        rings.push({ x: bx, y: by, r: 10, a: 0.95 });
+        spawnParts(bx, by, 18, '148,163,184', 42, false);
+        sfxChan(); shakeWorld(0.3);
+        say(ST.SCENE_CH15_TRUY_DUOI_END, function () {
+          state.quest = 'q15_bao_cao'; refreshHUD(); saveNow();
+          toast('Chỉ huy đã thoát bằng bùng nhiễu, để lại mảnh lõi pháp khí vỡ. Về đại điện báo cáo trưởng lão.', 4200);
+        });
+      } });
+    }
+  }
+
+  /* ---------- Kịch bản trận chương 18–20 (đợt 2) ---------- */
+  // Ch.18: trận đấu công khai với quán quân Đỗ gia tại sân phủ Cô Châu.
+  // [ĐỀ XUẤT SỐ] hp 1300 / atk 15 / speed 52 theo hợp đồng B.6a.
+  function arcStartCh18ChampFight() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch18_champ',
+      waves: [[
+        { tx: 51, ty: 27, look: 'luc_tranh', name: 'Vô Địch Đỗ Gia', title: 'Vô địch của Đỗ gia', hp: 1300, atk: 15, interval: 1.5, speed: 52, champ: true }
+      ]],
+      onWin: function () {
+        say(ST.SCENE_CH18_DAU_XONG, function () {
+          arcClaimToast('q18_champion');
+          state.quest = 'q18_chung_cu'; refreshHUD(); saveNow();
+          toast('Hai nhà đã cam kết giữ hòa tới phiên phân xử. Giờ gom chứng cứ khắp thành — hỏi chủ sạp chợ ở Cô Châu.', 4600);
+        });
+      } });
+    toast('Trận đấu công khai bắt đầu: quán quân Đỗ gia có HỘ THỂ theo chu kỳ (kiếm chỉ còn 25% khi khiên dựng), TRẤN ĐỊA vẽ vùng báo trước trên đất — rời vùng trước khi nổ, và QUÉT ĐÔI hai nhịp khi áp sát.', 5600);
+  }
+  // Ch.19: phục kích đoàn nhân chứng ở phố nam. Đợt 2 có xe văn thư,
+  // đợt 3 có đầu lĩnh quầng nhiễu. [ĐỀ XUẤT SỐ] hp các đợt theo B.6b.
+  function arcStartCh19Ambush() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch19_ambush', cart: true,
+      escorts: [
+        { tx: 50, ty: 62, look: 'villager_old', name: 'Người Giữ Sổ', hp: 300 },
+        { tx: 52, ty: 62, look: 'villager_m', name: 'Người Giữ Đập', hp: 300 },
+        { tx: 51, ty: 60, look: 'villager_f', name: 'Người Ghi Chép', hp: 300 }
+      ],
+      waves: [
+        [
+          { tx: 48, ty: 59, look: 'villager_m', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 620, atk: 13, interval: 1.5, speed: 56 },
+          { tx: 54, ty: 59, look: 'villager_m', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 620, atk: 13, interval: 1.5, speed: 56 },
+          { tx: 48, ty: 65, look: 'villager_f', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 620, atk: 13, interval: 1.5, speed: 58 }
+        ],
+        [
+          { tx: 54, ty: 65, look: 'villager_m', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 680, atk: 13, interval: 1.5, speed: 56 },
+          { tx: 49, ty: 58, look: 'villager_m', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 680, atk: 14, interval: 1.5, speed: 58 },
+          { tx: 53, ty: 66, look: 'villager_f', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 680, atk: 14, interval: 1.4, speed: 58 }
+        ],
+        [
+          { tx: 48, ty: 60, look: 'villager_m', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 680, atk: 14, interval: 1.5, speed: 58 },
+          { tx: 54, ty: 60, look: 'villager_f', name: 'Tay đánh thuê', title: 'Phía thua thuê', hp: 680, atk: 14, interval: 1.5, speed: 58 },
+          { tx: 51, ty: 58, look: 'luc_tranh', name: 'Đầu Lĩnh Phục Kích', title: 'Mang pháp khí loạn sóng', hp: 1500, atk: 15, interval: 1.4, speed: 58, jam: true, noKill: true, fleeAt: 0.25 }
+        ]
+      ],
+      onWin: function (fDone) {
+        var clean = fDone && !(fDone.escorts || []).some(function (e) { return e.injured; }) && !(fDone.cart && fDone.cart.state === 'tipped');
+        say(clean ? ST.SCENE_CH19_PHUC_KICH_XONG_A : ST.SCENE_CH19_PHUC_KICH_XONG_B, function () {
+          state.quest = 'q19_vet_ran'; refreshHUD(); saveNow();
+          toast('Đoàn nhân chứng đã qua cơn nguy. Đưa họ về tới cổng nam thành — đi xuống dải cổng phía nam phố.', 4600);
+        });
+      },
+      onLose: function () { state.flags.ch19AmbushStarted = false; refreshHUD(); saveNow(); } });
+    toast('Phục kích! Giữ cho ba nhân chứng sống sót — họ sẽ chạy về cổng nam khi địch áp sát, và địch sẽ đổi mục tiêu sang họ. Đợt hai có xe văn thư: dùng Định Âm gần xe để giữ xe khỏi đổ.', 5600);
+  }
+  // Ch.20: đuôi chung của hai đường kết trận hồn loạn — cảnh ghi nhận
+  // theo cờ soulPublic, công nhận phẩm hồn 4 qua logic, đặt cờ xong.
+  function arcSoulRecognizeTail() {
+    say(state.flags.soulPublic ? ST.SCENE_CH20_GHI_NHAN_A : ST.SCENE_CH20_GHI_NHAN_B, function () {
+      if (L.arcIvRecognizeSoulRank4) L.arcIvRecognizeSoulRank4(state);
+      state.flags.ch20SoulDone = true;
+      refreshHUD(); saveNow();
+      toast('Tư cách Hồn Sư đã được ghi nhận — phẩm hồn 4. Về Tĩnh Quan Lâu gặp Trần Chính Đạo để trao lời đáp.', 4800);
+    });
+  }
+  function arcFigSoulHoldWin() {
+    // Đường A: giữ nhịp đủ 3 lần bằng Định Âm — dọn trận trước, thưởng
+    // hồn lực đầy đủ +30 [ĐỀ XUẤT SỐ theo B.6c], rồi cảnh kết + ghi nhận.
+    if (!arcFig) return;
+    arcFig = null; arcEyes.length = 0;
+    state.soulPower = (state.soulPower || 0) + 30;
+    say(ST.SCENE_CH20_HON_LOAN_XONG_A, function () { arcSoulRecognizeTail(); });
+  }
+  function arcStartCh20SoulFight() {
+    if (arcFig || !state) return;
+    state.flags.ch20SoulStarted = true;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch20_soul', soulChaos: { need: 3 },
+      waves: [[
+        { tx: 62, ty: 60, look: 'villager_m', name: 'Hồn Loạn', title: 'Hồn lệch tần', hp: 1100, atk: 13, interval: 1.5, speed: 20, soulChaos: true, monsterLook: 'oan_hon_chien_truong' }
+      ]],
+      onWin: function () {
+        // Đường B: hạ gục trước khi giữ đủ nhịp — hồn lực +15.
+        state.soulPower = (state.soulPower || 0) + 15;
+        say(ST.SCENE_CH20_HON_LOAN_XONG_B, function () { arcSoulRecognizeTail(); });
+      } });
+    toast('Hồn loạn đang vùng vẫy giữa sân tông: sóng lệch của nó làm Tĩnh Âm của ngươi dâng lên — dùng Định Âm giữ nhịp cho nó đủ 3 lần để trấn an trọn vẹn, hoặc đánh gục nó nếu không giữ nổi.', 5600);
+  }
+
+  /* ---------- Kịch bản trận chương 21–24 (đợt 3) ----------
+     Mọi số [ĐỀ XUẤT SỐ] lấy đúng hợp đồng đợt 3 mục B.6/B.7 (thang đợt
+     2). Ô spawn đều đã dò walkable bằng logic.js — riêng tâm vùng trận
+     (44,44) bị footprint gốc thông chiếm nên figure đứng QUANH tâm,
+     không đứng đúng tâm. */
+  // Ch.21 chặng 1: giữ đoàn ở cổng nam — 3 tay phá đoàn + 3 xe hàng
+  // (cfg.carts tổng quát; xe không trượt ở chặng này).
+  function arcStartCh21GateA() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch21_gate_a',
+      carts: [
+        { tx: 50, ty: 72, hp: 400 },
+        { tx: 52, ty: 72, hp: 400 },
+        { tx: 51, ty: 70, hp: 400 }
+      ],
+      waves: [[
+        { tx: 48, ty: 68, look: 'villager_m', name: 'Tay Phá Đoàn', title: 'Kẻ đánh vào hàng thật', hp: 620, atk: 13, interval: 1.5, speed: 56 },
+        { tx: 54, ty: 68, look: 'villager_f', name: 'Tay Phá Đoàn', title: 'Kẻ đánh vào hàng thật', hp: 620, atk: 13, interval: 1.5, speed: 58 },
+        { tx: 51, ty: 66, look: 'villager_m', name: 'Tay Phá Đoàn', title: 'Kẻ đánh vào hàng thật', hp: 620, atk: 13, interval: 1.4, speed: 58 }
+      ]],
+      onWin: function () {
+        say(ST.SCENE_CH21_PHU_CAT, function () { arcStartCh21GateB(); });
+      },
+      onLose: function () { state.flags.ch21GateStarted = false; refreshHUD(); saveNow(); } });
+    toast('Chúng đánh vào hàng thật! Giữ ba xe hàng ở cổng nam — địch gần xe hơn ngươi sẽ quay sang phá xe. Xe mất hết là đoàn mất trắng.', 5600);
+  }
+  // Ch.21 chặng 2: đợt phá đoàn thứ hai — tinh anh Kim Đan dẫn nhóm +
+  // quái dã tinh anh nhiễm sóng nhập hỗn chiến; xe (51,70) đang trượt.
+  function arcStartCh21GateB() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch21_gate_b',
+      carts: [
+        { tx: 50, ty: 72, hp: 400 },
+        { tx: 52, ty: 72, hp: 400 },
+        { tx: 51, ty: 70, hp: 400, tilt: true }
+      ],
+      waves: [[
+        { tx: 48, ty: 68, look: 'villager_m', name: 'Tay Phá Đoàn', title: 'Kẻ đánh vào hàng thật', hp: 680, atk: 14, interval: 1.5, speed: 56 },
+        { tx: 54, ty: 68, look: 'villager_f', name: 'Tay Phá Đoàn', title: 'Kẻ đánh vào hàng thật', hp: 680, atk: 14, interval: 1.5, speed: 58 },
+        { tx: 51, ty: 66, look: 'luc_tranh', name: 'Tinh Anh Kim Đan Dẫn Nhóm', title: 'Kẻ đánh vào hàng thật', hp: 1250, atk: 16, interval: 1.4, speed: 58, champ: true },
+        { tx: 55, ty: 71, look: 'villager_m', name: 'Sơn Lang Nhiễm Sóng', title: 'Quái dã tinh anh nhập hỗn chiến', hp: 1500, atk: 22, interval: 1.3, speed: 50, monsterLook: 'lang_nhiem_song' }
+      ]],
+      onWin: function (fDone) {
+        var lost = (fDone && fDone.carts) ? fDone.carts.filter(function (ct) { return ct.state === 'lost' || ct.state === 'tipped'; }).length : 0;
+        state.flags.q21HangNguyen = lost === 0;
+        if (lost >= 2) state.flags.q21HangThietHai = lost;
+        refreshHUD(); saveNow();
+        say(ST.SCENE_CH21_KHOP_CUA, function () {
+          state.quest = 'q21_danh_gia'; refreshHUD(); saveNow();
+          toast(lost === 0 ? 'Hàng còn nguyên cả ba xe. Về phủ Hứa — Chính Ngôn đang chờ cả nhà ở sân phủ.' : 'Đoàn đã qua cổng, nhưng mất ' + lost + ' xe hàng. Về phủ Hứa gặp Chính Ngôn ở sân phủ.', 4600);
+        });
+      },
+      onLose: function () { state.flags.ch21GateStarted = false; refreshHUD(); saveNow(); } });
+    toast('Đợt hai ập tới — có tinh anh Kim Đan dẫn nhóm và một con quái nhiễm sóng nhập hỗn chiến, đánh cả người lẫn xe! Xe giữa đang TRƯỢT: dùng Định Âm trong 3,2 ô quanh xe để giữ nó lại!', 5600);
+  }
+  // Ch.22: trận thám báo ở vành tuyến — 4 đệ tử Huyết Bạc (một tên
+  // listener) + 1 mắt trận vành chịu Định Âm đóng băng.
+  function arcStartCh22Scout() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch22_scout', eyeBoost: 0.75, eyeDinhFreeze: true,
+      eyesAtWave: { 0: [{ tx: 46, ty: 42 }] },
+      waves: [[
+        { tx: 42, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Đội thám báo', hp: 700, atk: 14, interval: 1.5, speed: 56 },
+        { tx: 47, ty: 44, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Đội thám báo', hp: 700, atk: 14, interval: 1.5, speed: 58 },
+        { tx: 44, ty: 41, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Đội thám báo', hp: 700, atk: 14, interval: 1.5, speed: 56, listener: true },
+        { tx: 45, ty: 47, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Đội thám báo', hp: 700, atk: 14, interval: 1.4, speed: 58 }
+      ]],
+      onWin: function () {
+        say(ST.SCENE_CH22_VANH_TRAN, function () {
+          state.quest = 'q22_tich_luy'; refreshHUD(); saveNow();
+          toast('Xác minh đã xong: trận hoàn chỉnh, có người điều, có cửa sổ mỏng nhịp. Về đại điện báo lại trưởng lão.', 4600);
+        });
+      },
+      onLose: function () { state.flags.ch22ScoutStarted = false; refreshHUD(); saveNow(); } });
+    toast('Đội thám báo của Huyết Bạc Cung! Một tên trong chúng NGHE được nhịp kiếm của ngươi. Mắt trận vành đang nạp nhịp cho chúng — dùng Định Âm khóa thẳng vào mắt để đóng băng nó, rồi phá bằng kiếm lúc băng chưa tan.', 5600);
+  }
+  // Ch.23 chặng 1: vòng vây khép — cộng hưởng bị khóa từ lúc cảnh
+  // VONG_VAY_MO khép (cờ đặt ở trigger vùng, tắt ở mọi đường khép trận).
+  function arcStartCh23EncircleA() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch23_encircle_a', requireEyesDown: true,
+      eyesAtWave: { 0: [{ tx: 42, ty: 42 }], 1: [{ tx: 47, ty: 47 }] },
+      waves: [
+        [
+          { tx: 42, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 750, atk: 15, interval: 1.5, speed: 56 },
+          { tx: 48, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 750, atk: 15, interval: 1.5, speed: 56 },
+          { tx: 44, ty: 48, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 750, atk: 15, interval: 1.5, speed: 58 }
+        ],
+        [
+          { tx: 43, ty: 42, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 820, atk: 15, interval: 1.5, speed: 58 },
+          { tx: 47, ty: 42, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 820, atk: 15, interval: 1.4, speed: 58 },
+          { tx: 40, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 820, atk: 15, interval: 1.5, speed: 56 }
+        ]
+      ],
+      onWin: function () {
+        // Cờ riêng của chặng 2 đặt TRƯỚC khi chặng 2 mở: thua chặng 2
+        // thì trigger vùng vào lại thẳng chặng 2 (không chơi lại chặng 1).
+        state.flags.ch23FightBStarted = true; refreshHUD(); saveNow();
+        say(ST.SCENE_CH23_DOI_TRAN, function () { arcStartCh23EncircleB(); });
+      },
+      onLose: function () {
+        state.flags.arcResLocked = false;
+        state.flags.ch23FightStarted = false;
+        refreshHUD(); saveNow();
+      } });
+    toast('Vòng vây đã khép — cộng hưởng bị KHÓA, chỉ kiếm quyết và công pháp dùng được. Phá các mắt trận ven đường (kiếm phá hoặc Phong Âm phong ấn) rồi mới hạ được vòng vây.', 5600);
+  }
+  // Ch.23 chặng 2: đợt dồn giữa đoàn + sóng kiếm điều trận theo nhịp.
+  function arcStartCh23EncircleB() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch23_encircle_b', requireEyesDown: true, cmdZones: { every: 7 },
+      eyesAtWave: { 0: [{ tx: 45, ty: 40 }] },
+      waves: [[
+        { tx: 42, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 880, atk: 16, interval: 1.5, speed: 58 },
+        { tx: 48, ty: 46, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 880, atk: 16, interval: 1.4, speed: 58 },
+        { tx: 44, ty: 48, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 880, atk: 16, interval: 1.5, speed: 56 }
+      ]],
+      onWin: function () {
+        // Cộng hưởng GIỮ khóa suốt chuỗi cảnh sau trận; chỉ mở lại khi
+        // SCENE_CH23_LUA_CHON khép (mỏm đá nằm ngoài vùng trận).
+        say(ST.SCENE_CH23_HUONG_SUP, function () {
+          var variant = state.flags.guardAssign === 'ky_cuu' ? ST.SCENE_CH23_HUONG_SUP_A
+            : state.flags.guardAssign === 'tre' ? ST.SCENE_CH23_HUONG_SUP_B : ST.SCENE_CH23_HUONG_SUP_C;
+          say(variant, function () {
+            state.quest = 'q23_lua_chon'; refreshHUD(); saveNow();
+            say(ST.SCENE_CH23_LUA_CHON, function () {
+              state.flags.arcResLocked = false; refreshHUD();
+              say(ST.SCENE_CH23_KHEP, function () {
+                arcClaimToast('q23_done');
+                state.quest = 'q24_lenh_cuu_nguoi'; refreshHUD(); saveNow();
+                toast('Vòng vây đã vỡ, đoàn co về mỏm đá an toàn. Tới chỗ đệ tử hộ tống ở đoạn hai vách (45,43) — khắc tiếp theo thuộc về lựa chọn của ngươi.', 4600);
+              });
+            });
+          });
+        });
+      },
+      onLose: function () {
+        state.flags.arcResLocked = false;
+        state.flags.ch23FightBRetry = true; // trigger vùng dùng cờ này để vào lại thẳng chặng 2
+        refreshHUD(); saveNow();
+      } });
+    toast('Đợt dồn giữa đoàn! Người điều trận xả SÓNG KIẾM theo nhịp đóng của trận — thấy vùng báo trước thì rời khỏi ô đứng ngay. Cộng hưởng vẫn bị khóa.', 5600);
+  }
+  // Ch.24: rẽ hai đường theo lựa chọn mỏm đá của ch.23 (B.7). Thiếu cờ
+  // ch24Path (lưu cũ/lệch pha) -> mặc định đường giữ bí mật, KHÔNG ghi sổ.
+  function arcStartCh24Path() {
+    if (arcFig || !state) return;
+    if (state.flags.ch24Path === 'phat_huong') {
+      if (!state.flags.ch24SpeechRecorded) {
+        L.recordSpeech(state, 24, 'ch24_lenh_cuu_nguoi', 'doan_ho_tong_va_dich');
+        state.flags.ch24SpeechRecorded = true;
+      }
+      refreshHUD(); saveNow();
+      say(ST.SCENE_CH24_PHAT_HUONG, function () { arcStartCh24Rescue(); });
+      return;
+    }
+    say(ST.SCENE_CH24_GIU_BI_MAT, function () { arcStartCh24Breakout(); });
+  }
+  // Ch.24 đường PHÁT HƯỞNG: trận cứu người — thắng đủ BA điều kiện:
+  // hết đợt + mắt cuối xuống + Định Âm giữ điểm cứu người đủ 2 lần.
+  function arcStartCh24Rescue() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch24_rescue', requireEyesDown: true, rescueHold: { need: 2, tx: 44, ty: 44 },
+      eyesAtWave: { 1: [{ tx: 46, ty: 42 }] },
+      waves: [
+        [
+          { tx: 42, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Đợt áp sát cuối', hp: 750, atk: 15, interval: 1.5, speed: 56 },
+          { tx: 48, ty: 44, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Đợt áp sát cuối', hp: 750, atk: 15, interval: 1.5, speed: 58 }
+        ],
+        [
+          { tx: 43, ty: 42, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Đợt áp sát cuối', hp: 820, atk: 15, interval: 1.5, speed: 58 },
+          { tx: 47, ty: 47, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Đợt áp sát cuối', hp: 820, atk: 15, interval: 1.4, speed: 58 }
+        ]
+      ],
+      onWin: function () {
+        state.quest = 'q24_tha_mang'; refreshHUD(); saveNow();
+        toast('Người bị thương đã an toàn. Tới mép đoạn đường (43,45) — người điều trận bị bỏ lại đang nằm dưới gốc cây bị chém cụt.', 4600);
+      } });
+    toast('Giữ người bị thương dưới mảng vách nứt: đứng trong vòng sóng quanh điểm giữ (44,44) và dùng Định Âm giữ đủ 2 lần, đồng thời phá mắt trận cuối và đẩy lui các đợt áp sát.', 5600);
+  }
+  // Ch.24 đường GIỮ BÍ MẬT: trận phá vây bằng kiếm — cộng hưởng bị khóa
+  // LẠI trong trận này (tắt khi trận khép, thắng hay thua).
+  function arcStartCh24Breakout() {
+    if (arcFig || !state) return;
+    state.flags.arcResLocked = true; refreshHUD();
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch24_breakout',
+      waves: [
+        [
+          { tx: 42, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 800, atk: 15, interval: 1.5, speed: 56 },
+          { tx: 48, ty: 44, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 800, atk: 15, interval: 1.5, speed: 58 },
+          { tx: 44, ty: 48, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 800, atk: 15, interval: 1.4, speed: 58 }
+        ],
+        [
+          { tx: 43, ty: 42, look: 'villager_m', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 850, atk: 16, interval: 1.5, speed: 58 },
+          { tx: 47, ty: 47, look: 'villager_f', name: 'Đệ Tử Huyết Bạc', title: 'Vòng vây loạn sóng', hp: 850, atk: 16, interval: 1.5, speed: 58 },
+          { tx: 44, ty: 41, look: 'luc_tranh', name: 'Tên Cầm Trận', title: 'Quạt kiếm trận thu nhỏ', hp: 1400, atk: 17, interval: 1.4, speed: 56, champ: true }
+        ]
+      ],
+      onWin: function () {
+        state.flags.arcResLocked = false;
+        state.quest = 'q24_tha_mang'; refreshHUD(); saveNow();
+        toast('Đoàn đã phá vây thoát ra bằng kiếm. Tới mép đoạn đường (43,45) — người điều trận bị bỏ lại đang nằm dưới gốc cây bị chém cụt.', 4600);
+      },
+      onLose: function () {
+        state.flags.arcResLocked = false;
+        refreshHUD(); saveNow();
+      } });
+    toast('Phá vây bằng kiếm trong thế yếu: cộng hưởng bị khóa, không đòn bậc Hưởng — chỉ kiếm quyết và công pháp. Tên cầm trận ở đợt cuối có hộ thể, trấn địa và quét đôi.', 5600);
+  }
+
+  /* ---------- Đồng hồ chiêu boss trong hệ chạm trán (ch.16 + Hộ Trận) ---------- */
+  /* GỘP CUNG IV (2026-11-04) — hai chuẩn trình diễn Bui chốt ngày
+     2026-11-04 áp cho boss/trận chính của cung IV: (a) HIỆU ỨNG LÚC
+     CHIÊU RA (00:00): khoảnh khắc boss xuất chiêu phải có nhịp phát
+     tại điểm phát — vòng chấn động từ chân + cột sáng ngắn bùng lên +
+     hạt nở ra, hiệu ứng chính nở theo sau; (b) HIỆU ỨNG SKILL CỦA
+     BOSS (00:33): mọi skill của boss có lớp hiệu ứng riêng. Hàm này
+     là nhịp phát dùng chung, chỉ trình diễn — không đổi sát thương,
+     nhịp chiêu hay cửa sổ báo trước đã cân ở các đợt sản xuất. */
+  function arcBossCastFx(x, y, color, big) {
+    if (!SET || SET.current.fxRings) {
+      rings.push({ x: x, y: y, r: big ? 12 : 8, a: 0.95 });
+      rings.push({ x: x, y: y, r: big ? 5 : 3, a: 0.85 });
+    }
+    spawnParts(x, y - 6, big ? 26 : 14, color, big ? 46 : 34, true);
+    spawnPillar(x, y + 20, { dur: 0.35, h: big ? 124 : 88 });
+    if (big) shakeWorld(0.3);
+  }
+  function arcBossFanStrike(m, mcx, mcy, dist, dmg) {
+    for (var si = 0; si < 7; si++) {
+      var ang = -Math.PI / 2 + (si - 3) * 0.32;
+      spawnStreak(mcx + Math.cos(ang) * 30, mcy + Math.sin(ang) * 30, ang, '150,160,170', false);
+      spawnParts(mcx + Math.cos(ang) * 34, mcy + Math.sin(ang) * 34, 2, '150,160,170', 36, false);
+    }
+    shakeWorld(0.3);
+    if (dist < 132) hurtPlayer(Math.max(1, dmg));
+  }
+  function arcBossTick(dt) {
+    if (!enc || !enc.arcT || dt <= 0 || !state) return;
+    var m = enc.mon, t = enc.arcT;
+    if (m.state !== 'alive') return;
+    var pcx = px + 16, pcy = py + 16, mcx = m.x + 16, mcy = m.y + 16;
+    var dist = Math.hypot(mcx - pcx, mcy - pcy);
+    if (m.species === 'tran_nhan_kiem_linh') {
+      // Định Âm đóng băng chu kỳ: đồng bộ cờ frozen theo holdT của boss
+      // (đúng ngữ nghĩa VSLC_ARCIV.setCycleFrozen — khi bắt đầu đóng
+      // băng thì đặt lại nhịp tích tắc; arcUpdateCycle im tuyệt đối khi
+      // frozen; monSrc khóa khung idle cột 0 theo cùng điều kiện này).
+      if (arcCycle) { var fz = m.holdT > 0; if (fz && !arcCycle.frozen) arcCycle.tickI = -1; arcCycle.frozen = fz; }
+      if (t.quatTele >= 0) {
+        t.quatTele += dt;
+        if (t.quatTele >= 0.6) { t.quatTele = -1; if (m.holdT <= 0) { arcBossCastFx(mcx, mcy, '170,220,255', false); arcBossFanStrike(m, mcx, mcy, dist, Math.round(m.atk * 1.2)); if (!enc) return; } }
+      } else {
+        t.quat -= dt;
+        if (t.quat <= 0) { t.quat = 5.5; t.quatTele = 0; addFloat(mcx, mcy - 44, 'QUẠT KIẾM!', '200,208,220'); if (!SET || SET.current.fxRings) rings.push({ x: mcx, y: mcy, r: 8, a: 0.85 }); }
+      }
+      if (t.fanPend >= 0) {
+        t.fanPend += dt;
+        if (t.fanPend >= 1.1) {
+          t.fanPend = -1;
+          if (m.holdT > 0) addFloat(mcx, mcy - 48, 'CHU KỲ BỊ NGẮT!', '170,220,255'); // Định Âm ngắt đúng nhịp tụ của Vạn Kiếm
+          else if (dist < 150) { arcBossCastFx(mcx, mcy, '170,220,255', true); hurtPlayer(Math.max(1, Math.round(state.hpMax * 0.07))); if (!enc) return; }
+        }
+      } else {
+        t.van -= dt;
+        if (t.van <= 0) { t.van = 13; arcCycleFan(); t.fanPend = 0; }
+      }
+      return;
+    }
+    if (m.bossId === 'boss_hb_ho_tran_kiem_linh') {
+      // Quạt 7 tia XỈN, không sao dẫn (khác hẳn họ Sao Dẫn của người chơi).
+      if (t.quatTele >= 0) {
+        t.quatTele += dt;
+        if (t.quatTele >= 0.6) { t.quatTele = -1; if (m.holdT <= 0) { arcBossCastFx(mcx, mcy, '150,160,170', false); arcBossFanStrike(m, mcx, mcy, dist, Math.round(m.atk * 1.15)); if (!enc) return; } }
+      } else {
+        t.quat -= dt;
+        if (t.quat <= 0) { t.quat = 6; t.quatTele = 0; addFloat(mcx, mcy - 44, 'QUẠT KIẾM TRẬN!', '200,208,220'); if (!SET || SET.current.fxRings) rings.push({ x: mcx, y: mcy, r: 8, a: 0.85 }); }
+      }
+      // Chiêu chu kỳ: cửa sổ tụ 1,6s — CHỈ Định Âm (holdT) mới ngắt được.
+      if (t.cycWin >= 0) {
+        t.cycWin += dt;
+        if (m.holdT > 0) { t.cycWin = -1; t.cyc = 12; addFloat(mcx, mcy - 48, 'NGẮT CHU KỲ!', '170,220,255'); }
+        else if (t.cycWin >= 1.6) {
+          t.cycWin = -1; t.cyc = 12;
+          arcBossCastFx(mcx, mcy, '255,190,120', true);
+          arcBossFanStrike(m, mcx, mcy, dist, Math.round(state.hpMax * 0.08));
+          if (!enc) return;
+        }
+      } else {
+        t.cyc -= dt;
+        if (t.cyc <= 0) { t.cycWin = 0; addFloat(mcx, mcy - 44, 'CHU KỲ KIẾM TRẬN!', '255,190,120'); if (!SET || SET.current.fxRings) rings.push({ x: mcx, y: mcy, r: 8, a: 0.9 }); }
+      }
+    }
+  }
+
+  /* ---------- Cổng tầng sâu + thưởng boss tầng sâu ---------- */
+  function bcGateKiemTrungInteract() {
+    // Một vật thể hai tầng (tiền lệ cua_tan_tich): khi bcSauGateOpen
+    // đúng thì cho CHỌN tầng sâu; chưa đủ điều kiện thì vào tầng thường
+    // như cũ. Hai mắt phụ của tầng sâu KHÔNG có nhánh thoại riêng —
+    // tương tác với chúng đi qua hệ mắt trận/chiến đấu (chỉ thị điều
+    // phối 20:22 ngày 2026-11-03, giữ cổng lồng tiếng xanh tuyệt đối).
+    if (L.bcSauGateOpen && L.bcSauGateOpen(state)) {
+      if (enc) { toast('Đang giao chiến — thoát trận rồi hãy vào bí cảnh.'); return; }
+      if (bcSession) return bcGateInteract('bc_kiemtrung');
+      return say([{ who: 'choice', text: 'Cụm kiếm chắn hang rung lên khe khẽ: dưới Kiếm Trủng còn một tầng sâu cổ xưa hơn, chỉ mở cho người đã lĩnh ngộ khung Huyền và đứng ở Kim Đan. Ngươi sẽ…', options: [
+        { label: 'Xuống tầng sâu Kiếm Trủng', action: 'bc_floor_kiemtrung_sau' },
+        { label: 'Vào Kiếm Trủng (tầng thường)', action: 'bc_floor_kiemtrung' },
+        { label: 'Chưa xuống — quay lại sau', action: 'bc_floor_later' }
+      ] }]);
+    }
+    return bcGateInteract('bc_kiemtrung');
+  }
+  function bcSauBossRewards(m, def, rec) {
+    if (!rec.firstClear) {
+      // Thưởng lần đầu nằm NGOÀI hồ sơ phẳng: qua bcSauFirstClearRewards
+      // của logic (Huyền Tinh Kiếm Phổ + Yêu Đan cấp 3 + tu vi 240 + thử
+      // học ô 06). Túi không đủ chỗ cho Yêu Đan thì boss gượng dậy như
+      // mọi boss bí cảnh — firstClear chưa bị tính.
+      var fits = L.bagUsed(state) + 1 <= L.bagCap(state) && L.bagCanAdd(state, 'yeu_dan_3', 1).ok;
+      if (!fits) {
+        toast('Túi đã đầy — Trận Nhãn Kiếm Linh chưa gục hẳn đã gượng dậy. Hãy dọn túi rồi quay lại đánh tiếp; lần đầu này chưa bị tính là đã qua.', 5200);
+        return 'bag_full';
+      }
+      var ev = L.bcRecordClear(state, 'bc_kiemtrung_sau');
+      var fr = L.bcSauFirstClearRewards(state);
+      sfxFirstClear();
+      var parts = ['bí tịch Huyền Tinh Kiếm Phổ', 'Yêu Đan cấp 3 ×1'];
+      if (fr && fr.tuvi > 0) parts.push('+' + fmtAmt(fr.tuvi) + ' tu vi');
+      if (fr && fr.set06 && fr.set06.ok) parts.push('lĩnh ngộ Thanh Long Xuất Thế');
+      else if (fr && fr.set06 && !fr.set06.ok) parts.push('Thanh Long Xuất Thế còn chờ đủ chuỗi hệ');
+      toast('Lần đầu hạ Trận Nhãn Kiếm Linh! Nhận: ' + parts.join(' · ') + '.', 5600);
+      if (state.quest === 'q16_linh_ngo') {
+        state.quest = 'q16_benh_vuc';
+        toast('Kiếm ý tầng sâu đã lặng. Về đại điện gặp trưởng lão để khép việc lĩnh ngộ — và nhận khoản chuẩn bị đột phá.', 4600);
+      }
+      refreshHUD(); saveNow();
+      return 'claimed';
+    }
+    var key = bcSession ? bcSession.key : ('gr:bc:bc_kiemtrung_sau:d' + state.dayCount);
+    var r = L.grantReward(state, def.bossProfileId, { claimKey: key + ':boss', sourceId: 'bc_kiemtrung_sau', boss: true });
+    if (!r.ok) {
+      if (r.reason === 'bag_full') {
+        toast('Túi đã đầy — Trận Nhãn Kiếm Linh chưa gục hẳn đã gượng dậy. Hãy dọn túi rồi quay lại đánh tiếp; lượt này chưa bị tính là đã hạ.', 5200);
+        return 'bag_full';
+      }
+      if (r.duplicate) return 'claimed';
+      toast('Thưởng boss tầng sâu chưa nhận được: ' + (r.reason || 'lỗi không rõ') + '.', 4200);
+      return 'claimed';
+    }
+    if (huntSession) {
+      huntSession.tuvi += r.granted.tuvi;
+      for (var gid in r.granted.items) huntSession.items[gid] = (huntSession.items[gid] || 0) + r.granted.items[gid];
+    }
+    if (r.granted.tuvi > 0) spawnOrbs(9, m.x + 16, m.y + 16, r.granted.tuvi);
+    var sid = (enc && enc.sessionId) || key;
+    if (L.yeuDanDropFor(sid, 0.25)) spawnDrop('yeu_dan_' + def.yeuDanLevel, 1, m.x + 16, m.y + 16);
+    toast('Hạ ' + m.name + '! ' + grindGrantedText(r) + '.', 5200);
+    arcIvBcBossFragment('bc_kiemtrung_sau'); // ô 17 ở lượt lặp (A.2)
+    refreshHUD(); saveNow();
+    return 'claimed';
+  }
+
+  /* ---------- Đột phá Kim Đan Trung Kỳ tại đài (q16_dot_pha) ---------- */
+  function arcDoKimDanBreak() {
+    // KHÓA THỨ TỰ của hợp đồng A.1: khoản q16_pre_break (+300) phải
+    // nhận TRỚC khi thử đột phá. Nhánh chính đã nhận ở cảnh BENH_VUC;
+    // nếu vì bất kỳ lý do gì cờ chưa đặt, nhận ngay tại đây — vẫn
+    // TRƯỚC tryBreakthrough.
+    if (!state.flags.ch16Reward) arcClaimToast('q16_pre_break');
+    return say(ST.SCENE_CH16_DOT_PHA, function () {
+      // ĐIỂM MÓC ĐÃ NỐI khi gộp cung IV (2026-11-04): mốc lên kỳ trong
+      // đại cảnh giới Kim Đan đi qua ĐÚNG cổng của hệ điều kiện đột phá
+      // (L.stageGateBlocked — cùng cổng với nút Đột phá thường). Theo
+      // realm-prep mục 2.5, kỳ Kim Đan không thêm cổng phụ và không có
+      // thiên kiếp: cổng chỉ chặn khi điều kiện từng kỳ chưa đủ (tu vi
+      // do tryBreakthrough báo riêng); nếu hệ điều kiện bổ sung điều
+      // kiện cho kỳ Kim Đan về sau, mốc này tự áp theo.
+      var gate = L.stageGateBlocked(state);
+      if (gate && gate.reason && gate.reason !== 'great_border') { toast(gate.reason, 4600); refreshHUD(); saveNow(); return; }
+      var r = L.tryBreakthrough(state);
+      if (!r.ok) { toast(r.reason || 'Đột phá chưa thành — hãy kiểm tra lại tu vi.', 4200); refreshHUD(); saveNow(); return; }
+      pillarT = 2.8;
+      spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
+      rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+      rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+      shakeT = Math.max(shakeT, 0.8);
+      if (state.realm === 3 && state.stage === 1) {
+        state.quest = 'q16_done';
+        toast('Đột phá thành công: ' + (r.label || 'Kim Đan Trung Kỳ') + '! Hoàn thành chương 16 — từ đây là kỷ nguyên online cày cuốc.', 5600);
+      }
+      refreshHUD(); saveNow();
+    });
+  }
+
+  /* ---------- Đột phá Kim Đan Hậu Kỳ tại đài (q22_dot_pha, đợt 3 B.8) ----------
+     Chép khuôn arcDoKimDanBreak: khoản q22_pre_break (+250) phải nhận
+     TRƯỚC tryBreakthrough — nhánh chính đã nhận ở cuối cảnh NHAN_VIEC;
+     cờ chưa đặt thì nhận ngay tại đây, vẫn TRƯỚC tryBreakthrough.
+     ĐIỂM MÓC ĐÃ NỐI khi gộp cung IV (2026-11-04): mốc này là đột phá
+     TRONG đại cảnh giới (3,1)->(3,2) nên theo thiết kế realm-prep
+     mục 2.5 KHÔNG có thiên kiếp; điều kiện từng kỳ áp qua cổng chung
+     L.stageGateBlocked ngay trước L.tryBreakthrough (cùng khuôn điểm
+     móc q16 ở arcDoKimDanBreak phía trên). Chữ ký tryBreakthrough
+     giữ nguyên như đợt thiên kiếp yêu cầu. */
+  function arcDoHauKyBreak() {
+    if (!state.flags.ch22Reward) arcClaimToast('q22_pre_break');
+    return say(ST.SCENE_CH22_DOT_PHA, function () {
+      var gate = L.stageGateBlocked(state);
+      if (gate && gate.reason && gate.reason !== 'great_border') { toast(gate.reason, 4600); refreshHUD(); saveNow(); return; }
+      var r = L.tryBreakthrough(state);
+      if (!r.ok) { toast(r.reason || 'Đột phá chưa thành — hãy kiểm tra lại tu vi.', 4200); refreshHUD(); saveNow(); return; }
+      pillarT = 2.8;
+      spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
+      rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+      rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+      shakeT = Math.max(shakeT, 0.8);
+      if (state.realm === 3 && state.stage === 2) {
+        state.quest = 'q22_done';
+        toast('Đột phá thành công: ' + (r.label || 'Kim Đan Hậu Kỳ') + '! Đoàn hộ tống sắp lên đường — tới trạm nghỉ trên đường mòn gặp đoàn.', 5600);
+      }
+      refreshHUD(); saveNow();
+    });
+  }
+
+  /* ---------- Cảnh báo cáo ch.24: thay đoạn tin lan theo đường đi (B.3) ----------
+     Đường GIỮ BÍ MẬT (ch24Path khác 'phat_huong', kể cả thiếu cờ theo
+     mặc định B.7): hai dòng dan_thanh_a/b trong SCENE_CH24_LEN_DUONG
+     được thay bằng SCENE_CH24_LEN_DUONG_TIN_B — thay theo MÃ NGƯỜI NÓI
+     lúc dựng cảnh chạy, KHÔNG sửa mảng khóa trong story.js. */
+  function arcCh24LenDuongLines() {
+    if (state.flags.ch24Path === 'phat_huong') return ST.SCENE_CH24_LEN_DUONG;
+    var out = [], swapped = false;
+    ST.SCENE_CH24_LEN_DUONG.forEach(function (ln) {
+      if (ln.who === 'dan_thanh_a' || ln.who === 'dan_thanh_b') {
+        if (!swapped) { out = out.concat(ST.SCENE_CH24_LEN_DUONG_TIN_B); swapped = true; }
+        return;
+      }
+      out.push(ln);
+    });
+    return out;
+  }
+
+  /* ---------- Điểm hái nhỏ tại hiện trường ch.14 (sau trận) ---------- */
+  function arcSiteHarvest() {
+    if (!state.flags.bagUnlocked) return toast('Cần mở Túi Trữ Vật trước mới hái được dược liệu.', 3600);
+    if (state.flags.q14HerbDay === state.dayCount) return toast('Đám linh thảo ở hiện trường hôm nay đã hái rồi — chờ ngày game mới mọc lại.', 3600);
+    var chk = L.bagCanAdd(state, 'thanh_tam_thao', 2);
+    if (!chk.ok) return toast(chk.reason, 4200);
+    state.flags.q14HerbDay = state.dayCount;
+    L.bagAdd(state, 'thanh_tam_thao', 2);
+    sfxHarvest();
+    toast('Đã hái Thanh Tâm Thảo ×2 ở hiện trường đất linh đã yên bình.', 3200);
+    refreshHUD(); saveNow();
+  }
+
+  /* ---------- Trưởng lão / tàng kinh: dạy ô 19 + ô 09 + ghép bộ ---------- */
+  function arcIvElderExtras() {
+    if (!state || !L.arcIvTryTeachTuDien) return false;
+    var acted = false;
+    if (!L.techniqueOf(state, 'tu_dien_kich')) {
+      var rt = L.arcIvTryTeachTuDien(state);
+      if (rt && rt.ok) { sfxQuest(); toast('Trưởng lão giữ tàng kinh truyền dạy Tử Điện Kích (bí pháp ô 19) — đã ghi vào sổ công pháp của ngươi.', 4600); acted = true; }
+    }
+    if (L.questReached(state, 'q16_linh_ngo')) {
+      if (!L.techniqueOf(state, 'dai_nhat_hoa_cau')) {
+        var rd = L.arcIvTryTeachDaiNhat(state);
+        if (rd && rd.ok) { sfxQuest(); toast('Tàng kinh các truyền dạy Đại Nhật Hóa Cầu (bí pháp ô 09) — đã ghi vào sổ công pháp của ngươi.', 4600); acted = true; }
+      }
+      var craftable = L.nguHanhIds().filter(function (id) { return L.nguHanhCanCraft(state, id); });
+      if (craftable.length) {
+        if (acted) { refreshHUD(); saveNow(); }
+        var opts = craftable.map(function (id) { return { label: 'Ghép bí pháp: ' + ((L.TECHNIQUE_DEFS[id] || {}).name || id), action: 'arc_craft:' + id }; });
+        opts.push({ label: 'Để lúc khác', action: 'arc_craft_leave' });
+        say([{ who: 'choice', text: 'Tàng kinh các còn giữ khung ghép bí pháp của dải Kim Đan — ngươi đã đủ mảnh cho ' + craftable.length + ' bộ. Ngươi sẽ…', options: opts }]);
+        return true;
+      }
+    }
+    if (acted) { refreshHUD(); saveNow(); }
+    return false;
+  }
+
+  /* ---------- ARCIV đợt 2: lựa chọn thái độ chương 18 (B.4) ----------
+     Cùng điểm dispatch với resolveArcChoice/resolveCh10Choice. Cả hai
+     thái độ đều dẫn tới cùng trận quán quân: cảnh thái độ -> DAU_MO ->
+     mở trận. Tên cảnh theo kịch bản prep khóa: SCENE_CH18_AP_LUC_NGHE /
+     SCENE_CH18_AP_LUC_VIET (hợp đồng B.4 ghi lệch thành *_HUA_NGHE /
+     *_HUA_VIET — worker dữ liệu đã đính chính, xem REPORT-wave2-B). */
+  function arcOpenCh18Fight() {
+    state.flags.ch18FightStarted = true;
+    refreshHUD(); saveNow();
+    say(ST.SCENE_CH18_DAU_MO, function () { arcStartCh18ChampFight(); });
+  }
+  function resolveCh18Choice(action) {
+    if (action === 'ch18_hua_nghe') { say(ST.SCENE_CH18_AP_LUC_NGHE, function () { arcOpenCh18Fight(); }); return; }
+    if (action === 'ch18_hua_viet') { say(ST.SCENE_CH18_AP_LUC_VIET, function () { arcOpenCh18Fight(); }); return; }
+  }
+
+  /* ---------- ARCIV đợt 3: lựa chọn GIỮA MẢNG CẢNH (B.4) ----------
+     PHAN_CONG_CHOICE nằm giữa SCENE_CH22_NHAN_VIEC (còn 3 dòng sau) và
+     LUA_CHON_CHOICE nằm trong SCENE_CH23_LUA_CHON (còn 1 dòng narrate
+     chốt sau). say() THAY TOÀN BỘ hàng đợi thoại — gọi say() ở đây sẽ
+     nuốt mất các dòng còn lại của cảnh và callback cuối cảnh. Cả hai
+     resolver chỉ ghi cờ + saveNow() rồi gọi nextLine() để hàng đợi
+     chạy tiếp như chưa từng có lựa chọn. */
+  function resolvePhanCong(action) {
+    state.flags.guardAssign = action === 'phancong_ky_cuu' ? 'ky_cuu' : action === 'phancong_tre' ? 'tre' : 'deu';
+    refreshHUD(); saveNow();
+    nextLine();
+  }
+  function resolveCh23Choice(action) {
+    state.flags.ch24Path = action === 'ch23_phat_huong' ? 'phat_huong' : 'giu_bi_mat';
+    refreshHUD(); saveNow();
+    nextLine();
+  }
+  /* Lựa chọn cuối cảnh kỳ ngộ ô 23 (B.9): choice là dòng CUỐI của
+     SCENE_KY_NGO_BON_LOI nên nextLine() khép thoại sạch; cả hai lựa
+     chọn cùng dẫn tới học bộ qua nguHanhLearn + toast lĩnh ngộ. */
+  function resolveKyNgoChoice(action) {
+    if (action === 'kyngo_bon_loi_nhan' || action === 'kyngo_bon_loi_doc') {
+      var lr = L.nguHanhLearn(state, 'bon_loi_thiem_kich');
+      if (lr && lr.ok) { sfxQuest(); toast('Kỳ ngộ! Ngươi lĩnh ngộ được bí pháp ' + ((L.TECHNIQUE_DEFS.bon_loi_thiem_kich || {}).name || 'Bôn Lôi Thiểm Kích') + ' từ trang tàn quyển trong hốc cây cháy!', 5200); }
+      refreshHUD(); saveNow();
+    }
+    nextLine();
+  }
+
+  /* ---------- Phân tuyến lựa chọn arc_ ---------- */
+  function resolveArcChoice(action) {
+    if (action === 'arc_dai_retry') { say([]); startDaiFight(daiLastStage || 'nm1'); return; }
+    if (action === 'arc_dai_leave') {
+      say([]);
+      var pre = state.flags.daiPre;
+      var rx = pre ? pre.x : 62, ry = pre ? pre.y : 57;
+      delete state.flags.daiPre;
+      hhtTeleport('thanh_van_tong', rx, ry, 'up', null);
+      return;
+    }
+    if (action === 'arc_dai_open_noi_mon') { say([]); arcEnterDaiRepeat('noi_mon'); return; }
+    if (action === 'arc_dai_open_tinh_anh') { say([]); arcEnterDaiRepeat('tinh_anh'); return; }
+    if (action === 'arc_dai_open_vo_dich') {
+      say([]);
+      // Đợt 2 B.8: hạng quán quân mở sau q18_chung_cu; recordWin ở
+      // logic cũng tự khóa bằng openQuest — engine chỉ mở đường vào.
+      if (L.questReached && L.questReached(state, 'q18_chung_cu')) { arcEnterDaiRepeat('vo_dich'); return; }
+      toast('Bậc Quán quân đài chưa mở — hạng này mở sau trận đấu công khai với vô địch Đỗ gia ở Cô Châu (chương 18).', 3600);
+      return;
+    }
+    if (action === 'arc_dai_open_leave') { say([]); return; }
+    if (action === 'arc_craft_leave') { say([]); return; }
+    if (action.indexOf('arc_craft:') === 0) {
+      var id = action.slice('arc_craft:'.length);
+      say([]);
+      var r = L.arcIvCraftAtTangKinh(state, id);
+      if (r && r.ok) { sfxQuest(); toast('Đã ghép thành bí pháp: ' + ((L.TECHNIQUE_DEFS[id] || {}).name || id) + '!', 4600); }
+      else toast('Chưa ghép được bộ này lúc này: ' + ((r && r.reason) || 'chưa đủ điều kiện') + '.', 3600);
+      refreshHUD(); saveNow();
+      return;
+    }
+  }
+
+  /* ---------- Vòng nhiễu quanh NHÂN VẬT khi cộng hưởng bị khóa (F.6) ---------- */
+  function drawResJammingRing() {
+    var cxp = px + 16, cyp = py + 16;
+    for (var ai = 0; ai < 3; ai++) {
+      ctx.strokeStyle = 'rgba(148,163,184,' + (0.65 - ai * 0.16).toFixed(3) + ')';
+      ctx.lineWidth = 2.2 - ai * 0.4;
+      ctx.beginPath(); ctx.arc(cxp, cyp, 25 + ai * 6, -tNow / (260 + ai * 90) + ai * 1.7, -tNow / (260 + ai * 90) + ai * 1.7 + Math.PI * 1.3); ctx.stroke();
+    }
+    if (fxOn() && Math.random() < 0.3) spawnParts(cxp + (Math.random() - 0.5) * 44, cyp + (Math.random() - 0.5) * 30, 1, '148,163,184', 6, true);
+  }
   /* Linh Chi Sau Núi (chương 8): phục kích của Huyết Bạc Cung ngay sau khi
      hái. Cả ba đường đều qua được — đường CHẤN thiếu Tĩnh Mặc thì rơi về
      ẩn nấp, không khóa cứng; hái thành công mới đặt cờ chiGathered. */
@@ -4518,9 +6789,48 @@
   /* LỆNH — bậc cao của Ngôn Linh (phần 3, chương 12): ĐỊNH giữ một nhịp,
      PHONG khóa hai nhịp trong các trận về sau; ở sự kiện dạy lệnh tại đài,
      uy lực phải đạt ngưỡng của trưởng lão mới tính là chạm được bậc lệnh. */
+  /* ARCIV đợt 2 ch.17 (B.7): Định Âm giữ thước pha lê lớn ở thap_noi.
+     Vùng gần thước: x 16..23, y 6..10. Ngưỡng uy lực 140 (khuôn chương
+     12: không đạt thì tích Tĩnh Âm rồi thử lại, đòn vẫn trừ, không
+     khóa cứng). Thành công: vòng tĩnh + bụi đứng yên quanh thước tại
+     tâm (20,4), tiếng Định qua castResonanceFx, cảnh DO_LAI_XONG. */
+  function arcRulerDinh() {
+    var pt = playerTile();
+    if (!(pt.x >= 16 && pt.x <= 23 && pt.y >= 6 && pt.y <= 10)) {
+      toast('Thước pha lê ở phía bắc sảnh — hãy đứng gần thước (vùng x 16–23, y 6–10) rồi mới dùng Định Âm giữ nó.', 4200);
+      return;
+    }
+    var beforeR = state.silence;
+    var r = L.castWord(state, 'dinh');
+    if (!r.ok) { toast(r.reason); return; }
+    startResBody(false);
+    var rx = 20 * TILE + 16, ry = 4 * TILE + 16;
+    castResonanceFx('dinh', rx, ry, { silenceBefore: beforeR, baseFreq: 220, noWave: true });
+    addFloat(px + 16, py - 20, 'ĐỊNH!', '170,220,255');
+    if (r.power >= 140) {
+      state.flags.q17RulerShaking = false;
+      rings.push({ x: rx, y: ry, r: 10, a: 0.95 });
+      rings.push({ x: rx, y: ry, r: 4, a: 0.8 });
+      spawnParts(rx, ry, 16, '200,230,255', 20, true); // bụi quanh thước đứng yên giữa không trung
+      refreshHUD(); saveNow();
+      say(ST.SCENE_CH17_DO_LAI_XONG, function () {
+        state.quest = 'q17_chat_van'; refreshHUD(); saveNow();
+        toast('Thước đã đứng yên, buổi đo lại thành công. Người của tháp đang chờ chất vấn ở sảnh — nói chuyện với chấp sự tháp hoặc chủ trì.', 4600);
+      });
+      return;
+    }
+    toast('Uy lực Định Âm hiện tại ' + r.power + ' — cần 140 để giữ thước đứng yên. Hãy tích Tĩnh Âm thêm (đứng yên lắng nghe) rồi thử lại.', 4600);
+    refreshHUD(); saveNow();
+  }
   function castDinh() {
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('dinh'); return; } // Mục F: LỆNH dùng được trong trận đài
+    if (daiFight) { if (!dlg) daiCastWord('dinh'); return; } // ARCIV
+    if (arcFig) { if (!dlg) arcFigCastWord('dinh'); return; } // ARCIV
+    // ARCIV đợt 2 ch.17 (B.7): Định Âm giữ thước pha lê — sau các đường
+    // trận, trước đường tự do. Ngoài vùng gần thước thì chỉ nhắc, KHÔNG
+    // trừ gì; trong vùng thì đòn vẫn trừ như khuôn giữ bia chương 12.
+    if (state && state.map === 'thap_noi' && state.quest === 'q17_do_lai' && state.flags.q17RulerShaking) { arcRulerDinh(); return; }
     if (dlg) return;
     if (enc) { encCastWord('dinh'); return; }
     if (startEncounterNear(3.2)) { encCastWord('dinh'); return; }
@@ -4544,6 +6854,8 @@
   function castPhong() {
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('phong'); return; } // Mục F: LỆNH dùng được trong trận đài
+    if (daiFight) { if (!dlg) daiCastWord('phong'); return; } // ARCIV
+    if (arcFig) { if (!dlg) arcFigCastWord('phong'); return; } // ARCIV: Phong Âm phong ấn mắt trận ngay giữa trận
     if (dlg) return;
     if (enc) { encCastWord('phong'); return; }
     if (startEncounterNear(3.2)) { encCastWord('phong'); return; }
@@ -4600,9 +6912,10 @@
   var HIT_VARIANTS = [0.94, 1.0, 1.06]; // biến thể cao độ tiếng chạm đích: xoay vòng xác định theo thứ tự đòn, không ngẫu nhiên
   var PENTA_NOTES = [523, 587, 659, 784, 880];
   var MON_SHEET = { son_lang: 76, doc_vu_xa: 72, thiet_giap_tru: 92, phong_ung: 88, lang_vuong: 124, son_chu: 136,
-    dong_xa: 76, thuy_xa_tinh: 124, thach_tuong: 92, thach_tuong_thu_ve: 124, tan_anh_vo_cuc: 136, kiem_linh: 88, kiem_y_tan_hon: 136, oan_binh: 92, oan_hon_chien_truong: 136 }; // cỡ vẽ điểm ảnh theo loài
+    dong_xa: 76, thuy_xa_tinh: 124, thach_tuong: 92, thach_tuong_thu_ve: 124, tan_anh_vo_cuc: 136, kiem_linh: 88, kiem_y_tan_hon: 136, oan_binh: 92, oan_hon_chien_truong: 136,
+    tran_nhan_kiem_linh: 148, ho_tran_kiem_linh: 136, tan_hon_kiem_y_sau: 136, lang_nhiem_song: 92 }; // ARCIV A.2
   var MON_PARTS = { son_lang: '150,160,170', doc_vu_xa: '110,190,120', thiet_giap_tru: '120,110,105', phong_ung: '140,220,210', lang_vuong: '190,200,215', son_chu: '150,130,110',
-    dong_xa: '90,160,140', thuy_xa_tinh: '80,170,190', thach_tuong: '150,150,150', thach_tuong_thu_ve: '160,155,140', tan_anh_vo_cuc: '200,210,255', kiem_linh: '170,220,255', kiem_y_tan_hon: '190,210,255', oan_binh: '120,140,160', oan_hon_chien_truong: '110,130,170' };
+    dong_xa: '90,160,140', thuy_xa_tinh: '80,170,190', thach_tuong: '150,150,150', thach_tuong_thu_ve: '160,155,140', tan_anh_vo_cuc: '200,210,255', kiem_linh: '170,220,255', kiem_y_tan_hon: '190,210,255', oan_binh: '120,140,160', oan_hon_chien_truong: '110,130,170', tran_nhan_kiem_linh: '170,220,255', ho_tran_kiem_linh: '150,160,170', tan_hon_kiem_y_sau: '190,210,255', lang_nhiem_song: '148,163,184' };
   var ZONE_IDS_SORTED = Object.keys(L.HUNT_ZONES).sort(function (a, b) {
     var za = L.HUNT_ZONES[a], zb = L.HUNT_ZONES[b];
     return (za.x1 - za.x0 + 1) * (za.y1 - za.y0 + 1) - (zb.x1 - zb.x0 + 1) * (zb.y1 - zb.y0 + 1);
@@ -4696,12 +7009,20 @@
   }
   function spawnMonstersForMap() {
     mons = []; enc = null; drops = []; orbs = []; orbBatches = {}; comboN = 0; comboT = 0; zoneDwell = 0; encStance = false;
+    // ARCIV: đổi bản đồ giữa trận boss Trận Nhãn (đường spawnMonstersForMap
+    // đặt enc=null trực tiếp, không qua endEncounterCleanup) — dừng chu
+    // kỳ kiếm trận + dọn mắt phụ để không rò sang bản đồ khác.
+    if (typeof arcStopCycle === 'function') arcStopCycle();
+    if (typeof arcEyes !== 'undefined') arcEyes.length = 0;
     hideBossBanner(); musicBoss(false);
     if (!state || !huntUnlocked()) return;
     var mapId = state.map;
     L.HUNT_LAIRS.forEach(function (lair) {
       var z = L.HUNT_ZONES[lair.zoneId];
       if (!z || z.map !== mapId || !monsterHasArt(lair.species)) return;
+      // ARCIV A.3: lair có mốc nhiệm vụ (lang_nhiem_song cần q14_done) —
+      // chưa tới mốc thì ổ chưa sinh quái.
+      if (lair.requiresQuest && !L.questReached(state, lair.requiresQuest)) return;
       mons.push(makeMonster(lair.species, lair.zoneId, lair.x, lair.y, null));
     });
     for (var bid in L.BOSS_DEFS) {
@@ -4845,8 +7166,23 @@
       if (bcSession && bcSession.realm === 'bc_kiemtrung' && bcSession.speechUsed) { monsterStrike(m); toast('Kiếm ý đã nhớ lấy tiếng người — nó ra đòn mở màn ngay khi trận bắt đầu!', 4200); }
     }
     if (bcSession && bcSession.realm === 'bc_kiemtrung') bcSession.tranT = 0; // bắt đầu trận: đặt lại bộ đếm tĩnh mặc trấn
+    // ARCIV ch.16: boss Trận Nhãn mở trận -> dựng chu kỳ kiếm trận + hai
+    // mắt trận phụ ở (6,14)/(37,14) của tầng sâu (tọa độ điểm ảnh).
+    if (m.bcBoss && m.species === 'tran_nhan_kiem_linh') {
+      enc.arcT = { quat: 3.2, quatTele: -1, van: 8.5, fanPend: -1 };
+      arcStartCycle(function () { return { x: m.x + 16, y: m.y + 16 }; }, { period: 4.2 });
+      arcEyes.length = 0;
+      L.BC_KIEMTRUNG_SAU_EYES.forEach(function (ep) { arcAddEye(ep.x * TILE + 16, ep.y * TILE + 16, { label: 'Mắt trận phụ' }); });
+    }
+    // ARCIV: boss dã ngoại Hộ Trận Kiếm Linh — đồng hồ chiêu riêng.
+    if (m.bossId === 'boss_hb_ho_tran_kiem_linh') {
+      enc.arcT = { quat: 2.8, quatTele: -1, cyc: 7.5, cycWin: -1 };
+    }
   }
   function endEncounterCleanup() {
+    // ARCIV: trận boss Trận Nhãn khép (thắng/thua/tan trận) -> dừng chu
+    // kỳ kiếm trận + dọn hai mắt phụ, im tuyệt đối từ đây.
+    if (enc && enc.mon && enc.mon.species === 'tran_nhan_kiem_linh') { arcStopCycle(); arcEyes.length = 0; }
     if (enc && enc.mon && (enc.mon.bossId || enc.mon.bcBoss)) { hideBossBanner(); musicBoss(false); }
     if (state && state.flags) { state.flags.lenDinhHold = 0; state.flags.lenPhongSeal = 0; }
     enc = null; encStance = false;
@@ -4858,7 +7194,7 @@
     for (i = enc.pendingHits.length - 1; i >= 0; i--) {
       if (tNow >= enc.pendingHits[i].at) {
         ph = enc.pendingHits.splice(i, 1)[0];
-        applyHitToMonster(m, ph.power, { kind: ph.kind, move: ph.move });
+        applyHitToMonster(m, ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 });
         if (!enc || m.state !== 'alive') return;
       }
     }
@@ -4938,6 +7274,7 @@
     return Math.hypot((m.x + 16) - (px + 16), (m.y + 16) - (py + 16)) <= maxTiles * TILE;
   }
   function bestSwordMove() {
+    if (L.bestSwordMoveFor) return L.bestSwordMoveFor(state); // hợp đồng mục 9: helper dữ liệu (gồm Huyền Tinh Trảm 1,9 < Quy Nhất 2,5)
     var t = L.techniqueOf(state, 'that_tinh'), tier = t ? t.tier : 1, mv = L.SWORD_MOVES[0];
     L.SWORD_MOVES.forEach(function (x) { if (x.tier <= tier) mv = x; });
     return mv;
@@ -4954,13 +7291,11 @@
     // (Liên Hoàn hai đòn vẫn chỉ là một lần gọi — cùng luật đếm với
     // trận Thăng Long Đạo của cốt truyện).
     var gain = L.techniqueGain(state, 'that_tinh', 2);
-    if (gain.tierUps && gain.tierUps.length) {
-      addFloat(px + 16, py - 24, 'Kiếm quyết lên tầng ' + gain.tier + '!', '255,232,160');
-      sfxBell();
-    }
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp('that_tinh', gain.tier);
+    startSwordBody(mv.id, tNow, r.hits > 1 ? tNow + 120 : null); // khung trúng đích khóa tại t=0 (và +120ms cho nhịp 2)
     for (var i = 0; i < r.hits; i++) {
-      if (i === 0) applyHitToMonster(m, r.power, { kind: 'sword', move: mv.id });
-      else enc.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id });
+      if (i === 0) applyHitToMonster(m, r.power, { kind: 'sword', move: mv.id, hitIdx: 0 });
+      else enc.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id, hitIdx: i });
       if (!enc) return; // đòn đầu đã kết liễu
     }
     refreshHUD();
@@ -5007,9 +7342,12 @@
      mờ bám đuôi để mắt theo kịp đường chém; tồn tại 0,45 giây (chiêu
      dấu ấn/chí mạng: 0,55 giây, dài 150px). Mọi điểm gọi (kiếm quyết,
      tỉ thí, đánh đêm, Thăng Long, hình chiếu) dùng chung hàm này. */
-  function spawnStreak(x, y, ang, col, big) {
-    streaks.push({ x: x, y: y, ang: ang, t: 0, dur: big ? 0.55 : 0.45, col: col || '170,230,255', big: !!big });
+  function spawnStreak(x, y, ang, col, big, opts) {
+    opts = opts || {};
+    streaks.push({ x: x, y: y, ang: ang, t: 0, dur: big ? 0.55 : 0.45, col: col || '170,230,255', big: !!big,
+      scale: opts.scale || 1, guard: opts.guard || null, core: opts.core || null, thick: opts.thick || 0, swordFx: true });
     if (streaks.length > 12) streaks.shift();
+    if (window.__VSLC_FX_COUNT) window.__VSLC_FX_COUNT.swordDraws++;
   }
   function streakBladePath(L, T) {
     ctx.beginPath();
@@ -5085,47 +7423,544 @@
       ctx.beginPath(); ctx.ellipse(pl.x, ty, tw * 0.55, tw * 0.16, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
+  /* === ARCIV_FX: hình kiếm theo tỉ lệ KHÓA 3.6 (docs/bitich-effects-design.md) ===
+     Lưỡi 68-72% L, ngang <=6,6% L; đốc >=2,8x ngang lưỡi va >=17% L, tông tối
+     <=0,55x danh nghĩa; cán 24-28% L sẫm <=0,35x, quấn chỉ, núm >=2,2% L;
+     hào quang <=2% L, alpha <=0,30. Thay renderer liềm cũ cho MỌI vệt kiếm. */
+  function drawSwordShape(cx, cy, ang, L, body, core, guard, alpha, thickAdd) {
+    var bladeL = L * 0.70, guardT = Math.max(2.2, L * 0.038), guardW = L * 0.19, gripL = L * 0.268;
+    var halfW = Math.min(L * 0.033, L * 0.026 + (thickAdd || 0) * 0.4);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+    // hào quang phụ (trần cứng)
+    ctx.save(); ctx.globalAlpha = 0.30 * alpha; ctx.fillStyle = 'rgb(' + body + ')';
+    ctx.beginPath(); ctx.ellipse(L * 0.18, 0, L * 0.52, halfW + L * 0.016, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    // lưỡi: silhouette có viền định hình sẫm, hai cạnh sáng, sống trắng giữa
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(-bladeL * 0.02, -halfW); ctx.lineTo(bladeL * 0.55, -halfW * 0.92); ctx.lineTo(bladeL, 0); ctx.lineTo(bladeL * 0.55, halfW * 0.92); ctx.lineTo(-bladeL * 0.02, halfW); ctx.closePath();
+    ctx.fillStyle = 'rgb(' + body + ')'; ctx.fill();
+    ctx.strokeStyle = 'rgba(30,50,90,0.85)'; ctx.lineWidth = Math.max(0.8, L * 0.008); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(bladeL * 0.94, 0); ctx.strokeStyle = 'rgba(' + core + ',0.95)'; ctx.lineWidth = Math.max(0.8, halfW * 0.55); ctx.stroke();
+    // đốc tối tương phản + núm hai đầu
+    ctx.fillStyle = 'rgb(' + guard + ')';
+    ctx.fillRect(-guardT / 2, -guardW / 2, guardT, guardW);
+    ctx.beginPath(); ctx.arc(0, -guardW / 2, guardT * 0.62, 0, Math.PI * 2); ctx.arc(0, guardW / 2, guardT * 0.62, 0, Math.PI * 2); ctx.fill();
+    // cán sẫm quấn chỉ chéo + núm có tâm sáng
+    ctx.fillStyle = 'rgb(' + shadeCol(guard, 0.62) + ')';
+    ctx.fillRect(-guardT / 2 - gripL, -halfW * 0.82, gripL, halfW * 1.64);
+    ctx.strokeStyle = 'rgba(200,210,255,0.35)'; ctx.lineWidth = 1;
+    for (var wi = 0; wi < 4; wi++) { ctx.beginPath(); ctx.moveTo(-guardT / 2 - gripL + wi * gripL / 4, halfW * 0.8); ctx.lineTo(-guardT / 2 - gripL + wi * gripL / 4 + gripL / 8, -halfW * 0.8); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(-guardT / 2 - gripL, 0, Math.max(1.6, L * 0.023), 0, Math.PI * 2); ctx.fillStyle = 'rgb(' + guard + ')'; ctx.fill();
+    ctx.beginPath(); ctx.arc(-guardT / 2 - gripL, 0, Math.max(0.7, L * 0.008), 0, Math.PI * 2); ctx.fillStyle = 'rgba(' + core + ',0.9)'; ctx.fill();
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  function shadeCol(col, k) { var a = String(col).split(','); return Math.round(+a[0] * k) + ',' + Math.round(+a[1] * k) + ',' + Math.round(+a[2] * k); }
   function drawStreaks() {
     streaks.forEach(function (st) {
-      var k = st.t / st.dur;
-      var L = st.big ? 150 : 104, T = st.big ? 13 : 9.5;
-      var head = (k - 0.5) * (st.big ? 84 : 64);
+      var k = st.t / st.dur, a = Math.sin(Math.min(1, k) * Math.PI);
+      var L = (st.big ? 170 : 120) * (st.scale || 1);
+      var head = (k - 0.5) * L * 0.38;
       var cx = st.x + Math.cos(st.ang) * head, cy = st.y + Math.sin(st.ang) * head;
-      var a = Math.sin(Math.min(1, k) * Math.PI);
-      // Ba lớp liềm đồng dạng: liềm chính + hai bóng liềm lùi dần phía
-      // sau đầu chém (vệt đuôi) — lớp sau mờ và nhỏ dần.
-      for (var ghost = 2; ghost >= 0; ghost--) {
-        var ga = a * (ghost === 0 ? 1 : 0.32 - ghost * 0.09);
-        var gx = cx - Math.cos(st.ang) * ghost * 13, gy = cy - Math.sin(st.ang) * ghost * 13;
-        var sc = 1 - ghost * 0.1;
-        ctx.save();
-        ctx.translate(gx, gy); ctx.rotate(st.ang); ctx.scale(sc, sc);
-        // Quầng phát sáng màu đậm bọc ngoài thân lưỡi.
-        streakBladePath(L, T * 1.9);
-        ctx.fillStyle = 'rgba(' + st.col + ',' + (0.30 * ga) + ')'; ctx.fill();
-        // Thân lưỡi: đuôi trong suốt -> thân màu đậm -> đầu gần trắng.
-        var grd = null;
-        try { grd = ctx.createLinearGradient(-L / 2, 0, L / 2, 0); } catch (e) { grd = null; }
-        if (grd) {
-          grd.addColorStop(0, 'rgba(' + st.col + ',0)');
-          grd.addColorStop(0.35, 'rgba(' + st.col + ',' + (0.55 * ga) + ')');
-          grd.addColorStop(0.8, 'rgba(' + st.col + ',' + (0.92 * ga) + ')');
-          grd.addColorStop(1, 'rgba(255,255,255,' + (0.9 * ga) + ')');
-          ctx.fillStyle = grd;
-        } else ctx.fillStyle = 'rgba(' + st.col + ',' + (0.7 * ga) + ')';
-        streakBladePath(L, T); ctx.fill();
-        if (ghost === 0) {
-          // Lõi trắng nóng chạy dọc thân — phần "đọc" được ở mọi cỡ màn.
-          streakBladePath(L * 0.92, T * 0.42);
-          ctx.fillStyle = 'rgba(255,255,255,' + (0.95 * a) + ')'; ctx.fill();
-          // Đầu kiếm: quầng màu + lõi trắng lớn ở mũi dẫn.
-          ctx.fillStyle = 'rgba(' + st.col + ',' + (0.5 * a) + ')';
-          ctx.beginPath(); ctx.ellipse(L / 2 - 8, 0, 19, 8, 0, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = 'rgba(255,255,255,' + (0.95 * a) + ')';
-          ctx.beginPath(); ctx.ellipse(L / 2 - 8, 0, 11, 4.6, 0, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
+      var crit = st.col === '255,226,150';
+      var guard = st.guard || (crit ? '150,110,40' : '45,70,110');
+      var core = st.core || (crit ? '255,246,220' : '235,245,255');
+      // hai bóng kiếm mờ bám đuôi (chuyển động liên tục, không phải ảnh tĩnh)
+      for (var g = 2; g >= 1; g--) drawSwordShape(cx - Math.cos(st.ang) * g * 13, cy - Math.sin(st.ang) * g * 13, st.ang, L * (1 - g * 0.08), st.col, core, guard, a * 0.22, st.thick || 0);
+      drawSwordShape(cx, cy, st.ang, L, st.col, core, guard, Math.max(0.25, a), st.thick || 0);
+    });
+  }
+
+
+  /* ================= ARCIV_FX — trình diễn cung IV đợt 1 =================
+     Sao dẫn kiếm + đồ sao + cử động thân theo chiêu + nghi thức lên tầng +
+     Huyền Tinh Trảm + lá Thanh Phong. THUẦN TRÌNH DIỄN: không hàm nào ở
+     đây đổi thời điểm/số sát thương — mọi điểm móc đều chạy TẠI hoặc SAU
+     thời điểm pipe áp sát thương, khung trúng đích khóa đúng t=0 đó. */
+  window.__VSLC_FX_COUNT = window.__VSLC_FX_COUNT || { swordDraws: 0, stars: 0, tierUps: {}, bodyAnims: 0, huyen: 0 };
+  var FXC = window.__VSLC_FX_COUNT;
+  var starFx = [], constFx = [], miniSwords = [], swordFxLog = [];
+  var BEIDOU = [[2,6],[20,12],[36,19],[50,25],[52,43],[74,45],[76,27]];
+  var BEIDOU_LINES = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]];
+  var HUYENCAU = [[10,8],[26,30],[48,50],[72,44],[86,18]];
+  var HUYENCAU_LINES = [[0,1],[1,2],[2,3],[3,4]]; // tuyến MỞ 1->2->3->4, không khép
+  function fxTier() { var t = L.techniqueOf(state, 'that_tinh'); return Math.max(1, Math.min(4, t ? t.tier : 1)); }
+  var P_STARS = [0,1,3,5,7], P_SCALE = [0,0.85,1,1.15,1.3], P_BURST = [0,4,7,10,14];
+  function spawnStar(x, y, col, core, size, delay, dur) {
+    starFx.push({ x: x, y: y, t: -(delay || 0), dur: dur || 0.5, col: col || '150,200,255', core: core || '235,245,255', size: size || 1 });
+    if (starFx.length > 60) starFx.shift(); FXC.stars++;
+  }
+  function drawStarShape(x, y, size, col, core, alpha) {
+    var s1 = 11 * size, s2 = 3 * size;
+    ctx.save(); ctx.translate(x, y); ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgb(' + col + ')';
+    ctx.beginPath(); ctx.moveTo(0, -s1); ctx.lineTo(s2 * 0.4, -s2 * 0.4); ctx.lineTo(s1, 0); ctx.lineTo(s2 * 0.4, s2 * 0.4); ctx.lineTo(0, s1); ctx.lineTo(-s2 * 0.4, s2 * 0.4); ctx.lineTo(-s1, 0); ctx.lineTo(-s2 * 0.4, -s2 * 0.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgb(' + core + ')'; ctx.beginPath(); ctx.arc(0, 0, Math.max(1.2, s2 * 0.55), 0, Math.PI * 2); ctx.fill();
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  function spawnConstellation(cx, cy, w, pts, lines, col, lineCol, core, dur, spin) {
+    constFx.push({ cx: cx, cy: cy, w: w, pts: pts, lines: lines, col: col, lineCol: lineCol, core: core, t: 0, dur: dur || 0.55, spin: spin || 0 });
+    if (constFx.length > 6) constFx.shift();
+    pts.forEach(function (pt, i) { spawnStar(cx + (pt[0] - 50) / 100 * w, cy + (pt[1] - 31) / 62 * w * 0.62, col, core, 0.9, i * 0.03, (dur || 0.55)); });
+  }
+  function spawnStarBurst(x, y, n, col, core) {
+    if (!fxOn()) return;
+    for (var i = 0; i < n && parts.length < MAX_PARTS; i++) {
+      var a = (i / Math.max(1, n)) * Math.PI * 2 + 0.4, sp = 22 + (i % 4) * 9;
+      parts.push({ kind: 'star', x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7, life: 0.4, t: 0, col: col, core: core, r: 2.6 });
+    }
+  }
+  function spawnLeaves(x, y, n, rise) {
+    if (!fxOn()) return;
+    for (var i = 0; i < n && parts.length < MAX_PARTS; i++) {
+      var a = (i / Math.max(1, n)) * Math.PI * 2;
+      parts.push({ kind: 'leaf', x: x + Math.cos(a) * 22, y: y + 8, vx: -Math.sin(a) * 14, vy: -(rise || 26) - (i % 3) * 6, life: 0.95, t: 0, col: '140,220,160', r: 4.5, rot: a, vr: 2 + (i % 3) });
+    }
+  }
+  /* --- Cử động thân theo chiêu: segments khóa khung trúng đích tại t=0 ---
+     startBodySegment nhận hitAtAbs (ms, thang tNow): startAbs = hitAt -
+     tổng dur các khung TRƯỚC khung trúng -> tại đúng hitAt, khung hiển thị
+     là khung trúng đích. Đòn tức thời: hitAt = tNow (khung lấy đà nằm trong
+     quá khứ trình diễn, bị nén — xem khai báo trong CONTRACT); đòn chờ
+     (Liên Hoàn nhịp 2, +120ms) chạy đủ khung lấy đà thật. */
+  var bodySegs = [];
+  var ATK_SETS = {
+    A: { cols: [0,1,2,3,4,5], durs: [90,70,80,60,90,150], hit: 3 },
+    B1: { cols: [6,7,8], durs: [50,40,30], hit: 2 },
+    B2: { cols: [9,10,11,12,13], durs: [60,60,30,80,140], hit: 2 },
+    C: { cols: [14,15,16,17,18,19,20,21], durs: [90,90,110,90,70,120,110,140], hit: 4 },
+    D: { cols: [22,23,24,25,26,27,28], durs: [90,120,150,150,70,130,160], hit: 4 },
+    PHAP: { cols: [0,1,2,3,4,5,6,7,8], durs: [90,90,120,120,120,120,70,110,150], hit: 6 },
+    MOT: { cols: [9,10,11,12,13,14], durs: [80,80,110,110,110,60], hit: 5 },
+    E: { cols: [29,30,31,32,33,34], durs: [90,100,130,70,90,140], hit: 3 }
+  };
+  function startBodySegment(sheet, setName, hitAtAbs) {
+    var set = ATK_SETS[setName]; if (!set || !ASSETS.atk) return;
+    var pre = 0; for (var i = 0; i < set.hit; i++) pre += set.durs[i];
+    var total = 0; set.durs.forEach(function (d) { total += d; });
+    bodySegs.push({ sheet: sheet, cols: set.cols, durs: set.durs, start: hitAtAbs - pre, total: total, row: dir8 });
+    if (bodySegs.length > 4) bodySegs.shift(); FXC.bodyAnims++;
+  }
+  function bodyFrameNow() {
+    for (var i = bodySegs.length - 1; i >= 0; i--) {
+      var sg = bodySegs[i], el = tNow - sg.start;
+      if (el < 0 || el >= sg.total) continue;
+      var acc = 0, col = sg.cols[sg.cols.length - 1];
+      for (var j = 0; j < sg.cols.length; j++) { if (el < acc + sg.durs[j]) { col = sg.cols[j]; break; } acc += sg.durs[j]; }
+      var im = ASSETS.atk[sg.sheet]; if (!imgReady(im)) return null;
+      return { im: im, x: col * 96, y: sg.row * 120 };
+    }
+    return null;
+  }
+  function startSwordBody(move, hitAtAbs, secondHitAtAbs) {
+    var kc = state && state.gender === 'nu' ? 'nuKc' : 'namKc';
+    if (move === 'lien_hoan') { startBodySegment(kc, 'B1', hitAtAbs); if (secondHitAtAbs) startBodySegment(kc, 'B2', secondHitAtAbs); }
+    else if (move === 'pha_quan') startBodySegment(kc, 'C', hitAtAbs);
+    else if (move === 'quy_nhat') startBodySegment(kc, 'D', hitAtAbs);
+    else startBodySegment(kc, 'A', hitAtAbs); // tram + huyen_tinh_tram (bộ A — xấp xỉ đã ghi hợp đồng)
+  }
+  function startResBody(fast) {
+    var pq = state && state.gender === 'nu' ? 'nuPq' : 'namPq';
+    startBodySegment(pq, fast ? 'MOT' : 'PHAP', tNow);
+  }
+  /* --- Nghi thức lên tầng dùng chung (thiết kế 6.3) --- */
+  function presentTechTierUp(techId, tier) {
+    if (!state || !tier) return;
+    FXC.tierUps[techId + ':' + tier] = (FXC.tierUps[techId + ':' + tier] || 0) + 1;
+    var def = L.TECHNIQUE_DEFS[techId]; if (!def) return;
+    var tierName = (def.tiers && def.tiers[tier] && (def.tiers[tier].name || def.tiers[tier])) || ('Tầng ' + tier);
+    if (typeof tierName !== 'string') tierName = 'Tầng ' + tier;
+    var cx = px + 16, cy = py + 16;
+    if (techId === 'that_tinh') spawnConstellation(cx, cy - 62, 76, BEIDOU, BEIDOU_LINES, '150,200,255', '90,140,220', '235,245,255', 1.0, 0);
+    else if (techId === 'thanh_phong') spawnLeaves(cx, cy, 11, 30);
+    addFloat(cx, py - 26, def.name + ' — ' + tierName, techId === 'thanh_phong' ? '200,240,215' : '150,200,255');
+    if (tier >= 4) sfxBigBell(); else sfxBell();
+  }
+  /* --- Trình diễn từng chiêu kiếm tại điểm áp sát thương --- */
+  var lienFirstHitPos = null;
+  function presentSwordHit(tx, ty, ang, move, crit, hitIdx) {
+    var P = fxTier(), colBody = crit ? '255,226,150' : '170,230,255';
+    swordFxLog.push({ move: move || 'tram', P: P, t: tNow }); if (swordFxLog.length > 40) swordFxLog.shift();
+    if (move === 'huyen_tinh_tram') { presentHuyenTinh(tx, ty, ang, crit); return; }
+    if (move === 'pha_quan') {
+      var n = P >= 4 ? 7 : 5, sang = ang;
+      for (var i = 0; i < n; i++) { var off = (i - (n - 1) / 2) * 26; spawnStar(tx + Math.cos(sang) * off, ty + Math.sin(sang) * off - 6, '150,200,255', '235,245,255', 0.95, i * 0.02, 0.5); }
+      spawnStreak(tx, ty - 12, sang, colBody, true, { scale: P_SCALE[P] });
+      addFloat(tx, ty - 34, 'PHÁ QUÂN!', '150,200,255');
+      shakeWorld(0.35); hitStop(0.06);
+      beep(660, 0.1, 'sine', 0.03, 'skill'); setTimeout(function () { beep(98, 0.15, 'triangle', 0.07, 'skill'); }, 40);
+      spawnStarBurst(tx, ty, P >= 4 ? 14 : 10, '150,200,255', '235,245,255');
+      return;
+    }
+    if (move === 'quy_nhat') {
+      spawnConstellation(tx, ty - 55, 100, BEIDOU, BEIDOU_LINES, '150,200,255', '90,140,220', '235,245,255', 0.65, 0);
+      for (var q = 0; q < 7; q++) {
+        miniSwords.push({ x0: tx + (BEIDOU[q][0] - 50), y0: ty - 55 + (BEIDOU[q][1] - 31) * 0.62, x1: tx, y1: ty - 8, t: -q * 0.012, dur: 0.15, L: 54, body: '150,200,255', core: '235,245,255', guard: '45,70,110' });
       }
+      spawnStreak(tx, ty - 12, ang, colBody, true, { scale: 1.3 });
+      addFloat(tx, ty - 40, 'QUY NHẤT!', '150,200,255');
+      shakeWorld(crit ? 0.6 : 0.35);
+      for (var qi = 0; qi < 7; qi++) setTimeout((function (k) { return function () { beep(Math.round(1318 * Math.pow(1.135, k)), 0.07, 'sine', 0.04, 'skill'); }; })(qi), qi * 15);
+      spawnStarBurst(tx, ty, 14, '150,200,255', '235,245,255');
+      return;
+    }
+    if (move === 'lien_hoan') {
+      if (!hitIdx) {
+        spawnStar(tx - 26, ty - 22, '150,200,255', '235,245,255', 0.9, 0, 0.45);
+        spawnStar(tx + 26, ty - 22, '150,200,255', '235,245,255', 0.9, 0.03, 0.45);
+        spawnStar(tx, ty + 26, '150,200,255', '235,245,255', 0.9, 0.06, 0.45);
+        if (P >= 3) for (var e = 0; e < P_STARS[P] - 3; e++) spawnStar(tx - 18 + e * 18, ty - 40, '150,200,255', '235,245,255', 0.7, e * 0.03, 0.4);
+        addFloat(tx, ty - 34, 'LIÊN HOÀN!', '150,200,255');
+        lienFirstHitPos = { x: tx, y: ty };
+        spawnStreak(tx, ty - 12, ang + 0.5, colBody, false, { scale: P_SCALE[P] });
+      } else {
+        spawnStreak(tx, ty - 12, Math.PI - (ang + 0.5), colBody, false, { scale: P_SCALE[P] }); // kiếm 2 phản gương, khép X
+        if (lienFirstHitPos) constFx.push({ cx: (lienFirstHitPos.x + tx) / 2, cy: (lienFirstHitPos.y + ty) / 2 - 12, w: 2, pts: [], lines: [], col: '90,140,220', lineCol: '90,140,220', core: '235,245,255', t: 0, dur: 0.2, spin: 0, seg: [lienFirstHitPos.x, lienFirstHitPos.y - 12, tx, ty - 12] });
+      }
+      spawnStarBurst(tx, ty, Math.ceil(P_BURST[P] / 2), '150,200,255', '235,245,255');
+      return;
+    }
+    // Trảm (đòn nền, không tên nổi): sao nhen trên vai kiếm + cung sao theo P
+    spawnStar(px + 30, py - 14, '150,200,255', '235,245,255', 0.9, 0, 0.4);
+    if (P >= 2) for (var a2 = 1; a2 < P_STARS[P]; a2++) spawnStar(px + 16 + (a2 - (P_STARS[P] - 1) / 2) * 13, py - 34 - Math.abs(a2 - (P_STARS[P] - 1) / 2) * -3, '150,200,255', '235,245,255', 0.7, a2 * 0.025, 0.4);
+    if (P >= 4) spawnConstellation(tx, ty - 20, 46, BEIDOU, BEIDOU_LINES, '150,200,255', '90,140,220', '235,245,255', 0.3, 0);
+    spawnStreak(tx, ty - 12, ang, colBody, crit, { scale: P_SCALE[P] });
+    spawnStarBurst(tx, ty, P_BURST[P], '150,200,255', '235,245,255');
+  }
+  /* --- Huyền Tinh Trảm (đặc tả fx/huyen-tinh-tram-spec.md) --- */
+  function presentHuyenTinh(tx, ty, ang, crit) {
+    FXC.huyen++;
+    // 5 sao Huyền Câu nhen nối tiếp -125ms->0 từng 25ms: sao dùng delay âm
+    // tương đối theo thang giây của starFx (t đã chạy trước qua t âm) —
+    // tại t=0 của pipe, sao cuối vừa nhen; đồ họa thấp vẫn đủ 5 điểm.
+    HUYENCAU.forEach(function (pt, i) { spawnStar(tx + (pt[0] - 50) * 1.1, ty - 58 + (pt[1] - 31) * 0.68, '110,122,240', '216,222,255', 1.0, (4 - i) * -0.025, 0.55); });
+    constFx.push({ cx: tx, cy: ty - 58, w: 110, pts: HUYENCAU, lines: HUYENCAU_LINES, col: '110,122,240', lineCol: '94,84,205', core: '216,222,255', t: 0, dur: 0.55, spin: 0 });
+    // kiếm L=221px bay dọc xương sống chòm (đoạn 2->3->4): big 170 x 1,30
+    spawnStreak(tx, ty - 12, ang, crit ? '255,226,150' : '110,122,240', true, { scale: 1.30, guard: '36,30,84', core: '216,222,255' });
+    addFloat(tx, ty - 42, 'HUYỀN TINH TRẢM!', '168,176,255');
+    shakeWorld(0.35);
+    spawnStarBurst(tx, ty, 8, '110,122,240', '216,222,255'); // 8 sao bốn cánh chàm
+    if (fxOn()) for (var d = 0; d < 4 && parts.length < MAX_PARTS; d++) parts.push({ x: tx + (d - 1.5) * 7, y: ty - 6 + (d % 2) * 5, vx: (d - 1.5) * 8, vy: -6, life: 0.35, t: 0, col: '62,52,148', r: 1.8 }); // 4 hạt chàm đậm
+  }
+  /* --- Cửu Phẩm của Lục Tranh: 9 kiếm con tỏa tại điểm trúng --- */
+  function spawnNineSwords(x, y) {
+    for (var i = 0; i < 9; i++) { var a = i / 9 * Math.PI * 2; miniSwords.push({ x0: x, y0: y, x1: x + Math.cos(a) * 30, y1: y + Math.sin(a) * 30, t: 0, dur: 0.25, L: 21, body: '255,246,220', core: '255,255,255', guard: '255,226,150', out: true }); }
+  }
+  /* --- Cập nhật + vẽ ARCIV_FX --- */
+  function updateArcFx(dt) {
+    starFx = starFx.filter(function (st) { st.t += dt; return st.t < st.dur; });
+    constFx = constFx.filter(function (c) { c.t += dt; return c.t < c.dur; });
+    miniSwords = miniSwords.filter(function (m2) { m2.t += dt; return m2.t < m2.dur; });
+    bodySegs = bodySegs.filter(function (sg) { return tNow - sg.start < sg.total + 40; });
+  }
+  function drawArcFx() {
+    constFx.forEach(function (c) {
+      var fade = c.t < 0.1 ? c.t / 0.1 : Math.max(0, 1 - Math.max(0, c.t - c.dur * 0.6) / (c.dur * 0.4));
+      ctx.save(); ctx.globalAlpha = 0.5 * fade; ctx.strokeStyle = 'rgb(' + c.lineCol + ')'; ctx.lineWidth = 1.3;
+      if (ctx.setLineDash) ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      if (c.seg) { ctx.moveTo(c.seg[0], c.seg[1]); ctx.lineTo(c.seg[2], c.seg[3]); }
+      else c.lines.forEach(function (ln) { var a = c.pts[ln[0]], b = c.pts[ln[1]]; ctx.moveTo(c.cx + (a[0] - 50) / 100 * c.w, c.cy + (a[1] - 31) / 62 * c.w * 0.62); ctx.lineTo(c.cx + (b[0] - 50) / 100 * c.w, c.cy + (b[1] - 31) / 62 * c.w * 0.62); });
+      ctx.stroke(); if (ctx.setLineDash) ctx.setLineDash([]); ctx.restore(); ctx.globalAlpha = 1;
+    });
+    starFx.forEach(function (st) { if (st.t < 0) return; var k = st.t / st.dur; drawStarShape(st.x, st.y, st.size * (0.7 + 0.3 * Math.sin(Math.min(1, st.t / 0.04) * Math.PI * 0.5)), st.col, st.core, Math.sin(Math.min(1, k) * Math.PI)); });
+    miniSwords.forEach(function (m2) {
+      if (m2.t < 0) return; var p = Math.min(1, m2.t / m2.dur);
+      var x = m2.x0 + (m2.x1 - m2.x0) * p, y = m2.y0 + (m2.y1 - m2.y0) * p;
+      drawSwordShape(x, y, Math.atan2(m2.y1 - m2.y0, m2.x1 - m2.x0), m2.L, m2.body, m2.core, m2.guard, Math.sin(p * Math.PI), 0);
+      // vệt đuôi: bóng mờ tại các vị trí trước trên quỹ đạo (chuyển động liên tục)
+      drawSwordShape(m2.x0 + (m2.x1 - m2.x0) * Math.max(0, p - 0.3), m2.y0 + (m2.y1 - m2.y0) * Math.max(0, p - 0.3), Math.atan2(m2.y1 - m2.y0, m2.x1 - m2.x0), m2.L * 0.9, m2.body, m2.core, m2.guard, Math.sin(p * Math.PI) * 0.3, 0);
+    });
+  }
+
+
+  /* ================= ARCIV đợt 1 — mắt trận, chu kỳ boss, bí pháp Kim Đan ================= */
+  /* Mắt trận (ch.14 hiện trường + ch.15 hai mắt di động + ch.16 hai mắt phụ):
+     vật thể trình diễn/cơ chế nhẹ do worker dữ liệu đặt qua cầu VSLC_ARCIV.
+     Mắt còn đứng -> dữ liệu đọc eyesStanding() để nạp nhịp địch/chu kỳ boss;
+     Phong Âm trong tầm phong ấn mắt (ấn vàng khép), mắt tắt vĩnh viễn tới
+     khi dữ liệu tự dọn. Vòng nhiễu xám = ngôn ngữ thiết bị hỗn độn ch.11. */
+  var arcEyes = [];
+  function arcAddEye(x, y, opts) { opts = opts || {}; var e = { x: x, y: y, sealed: false, mobile: !!opts.mobile, ph: Math.random() * 6.3, label: opts.label || 'Mắt trận' }; arcEyes.push(e); return e; }
+  function arcEyesStanding() { return arcEyes.filter(function (e) { return !e.sealed; }).length; }
+  function arcPhongContext() { return arcEyes.some(function (e) { return !e.sealed && Math.hypot(e.x - (px + 16), e.y - (py + 16)) <= 3.2 * TILE; }); }
+  function arcSealEye(e) {
+    if (!e || e.sealed) return; e.sealed = true;
+    rings.push({ x: e.x, y: e.y, r: 8, a: 0.95 });
+    addFloat(e.x, e.y - 30, 'PHONG ẤN!', '255,214,120');
+    spawnParts(e.x, e.y, 10, '255,214,120', 30, true); sfxBell();
+  }
+  /* ---------- ARCIV đợt 2: lớp vẽ vùng báo trước / xe văn thư / sóng hồn / thước rung ----------
+     Gọi cùng điểm với arcDrawEyes trong render. Vùng báo trước: vòng
+     ngoài mờ nâu đỏ (sóng lệch: lam) + vòng trong co dần theo thời gian
+     còn lại + chữ cảnh báo. Xe văn thư vẽ bằng khối gỗ + bánh xe (hàm
+     riêng của trận, không sửa dữ liệu MAPS). Sóng méo trên đầu hồn
+     loạn: biên độ giảm theo số lần giữ — sóng THẲNG DẦN bằng mắt. */
+  function arcDrawWave2() {
+    if (arcFig) {
+      (arcFig.zones || []).forEach(function (zn) {
+        var k = Math.max(0, zn.t / (zn.dur || zn.t || 1));
+        var col = zn.kind === 'soul' ? '120,170,255' : '205,90,60';
+        ctx.fillStyle = 'rgba(' + col + ',' + (0.16 + 0.10 * Math.sin(tNow / 90)) + ')';
+        ctx.beginPath(); ctx.ellipse(zn.x, zn.y, zn.r, zn.r * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(' + col + ',0.85)'; ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.ellipse(zn.x, zn.y, zn.r, zn.r * 0.45, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,235,200,0.9)'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.ellipse(zn.x, zn.y, Math.max(4, zn.r * k), Math.max(2, zn.r * 0.45 * k), 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(20,12,6,0.9)'; ctx.fillText(zn.kind === 'soul' ? 'SÓNG LỆCH!' : 'NÉ!', zn.x + 1, zn.y - zn.r * 0.45 - 5);
+        ctx.fillStyle = '#ffd9a0'; ctx.fillText(zn.kind === 'soul' ? 'SÓNG LỆCH!' : 'NÉ!', zn.x, zn.y - zn.r * 0.45 - 6);
+      });
+      if (arcFig.cart) {
+        var ct = arcFig.cart;
+        var tilt = ct.state === 'tipped' ? 0.85 : ct.state === 'tilting' ? (1 - Math.max(0, ct.t) / 6) * 0.5 : 0;
+        ctx.save(); ctx.translate(ct.x, ct.y); ctx.rotate(tilt);
+        ctx.fillStyle = 'rgba(24,34,18,0.28)'; ctx.beginPath(); ctx.ellipse(0, 14, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8a6a42'; ctx.fillRect(-26, -14, 52, 26);
+        ctx.strokeStyle = '#5d422a'; ctx.lineWidth = 2; ctx.strokeRect(-26, -14, 52, 26);
+        ctx.fillStyle = '#e8dcc0'; ctx.fillRect(-18, -9, 36, 7); ctx.fillRect(-18, 1, 30, 6); // chồng văn thư trắng buộc dây
+        ctx.strokeStyle = '#a33b2e'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(0, 9); ctx.stroke();
+        ctx.fillStyle = '#4a3520';
+        ctx.beginPath(); ctx.arc(-16, 14, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(16, 14, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        if (ct.state === 'saved') {
+          ctx.strokeStyle = 'rgba(255,214,120,' + (0.7 + 0.25 * Math.sin(tNow / 160)) + ')'; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.ellipse(ct.x, ct.y, 38, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        } else if (ct.state === 'tilting') {
+          ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffd9a0'; ctx.fillText(Math.ceil(Math.max(0, ct.t)) + '', ct.x, ct.y - 30);
+        }
+      }
+      /* Đợt 3: XE HÀNG (cfg.carts) — cùng ngôn ngữ vẽ với xe văn thư:
+         khối gỗ + kiện hàng + bánh xe; 'tilting' nghiêng dần + đếm
+         ngược, 'saved' vòng vàng, 'tipped' nghiêng hẳn, 'lost' vỡ
+         (nghiêng mạnh + kiện hàng rơi vương ra đất) + thanh máu xe. */
+      (arcFig.carts || []).forEach(function (ct) {
+        var tilt3 = ct.state === 'lost' ? 1.05 : ct.state === 'tipped' ? 0.85 : ct.state === 'tilting' ? (1 - Math.max(0, ct.t) / 6) * 0.5 : 0;
+        ctx.save(); ctx.translate(ct.x, ct.y); ctx.rotate(tilt3);
+        ctx.fillStyle = 'rgba(24,34,18,0.28)'; ctx.beginPath(); ctx.ellipse(0, 14, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = ct.flashT > 0 ? '#c9a06a' : '#8a6a42'; ctx.fillRect(-26, -14, 52, 26);
+        ctx.strokeStyle = '#5d422a'; ctx.lineWidth = 2; ctx.strokeRect(-26, -14, 52, 26);
+        ctx.fillStyle = '#d8c9a3'; ctx.fillRect(-19, -10, 38, 8); ctx.fillRect(-19, 1, 32, 7); // kiện hàng buộc dây
+        ctx.strokeStyle = '#7a5c33'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(0, 10); ctx.stroke();
+        ctx.fillStyle = '#4a3520';
+        ctx.beginPath(); ctx.arc(-16, 14, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(16, 14, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        if (ct.state === 'lost') {
+          ctx.fillStyle = '#c9b184';
+          ctx.fillRect(ct.x - 34, ct.y + 12, 12, 7); ctx.fillRect(ct.x + 24, ct.y + 16, 10, 6); ctx.fillRect(ct.x + 2, ct.y + 20, 9, 5); // kiện hàng rơi vương
+        } else if (ct.state === 'saved') {
+          ctx.strokeStyle = 'rgba(255,214,120,' + (0.7 + 0.25 * Math.sin(tNow / 160)) + ')'; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.ellipse(ct.x, ct.y, 38, 18, 0, 0, Math.PI * 2); ctx.stroke();
+        } else if (ct.state === 'tilting') {
+          ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillStyle = '#ffd9a0'; ctx.fillText(Math.ceil(Math.max(0, ct.t)) + '', ct.x, ct.y - 30);
+        }
+        if (ct.hpMax && ct.hp < ct.hpMax && ct.state !== 'lost') {
+          ctx.fillStyle = 'rgba(10,10,10,0.55)'; ctx.fillRect(ct.x - 22, ct.y - 26, 44, 5);
+          ctx.fillStyle = '#ffb060'; ctx.fillRect(ct.x - 21, ct.y - 25, 42 * Math.max(0, ct.hp / ct.hpMax), 3);
+        }
+      });
+      /* Đợt 3 ch.24: điểm giữ cứu người (cfg.rescueHold) — vòng sóng
+         đứng tại vị trí người bị thương dưới mảng vách + nhãn số lần
+         giữ; đứng trong 3,2 ô quanh điểm này dùng Định Âm là giữ. */
+      if (arcFig.rescueHold) {
+        var rh = arcFig.rescueHold, rhX2 = rh.tx * TILE + 16, rhY2 = rh.ty * TILE + 16;
+        var done2 = arcFig.rescueHolds >= (rh.need || 2);
+        ctx.strokeStyle = done2 ? 'rgba(255,214,120,0.95)' : 'rgba(170,220,255,' + (0.65 + 0.25 * Math.sin(tNow / 170)) + ')'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.ellipse(rhX2, rhY2, 3.2 * TILE, 3.2 * TILE * 0.45, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(rhX2, rhY2, 14 + 3 * Math.sin(tNow / 200), 7 + 1.5 * Math.sin(tNow / 200), 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(20,12,6,0.9)'; ctx.fillText('NGƯỜI BỊ THƯƠNG — GIỮ! (' + arcFig.rescueHolds + '/' + (rh.need || 2) + ')', rhX2 + 1, rhY2 - 3.2 * TILE * 0.45 - 5);
+        ctx.fillStyle = '#bfe0ff'; ctx.fillText('NGƯỜI BỊ THƯƠNG — GIỮ! (' + arcFig.rescueHolds + '/' + (rh.need || 2) + ')', rhX2, rhY2 - 3.2 * TILE * 0.45 - 6);
+      }
+      if (arcFig.soulChaos) {
+        arcFig.figs.forEach(function (fg) {
+          if (!fg.soulChaos || fg.dead) return;
+          var need = (arcFig.soulChaos && arcFig.soulChaos.need) || 3;
+          var amp = 9 * (1 - 0.8 * Math.min(1, arcFig.soulHolds / need));
+          var cxw = fg.x + 16, cyw = fg.y - 46;
+          ctx.strokeStyle = 'rgba(170,205,255,0.9)'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (var si2 = 0; si2 <= 16; si2++) {
+            var u = si2 / 16;
+            var wx = cxw - 34 + u * 68;
+            var wy = cyw + Math.sin(u * Math.PI * 3 + tNow / 210) * amp * (0.6 + 0.4 * Math.sin(u * Math.PI * 7));
+            if (si2 === 0) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy);
+          }
+          ctx.stroke();
+        });
+      }
+    }
+    arcDrawRulerShake();
+  }
+  /* Đợt 2 ch.17 (B.7): thước pha lê rung loạn ở thap_noi khi cờ
+     q17RulerShaking bật — hạt bụi rơi quanh thước + vòng mờ rung tại
+     tâm thước (20,4). Thuần trình diễn, gọi từ arcDrawWave2. */
+  function arcDrawRulerShake() {
+    if (!state || state.map !== 'thap_noi' || !state.flags || !state.flags.q17RulerShaking) return;
+    var rx = 20 * TILE + 16, ry = 4 * TILE + 16;
+    var jx = Math.sin(tNow / 37) * 2.2, jy = Math.cos(tNow / 43) * 1.6;
+    ctx.strokeStyle = 'rgba(200,225,255,' + (0.4 + 0.2 * Math.sin(tNow / 80)) + ')'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.ellipse(rx + jx, ry + jy, 30, 13, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.ellipse(rx - jx, ry - jy, 22, 9, 0, 0, Math.PI * 2); ctx.stroke();
+    if (fxOn()) {
+      for (var di = 0; di < 5; di++) {
+        var dh = (di * 47 + Math.floor(tNow / 30)) % 60;
+        ctx.fillStyle = 'rgba(210,220,235,' + (0.5 * (1 - dh / 60)) + ')';
+        ctx.fillRect(rx - 26 + ((di * 29) % 52) + Math.sin(tNow / 60 + di) * 2, ry - 20 + dh, 2, 2);
+      }
+    }
+  }
+  function arcDrawEyes() {
+    arcEyes.forEach(function (e) {
+      var bobY = e.mobile ? Math.sin(tNow / 700 + e.ph) * 5 : 0, cy = e.y + bobY;
+      if (!e.sealed) {
+        for (var ai = 0; ai < 3; ai++) { ctx.strokeStyle = 'rgba(148,163,184,' + (0.75 - ai * 0.18) + ')'; ctx.lineWidth = 2.4 - ai * 0.5; ctx.beginPath(); ctx.arc(e.x, cy, 13 + ai * 6, tNow / (300 + ai * 120) + ai, tNow / (300 + ai * 120) + ai + Math.PI * 1.35); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(210,218,230,0.9)'; ctx.beginPath(); ctx.arc(e.x, cy, 4.5, 0, Math.PI * 2); ctx.fill();
+        // Đợt 3: mắt đang ĐÓNG BĂNG (Định Âm, cfg.eyeDinhFreeze) — vành
+        // băng lam quanh mắt + nhân băng đặc, khác hẳn vòng nhiễu xám.
+        if (e.frozenT > 0) {
+          ctx.strokeStyle = 'rgba(170,220,255,0.95)'; ctx.lineWidth = 2.6;
+          ctx.beginPath(); ctx.arc(e.x, cy, 17, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(230,245,255,0.8)'; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(e.x, cy, 21, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = 'rgba(200,235,255,0.95)'; ctx.beginPath(); ctx.arc(e.x, cy, 5.5, 0, Math.PI * 2); ctx.fill();
+        }
+      } else {
+        ctx.save(); ctx.translate(e.x, cy); ctx.rotate(Math.PI / 4);
+        ctx.strokeStyle = 'rgba(255,214,120,0.95)'; ctx.lineWidth = 3; ctx.strokeRect(-11, -11, 22, 22); ctx.restore();
+        ctx.fillStyle = 'rgba(120,110,90,0.8)'; ctx.beginPath(); ctx.arc(e.x, cy, 4, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+  }
+  /* Chu kỳ kiếm trận của boss (ch.16 Trận Nhãn + ch.15/5e biến thể): 7 kiếm
+     xỉn bay quanh boss, đổi chiều mỗi chu kỳ, đường bay vẽ trước một nhịp;
+     tích tắc cơ học theo số mắt còn đứng, im tuyệt đối khi bị Định Âm đóng
+     băng (frozen). Vạn Kiếm Quy Tông: triggerFan() báo trước dài rồi xả quạt
+     miniSwords từ boss ra ngoài. Đường thắng không cần Định/Phong nằm ở dữ
+     liệu/sát thương — lớp này chỉ trình diễn + đồng hồ chu kỳ. */
+  var arcCycle = null;
+  function arcStartCycle(getPos, opts) { opts = opts || {}; arcCycle = { getPos: getPos, t: 0, dir: 1, period: opts.period || 4.2, frozen: false, tickI: -1, fanT: -1, dull: opts.dull || '150,160,170' }; }
+  function arcStopCycle() { arcCycle = null; }
+  function arcCycleFan() { if (arcCycle) arcCycle.fanT = 0; }
+  function arcUpdateCycle(dt) {
+    var c = arcCycle; if (!c) return;
+    if (c.frozen) return; // Định Âm: chu kỳ đóng băng, im tuyệt đối, boss giữ thế tụ
+    c.t += dt;
+    if (c.t >= c.period) { c.t = 0; c.dir *= -1; }
+    var standing = Math.max(0, arcEyesStanding());
+    var tick = Math.floor(c.t / (c.period / 7) / (standing >= 2 ? 0.8 : standing === 1 ? 0.9 : 1));
+    if (tick !== c.tickI) { c.tickI = tick; beep(1200 - standing * 120, 0.03, 'square', 0.012, 'skill'); }
+    if (c.fanT >= 0) {
+      c.fanT += dt;
+      if (c.fanT >= 1.1) { // hết báo trước dài -> xả quạt 7 tia
+        var bp = c.getPos();
+        for (var fi = 0; fi < 7; fi++) { var fa = -Math.PI / 2 + (fi - 3) * 0.3; miniSwords.push({ x0: bp.x, y0: bp.y, x1: bp.x + Math.cos(fa) * 120, y1: bp.y + Math.sin(fa) * 120, t: 0, dur: 0.5, L: 60, body: c.dull, core: '220,228,240', guard: '60,64,72', out: true }); }
+        shakeWorld(0.35); c.fanT = -1;
+      }
+    }
+  }
+  function arcDrawCycle() {
+    var c = arcCycle; if (!c) return; var bp = c.getPos(); if (!bp) return;
+    var speedK = Math.max(0, arcEyesStanding()) >= 2 ? 1.25 : Math.max(0, arcEyesStanding()) === 1 ? 1.12 : 1;
+    for (var i = 0; i < 7; i++) {
+      var a = (c.t / c.period) * Math.PI * 2 * c.dir * speedK + i * (Math.PI * 2 / 7);
+      var ox = bp.x + Math.cos(a) * 54, oy = bp.y + Math.sin(a) * 30;
+      drawSwordShape(ox, oy, a + Math.PI / 2 * c.dir, 44, c.dull, '220,228,240', '60,64,72', c.frozen ? 0.55 : 0.9, 0);
+      // đường bay đọc trước một nhịp: chấm mờ tại vị trí kế tiếp
+      var a2 = a + 0.5 * c.dir; ctx.fillStyle = 'rgba(200,208,220,0.25)'; ctx.beginPath(); ctx.arc(bp.x + Math.cos(a2) * 54, bp.y + Math.sin(a2) * 30, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    if (c.fanT >= 0) { ctx.strokeStyle = 'rgba(255,190,120,' + (0.4 + 0.4 * Math.sin(tNow / 90)) + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(bp.x, bp.y, 30 + c.fanT * 30, 0, Math.PI * 2); ctx.stroke(); addFloat(bp.x, bp.y - 52, 'VẠN KIẾM QUY TÔNG!', '255,190,120'); c.fanShown = true; }
+  }
+  /* --- Trình diễn 10 bộ bí pháp dải Kim Đan (ô 03/06/09/14/15/17/19/20/23/26) ---
+     Hiệu ứng CHUYỂN ĐỘNG LIÊN TỤC dựng từ sprite cắt trực tiếp trong
+     assets/vfx/cp<ô>/ của chính sheet từng bộ: đạn bay có tiến trình + vệt
+     đuôi (hạt bám quỹ đạo), triệu hồi lướt theo quỹ đạo cong, mưa đạn trút
+     theo nhịp, xoáy xoay thật, lưỡi liềm là MỘT vệt cong quét qua mục tiêu.
+     castTechFx do đường xuất chiêu của worker dữ liệu gọi tại t=0 áp sát
+     thương; SP-01 Thanh Hoa Liên Trận Kinh CHƯA có sheet -> không đăng ký
+     ở đây (trình diễn tối thiểu chung ở phía dữ liệu, xem CONTRACT). */
+  var TECH_FX_IMG = {};
+  function techImg(cell, file) { var k = cell + '/' + file; if (!TECH_FX_IMG[k]) TECH_FX_IMG[k] = loadImg('assets/vfx/cp' + cell + '/' + file); return TECH_FX_IMG[k]; }
+  var techProj = [];
+  function spawnTechProj(img, x0, y0, x1, y1, dur, size, opts) {
+    opts = opts || {};
+    techProj.push({ img: img, x0: x0, y0: y0, x1: x1, y1: y1, t: -(opts.delay || 0), dur: dur, size: size, spin: opts.spin || 0, arc: opts.arc || 0, col: opts.col || '200,230,255', grow: opts.grow || 0 });
+    if (techProj.length > 24) techProj.shift();
+  }
+  var TECH_FX_DEFS = {
+    thanh_loan_pha_hu: { cell: '03', pattern: 'phoenix', col: '32,192,160', body: 'phap' },
+    thanh_long_xuat_the: { cell: '06', pattern: 'dragon', col: '80,220,160', body: 'phap' },
+    dai_nhat_hoa_cau: { cell: '09', pattern: 'fireball', col: '255,150,60', body: 'phap', img: 'g09_ball.png' },
+    thuong_hai_cuong_dao: { cell: '14', pattern: 'wave', col: '80,170,255', body: 'phap', img: 'g14_wave.png' },
+    han_bang_bao_lien: { cell: '15', pattern: 'lotus', col: '150,210,255', body: 'phap', img: 'g15_lotus_full.png' },
+    tuyet_hoa_cu_kiem: { cell: '17', pattern: 'sword', col: '190,225,255', body: 'sword', img: 'g17_sword.png' },
+    tu_dien_kich: { cell: '19', pattern: 'bolt', col: '180,140,255', body: 'mot', img: 'g19_bolt.png' },
+    loi_quang_than_kiem: { cell: '20', pattern: 'sword', col: '200,170,255', body: 'sword', img: 'g20_sword.png' },
+    bon_loi_thiem_kich: { cell: '23', pattern: 'bolt', col: '170,150,255', body: 'mot', img: 'l23_proj15.png' },
+    thai_bach_kim_kiem: { cell: '26', pattern: 'sword', col: '255,220,150', body: 'sword', img: 'g26_sword.png' },
+    hoa_phuong_lieu_nguyen: { cell: '07', pattern: 'firephoenix', col: '255,130,50', body: 'phap' }
+  };
+  function castTechFx(techId, tx, ty, opts) {
+    opts = opts || {}; var def = TECH_FX_DEFS[techId]; if (!def) return false;
+    var sx = px + 16, sy = py + 10, tier = opts.tier || 1;
+    if (def.body === 'sword') startSwordBody('tram', tNow, null);
+    else if (def.body === 'mot') startResBody(true);
+    else startResBody(false);
+    FXC['tech_' + techId] = (FXC['tech_' + techId] || 0) + 1;
+    if (def.pattern === 'sword') { spawnTechProj(techImg(def.cell, def.img), sx, sy, tx, ty - 8, 0.34, 74 + tier * 8, { col: def.col, spin: 0.4 }); spawnStarBurst(tx, ty, 6 + tier * 2, def.col, '255,255,255'); }
+    else if (def.pattern === 'bolt') { for (var b = 0; b < 3; b++) spawnTechProj(techImg(def.cell, def.img), tx + (b - 1) * 22, ty - 130, tx + (b - 1) * 22, ty - 10, 0.3, 54, { col: def.col, delay: b * 0.09 }); spawnStarBurst(tx, ty, 8, def.col, '255,255,255'); }
+    else if (def.pattern === 'fireball') { spawnTechProj(techImg(def.cell, def.img), sx, sy, tx, ty - 10, 0.45, 40, { col: def.col, grow: 60 + tier * 10 }); spawnStarBurst(tx, ty, 12, def.col, '255,240,200'); }
+    else if (def.pattern === 'wave') { spawnTechProj(techImg(def.cell, def.img), sx, ty - 6, tx, ty - 6, 0.5, 96, { col: def.col }); spawnParts(tx, ty, 10, def.col, 34, false); }
+    else if (def.pattern === 'lotus') { spawnTechProj(techImg(def.cell, def.img), tx, ty + 6, tx, ty + 6, 0.85, 92 + tier * 8, { col: def.col, spin: 2.6 }); for (var c2 = 0; c2 < 5; c2++) spawnTechProj(techImg(def.cell, 'a15_crystal16.png'), tx + (c2 - 2) * 16, ty - 110, tx + (c2 - 2) * 13, ty - 6, 0.4, 30, { col: def.col, delay: 0.15 + c2 * 0.07 }); }
+    else if (def.pattern === 'phoenix') {
+      spawnTechProj(techImg('03', 'orbit.png'), sx, sy, sx, sy, 0.5, 74, { col: def.col, spin: 3 });
+      for (var d = 0; d < 3; d++) spawnTechProj(techImg('03', 'dart_small_0' + (d + 1) + '.png'), sx, sy, tx, ty - 8, 0.3, 40, { col: def.col, delay: 0.1 + d * 0.08 });
+      spawnTechProj(techImg('03', 'disc_01.png'), tx, ty - 8, tx, ty - 8, 0.5, 58, { col: def.col, spin: 5, delay: 0.3 });
+      for (var r2 = 0; r2 < 6; r2++) spawnTechProj(techImg('03', 'dart_small_04.png'), tx + (r2 - 2.5) * 13, ty - 120, tx + (r2 - 2.5) * 10, ty - 8, 0.36, 34, { col: def.col, delay: 0.55 + r2 * 0.06 });
+      spawnTechProj(techImg('03', 'phoenix_big.png'), sx - 30, sy - 44, tx, ty - 14, 0.62, 130, { col: def.col, arc: -46, delay: 0.5 });
+    }
+    else if (def.pattern === 'firephoenix') {
+      // Ô 07 Hỏa Phượng Liêu Nguyên: bám vũ đạo 'phoenix' của ô 03 nhưng
+      // bằng sprite lửa cắt trực tiếp từ bảng của Bui (assets/vfx/cp07/).
+      // Mọi thành phần CHUYỂN ĐỘNG LIÊN TỤC: hào quang xoay tại thân, phi
+      // tiêu bay có tiến trình, đĩa xoay tại đích, mưa phi tiêu trút theo
+      // nhịp, phượng lửa LƯỚT theo quỹ đạo cong tới đích rồi nổ sao —
+      // tuyệt đối không ảnh tĩnh hiện lên rồi biến mất.
+      spawnTechProj(techImg('07', 'g07_aura.png'), sx, sy, sx, sy, 0.5, 74, { col: def.col, spin: 3 });
+      var fpDarts = ['a07_proj13.png', 'a07_proj15.png', 'a07_proj16.png'];
+      for (var fd = 0; fd < 3; fd++) spawnTechProj(techImg('07', fpDarts[fd]), sx, sy, tx, ty - 8, 0.3, 40, { col: def.col, delay: 0.1 + fd * 0.08 });
+      spawnTechProj(techImg('07', 'f07_disc01.png'), tx, ty - 8, tx, ty - 8, 0.5, 58, { col: def.col, spin: 5, delay: 0.3 });
+      var fpRain = ['a07_proj17.png', 'a07_proj18.png', 'a07_proj19.png'];
+      for (var fr = 0; fr < 6; fr++) spawnTechProj(techImg('07', fpRain[fr % 3]), tx + (fr - 2.5) * 13, ty - 120, tx + (fr - 2.5) * 10, ty - 8, 0.36, 34, { col: def.col, delay: 0.55 + fr * 0.06 });
+      spawnTechProj(techImg('07', 'g07_phoenix.png'), sx - 30, sy - 44, tx, ty - 14, 0.62, 130, { col: def.col, arc: -46, delay: 0.5 });
+      spawnTechProj(techImg('07', 'f07_burst.png'), tx, ty - 10, tx, ty - 10, 0.45, 84, { col: def.col, spin: 1.2, delay: 0.95 });
+      spawnStarBurst(tx, ty, 10 + tier * 2, def.col, '255,240,200');
+    }
+    else if (def.pattern === 'dragon') {
+      spawnTechProj(techImg('06', 'dragon_full.png'), sx - 20, sy - 30, tx, ty - 12, 0.66, 138, { col: def.col, arc: -40 });
+      spawnTechProj(techImg('06', 'crescent_jade.png'), sx, sy, tx + 26, ty - 8, 0.4, 66, { col: def.col, spin: 2.2, delay: 0.2 });
+      spawnStarBurst(tx, ty, 10, def.col, '235,255,245');
+    }
+    return true;
+  }
+  function updateTechFx(dt) {
+    techProj = techProj.filter(function (pr) { pr.t += dt; if (pr.t >= 0 && pr.t < pr.dur && fxOn() && Math.random() < 0.75) { var p = pr.t / pr.dur; parts.push({ x: pr.x0 + (pr.x1 - pr.x0) * p + (Math.random() - 0.5) * 6, y: pr.y0 + (pr.y1 - pr.y0) * p + Math.sin(p * Math.PI) * pr.arc + (Math.random() - 0.5) * 6, vx: 0, vy: -4, life: 0.3, t: 0, col: pr.col, r: 1.8 }); if (parts.length > MAX_PARTS) parts.shift(); } return pr.t < pr.dur; });
+    arcEyes.forEach(function (e) { if (e.mobile && !e.sealed) { e.x += Math.sin(tNow / 900 + e.ph) * 6 * dt; } });
+  }
+  function drawTechFx() {
+    techProj.forEach(function (pr) {
+      if (pr.t < 0 || !imgReady(pr.img)) return;
+      var p = Math.min(1, pr.t / pr.dur), ease = 1 - (1 - p) * (1 - p);
+      var x = pr.x0 + (pr.x1 - pr.x0) * ease, y = pr.y0 + (pr.y1 - pr.y0) * ease + Math.sin(p * Math.PI) * pr.arc;
+      var size = pr.size * (1 + (pr.grow || 0) / 100 * p);
+      ctx.save(); ctx.translate(x, y); if (pr.spin) ctx.rotate(pr.spin * pr.t * 3);
+      else if (pr.x1 !== pr.x0 || pr.y1 !== pr.y0) ctx.rotate(Math.atan2(pr.y1 - pr.y0, pr.x1 - pr.x0) + Math.PI / 2 * 0);
+      ctx.globalAlpha = Math.sin(Math.min(1, p) * Math.PI * 0.5 + 0.5);
+      ctx.drawImage(pr.img, -size / 2, -size / 2, size, size); ctx.restore(); ctx.globalAlpha = 1;
     });
   }
 
@@ -5641,9 +8476,13 @@
       sfxHitBlade();
       if (it.crit) { sfxCrit(); hitStop(it.graze ? 0.09 : 0.06); shakeWorld(it.graze ? 0.35 : 0.12); }
       if (it.graze) spawnParts(dxp, def.y * TILE + 26, 10, '200,60,50', 30, true); // máu thấm áo ở đòn sượt vai
-      if (it.skill) { // vệt kiếm quang cho chiêu kiếm trong tỉ thí (gói phụ 10)
-        spawnStreak(dxp, def.y * TILE + 6, it.who === 'u' ? 0.2 : Math.PI - 0.2, it.crit ? '255,226,150' : '170,230,255', it.crit);
-        if (it.who === 'u') spawnPetals(dxp - 14, def.y * TILE, 3); // cánh hoa quanh chiêu của U Nhàn (gói phụ 10)
+      if (it.skill) { // ARCIV 8.1: bản sắc theo chiêu tỉ thí chương 5
+        var dAng = it.who === 'u' ? 0.2 : Math.PI - 0.2, dCol = it.crit ? '255,226,150' : '170,230,255';
+        if (it.skill === 'Cửu Phẩm Kiếm Khí') { spawnStreak(dxp, def.y * TILE + 6, dAng, '255,246,220', false, { guard: '255,226,150', core: '255,255,255' }); spawnNineSwords(dxp, def.y * TILE + 16); }
+        else if (it.skill === 'Thanh Phong Khoái Kiếm') { spawnStreak(dxp, def.y * TILE + 6, dAng, '170,240,190', false); setTimeout(function () { spawnStreak(dxp, def.y * TILE + 6, dAng + 0.44, '170,240,190', false); }, 60); spawnPetals(dxp - 14, def.y * TILE, 4); }
+        else if (it.skill === 'Hồi Phong Phất Liễu') { spawnStreak(dxp, def.y * TILE + 6, dAng, '140,220,160', true, { scale: 1.2 }); spawnPetals(dxp - 14, def.y * TILE, 6); }
+        else if (it.skill === 'Trảm Phong Thức') { spawnStreak(dxp, def.y * TILE + 6, dAng, '230,200,140', false, { thick: 3 }); }
+        else { spawnStreak(dxp, def.y * TILE + 6, dAng, dCol, it.crit); if (it.who === 'u') spawnPetals(dxp - 14, def.y * TILE, 3); }
       }
     }
     if (duel.uKb) { duel.uKb = Math.abs(duel.uKb) <= 90 * dt ? 0 : duel.uKb - Math.sign(duel.uKb) * 90 * dt; }
@@ -5929,6 +8768,7 @@
 
   function encCastWord(skill) {
     var m = enc.mon;
+    if (state.flags && (state.flags.arcResLocked || state.flags.ch15ResonanceLock)) { toast('Vòng nhiễu loạn sóng khóa chặt cộng hưởng — sóng không tới được. Đã học bậc Hưởng cũng vô dụng ở đây; dùng kiếm quyết và công pháp!'); return; } // ARCIV ch.15/23: cộng hưởng bị khóa theo trạng thái cảnh (cờ do worker dữ liệu đặt)
     if (!encTargetInRange(3.2)) {
       // Ngoài tầm khóa 3,2 ô (3.4): sóng chạy nửa đường rồi tan + lời
       // nhắn mới. Thuần trình bày — điều kiện tầm không đổi.
@@ -5945,6 +8785,7 @@
     var silenceBefore = state.silence; // nấc trình diễn tính theo Tĩnh Âm TRƯỚC khi ra đòn (3.3)
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
+    startResBody(false); // bộ PHÁP: khung phóng quyết (cột 6) khóa tại thời điểm áp hiệu ứng dưới đây
     var wf = WORD_FLOAT[skill];
     var baseF = resBaseFreqForMonster(m); // âm gốc của mục tiêu cho nốt khóa sóng (3.6)
     if (skill === 'pha') {
@@ -5966,6 +8807,8 @@
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.9 });
     } else if (skill === 'phong') {
       // PHONG: phong ấn hai chu kỳ tấn công + uy lực lời đánh thẳng vào quái.
+      // ARCIV: mắt trận trong tầm được phong ấn NGAY GIỮA TRẬN (ch.14 đường b / ch.15 / ch.16 mắt phụ).
+      arcEyes.forEach(function (e) { if (!e.sealed && Math.hypot(e.x - (px + 16), e.y - (py + 16)) <= 3.2 * TILE) arcSealEye(e); });
       enc.usedPhong++;
       state.flags.lenUsedPhong = (state.flags.lenUsedPhong || 0) + 1;
       m.sealT = m.atkInterval * 2;
@@ -5998,9 +8841,9 @@
     var crit = enc.critRng() < CRIT_CHANCE;
     var dmg = crit ? Math.round(power * CRIT_MULT) : power;
     if (opts.kind === 'word' && m.def && m.def.wordResist) dmg = Math.max(1, Math.round(dmg * m.def.wordResist)); // kháng Ngôn Linh: chỉ kiem_y_tan_hon 0.5
-    if (opts.kind === 'sword') { // vệt kiếm quang lam lướt qua quái (gói phụ 10)
+    if (opts.kind === 'sword') { // ARCIV: trình diễn theo chiêu + thang P tại đúng t=0 áp sát thương
       var sang = Math.atan2((m.y + 16) - (py + 16), (m.x + 16) - (px + 16)) + (Math.random() - 0.5) * 0.7;
-      spawnStreak(m.x + 16, m.y + 4, sang, crit ? '255,226,150' : '170,230,255', crit);
+      presentSwordHit(m.x + 16, m.y + 20, sang, opts.move || 'tram', crit, opts.hitIdx || 0);
     }
     m.hp = Math.max(0, m.hp - dmg);
     // Phản ứng của quái (GF-02): nhấp nháy trắng theo hạng, đẩy lùi thuần
@@ -6141,6 +8984,9 @@
     if (r.granted.merit > 0) parts.push('+' + fmtAmt(r.granted.merit) + ' cống hiến');
     for (var id2 in r.granted.items) parts.push((L.ITEM_DEFS[id2] ? L.ITEM_DEFS[id2].name : id2) + ' ×' + r.granted.items[id2]);
     toast('Hạ ' + bd.name + '! ' + parts.join(' · '), 5200);
+    // ARCIV A.3: Hộ Trận Kiếm Linh — mảnh ô 26 + trưởng lão dạy ô 19
+    // (số lần thắng boss Kim Đan đọc từ sổ claim trong logic).
+    if (m.bossId === 'boss_hb_ho_tran_kiem_linh') arcIvBossFragmentToast('boss:ho_tran_kiem_linh');
     return 'claimed';
   }
   function bossPhaseOf(m) { return Math.max(1, Math.ceil(m.hp / m.hpMax * 4)); }
@@ -6327,7 +9173,10 @@
       }
       sfxBell();
       rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
-      spawnParts(px + 16, py + 10, 12, '255,232,160', 24, true);
+      // ARCIV mục 7: hạt motif theo quyển thay hạt vàng chung + nghi thức lên tầng nối tiếp
+      if (rb.technique === 'thanh_phong') spawnLeaves(px + 16, py + 10, 10, 26);
+      else spawnStarBurst(px + 16, py + 6, 10, '150,200,255', '235,245,255');
+      if (rb.tierUps && rb.tierUps.length) presentTechTierUp(rb.technique, rb.tier);
       addFloat(px + 16, py - 24, '+' + rb.points + ' điểm tu luyện', '255,232,160');
       toast('Đọc xong ' + def.name + ': +' + rb.points + ' điểm tu luyện cho ' + L.TECHNIQUE_DEFS[rb.technique].name +
         (rb.tierUps.length ? ' — công pháp LÊN TẦNG ' + rb.tier + '!' : ' (đang tầng ' + rb.tier + ').'), 4600);
@@ -6352,6 +9201,9 @@
     if (m.state === 'dying') { row = 3; col = m.deathT < 0.3 ? 1 : (m.deathT < 0.65 ? 2 : 3); }
     else if (m.flashT > 0) { row = 3; col = 0; } // khung trúng đòn (khi không có bản trắng)
     else if (m.atkAnimT > 0) { row = 2; col = Math.min(2, Math.floor((0.35 - m.atkAnimT) / 0.35 * 3)); }
+    // ARCIV ch.16 (F.6 đã khai): boss Trận Nhãn bị Định Âm đóng băng
+    // (holdT hoặc chu kỳ frozen) thì KHÓA khung đứng yên cột 0 của sheet.
+    else if (m.species === 'tran_nhan_kiem_linh' && (m.holdT > 0 || (typeof arcCycle !== 'undefined' && arcCycle && arcCycle.frozen))) { row = 0; col = 0; }
     else if (m.movingNow) { row = 1; col = Math.floor(tNow / 140) % 4; }
     else { row = 0; col = Math.floor(tNow / 600) % 2; }
     return { x: col * cw, y: row * ch, w: cw, h: ch };
@@ -6571,6 +9423,8 @@
       if (!state.flags.lenPhongDone) return say(ST.SCENE_CH12_LENH_2);
       return say([{ who: 'narrate', text: 'Tấm bia ở chân đài đứng yên tuyệt đối, vết rạn trên trận văn đã khép dưới vòng ấn vàng. Bậc Hưởng của ngươi bắt đầu từ đây.' }]);
     }
+    if (state.quest === 'q16_dot_pha') return arcDoKimDanBreak();
+    if (state.quest === 'q22_dot_pha') return arcDoHauKyBreak();
     return say([{ who: 'narrate', text: 'Đài Trúc Cơ ở phía bắc tông môn: nền đá tròn khắc vòng trận văn cổ, linh khí quanh đài đậm đặc tới mức nhìn thấy được bằng mắt thường. Đây là nơi đệ tử Thanh Vân Tông bước qua mốc tu vi lớn đầu tiên của đời mình.' }]);
   }
   function resolveGuardWave(action) {
@@ -6963,6 +9817,8 @@
   function castPha() {
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long — bấm là phát hưởng, ải đặt lại
     if (hhtFight) { if (!dlg) hhtCastWord('pha'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
+    if (daiFight) { if (!dlg) daiCastWord('pha'); return; } // ARCIV: cộng hưởng trong trận đài thách đấu
+    if (arcFig) { if (!dlg) arcFigCastWord('pha'); return; } // ARCIV: cộng hưởng trong trận kịch bản dã ngoại
     if (dlg) return;
     if (enc) { encCastWord('pha'); return; }
     if (startEncounterNear(3.2)) { encCastWord('pha'); return; }
@@ -6999,6 +9855,8 @@
   function castChan() {
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('chan'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
+    if (daiFight) { if (!dlg) daiCastWord('chan'); return; } // ARCIV
+    if (arcFig) { if (!dlg) arcFigCastWord('chan'); return; } // ARCIV
     if (dlg) return;
     if (enc) { encCastWord('chan'); return; }
     if (startEncounterNear(3.2)) { encCastWord('chan'); return; }
@@ -7016,6 +9874,8 @@
   function castSword() {
     if (tlFight) { tlSwordHeld = true; tlSwordHeldUntil = tNow + 350; tlSwordPress(); return; } // gói phụ 13: nút kiếm cảm ứng trong ải
     if (hhtFight) { if (!dlg) hhtCastSword(); return; } // Mục F: kiếm quyết trong trận đài
+    if (daiFight) { if (!dlg) daiCastSword(); return; } // ARCIV: kiếm quyết trong trận đài thách đấu
+    if (arcFig) { if (!dlg) arcFigCastSword(); return; } // ARCIV: kiếm quyết trong trận kịch bản dã ngoại (gồm phá mắt trận)
     if (dlg) return;
     if (enc) { encCastSword(); return; }
     if (startEncounterNear(1.9)) { encCastSword(); return; }
@@ -7259,6 +10119,13 @@
     setSkillCant('sk-chan', state.unlocked.indexOf('luyenkhi1') >= 0 && state.silence < (wsCost.chan || 50));
     setSkillCant('sk-dinh', state.unlocked.indexOf('kimdan') >= 0 && state.silence < (wsCost.dinh || 60));
     setSkillCant('sk-phong', state.unlocked.indexOf('kimdan') >= 0 && state.silence < (wsCost.phong || 80));
+    // ARCIV ch.15: cộng hưởng bị nhiễu khóa — nút xám theo ngữ cảnh; bậc Hưởng
+    // hiện "đã biết nhưng bị nhiễu" (title riêng), KHÔNG hiện như chưa học.
+    if (state.flags && (state.flags.arcResLocked || state.flags.ch15ResonanceLock)) {
+      ['sk-pha', 'sk-chan', 'sk-dinh', 'sk-phong'].forEach(function (sid) { setSkillCant(sid, true); });
+      if (state.unlocked.indexOf('kimdan') >= 0) { var sd = $('sk-dinh'), sp2 = $('sk-phong'); if (sd) sd.title = 'Đã học Định Âm — đang bị nhiễu loạn sóng khóa'; if (sp2) sp2.title = 'Đã học Phong Âm — đang bị nhiễu loạn sóng khóa'; }
+      var sph = $('sk-phong'); if (sph) sph.classList.toggle('active', arcPhongContext());
+    }
     var bagBtn = $('btn-bag');
     if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
@@ -7344,11 +10211,16 @@
         p.x += (p.vx + Math.sin(p.t * 5 + p.sw) * 13) * dtW; p.y += p.vy * dtW; p.rot += p.vr * dtW;
       } else if (p.kind === 'smoke') { // khói: nở chậm và bốc lên
         p.x += p.vx * dtW; p.y += p.vy * dtW; p.r += 5.5 * dtW;
+      } else if (p.kind === 'leaf') { // lá Thanh Phong: xoáy quanh trục bốc lên
+        p.rot += (p.vr || 2) * dtW; p.x += (p.vx + Math.sin(p.t * 6 + p.rot) * 10) * dtW; p.y += p.vy * dtW;
+      } else if (p.kind === 'star') {
+        p.x += p.vx * dtW; p.y += p.vy * dtW;
       } else { p.x += p.vx * dtW; p.y += p.vy * dtW; p.vy -= 8 * dtW; }
     });
     pillars = pillars.filter(function (pl) { pl.t += dtW; return pl.t < pl.dur; });
     streaks = streaks.filter(function (st) { st.t += dtW; return st.t < st.dur; });
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
+    updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
     updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
     // Mờ chuyển cảnh: out -> chạy callback ở điểm tối nhất -> in.
     if (fade.phase === 'out') {
@@ -7643,7 +10515,10 @@
         if (medSfxT > 0.9) { medSfxT = 0; beep(MED_NOTES[medNoteIdx % MED_NOTES.length], 0.5, 'sine', 0.014, 'skill'); medNoteIdx++; }
         if (fxOn() && Math.random() < dt * 6) spawnParts(px + 16 + (Math.random() - 0.5) * 56, py + 20 + (Math.random() - 0.5) * 30, 1, '170,225,255', 8, true);
         var beforeTuvi = state.tuvi;
+        var __tpBefore = (L.techniqueOf(state, 'thanh_phong') || {}).tier;
         L.meditateTick(state, dt);
+        var __tpAfter = (L.techniqueOf(state, 'thanh_phong') || {}).tier;
+        if (__tpAfter && __tpBefore != null && __tpAfter > __tpBefore) presentTechTierUp('thanh_phong', __tpAfter);
         // Thổ nạp cũng là lúc dưỡng thương (làn chạm trán): ngồi nạp ở
         // điểm linh khí hồi 10% máu tối đa mỗi giây — đường hồi máu duy
         // nhất ngoài đột phá, để vòng săn quái không kẹt ở máu thấp.
@@ -7657,6 +10532,12 @@
         if (state.tuvi !== beforeTuvi && state.quest === 'q_meditate' && state.tuvi >= 100) {
           state.quest = 'q_break'; toast('Tu vi đã đầy! Nhấn phím B để đột phá Luyện Khí tầng 1.');
         }
+        // ARCIV ch.16: tĩnh tu hoàn thành khi tu vi đầy giai đoạn TRONG
+        // lúc thổ nạp tại điểm linh khí (sau khi đã nghe cảnh TINH_TU).
+        if (state.quest === 'q16_tinh_tu' && state.flags.ch16TinhTuSeen && state.tuvi >= (L.REALMS[state.realm].tuviNext || Infinity)) {
+          state.quest = 'q16_linh_ngo'; refreshHUD(); saveNow();
+          toast('Tu vi đã đầy giai đoạn. Về đại điện gặp trưởng lão — tàng kinh các và tầng sâu Kiếm Trủng đang chờ.', 4600);
+        }
         refreshHUD();
       }
       // Làn chạm trán: quái đi lại, trận thật, rơi đồ, tinh tu vi — chạy
@@ -7668,6 +10549,10 @@
       if (tlFight) updateTlFight(dtW); // ải Thăng Long thật (gói phụ 13)
       if (hhtFight) updateHhtFight(dtW); // trận tỉ thí Hoa Hướng Thần trên đài (Mục F)
       if (hhtFight && state && state.map === 'dai_dau_kiem') { px = Math.max(HHT_ARENA.x0 * TILE, Math.min(HHT_ARENA.x1 * TILE, px)); py = Math.max(HHT_ARENA.y0 * TILE, Math.min(HHT_ARENA.y1 * TILE, py)); } // Mục F: người chơi không rời bệ đấu giữa trận (khán giả đứng ngoài bệ, không chặn đường)
+      if (daiFight) updateDaiFight(dtW); // ARCIV ch.13: trận đài thách đấu
+      if (daiFight && state && state.map === 'dai_dau_kiem') { px = Math.max(HHT_ARENA.x0 * TILE, Math.min(HHT_ARENA.x1 * TILE, px)); py = Math.max(HHT_ARENA.y0 * TILE, Math.min(HHT_ARENA.y1 * TILE, py)); } // ARCIV: kẹp bệ đấu như HHT
+      if (arcFig) updateArcFig(dtW); // ARCIV ch.14/15: trận kịch bản dã ngoại
+      arcBossTick(dtW); // ARCIV ch.16 + boss Hộ Trận: đồng hồ chiêu boss trong trận chạm trán
       checkPortalsAndZones();
     } else {
       // Mở thoại thì hủy đường đi bằng chuột và hủy cần cảm ứng.
@@ -7727,6 +10612,12 @@
       // Vừa đặt chân lên tông mà save còn dừng ở cuối chương 6 thì nâng
       // nhiệm vụ ngay trong cùng phiên (di trú lúc nạp vẫn giữ cho save cũ).
       if (po.to === 'thanh_van_tong' && state.quest === 'q6_done') state.quest = 'q7_nhap_tong';
+      // ARCIV đợt 3: vừa đặt chân lên đường mòn mà save còn dừng ở mốc
+      // cuối chương 22 (marker q22_done do arcDoHauKyBreak đặt) thì nâng
+      // nhiệm vụ sang bước hộ tống chương 23 ngay trong cùng phiên —
+      // đúng tiền lệ q6_done ở trên (di trú lúc nạp vẫn là đường cho
+      // save cũ ở các mốc cuối cung).
+      if (po.to === 'duong_mon' && state.quest === 'q22_done') state.quest = 'q23_ho_tong';
       state.dir = po.to === 'tran' ? 'up' : 'down';
       L.setActiveMap(po.to);
       px = po.toX * TILE; py = po.toY * TILE; facing = state.dir;
@@ -7753,6 +10644,10 @@
   function checkPortalsAndZones() {
     if (!state || dlg || fade.phase !== 'idle') return; // đang mờ chuyển cảnh thì không kích lại
     if (hhtFight) return; // Mục F: đang tỉ thí trên đài — cổng ra khóa cho tới khi trận khép (thắng/thua đều có đường ra riêng)
+    if (daiFight || arcFig) return; // ARCIV: đang trong trận kịch bản — cổng/vùng khóa cho tới khi trận khép
+    arcIvMaybeInjectWitness(); // ARCIV q14: tiêm nhân chứng giữ đất theo pha (hàm tự kiểm điều kiện + chống trùng)
+    arcIvMaybeInjectWave2(); // ARCIV đợt 2 (ch.17–20): tiêm NPC theo quest/cờ + gỡ khi điều kiện hết
+    arcIvMaybeInjectWave3(); // ARCIV đợt 3 (ch.21–24): tiêm NPC theo quest + gỡ khi điều kiện hết
     var pt = playerTile();
     var def = L.activeMap();
     for (var i = 0; i < def.portals.length; i++) {
@@ -7841,6 +10736,134 @@
     if (state.map === 'kiem_trac_thap' && !state.flags.bcTapsauInviteSeen && L.questReached(state, 'q8_done')) {
       // Thư mời tầng sâu: vào tháp lần đầu sau Trúc Cơ (cờ đặt trong callback).
       say(ST.SCENE_BC_TAPSAU_INVITE, function () { state.flags.bcTapsauInviteSeen = true; refreshHUD(); saveNow(); });
+      return;
+    }
+    /* ---------- ARCIV đợt 1b: trigger vùng chương 13–16 (mục A.1) ---------- */
+    if (state.map === 'thanh_van_tong' && state.quest === 'q13_thinh_cau_dau' && !state.flags.ch13GateSeen && Math.abs(pt.x - 61) <= 1 && Math.abs(pt.y - 88) <= 1) {
+      // Người đưa tin đứng đợi ở cổng tông (61,88) — neo theo hợp đồng;
+      // NPC tin_su thường trú ở đại điện nên điểm chạm là trigger vùng.
+      say(ST.SCENE_CH13_THINH_CAU, function () {
+        state.flags.ch13GateSeen = true;
+        state.quest = 'q13_ve_thanh'; refreshHUD(); saveNow();
+        toast('Thư từ chối đã viết xong. Về Cô Châu Thành gặp Hứa U Nhàn ở phủ Hứa.', 4200);
+      });
+      return;
+    }
+    if (state.map === 'co_chau' && state.quest === 'q14_dieu_tra' && !state.flags.q14SoDat && Math.abs(pt.x - 26) <= 1 && Math.abs(pt.y - 39) <= 1) {
+      // Sổ đất: neo tại ô hint (26,39) — phòng lưu sổ của phủ thành
+      // (NPC dan_thanh_a đứng ở (49,28), không phải điểm này).
+      say(ST.SCENE_CH14_SO_DAT, function () {
+        state.flags.q14SoDat = true; refreshHUD(); saveNow();
+        toast('Sổ mới là giả. Ra đường mòn hỏi lão giữ đất ở hiện trường phía đông (gần điểm đất linh 47,38).', 4600);
+      });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q15_bao_dong' && !state.flags.ch15BaoDongSeen && Math.abs(pt.x - 47) <= 1 && Math.abs(pt.y - 38) <= 1) {
+      // Điểm hẹn (47,38): cảnh báo động chạy tại điểm hẹn rồi dẫn thẳng
+      // vào trận cứu đoàn tại chỗ (xem ghi chú lệch neo ở hợp đồng mục G).
+      say(ST.SCENE_CH15_BAO_DONG, function () {
+        state.flags.ch15BaoDongSeen = true;
+        state.quest = 'q15_cuu_doan'; refreshHUD(); saveNow();
+        say(ST.SCENE_CH15_CUU_DOAN, function () { arcStartCh15Rescue(); });
+      });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q15_truy_duoi' && !state.flags.ch15ChaseSeen && Math.abs(pt.x - 45) <= 2 && Math.abs(pt.y - 50) <= 2) {
+      say(ST.SCENE_CH15_TRUY_DUOI, function () {
+        state.flags.ch15ChaseSeen = true; refreshHUD(); saveNow();
+        arcStartCh15Chase(1);
+      });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q15_cuu_doan' && state.flags.ch15BaoDongSeen && !arcFig && Math.abs(pt.x - 47) <= 1 && Math.abs(pt.y - 38) <= 1) {
+      // Vào lại trận cứu đoàn sau khi thua (arcFigLose giữ nguyên nhiệm
+      // vụ): tới điểm vây là cảnh CUU_DOAN chạy lại rồi mở trận.
+      say(ST.SCENE_CH15_CUU_DOAN, function () { arcStartCh15Rescue(); });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q15_truy_duoi' && state.flags.ch15ChaseSeen && !state.flags.ch15ChaseDone && !arcFig && Math.abs(pt.x - 45) <= 2 && Math.abs(pt.y - 50) <= 2) {
+      // Vào lại truy đuổi sau khi thua ở một chốt chặn: đánh lại từ chốt 1.
+      arcStartCh15Chase(1);
+      return;
+    }
+    if (state.map === 'bc_kiemtrung_sau' && state.quest === 'q16_linh_ngo' && !state.flags.ch16KiemTrungSeen && pt.y <= 10 && pt.x >= 14 && pt.x <= 29) {
+      // Lần đầu bước vào phòng boss tầng sâu trong mạch truyện ch.16.
+      say(ST.SCENE_CH16_KIEMTRUNG, function () { state.flags.ch16KiemTrungSeen = true; refreshHUD(); saveNow(); });
+      return;
+    }
+    /* ---------- ARCIV đợt 2: trigger vùng chương 19–20 (B.5) ---------- */
+    if (state.map === 'co_chau' && state.quest === 'q19_phan_ung' && !state.flags.ch19AmbushStarted && pt.x >= 49 && pt.x <= 53 && pt.y >= 62 && pt.y <= 66) {
+      // Phục kích phố nam: cờ đặt TRƯỚC khi cảnh mở (cảnh/trận không bị
+      // kích lại giữa chừng); thua trận thì onLose của trận gỡ cờ này
+      // để người chơi vào vùng là đánh lại được.
+      state.flags.ch19AmbushStarted = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH19_PHUC_KICH_MO, function () { arcStartCh19Ambush(); });
+      return;
+    }
+    if (state.map === 'co_chau' && state.quest === 'q19_vet_ran' && !state.flags.ch19GateDone && pt.x >= 49 && pt.x <= 53 && pt.y >= 72 && pt.y <= 75) {
+      // Cổng nam: lớp tuyên quy tắc (TUYEN_QUY_TAC) neo làm cảnh mở đầu
+      // của q19_vet_ran theo ghi chú sản xuất chương 19 — rồi VET_RAN.
+      state.flags.ch19GateDone = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH19_TUYEN_QUY_TAC, function () {
+        say(ST.SCENE_CH19_VET_RAN, function () {
+          state.quest = 'q19_an_dinh'; refreshHUD(); saveNow();
+          toast('Đã thấy dấu hiệu đáng ngờ ở cổng nam. Về Thanh Vân Đại Điện báo cáo trưởng lão tông.', 4600);
+        });
+      });
+      return;
+    }
+    /* ---------- ARCIV đợt 3: trigger vùng chương 21–24 (B.5) ---------- */
+    if (state.map === 'co_chau' && state.quest === 'q21_doi_chat' && !state.flags.ch21GateStarted && pt.x >= 49 && pt.x <= 53 && pt.y >= 72 && pt.y <= 75) {
+      // Đối chất ở cổng nam: cờ đặt TRƯỚC cảnh (thua trận thì onLose của
+      // trận gỡ cờ để kích hoạt lại); cảnh phủ là cảnh cắt song song —
+      // người chơi không có mặt ở phủ, đúng kịch bản prep.
+      state.flags.ch21GateStarted = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH21_DOI_CHAT_PHU, function () { arcStartCh21GateA(); });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q22_tham_bao' && !state.flags.ch22ScoutStarted && pt.x >= 41 && pt.x <= 47 && pt.y >= 41 && pt.y <= 47) {
+      // Thám báo ở vành tuyến: vào vùng là mở trận luôn, không cảnh mở
+      // (SCENE_CH22_THAM_BAO đã chạy ở đại điện).
+      state.flags.ch22ScoutStarted = true; refreshHUD(); saveNow();
+      arcStartCh22Scout();
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q23_ho_tong' && !state.flags.ch23MarchDone && pt.x >= 50 && pt.x <= 56 && pt.y >= 21 && pt.y <= 27) {
+      state.flags.ch23MarchDone = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH23_HO_TONG, function () {
+        state.quest = 'q23_vong_vay'; refreshHUD(); saveNow();
+        toast('Đoàn rời trạm nghỉ, đi vào đoạn hai vách — qua đoạn đường giữa hai vách đá quanh (44,44) là thoát đoạn khó nhất.', 4600);
+      });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q23_vong_vay' && !state.flags.ch23FightStarted && pt.x >= 41 && pt.x <= 47 && pt.y >= 41 && pt.y <= 47) {
+      // Vòng vây khép: cộng hưởng khóa TRƯỚC chặng 1, đặt cùng lúc cảnh
+      // mở khép (B.6c); thua chặng nào onLose của chặng đó cũng tắt cờ.
+      state.flags.ch23FightStarted = true;
+      state.flags.arcResLocked = true;
+      refreshHUD(); saveNow();
+      say(ST.SCENE_CH23_VONG_VAY_MO, function () { arcStartCh23EncircleA(); });
+      return;
+    }
+    if (state.map === 'duong_mon' && state.quest === 'q23_vong_vay' && state.flags.ch23FightBRetry && pt.x >= 41 && pt.x <= 47 && pt.y >= 41 && pt.y <= 47) {
+      // Thua chặng 2: vào lại THẲNG chặng 2 qua cùng trigger vùng (cờ
+      // riêng ch23FightBRetry do onLose của chặng 2 đặt) — không chạy
+      // lại cảnh/chặng 1, khóa cộng hưởng bật lại như đầu chặng 2.
+      state.flags.ch23FightBRetry = false;
+      state.flags.arcResLocked = true;
+      refreshHUD(); saveNow();
+      toast('Vòng vây chưa vỡ — quay lại đoạn hai vách đánh tiếp đợt dồn giữa đoàn.', 4200);
+      arcStartCh23EncircleB();
+      return;
+    }
+    if (state.map === 'co_chau' && state.quest === 'q20_giam_sat' && !state.flags.q20WatchersSeen && pt.x >= 49 && pt.x <= 53 && pt.y >= 71 && pt.y <= 75) {
+      // Bị theo dõi: cờ bật -> người theo dõi Thiên Cơ Các xuất hiện ở
+      // thành + tông (tiêm B.2) cho tới khi lời đáp khép chương 20.
+      state.flags.q20WatchersSeen = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH20_GIAM_SAT, function () {
+        state.quest = 'q20_doi_sach'; refreshHUD(); saveNow();
+        toast('Người của các đã lộ diện theo dõi. Về Thanh Vân Tông — ở đại điện đang có một ca hồn cần ngươi, rồi mới tính lời đáp.', 4600);
+      });
       return;
     }
     if (state.map !== 'duong_mon') return;
@@ -8382,7 +11405,14 @@
       [{ species: 'oan_binh', x: 16, y: 33 }, { species: 'oan_binh', x: 38, y: 33 }],
       [{ species: 'oan_binh', x: 16, y: 14 }, { species: 'oan_binh', x: 38, y: 14 }] ] }
   };
-  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 } };
+  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 }, bc_kiemtrung_sau: { x: 22, y: 5 } }; // ARCIV A.2
+  // ARCIV A.2: BC_KIEMTRUNG_SAU_WAVES của logic có dạng [[loài, số]...]
+  // KHÁC định dạng bcSpawnMonsters ({species,x,y}) — chuyển đổi tại đây
+  // thành tọa độ thật trên lưới đi được của tầng sâu, giữ đúng số lượng
+  // 2 rồi 3 của dữ liệu (tầng giữa + phòng đáp phía nam).
+  BC_WAVES.bc_kiemtrung_sau = { zone: 'zone_bc_kiemtrung_sau', waves: [
+    [{ species: 'tan_hon_kiem_y_sau', x: 12, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 32, y: 14 }],
+    [{ species: 'tan_hon_kiem_y_sau', x: 18, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 26, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 21, y: 24 }] ] };
   // Thưởng LẦN ĐẦU (ngoài hồ trần, cờ firstClear chống trùng — đúng hồ sơ
   // đã duyệt; ti_loi_phu là thưởng lần đầu đã duyệt, KHÔNG phải Dẫn Lôi
   // Pháp và không bao giờ phát dan_loi_phap trong bí cảnh).
@@ -8643,8 +11673,22 @@
     for (var i = npcsLive.length - 1; i >= 0; i--) if (npcsLive[i].id === 'de_tu_ho_tong') npcsLive.splice(i, 1);
   }
   // Việc tông luân phiên chạy theo nhịp thế giới: tuần tra theo thứ tự
-  // điểm kiểm (bán kính Chebyshev ≤ 1); hộ tống có bạn đi theo trên bản
-  // đồ tông, rời bản đồ thì tạm dừng (bạn biến khỏi npcsLive, tiến độ giữ).
+  // điểm kiểm (bán kính Chebyshev ≤ 1); hộ tống có bạn đi theo.
+  // ĐỢT 2 (B.9): hộ tống TỔNG QUÁT cho MỌI mẫu escort (jobType/kind
+  // 'escort') theo escortFrom/escortTo/escortName/escortLook của chính
+  // mẫu. Mẫu cũ thiếu trường thì dùng mặc định đúng giá trị cũ: điểm
+  // đến thanh_van_tong (61,87), tên 'Đệ tử đi cùng', look villager_m,
+  // điểm đón = điểm người chơi đang đứng trên bản đồ tông. Hành vi
+  // sect_escort_rot giữ y nguyên: mẫu này đã có sẵn escortFrom/
+  // escortTo trong dữ kiện, follower xuất hiện ngay trên bản đồ tông
+  // khi việc đang chạy, hoàn thành khi người chơi trong 1 ô Chebyshev
+  // của điểm đến. Mẫu MỚI (có escortName): pha ĐÓN — follower chỉ xuất
+  // hiện khi người chơi tới gần điểm escortFrom (≤2 ô) trên đúng bản
+  // đồ đó, spawn tại điểm đón; pha GIAO — follower theo người chơi
+  // trên bản đồ escortTo và hoàn thành tại điểm escortTo; giữa hai
+  // bản đồ follower ẩn (npcsLive vốn được dựng lại khi đổi bản đồ).
+  // Pha đón/giao lưu bằng ins.cpIndex sẵn có của instance (0/1) —
+  // không đổi khuôn save.
   function grindSectTick(dt) {
     if (!state) return;
     var g = L.ensureGrind(state), ins = null, id;
@@ -8652,11 +11696,12 @@
       var o = g.instances[id];
       if (o && o.kind === 'sect' && o.status === 'active') { ins = o; break; }
     }
-    if (!ins || ins.templateId !== 'sect_escort_rot' || state.map !== 'thanh_van_tong') grindEscortClear();
-    if (!ins) return;
+    if (!ins) { grindEscortClear(); return; }
     var t = null;
     L.SECT_JOB_TEMPLATES.forEach(function (x) { if (x.templateId === ins.templateId) t = x; });
-    if (!t) return;
+    if (!t) { grindEscortClear(); return; }
+    var isEscort = t.jobType === 'escort' || t.kind === 'escort';
+    if (!isEscort) grindEscortClear();
     if (t.jobType === 'patrol') {
       var cps = t.checkpoints || [], cp = cps[ins.cpIndex || 0];
       if (!cp) { ins.status = 'ready'; refreshHUD(); saveNow(); return; }
@@ -8671,15 +11716,30 @@
       }
       return;
     }
-    if (t.jobType === 'escort') {
-      if (state.map !== 'thanh_van_tong') return;
+    if (isEscort) {
+      var legacy = !t.escortName;
+      var from = t.escortFrom || { map: 'thanh_van_tong', x: playerTile().x, y: playerTile().y };
+      var to = t.escortTo || { map: 'thanh_van_tong', x: 61, y: 87 };
+      var escName = t.escortName || 'Đệ tử đi cùng';
+      var escLook = t.escortLook || 'villager_m';
+      var pt2 = playerTile();
+      var picked = legacy ? (state.map === from.map) : (ins.cpIndex || 0) >= 1;
+      if (!picked) {
+        // Pha đón (mẫu mới): chưa tới gần điểm đón thì follower ẩn.
+        if (state.map !== from.map || Math.max(Math.abs(pt2.x - from.x), Math.abs(pt2.y - from.y)) > 2) { grindEscortClear(); return; }
+        ins.cpIndex = 1; picked = true;
+        toast('Đã đón ' + escName + ' — hộ tống tới ' + (to.map === state.map ? 'điểm hẹn' : 'nơi giao') + ' rồi về tông trả việc.', 4200);
+        refreshHUD(); saveNow();
+      }
+      if (state.map !== from.map && state.map !== to.map) { grindEscortClear(); return; } // giữa hai bản đồ: follower ẩn
       var fol = null;
       npcsLive.forEach(function (n) { if (n.id === 'de_tu_ho_tong') fol = n; });
       if (!fol) {
-        fol = { id: 'de_tu_ho_tong', name: 'Đệ tử đi cùng', look: 'villager_m', x: playerTile().x, y: playerTile().y, dir: 'down' };
+        var spawnAt = (!legacy && state.map === from.map && (ins.cpIndex || 0) === 1 && Math.max(Math.abs(pt2.x - from.x), Math.abs(pt2.y - from.y)) <= 2 && fol === null)
+          ? { x: from.x, y: from.y } : { x: pt2.x, y: pt2.y };
+        fol = { id: 'de_tu_ho_tong', name: escName, look: escLook, x: spawnAt.x, y: spawnAt.y, dir: 'down' };
         npcsLive.push(fol);
-      }
-      var pt2 = playerTile();
+      } else { fol.name = escName; fol.look = escLook; }
       escortT += dt;
       if (escortT >= 0.35) {
         escortT = 0;
@@ -8692,11 +11752,10 @@
           else if (L.isWalkable(fol.x, fol.y + sy, others)) fol.y += sy;
         }
       }
-      var to = t.escortTo;
-      if (to && Math.max(Math.abs(pt2.x - to.x), Math.abs(pt2.y - to.y)) <= 1) {
-        ins.status = 'ready'; ins.progress = 1;
+      if (state.map === to.map && Math.max(Math.abs(pt2.x - to.x), Math.abs(pt2.y - to.y)) <= 1) {
+        ins.status = 'ready'; ins.progress = ins.target || 1;
         grindEscortClear();
-        toast('Đã hộ tống đệ tử mới tới nơi — về gặp Quản Sự Tạp Dịch để trả việc.', 4200);
+        toast(legacy ? 'Đã hộ tống đệ tử mới tới nơi — về gặp Quản Sự Tạp Dịch để trả việc.' : 'Đã hộ tống ' + escName + ' tới nơi — về gặp Quản Sự Tạp Dịch để trả việc.', 4200);
         refreshHUD(); saveNow();
       }
     }
@@ -8719,6 +11778,9 @@
     best.progress = Math.min(best.target, best.progress + 1);
     if (best.progress >= best.target) { best.status = 'ready'; toast('Phiếu săn đã đủ số — về đúng bảng treo thưởng để trả.', 4200); }
     refreshHUD(); saveNow();
+    // ARCIV A.3: kỳ ngộ ô 23 — nối bộ đếm tại hành động săn ở đường mòn
+    // (tập bộ do kyNgoPool của logic tự lọc điều kiện).
+    if (state.map === 'duong_mon') arcKyNgo('hunt');
   }
   // Điểm hái: tương tác theo nodeStatus, ô đứng kề Chebyshev ≤ 1 (điểm
   // nằm trên ô thân cây trang trí vẫn hái được từ ô kề, không dời tọa
@@ -8745,6 +11807,8 @@
     sfxHarvest();
     toast('Đã hái ' + (L.ITEM_DEFS[nd.itemId] ? L.ITEM_DEFS[nd.itemId].name : nd.itemId) + ' ×' + nd.yield + '.', 3200);
     refreshHUD(); saveNow();
+    // ARCIV A.3: kỳ ngộ cũng tích tại hành động thu thập trên đường mòn.
+    if (nd.mapId === 'duong_mon') arcKyNgo('hunt');
   }
 
   /* ---------- Bí cảnh (phiên chỉ sống trong bộ nhớ) ----------
@@ -8776,6 +11840,7 @@
     var entry = L.bcConsumeEntry(state, realmId);
     if (!entry.ok) {
       if (entry.reason === 'pool_empty') return say([{ who: 'narrate', text: BC_LOCK_LINES.pool }]);
+      if (entry.reason === 'repeat_locked') return toast('Lượt lặp tầng sâu Kiếm Trủng mở sau việc ở Kiểm Trắc Tháp (chương 17).', 4200);
       if (entry.reason === 'locked') return say([{ who: 'narrate', text: BC_LOCK_LINES[realmId] }]);
       return toast('Chưa vào được bí cảnh lúc này.', 3600);
     }
@@ -8851,6 +11916,9 @@
       toast('Thưởng đợt bí cảnh chưa nhận được: ' + (r.reason || 'lỗi không rõ') + '.', 4200);
     }
     refreshHUD(); saveNow();
+    // ARCIV A.3: kỳ ngộ SP-01 — chạy Thủy Liêm sau q16_linh_ngo cũng
+    // tích bộ đếm (kyNgoPool tự lọc mốc q16_linh_ngo của SP-01).
+    if (bcSession.realm === 'bc_thuyliem' && L.questReached(state, 'q16_linh_ngo')) arcKyNgo(null);
   }
   // Thưởng boss bí cảnh. Lần đầu: ngoài hồ trần, kiểm túi nguyên tử
   // trước (không đủ chỗ -> 'bag_full', boss gượng dậy 5% máu, KHÔNG đặt
@@ -8861,6 +11929,9 @@
     var def = L.SECRET_REALM_DEFS[realmId];
     var rec = bcRealmRec(realmId);
     if (!def || !rec) return 'claimed';
+    // ARCIV A.2: tầng sâu KHÔNG dùng bảng phẳng BC_FIRST_REWARDS (không
+    // có mục cho realm này) — đường riêng qua bcSauFirstClearRewards.
+    if (realmId === 'bc_kiemtrung_sau') return bcSauBossRewards(m, def, rec);
     if (!rec.firstClear) {
       var fw = BC_FIRST_REWARDS[realmId];
       var total = 0, id;
@@ -8885,6 +11956,7 @@
       if (fw.tech) parts.push('+' + fw.tech.pts + ' điểm lĩnh ngộ ' + (L.TECHNIQUE_DEFS[fw.tech.id] ? L.TECHNIQUE_DEFS[fw.tech.id].name : fw.tech.id));
       for (id in fw.items) parts.push((L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : id) + ' ×' + fw.items[id]);
       toast('Lần đầu qua ải ' + def.name + '! ' + parts.join(' · '), 5600);
+      arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh ô 15/20 (Kiếm Trủng) / ô 14 + SP-01 (Thủy Liêm)
       refreshHUD(); saveNow();
       return 'claimed';
     }
@@ -8906,6 +11978,7 @@
     var sid = (enc && enc.sessionId) || bcSession.key;
     if (L.yeuDanDropFor(sid, 0.25)) spawnDrop('yeu_dan_' + def.yeuDanLevel, 1, m.x + 16, m.y + 16);
     toast('Hạ ' + m.name + '! ' + grindGrantedText(r) + '.', 5200);
+    arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh bí pháp theo nguồn boss bí cảnh
     refreshHUD(); saveNow();
     return 'claimed';
   }
@@ -9011,6 +12084,10 @@
   function bcChoiceAction(action) {
     if (action === 'bc_floor_tapha') { grindCloseDlg(); return bcEnterWithIntro('bc_tapha'); }
     if (action === 'bc_floor_tapsau') { grindCloseDlg(); return bcEnterWithIntro('bc_tapsau'); }
+    // ARCIV A.2: hai tầng của cụm kiếm Kiếm Trủng (tầng sâu qua bcSauGateOpen).
+    if (action === 'bc_floor_kiemtrung_sau') { grindCloseDlg(); return bcEnterWithIntro('bc_kiemtrung_sau'); }
+    if (action === 'bc_floor_kiemtrung') { grindCloseDlg(); return bcEnterWithIntro('bc_kiemtrung'); }
+    if (action === 'bc_floor_later') { grindCloseDlg(); return toast('Ngươi để cụm kiếm đó lại, quay lại sau.', 3600); }
     if (action === 'bc_vach_pha') {
       var rv = L.castWord(state, 'pha');
       if (!rv.ok) return say([{ who: 'narrate', text: BC_HINT_LINES.vach }]); // thiếu Tĩnh Mặc: hiện lại gợi ý, không trừ gì
@@ -9468,7 +12545,28 @@
     resFields: function () { return resFields.map(function (f) { return { skill: f.skill, tier: f.tier, R: f.R, cols: f.cols.length, t: +f.t.toFixed(3), dur: f.dur }; }); },
     resWaves: function () { return resWaves.length; },
     resTier: function (s) { return resTierFor(s); },
-    resBaseFreq: function (species) { return resBaseFreqForSpecies(species); }
+    resBaseFreq: function (species) { return resBaseFreqForSpecies(species); },
+    // ARCIV đợt 1 (chỉ đọc + đếm): trình diễn bí tịch/cung IV
+    swordLog: function () { return swordFxLog.slice(); },
+    fxCount: function () { return FXC; },
+    bodySegs: function () { return bodySegs.length; },
+    techProj: function () { return techProj.length; },
+    eyes: function () { return arcEyes.map(function (e) { return { x: Math.round(e.x), y: Math.round(e.y), sealed: e.sealed }; }); }
+  };
+  /* Cầu ARCIV cho worker dữ liệu (xem arciv-work/CONTRACT-wave1.md):
+     dữ liệu/cảnh gọi các hàm trình diễn + cơ chế nhẹ này, engine KHÔNG
+     tự đặt cờ truyện. */
+  window.VSLC_ARCIV = {
+    presentTechTierUp: presentTechTierUp,
+    presentHuyenTinh: function (x, y, ang) { presentHuyenTinh(x, y, ang || 0, false); },
+    castTechFx: castTechFx,
+    techFxDefs: function () { return Object.keys(TECH_FX_DEFS); },
+    addEye: arcAddEye, sealEye: arcSealEye, eyesStanding: arcEyesStanding, phongContext: arcPhongContext,
+    startCycle: arcStartCycle, stopCycle: arcStopCycle, cycleFan: arcCycleFan,
+    setCycleFrozen: function (v) { if (arcCycle) { arcCycle.frozen = !!v; if (v) arcCycle.tickI = -1; } },
+    cycle: function () { return arcCycle ? { t: +arcCycle.t.toFixed(2), dir: arcCycle.dir, frozen: arcCycle.frozen, period: arcCycle.period } : null; },
+    startSwordBody: startSwordBody, startResBody: startResBody,
+    spawnNineSwords: spawnNineSwords
   };
 
   /* Cầu kiểm chứng chuỗi đánh đêm (gói phụ 8, chỉ đọc). */
