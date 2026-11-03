@@ -1436,7 +1436,12 @@
     co_chau: {
       name: 'Cô Châu Thành', w: 104, h: 78, grid: CITY_GRID, props: CITY_PROPS, npcs: CITY_NPCS,
       meditate: { x: 11, y: 59 },
-      signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }, { x: 98, y: 4, text: 'Thanh Vân Tông' }],
+      // ĐIỂM 4 (vá live 2026-11-03): biển 'Đường Mòn Xuyên Rừng' ở (55,73)
+      // — phía đông quảng trường nam, cùng hàng với biển tên thành
+      // (48,73) ở phía tây, kẹp trục đường xuống dải cổng nam (50..53,
+      // 77) về Đường Mòn. Trước đây phía trong thành không có biển nào
+      // chỉ cổng này (chỉ có nhãn nổi khi đã bước lên dải cổng).
+      signs: [{ x: 48, y: 73, text: 'Cô Châu Thành' }, { x: 8, y: 31, text: 'Phủ Hứa Gia' }, { x: 84, y: 13, text: 'Trần Gia' }, { x: 48, y: 7, text: 'Kiểm Trắc Tháp' }, { x: 74, y: 29, text: 'Chợ Cô Châu' }, { x: 57, y: 61, text: 'Thiên Cơ Các' }, { x: 98, y: 4, text: 'Thanh Vân Tông' }, { x: 55, y: 73, text: 'Đường Mòn Xuyên Rừng' }],
       portals: [
         { x: 50, y: 77, w: 4, h: 1, to: 'duong_mon', toX: 47, toY: 70, label: 'Về Đường Mòn Xuyên Rừng' },
         { x: 48, y: 0, w: 8, h: 4, to: 'kiem_trac_thap', toX: 35, toY: 52, label: 'Vào Kiểm Trắc Tháp', cond: 'quest:q3_hang_cho', lockMsg: 'Kỳ kiểm trắc chưa tới — cổng tháp còn đóng.' },

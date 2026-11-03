@@ -695,6 +695,7 @@
   var DIR8_ROW4 = { down: 0, right: 2, up: 4, left: 6 }; // hướng 4 chính -> hàng chẵn của sheet 8 hướng
   var DIR8_EVEN_DIR = { 0: 'down', 2: 'right', 4: 'up', 6: 'left' }; // hàng chẵn -> tên hướng 4 chính
   var dir8 = 0;          // hướng HIỂN THỊ riêng của người chơi (0..7); `facing` 4 hướng vẫn là hướng logic
+  var dir8PendD = -1, dir8PendT = 0; // ĐIỂM 1 (vá live 2026-11-03): khu vực hướng đang chờ bền để chuyển dir8 hiển thị + thời gian đã bền (giây)
   var stepPhase = 0;     // pha bước của sheet mới: 0 đứng yên, 1..N chu kỳ bước (N = số khung bước của sheet)
   var stepTimer = 0;
   var stepAcc = 0;       // bộ tích lũy quãng đường cho pha bước (điểm ảnh đã đi chưa đủ một khung bước)
@@ -750,7 +751,12 @@
     // ở hướng xuống. Sau: 25,7/24,7 -> nhịp dọc ~4,9-5,1, khóa với
     // ngang. Sáu hướng ngang/chéo giữ nguyên số Mục D 2026-11-02.
     player_nam: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8],
-    player_nu: [24.7, 21.9, 24.7, 25.9, 24.7, 21.2, 24.7, 18.9],
+    // player_nu[7] (xuống-trái) 18,9 -> 21,9: đợt VẼ LẠI ĐI BỘ 2026-11-03 —
+    // hàng xuống-trái của sheet mới là phản chiếu thật của xuống-phải nên
+    // sải bằng đúng xuống-phải (21,9); số cũ 18,9 xuất thân từ hàng hỏng
+    // trộn thiết kế của sheet trước (đo khung cha mới:
+    // tools/work/walk-redraw/report.md mục 6). Mọi hằng số khác giữ nguyên.
+    player_nu: [24.7, 21.9, 24.7, 25.9, 24.7, 21.2, 24.7, 21.9],
     _default: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8]
   };
   var BOB_AMP = 2.0;     // biên độ nhún thân (px thế giới): thân hạ +2,0 ở tiếp đất, nâng -2,0 ở qua giữa
@@ -800,6 +806,39 @@
   // Hướng 4 chính gần nhất của một dir8 (làm tròn về hàng chẵn) — cho sprite lưới dự phòng.
   function dir8NearDir(d8) {
     return DIR8_EVEN_DIR[(Math.round(d8 / 2) * 2) % 8] || 'down';
+  }
+  /* ĐIỂM 1 (đợt vá theo chơi thử live 2026-11-03) — chọn hướng HIỂN THỊ
+     cho người chơi. Lỗi live: trên các quãng bấm-đi chéo NÔNG (25–40° so
+     với trục), nhân vật giữ dáng hướng chính suốt quãng trong khi thân
+     trôi theo đường chéo. Hai gốc cộng dồn: (i) đường vuốt gồm các đoạn
+     trục/chéo nối nhau (tìm đường vòng vật cản: đoạn đầu men theo hàng,
+     đoạn sau mới chéo) nên vận tốc TỨC THỜI phần lớn quãng là hướng
+     chính dù hướng cả chặng là chéo; (ii) độ trễ 26,5° của
+     L.dir8FromVector chốt hướng chính tới 26,5° qua biên khu vực 22,5°.
+     Cách sửa (chỉ ở điểm ghi đè CUỐI khung của người chơi — các điểm gọi
+     dir8FromVector ở khâu ra lệnh và logic của quái/NPC giữ nguyên):
+     lượng tử hoá vector lái sang khu vực 8 hướng không trễ lớn — vector
+     nằm sâu trong khu vực mới (>= 3° trong biên 22,5°) thì chuyển ngay;
+     vector chỉ sát biên khu vực thì phải bền >= 0,09 giây mới chuyển
+     (vùng trễ hẹp, chống rung khi đi gần thẳng trục hoặc vector dao động
+     quanh biên). Khi đang bấm-đi (clickPath), vector lái là hướng từ
+     nhân vật tới ĐÍCH của chặng (clickTarget) nếu thân đang thật sự đi
+     về phía đích (góc lệch vận tốc <-> hướng đích <= 67,5°); nếu thân
+     đang đi vòng xa khỏi hướng đích thì quay về bám vận tốc như cũ. */
+  function dir8RawSector(dx, dy) {
+    var k = Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) % 8;
+    return k < 0 ? k + 8 : k;
+  }
+  function steerDir8Display(vx, vy, dt) {
+    var raw = dir8RawSector(vx, vy);
+    if (raw === dir8) { dir8PendD = -1; dir8PendT = 0; return; }
+    var a = Math.atan2(vx, vy);
+    var center = (raw <= 4 ? raw * 45 : (raw - 8) * 45) * Math.PI / 180;
+    var diff = Math.abs(Math.atan2(Math.sin(a - center), Math.cos(a - center)));
+    if (diff <= (22.5 - 3) * Math.PI / 180) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; return; }
+    if (dir8PendD !== raw) { dir8PendD = raw; dir8PendT = 0; }
+    dir8PendT += dt;
+    if (dir8PendT >= 0.09) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; }
   }
   /* ---------- Cần điều khiển cảm ứng (floating joystick) ---------- */
   var JOY_R = 37; // bán kính vòng cần (px, hệ tọa độ màn hình) — Mục G đợt vá 2026-11-02: giảm ~1/3 từ 56 theo lệnh Bui (joystick bé lại)
@@ -2538,26 +2577,49 @@
     return null;
   }
   function navFromTile() { return { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) }; }
+  // ĐIỂM 2 (đợt vá theo chơi thử live 2026-11-03): tập ô NPC dùng cho
+  // khâu CHỐT ĐÍCH của dẫn đường nhiệm vụ = hợp nhất ảnh chụp npcsLive
+  // với vị trí pha NPC tính từ logic theo ĐÚNG trạng thái hiện tại
+  // (L.npcPosFor — cùng nguồn renderer dùng để đặt NPC lên bản đồ).
+  // Chốt đích chỉ dựa vào ảnh chụp sống có một lỗ hổng thời điểm: ở
+  // biên chuyển cảnh/bản đồ hoặc sau các cảnh dựng sẵn (nơi npcsLive bị
+  // làm rỗng/xây lại), ảnh chụp có thể chưa có NPC đích trong khi NPC
+  // đã đứng trên bản đồ — đích bấm sẽ rơi thẳng lên ô NPC. Từ nay đích
+  // nhiệm vụ luôn được phân giải trên tập hợp nhất này: ô đích bị NPC
+  // đứng hoặc không đứng được thì lệch sang ô kề đi được gần nhất (luật
+  // cũ của navResolveDest, nay kín cả hai nguồn vị trí).
+  function navBlockers() {
+    var out = npcsLive.slice(), seen = {};
+    out.forEach(function (n) { seen[n.x + ',' + n.y] = true; });
+    if (state) {
+      (L.activeMap().npcs || []).forEach(function (n) {
+        var pp = L.npcPosFor(state, n), k = pp.x + ',' + pp.y;
+        if (!seen[k]) { seen[k] = true; out.push({ id: n.id, x: pp.x, y: pp.y }); }
+      });
+    }
+    return out;
+  }
   // Ô đích đi được cho mốc gợi ý trên bản đồ hiện tại: mốc đứng được thì
   // dùng thẳng; mốc nằm trong dấu chân vật thể / ô NPC thì lấy ô đi được
   // kề gần nhất mà tìm đường tới được.
-  function navResolveDest(hx, hy) {
-    if (L.isWalkable(hx, hy, npcsLive)) return { x: hx, y: hy };
+  function navResolveDest(hx, hy, npcs) {
+    var blockers = npcs || navBlockers();
+    if (L.isWalkable(hx, hy, blockers)) return { x: hx, y: hy };
     for (var r = 1; r <= 4; r++) {
       var best = null, bestPath = null;
       for (var oy = -r; oy <= r; oy++) for (var ox = -r; ox <= r; ox++) {
         if (Math.max(Math.abs(ox), Math.abs(oy)) !== r) continue;
         var cx = hx + ox, cy = hy + oy;
-        if (!L.isWalkable(cx, cy, npcsLive)) continue;
-        var p = L.findPath(navFromTile(), { x: cx, y: cy }, npcsLive);
+        if (!L.isWalkable(cx, cy, blockers)) continue;
+        var p = L.findPath(navFromTile(), { x: cx, y: cy }, blockers);
         if (p && (!bestPath || p.length < bestPath.length)) { best = { x: cx, y: cy }; bestPath = p; }
       }
       if (best) return best;
     }
     return null;
   }
-  function navIssuePath(dest) {
-    var path = L.findPath(navFromTile(), dest, npcsLive);
+  function navIssuePath(dest, npcs) {
+    var path = L.findPath(navFromTile(), dest, npcs || npcsLive);
     if (!path) return false;
     if (!path.length) return true; // đã đứng ngay đích
     clickPath = smoothPath(path); clickTarget = dest; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
@@ -2586,11 +2648,12 @@
     questNav.replans++;
     if (questNav.replans > 4) { questNav = null; toast('Tự tìm đường bị chặn — hãy đi tay tới điểm nhiệm vụ theo mốc vàng trên bản đồ.'); return; }
     if (state.map === questNav.targetMap) {
-      var dest = navResolveDest(questNav.hx, questNav.hy);
+      var navNpcs = navBlockers(); // ĐIỂM 2: cùng một tập chặn cho cả chốt đích lẫn tìm đường chặng đích
+      var dest = navResolveDest(questNav.hx, questNav.hy, navNpcs);
       if (!dest) { questNav = null; toast('Không tìm được ô đứng cạnh điểm nhiệm vụ.'); return; }
       if (dest.x === pt.x && dest.y === pt.y) { questNav = null; toast('Đã tới điểm nhiệm vụ.'); return; }
       questNav.leg = { kind: 'hint', dest: dest, map: state.map };
-      if (!navIssuePath(dest)) { questNav = null; toast('Không tìm được đường tới điểm nhiệm vụ.'); }
+      if (!navIssuePath(dest, navNpcs)) { questNav = null; toast('Không tìm được đường tới điểm nhiệm vụ.'); }
       return;
     }
     var route = navRouteMaps(state.map, questNav.targetMap);
@@ -4894,7 +4957,13 @@
   }
   function spawnResWave(x0, y0, x1, y1, reach, tier) {
     if (SET && SET.current && !SET.current.fxRings) return; // 3.8: fxRings tắt -> mất đường sóng
-    resWaves.push({ x0: x0, y0: y0, x1: x1, y1: y1, reach: reach == null ? 1 : reach, t: 0, dur: 0.12, tier: tier || 1 });
+    // ĐIỂM 3 (vá live 2026-11-03): dur = 0,12s vẫn là thời gian BAY tới
+    // đích (pha sóng chạy hết trong 0,12s như cũ); life = 0,40s là tổng
+    // thời gian NHÌN THẤY — sau khi sóng tới đích, đường sóng GIỮ NGUYÊN
+    // hình và mờ dần trong phần còn lại (xem holdK ở drawResWaves).
+    // Thuần trình diễn: thời điểm áp sát thương, cơ chế khóa và mọi con
+    // số đấu không đổi (sát thương áp tại khoảnh khắc tung đòn như cũ).
+    resWaves.push({ x0: x0, y0: y0, x1: x1, y1: y1, reach: reach == null ? 1 : reach, t: 0, dur: 0.12, life: 0.40, tier: tier || 1 });
     if (resWaves.length > 8) resWaves.shift();
   }
   function spawnResField(gx, gy, opts) {
@@ -4931,12 +5000,19 @@
   }
   function updateResFx(dt) {
     for (var i = resFields.length - 1; i >= 0; i--) { resFields[i].t += dt; if (resFields[i].t >= resFields[i].dur) resFields.splice(i, 1); }
-    for (var j = resWaves.length - 1; j >= 0; j--) { resWaves[j].t += dt; if (resWaves[j].t >= resWaves[j].dur) resWaves.splice(j, 1); }
+    for (var j = resWaves.length - 1; j >= 0; j--) { resWaves[j].t += dt; if (resWaves[j].t >= (resWaves[j].life || resWaves[j].dur)) resWaves.splice(j, 1); }
   }
   function drawResWaves() {
     if (SET && SET.current && !SET.current.fxRings) return;
     resWaves.forEach(function (w) {
       var p = Math.min(1, w.t / w.dur);
+      // ĐIỂM 3 (vá live 2026-11-03): hệ số giữ/mờ — 1,0 trong suốt pha
+      // bay (0,12s) và nhịp giữ đầu (tới 0,20s), sau đó giảm tuyến tính
+      // về 0 tại cuối vòng đời nhìn thấy (life 0,40s). Nhân SAU các sàn
+      // độ mờ của vá nhanh (sàn vẫn giữ tác dụng trong pha bay/giữ);
+      // hình sin đóng băng ở p = 1 sau khi sóng tới đích.
+      var life = w.life || w.dur;
+      var holdK = w.t <= 0.20 ? 1 : Math.max(0, 1 - (w.t - 0.20) / Math.max(0.01, life - 0.20));
       var ex = w.x0 + (w.x1 - w.x0) * w.reach, ey = w.y0 + (w.y1 - w.y0) * w.reach;
       var dx = ex - w.x0, dy = ey - w.y0, len = Math.max(1, Math.hypot(dx, dy));
       var nx = -dy / len, ny = dx / len;
@@ -4950,9 +5026,9 @@
          vòng đời 0,12s, hình sin, cơ chế khóa và mọi con số đấu giữ
          nguyên. */
       var passes = [
-        { col: '7,42,48', a: Math.max(0.34, 0.5 * (1 - p * 0.35)), lw: 9 },
-        { col: '127,232,224', a: Math.max(0.38, 0.55 * (1 - p * 0.35)), lw: 7 },
-        { col: '255,255,255', a: Math.max(0.8, 0.95 * (1 - p * 0.25)), lw: 3 }
+        { col: '7,42,48', a: Math.max(0.34, 0.5 * (1 - p * 0.35)) * holdK, lw: 9 },
+        { col: '127,232,224', a: Math.max(0.38, 0.55 * (1 - p * 0.35)) * holdK, lw: 7 },
+        { col: '255,255,255', a: Math.max(0.8, 0.95 * (1 - p * 0.25)) * holdK, lw: 3 }
       ];
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (var pass = 0; pass < passes.length; pass++) {
@@ -4969,10 +5045,10 @@
         ctx.stroke();
       }
       // Nút sáng hai đầu sóng: đầu người tung + đầu mục tiêu.
-      ctx.fillStyle = 'rgba(127,232,224,' + Math.max(0.35, 0.6 * (1 - p * 0.3)) + ')';
+      ctx.fillStyle = 'rgba(127,232,224,' + (Math.max(0.35, 0.6 * (1 - p * 0.3)) * holdK) + ')';
       ctx.beginPath(); ctx.arc(w.x0, w.y0, 5.5, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(ex, ey, 5.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0.8, 0.95 * (1 - p * 0.25)) + ')';
+      ctx.fillStyle = 'rgba(255,255,255,' + (Math.max(0.8, 0.95 * (1 - p * 0.25)) * holdK) + ')';
       ctx.beginPath(); ctx.arc(w.x0, w.y0, 2.6, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(ex, ey, 2.6, 0, Math.PI * 2); ctx.fill();
     });
@@ -6985,8 +7061,23 @@
       // đứng yên, vận tốc chưa có hướng đáng tin). Các điểm gọi
       // dir8FromVector(dx, dy, ...) ở khâu ra lệnh giữ nguyên để đáp ứng
       // tức thì trong cùng khung; giá trị CUỐI khung (cái được vẽ) là
-      // giá trị suy từ vận tốc này mỗi khi đang thật sự di chuyển.
-      if (speedNow > 24) dir8 = L.dir8FromVector(velX, velY, dir8);
+      // giá trị lái bởi steerDir8Display mỗi khi đang thật sự di chuyển.
+      // ĐIỂM 1 (vá live 2026-11-03): khi đang bấm-đi, nếu thân đang đi
+      // về phía đích của chặng (lệch <= 67,5°) thì lái theo hướng tới
+      // đích — đường vuốt vòng vật cản gồm nhiều đoạn trục/chéo nối
+      // nhau, bám vận tốc tức thời làm dáng hướng chính chiếm phần lớn
+      // các quãng chéo nông dù cả chặng là chéo; ngoài bấm-đi (phím,
+      // cần, trượt tường) vẫn bám vận tốc thật như nguyên tắc cũ. Xem
+      // steerDir8Display ở phía trên charSrc.
+      if (speedNow > 24) {
+        var stDx = velX, stDy = velY;
+        if (clickPath && clickPath.length && clickTarget) {
+          var tgX = clickTarget.x * TILE - px, tgY = clickTarget.y * TILE - py;
+          var tgLen = Math.hypot(tgX, tgY);
+          if (tgLen > 40 && (velX * tgX + velY * tgY) / (speedNow * tgLen) > Math.cos(67.5 * Math.PI / 180)) { stDx = tgX; stDy = tgY; }
+        }
+        steerDir8Display(stDx, stDy, dt);
+      }
       moving = !!(dx || dy) || speedNow > 6;
       // Đường THÔ kẹt một khung vì hộp chân còn vương sang ô kề chéo
       // (thường gặp ngay sau khi rẽ hướng): thử bước theo trục phụ về phía
