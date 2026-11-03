@@ -158,9 +158,94 @@
   }
   function rumble() { beep(52, 1.1, 'sawtooth', 0.12, 'skill'); beep(38, 1.4, 'triangle', 0.1, 'skill'); }
   /* ---------- Bộ âm thanh sự kiện (docs/effects-catalog.md) ---------- */
-  // PHÁ: trầm, nặng, dư chấn dài. CHẤN: cao hơn, vang, dứt khoát — phân biệt rõ.
-  function sfxPha() { beep(70, 0.55, 'sawtooth', 0.11, 'skill'); beep(140, 0.3, 'square', 0.07, 'skill'); beep(52, 0.8, 'triangle', 0.1, 'skill'); }
-  function sfxChan() { beep(196, 0.4, 'square', 0.07, 'skill'); beep(392, 0.55, 'sine', 0.05, 'skill'); beep(98, 0.65, 'triangle', 0.09, 'skill'); }
+  /* Họ tiếng VẠN ÂM CỘNG HƯỞNG (bước 2, thiết kế mục 3.6): mọi đòn mở
+     bằng NỐT KHÓA SÓNG ở âm gốc của mục tiêu. toneWave là đường WebAudio
+     trực tiếp (như sfxWind) vì beep() chỉ phát tần tĩnh — cộng hưởng cần
+     quét tần, phách hai sóng gần tần và cắt đột ngột. Mọi lớp qua cổng
+     'skill', gain từng lớp <= 0,11 theo kỷ luật tông trầm. Tên hàm cũ
+     sfxPha/sfxChan/sfxNameCall/sfxSealBreak GIỮ NGUYÊN (bất biến kiểm
+     thử + điểm gọi), chỉ thay thân tiếng. */
+  function toneWave(o) {
+    if (SET && SET.sfxAllowed && !SET.sfxAllowed('skill')) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      var scale = SET && SET.gainScale ? SET.gainScale() : 1;
+      var t0 = AC.currentTime + (o.delay || 0);
+      var osc = AC.createOscillator(), g = AC.createGain();
+      osc.type = o.type || 'sine';
+      osc.frequency.setValueAtTime(Math.max(24, o.f0 || 440), t0);
+      if (o.f1) osc.frequency.exponentialRampToValueAtTime(Math.max(24, o.f1), t0 + (o.dur || 0.2));
+      var gv = Math.min(0.11, o.gain || 0.05) * scale;
+      g.gain.setValueAtTime(gv, t0);
+      if (o.cut) g.gain.setValueAtTime(0.0001, t0 + (o.dur || 0.2));
+      else g.gain.exponentialRampToValueAtTime(0.0001, t0 + (o.dur || 0.2));
+      osc.connect(g); g.connect(AC.destination); osc.start(t0); osc.stop(t0 + (o.dur || 0.2) + 0.03);
+    } catch (e) { /* im lặng */ }
+  }
+  function noiseBurst(dur, gain, delay) {
+    if (SET && SET.sfxAllowed && !SET.sfxAllowed('skill')) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (!AC.createBuffer || !AC.createBufferSource) return;
+      var scale = SET && SET.gainScale ? SET.gainScale() : 1;
+      var len = Math.max(1, Math.floor(AC.sampleRate * dur));
+      var buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      var src = AC.createBufferSource(); src.buffer = buf;
+      var g = AC.createGain(); var t0 = AC.currentTime + (delay || 0);
+      g.gain.setValueAtTime(Math.min(0.11, gain || 0.03) * scale, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(g); g.connect(AC.destination); src.start(t0);
+    } catch (e) { /* im lặng */ }
+  }
+  function lockNote(freq, gain, dur, delay) { toneWave({ f0: freq || 420, dur: dur || 0.09, type: 'sine', gain: gain == null ? 0.05 : gain, delay: delay || 0 }); }
+  function resBaseFreqForMonster(m) {
+    if (!m) return 420;
+    var def = m.def || L.MONSTER_DEFS[m.species] || {};
+    var f = def.cry || 420;
+    if (def.rank === 'elite' || m.rank === 'elite') f *= 0.8; // tinh anh thấp hơn 20% như quy ước sfxMonsterCry
+    return f;
+  }
+  function resBaseFreqForSpecies(species) { var def = L.MONSTER_DEFS[species] || {}; var f = def.cry || 420; if (def.rank === 'elite') f *= 0.8; return f; }
+  // PHÁ ÂM: nốt khóa -> sine quét xuống nửa âm gốc trong 0,28s + tam giác
+  // 55 Hz 0,4s + nhiễu nứt nhẹ ở đỉnh; nấc 4 thêm nốt quãng năm (x1,5)
+  // chớp 0,12s ngay trước tiếng vỡ.
+  function sfxPha(freq, tier) {
+    var f = freq || 420;
+    lockNote(f, 0.05, 0.09, 0);
+    if ((tier || 1) >= 4) toneWave({ f0: f * 1.5, dur: 0.12, type: 'sine', gain: 0.04, delay: 0.05 });
+    toneWave({ f0: f, f1: f * 0.5, dur: 0.28, type: 'sine', gain: 0.075, delay: 0.07 });
+    toneWave({ f0: 55, dur: 0.4, type: 'triangle', gain: 0.09, delay: 0.07 });
+    noiseBurst(0.09, 0.028, 0.2);
+  }
+  // CHẤN ÂM: cặp sine âm gốc + x0,98 tạo tiếng phách 0,45s lụi dần +
+  // square 98 Hz cụp ở cuối. Không tiếng nứt/vỡ — dao động bị DẬP.
+  function sfxChan(freq) {
+    var f = freq || 420;
+    lockNote(f, 0.05, 0.09, 0);
+    toneWave({ f0: f, dur: 0.45, type: 'sine', gain: 0.042, delay: 0.06 });
+    toneWave({ f0: f * 0.98, dur: 0.45, type: 'sine', gain: 0.042, delay: 0.06 });
+    toneWave({ f0: 98, dur: 0.1, type: 'square', gain: 0.035, delay: 0.42, cut: true });
+  }
+  // ĐỊNH ÂM: chuông đứng yên — sine âm gốc + hài bậc hai, 0,8s, KHÔNG
+  // quét/không rung; lớp sfxBell khẽ hiện tại giữ làm nền phụ.
+  function sfxResDinh(freq) {
+    var f = freq || 420;
+    lockNote(f, 0.05, 0.09, 0);
+    toneWave({ f0: f, dur: 0.8, type: 'sine', gain: 0.045, delay: 0.05 });
+    toneWave({ f0: f * 2, dur: 0.8, type: 'sine', gain: 0.02, delay: 0.05 });
+    sfxBell();
+  }
+  // PHONG ÂM: nốt khóa LỆCH x1,06 trong 0,15s -> trượt về đúng âm gốc ->
+  // CẮT ĐỘT NGỘT + chuông trầm biến thể; sau đó kênh chiêu im lặng 0,3s
+  // (hàm không phát thêm lớp nào sau mốc cắt — im lặng là một phần đòn).
+  function sfxResPhong(freq) {
+    var f = freq || 420;
+    toneWave({ f0: f * 1.06, dur: 0.15, type: 'sine', gain: 0.05, delay: 0 });
+    toneWave({ f0: f * 1.06, f1: f, dur: 0.14, type: 'sine', gain: 0.05, delay: 0.15, cut: true });
+    toneWave({ f0: 196, dur: 0.7, type: 'triangle', gain: 0.05, delay: 0.3 });
+    toneWave({ f0: 98, dur: 0.85, type: 'sine', gain: 0.04, delay: 0.3 });
+  }
   function sfxBell() { beep(1046, 0.9, 'sine', 0.055, 'skill'); beep(1568, 1.2, 'sine', 0.035, 'skill'); beep(784, 0.7, 'sine', 0.045, 'skill'); }
   function sfxQuest() {
     beep(523, 0.12, 'sine', 0.05, 'skill');
@@ -378,6 +463,7 @@
     hhtFight = null; hhtLastSkills = []; hideBossBanner(); // trận tỉ thí Hoa Hướng Thần trên đài (Mục F) cũng là trạng thái phiên
     atkFigs = []; atkFx = null; atkPanelPending = false; atkPanelShown = false; hideAtkPanel(); // hình diễn đánh đêm + tranh phân cảnh (gói phụ 8)
     pillars = []; streaks = []; // cột sáng + vệt kiếm quang là trạng thái phiên (gói phụ 10)
+    resFields = []; resWaves = []; resPassiveT = 9; // sân cộng hưởng + sóng khóa + nhịp nghe thụ động cũng là trạng thái phiên (bước 2 Vạn Âm)
     comboN = 0; comboT = 0; hitStopT = 0; hurtT = 0; playerHurtT = 0; ghostHp = -1; ghostPctShown = -1;
     bossPillar = null; encStance = false; zoneDwell = 0;
     hideBossBanner(); hideHuntSummary(); updateComboBox();
@@ -1550,17 +1636,18 @@
         // (khác hẳn hình chiếu bán trong suốt), chớp sáng khi trúng đòn,
         // thanh máu riêng trên đầu + nhãn đại đệ tử.
         var hf = d.f;
+        var hvx = hf.resVibT > 0 ? Math.sin(tNow / 16) * 2.6 * Math.min(1, hf.resVibT / 0.2) : 0; // rung chấn khi trúng đòn cộng hưởng (thuần vẽ)
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(hf.x + 16, hf.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var hfim = ASSETS.chars['player_nam'];
         if (imgReady(hfim)) {
           var hsrc = charSrc('player_nam', hfim, hf.dir, DIR8_ROW4[hf.dir] || 0, (hf.phase === 'chase' || hf.phase === 'lunge') && (Math.abs(hf.x - (hf._lx || hf.x)) > 0.1 || Math.abs(hf.y - (hf._ly || hf.y)) > 0.1) ? (Math.floor(hf.walkT * 8) % 6) : 0, 0);
-          ctx.drawImage(hfim, hsrc.x, hsrc.y, hsrc.w, hsrc.h, hf.x - 16, hf.y - 48, 64, 80);
+          ctx.drawImage(hfim, hsrc.x, hsrc.y, hsrc.w, hsrc.h, hf.x - 16 + hvx, hf.y - 48, 64, 80);
         } else {
-          drawSprite(S.charSprite('player_nam', hf.dir, 0), hf.x, hf.y - 8, 2);
+          drawSprite(S.charSprite('player_nam', hf.dir, 0), hf.x + hvx, hf.y - 8, 2);
         }
         hf._lx = hf.x; hf._ly = hf.y;
-        if (hf.flashT > 0) { ctx.fillStyle = 'rgba(255,80,60,' + (0.35 * hf.flashT / 0.18).toFixed(3) + ')'; ctx.fillRect(hf.x - 14, hf.y - 46, 60, 78); }
+        if (hf.flashT > 0) { ctx.fillStyle = 'rgba(255,80,60,' + (0.35 * hf.flashT / 0.18).toFixed(3) + ')'; ctx.fillRect(hf.x - 14 + hvx, hf.y - 46, 60, 78); }
         var hbx = hf.x + 16 - 23, hby = hf.y - 62;
         ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(hbx - 1, hby - 1, 48, 7);
         ctx.fillStyle = hf.hp / hf.hpMax > 0.35 ? '#7ec850' : '#e04c3c'; ctx.fillRect(hbx, hby, 46 * Math.max(0, hf.hp / hf.hpMax), 5);
@@ -1641,6 +1728,8 @@
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
     });
     bcDrawOverlays(); // lớp phủ bí cảnh: bẫy kiếm trận, vòng trấn, điểm hái
+    drawResWaves(); // đường sóng khóa Vạn Âm (bước 2 mục 3) — cổng fxRings bên trong hàm
+    drawResFields(); // sân cộng hưởng Vạn Âm (bước 2 mục 1–2) — cổng fxRings/fxParticles bên trong hàm
     // chữ bay (sát thương, thông báo nhỏ): cỡ chữ theo hạng đòn; chí mạng
     // phóng 1,0 -> 1,3 trong 70ms rồi về trong 110ms (hiệu ứng "pop").
     floats = floats.filter(function (f) { return f.a > 0; });
@@ -1653,6 +1742,13 @@
         fs = Math.round(fs * sc);
       }
       ctx.font = 'bold ' + fs + 'px sans-serif'; ctx.textAlign = 'center';
+      // Độ đọc rõ (mục 8, ghi chú Bui sau chơi live): viền tối tương phản
+      // 4 hướng quanh số sát thương trước khi đổ bóng + thân chữ — ở cỡ
+      // điện thoại/mức zoom thường dùng số trừ máu vẫn tách khỏi nền cỏ/
+      // đất sáng. Thuần trình bày, không đổi giá trị sát thương.
+      ctx.fillStyle = 'rgba(12,9,4,' + f.a + ')';
+      ctx.fillText(f.text, f.x - 1.6, f.y); ctx.fillText(f.text, f.x + 1.6, f.y);
+      ctx.fillText(f.text, f.x, f.y - 1.6); ctx.fillText(f.text, f.x, f.y + 1.6);
       ctx.fillStyle = 'rgba(20,16,8,' + f.a + ')'; ctx.fillText(f.text, f.x + 1, f.y + 1);
       ctx.fillStyle = 'rgba(' + f.color + ',' + f.a + ')'; ctx.fillText(f.text, f.x, f.y);
     });
@@ -2032,7 +2128,7 @@
       var ru = L.bagRemove(state, 'hoi_khi_dan', 1);
       if (ru.ok) {
         state.silence = Math.min(L.SILENCE_MAX, state.silence + 25);
-        toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Mặc (còn ' + L.bagCount(state, 'hoi_khi_dan') + ' viên).', 3200);
+        toast('Đã dùng Hồi Khí Đan: hồi 25 Tĩnh Âm (còn ' + L.bagCount(state, 'hoi_khi_dan') + ' viên).', 3200);
       } else toast('Không còn viên Hồi Khí Đan nào trong túi.');
       refreshHUD(); saveNow();
       say(ST.SCENE_PHARMACY);
@@ -2059,10 +2155,10 @@
         // Tĩnh Mặc chưa đủ cho CHẤN: không khóa cứng — tự rơi về đường bằng chứng.
         toast(rc.reason + ' Đi đường bằng chứng vậy.');
         state.quest = 'q4_dieu_tra';
-        say([{ who: 'narrate', text: 'Ngươi định cất tiếng, nhưng Tĩnh Mặc trong ngực chưa đủ nặng cho một tiếng CHẤN. Ngươi nuốt lời nói xuống, quay đi tìm bằng chứng — đường chậm hơn, nhưng chắc hơn.' }], function () { refreshHUD(); saveNow(); });
+        say([{ who: 'narrate', text: 'Ngươi định phát một đòn Chấn Âm, nhưng Tĩnh Âm chưa đủ trong để khóa sóng cho một đòn như thế. Ngươi nén sóng lại, quay đi tìm bằng chứng — đường chậm hơn, nhưng chắc hơn.' }], function () { refreshHUD(); saveNow(); });
       } else {
         state.flags.usedChanCh4 = true;
-        state.flags.daoNoticedVoice = true; // Trần Chính Đạo đã để ý tiếng nói bất thường
+        state.flags.daoNoticedVoice = true; // Trần Chính Đạo đã để ý dư âm bất thường
         L.recordSpeech(state, 4, 'chan-dep-vu-cao', 'thien-co-cac');
         sfxChan(); shakeT = Math.max(shakeT, 0.8);
         rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
@@ -2169,7 +2265,7 @@
       state.silence = 20; // mười tám năm dồn nén đã xả trong một lời — tích lại từ đây
       state.quest = 'q_meditate';
       refreshHUD(); saveNow();
-      toast('Đã mở khóa: Thổ nạp (phím T cạnh giếng) và Ngôn Linh "PHÁ" (phím 1).');
+      toast('Đã mở khóa: Thổ nạp (phím T cạnh giếng) và Vạn Âm Cộng Hưởng "Phá Âm" (phím 1).');
     });
   }
 
@@ -2278,8 +2374,8 @@
     }
     if (p && p.id === 'bia_trac_linh') return touchStele();
     if (p && p.id === 'coc_go') {
-      if (state.flags.dummyBroken) return say([{ who: 'narrate', text: 'Cọc gỗ đã gãy. Tiếng nói đầu tiên của ngươi làm nó nứt từ trong lõi.' }]);
-      return say([{ who: 'narrate', text: 'Cọc gỗ luyện công. ' + (state.unlocked.indexOf('voice') >= 0 ? 'Đứng gần và nhấn phím 1 để dùng Ngôn Linh "PHÁ" (cần 30 Tĩnh Mặc).' : 'Gỗ chắc thế này, tay không không làm gì được.') }]);
+      if (state.flags.dummyBroken) return say([{ who: 'narrate', text: 'Cọc gỗ đã gãy. Đòn cộng hưởng đầu tiên của ngươi làm nó nứt từ trong lõi.' }]);
+      return say([{ who: 'narrate', text: 'Cọc gỗ luyện công. ' + (state.unlocked.indexOf('voice') >= 0 ? 'Đứng gần và nhấn phím 1 để dùng Vạn Âm Cộng Hưởng "Phá Âm" (cần 30 Tĩnh Âm).' : 'Gỗ chắc thế này, tay không không làm gì được.') }]);
     }
     if (p && p.id === 'gieng') return say([{ who: 'narrate', text: 'Giếng nước đầu trấn. Nước trong, hơi mát bốc lên — linh khí quanh đây đậm hơn hẳn nơi khác.' }]);
     if (p && p.id === 'vet_tich') return touchTracks();
@@ -3114,8 +3210,8 @@
       spawnParts(px + 16, py + 16, 10, '200,200,210', 30, false); // bụi đá của sân phủ
       resolved = true;
       line = { who: 'narrate', text: word === 'pha'
-        ? 'Một tiếng PHÁ nổ giữa sân — đợt địch bị hất văng khỏi thềm, đao kiếm rơi loảng xoảng.'
-        : 'Tiếng CHẤN rung chuyển cả phủ — đợt địch ôm tai ngã khuỵu, đội hình tan nát.' };
+        ? 'Một đòn Phá Âm nổ giữa sân — đợt địch bị hất văng khỏi thềm, đao kiếm rơi loảng xoảng.'
+        : 'Một đòn Chấn Âm rung chuyển cả phủ — đợt địch ôm tai ngã khuỵu, đội hình tan nát.' };
     } else if (action === 'atk_sword') {
       var rs = L.castSword(state);
       if (!rs.ok) { toast(rs.reason); say(ST['SCENE_ATK' + wave]); return; }
@@ -3339,7 +3435,7 @@
     hhtFight = {
       phase: 'intro', t: 0, result: null, skillsUsed: [], skillName: '', skillTelegraph: 0, skillId: '',
       stars: [], pendingHits: [], cheered: {}, sub: '',
-      boss: { x: 19 * TILE, y: 10 * TILE, hp: HHT_HP, hpMax: HHT_HP, dir: 'down', walkT: 0, flashT: 0, atkT: 1.2, atkAnimT: 0, phase: 'chase', t: 0, skillId: '', used1: false, used2: false, used3: false, stars: [] }
+      boss: { x: 19 * TILE, y: 10 * TILE, hp: HHT_HP, hpMax: HHT_HP, dir: 'down', walkT: 0, flashT: 0, resVibT: 0, atkT: 1.2, atkAnimT: 0, phase: 'chase', t: 0, skillId: '', used1: false, used2: false, used3: false, stars: [] }
     };
     var bc = hhtBossCenter();
     if (!SET || SET.current.fxRings) rings.push({ x: bc.x, y: bc.y, r: 6, a: 0.9 });
@@ -3360,7 +3456,7 @@
     playerHurtT = 0.07; hurtT = 0.33; hitStop(0.07); shakeWorld(0.3);
     sfxHurt();
     spawnParts(px + 16, py + 6, 8, '255,90,70', 40, false);
-    addDmgFloat(px + 16, py - 24, '-' + Math.max(1, Math.round((state.hpMax || 100) * pct)), '255,110,100', { size: 15, targetKey: '__player' });
+    addDmgFloat(px + 16, py - 24, '-' + Math.max(1, Math.round((state.hpMax || 100) * pct)), '255,110,100', { size: 19, targetKey: '__player' });
     refreshHUD();
     if (state.hp <= 0 && hhtFight && !hhtFight.result) hhtLose();
   }
@@ -3374,7 +3470,7 @@
     var dmg = Math.max(1, Math.round(HHT_ATK * (0.85 + Math.random() * 0.3)));
     state.hp = Math.max(0, state.hp - dmg);
     playerHurtT = 0.07; hurtT = 0.33; shakeWorld(0.12); sfxHurt();
-    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 15, targetKey: '__player' });
+    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
     spawnParts(px + 16, py + 6, 6, '255,90,70', 36, false);
     refreshHUD();
     if (state.hp <= 0 && !f.result) hhtLose();
@@ -3389,8 +3485,9 @@
     if (b.phase === 'tele' || b.phase === 'lunge') power = Math.max(1, Math.round(power * 0.35));
     b.hp = Math.max(0, b.hp - power);
     b.flashT = 0.18;
+    if (opts && opts.kind === 'word') b.resVibT = 0.2;
     var bc = hhtBossCenter();
-    addDmgFloat(bc.x, bc.y - 26, '-' + power, (opts && opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 16, targetKey: 'hhtboss' });
+    addDmgFloat(bc.x, bc.y - 26, '-' + power, (opts && opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 20, targetKey: 'hhtboss' });
     spawnStreak(bc.x, bc.y - 4, Math.atan2((py + 16) - bc.y, (px + 16) - bc.x) + Math.PI, (opts && opts.crit) ? '255,226,150' : '170,230,255', !!(opts && opts.crit));
     spawnParts(bc.x, bc.y, 6, '190,235,200', 34, false);
     if (fxOn() && Math.random() < 0.5) spawnPetals(bc.x - 10, bc.y - 16, 2);
@@ -3422,17 +3519,26 @@
     var f = hhtFight; if (!f || f.result) return;
     var b = f.boss;
     var d = Math.hypot((b.x + 16) - (px + 16), (b.y + 16) - (py + 16));
-    if (d > 3.2 * TILE) { toast('Hoa Hướng Thần còn xa — lời nói không vang tới được.'); return; }
+    if (d > 3.2 * TILE) {
+      var pcFar2 = { x: px + 16, y: py + 16 };
+      spawnResWave(pcFar2.x, pcFar2.y, b.x + 16, b.y + 16, 0.5, resTierFor(state.silence)); // sóng chạy nửa đường rồi tan (3.4)
+      toast('Quái còn xa — sóng chưa khóa tới được.');
+      return;
+    }
     faceMonster(b);
+    var silenceBefore = state.silence;
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
     L.recordSpeech(state, 7, skill + '-ti-thi-hoa-huong-than-dai-dau-kiem', 'dai-dau-kiem');
     var bc = hhtBossCenter();
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
-    if (skill === 'pha') { sfxPha(); rings.push({ x: bc.x, y: bc.y, r: 8, a: 0.95 }); }
-    else if (skill === 'chan') { sfxChan(); shakeT = Math.max(shakeT, 0.5); rings.push({ x: bc.x, y: bc.y, r: 10, a: 0.95 }); rings.push({ x: bc.x, y: bc.y, r: 3, a: 0.8 }); }
-    else if (skill === 'dinh') { spawnPillar(bc.x, bc.y + 30, { top: 'purple', dur: 0.85, h: 105 }); sfxBell(); rings.push({ x: bc.x, y: bc.y, r: 10, a: 0.9 }); b.holdT = (b.atkInterval || HHT_ATK_INTERVAL); }
-    else if (skill === 'phong') { spawnPillar(bc.x, bc.y + 30, { dur: 0.9, h: 112 }); sfxBigBell(); b.sealT = (HHT_ATK_INTERVAL * 2); }
+    // Hoa Hướng Thần không có dòng MONSTER_DEFS: âm gốc lấy 340 Hz —
+    // đúng cao độ gầm boss mà hhtBossStrike đã dùng cho tiếng của hắn.
+    var hhtF = 340;
+    if (skill === 'pha') { castResonanceFx('pha', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: hhtF, target: b }); shakeWorld(0.35); }
+    else if (skill === 'chan') { castResonanceFx('chan', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: hhtF, target: b }); shakeWorld(0.35); }
+    else if (skill === 'dinh') { spawnPillar(bc.x, bc.y + 30, { top: 'purple', dur: 0.85, h: 105 }); castResonanceFx('dinh', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: hhtF, target: b }); b.holdT = (b.atkInterval || HHT_ATK_INTERVAL); }
+    else if (skill === 'phong') { spawnPillar(bc.x, bc.y + 30, { dur: 0.9, h: 112 }); castResonanceFx('phong', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: hhtF, target: b }); shakeWorld(0.12); b.sealT = (HHT_ATK_INTERVAL * 2); }
     addDmgFloat(bc.x, bc.y - 40, wf[0], wf[1], { size: 22, life: 0.9 });
     if (skill === 'pha' || skill === 'chan' || skill === 'phong') applyHitToHhtBoss(r.power, { kind: 'word', skill: skill });
     refreshHUD();
@@ -3518,6 +3624,7 @@
     var f = hhtFight; if (!f || dt <= 0) return;
     var b = f.boss;
     if (b.flashT > 0) b.flashT = Math.max(0, b.flashT - dt);
+    if (b.resVibT > 0) b.resVibT = Math.max(0, b.resVibT - dt);
     if (b.atkAnimT > 0) b.atkAnimT = Math.max(0, b.atkAnimT - dt);
     if (b.holdT > 0) b.holdT = Math.max(0, b.holdT - dt);
     if (b.sealT > 0) b.sealT = Math.max(0, b.sealT - dt);
@@ -3654,9 +3761,9 @@
         rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
         addFloat(px + 16, py - 20, 'CHẤN!', '150,200,255');
         L.recordSpeech(state, 8, 'chan-sau-nui', 'huyet-bac-cung');
-        line = { who: 'narrate', text: 'Một tiếng CHẤN nổ giữa rừng sau núi — bóng đen ôm tai loạng choạng, quay đầu bỏ chạy vào sâu trong rừng.' };
+        line = { who: 'narrate', text: 'Một đòn Chấn Âm nổ giữa rừng sau núi — bóng đen ôm tai loạng choạng, quay đầu bỏ chạy vào sâu trong rừng.' };
       } else {
-        line = { who: 'narrate', text: 'Ngươi định cất tiếng, nhưng Tĩnh Mặc trong ngực chưa đủ nặng cho một tiếng CHẤN. Ngươi nuốt lời nói xuống, lăn người vào bóng cây — bóng đen vồ hụt vào khoảng trống, chém phải thân cây rồi biến mất.' };
+        line = { who: 'narrate', text: 'Ngươi định phát một đòn Chấn Âm, nhưng Tĩnh Âm chưa đủ trong để khóa sóng cho một đòn như thế. Ngươi nén sóng lại, lăn người vào bóng cây — bóng đen vồ hụt vào khoảng trống, chém phải thân cây rồi biến mất.' };
       }
     } else if (action === 'chi_hide') {
       line = { who: 'narrate', text: 'Ngươi nín thở, ép mình vào sau thân cây lớn. Mười tám năm im lặng dạy ngươi cách biến mất giỏi hơn bất kỳ ai — bóng đen lùng sục một vòng rồi tan vào rừng.' };
@@ -3991,10 +4098,10 @@
       rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
       addFloat(px + 16, py - 20, 'CHẤN!', '150,200,255');
       L.recordSpeech(state, 11, 'chan-giu-duoc-hoi-phong-dot-' + wave, 'hoi-phong');
-      line = { who: 'narrate', text: 'Một tiếng CHẤN nổ giữa bãi bắc — con thú ôm đầu gầm lên đau đớn, bước chân rối loạn.' };
+      line = { who: 'narrate', text: 'Một đòn Chấn Âm nổ giữa bãi bắc — con thú ôm đầu gầm lên đau đớn, bước chân rối loạn.' };
     } else if (action === 'kd_hold') {
       state.silence = L.silenceGain('meditate', 2, state.silence);
-      line = { who: 'narrate', text: 'Ngươi lùi về sau vòng đá, giữ thế và dồn Tĩnh Mặc. Con thú gầm gừ vòng quanh, chưa dám lao vào lần nữa.' };
+      line = { who: 'narrate', text: 'Ngươi lùi về sau vòng đá, giữ thế và dồn Tĩnh Âm. Con thú gầm gừ vòng quanh, chưa dám lao vào lần nữa.' };
     }
     if (!line) return;
     if (wave < 2) {
@@ -4038,11 +4145,11 @@
   }
   function resolveKdGuard(action) {
     if (action === 'kdguard_voice') {
-      return say([{ who: 'narrate', text: 'Tiếng nói xé toang chu thiên đang vận hành. Kim đan chưa thành hình đã rung lên dữ dội rồi lặng xuống — vận công vỡ giữa chừng. May là vật dẫn vẫn còn nguyên trong tay ngươi: chưa nuốt, chưa mất gì. Hít một hơi. Làm lại từ đầu.' }], function () {
+      return say([{ who: 'narrate', text: 'Một lần phát hưởng xé toang chu thiên đang vận hành. Kim đan chưa thành hình đã rung lên dữ dội rồi lặng xuống — vận công vỡ giữa chừng. May là vật dẫn vẫn còn nguyên trong tay ngươi: chưa nuốt, chưa mất gì. Hít một hơi. Làm lại từ đầu.' }], function () {
         state.flags.ketDanGuardBroken = (state.flags.ketDanGuardBroken || 0) + 1;
         state.flags.ketDanGuardWave = 0;
         refreshHUD(); saveNow();
-        toast('Vận công Kết Đan đã vỡ vì một tiếng nói. Hãy tương tác lại Đài Trúc Cơ để vận công lại từ đầu — vật dẫn Kết Đan vẫn còn nguyên.', 4600);
+        toast('Vận công Kết Đan đã vỡ vì một lần phát hưởng. Hãy tương tác lại Đài Trúc Cơ để vận công lại từ đầu — vật dẫn Kết Đan vẫn còn nguyên.', 4600);
       });
     }
     var wave = state.flags.ketDanGuardWave || 1;
@@ -4068,15 +4175,15 @@
         state.flags.ketDanGuardDone = true;
         state.quest = 'q12_ket_dan';
         refreshHUD(); saveNow();
-        toast('Hộ pháp Kết Đan đã xong ba đợt trong im lặng tuyệt đối. Giờ là tâm ma — và khoảnh khắc quyết định.', 4200);
+        toast('Hộ pháp Kết Đan đã xong ba đợt mà không một lần phát hưởng. Giờ là tâm ma — và khoảnh khắc quyết định.', 4200);
       });
     }
   }
   var KD_TAMMA_CHOICE = {
     who: 'choice', text: 'Mảng đá đang rơi. Ngươi sẽ…',
     options: [
-      { label: 'Cất lời — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
-      { label: 'Giữ im lặng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
+      { label: 'Phát hưởng — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
+      { label: 'Không phát hưởng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
     ]
   };
   function resolveKetDanChoice(action) {
@@ -4101,7 +4208,7 @@
       toast('Tu vi hiện tại: ' + Math.floor(state.tuvi) + '/' + cap + '.', 3600);
       return say([{ who: 'narrate', text: 'Tu vi chưa đầy. Hãy thổ nạp ở điểm linh khí của tông, hoặc bờ suối Thung Lũng Hồi Phong, cho đầy hẳn rồi quay lại đài.' }]);
     }
-    if (state.flags.ketDanGuardDone !== true) return say([{ who: 'narrate', text: 'Vòng hộ pháp quanh đài chưa qua đủ ba đợt sóng gió. Hãy vận công lại từ đầu — địch sẽ tới, và ngươi phải giữ im lặng cho tới khi chúng rút.' }]);
+    if (state.flags.ketDanGuardDone !== true) return say([{ who: 'narrate', text: 'Vòng hộ pháp quanh đài chưa qua đủ ba đợt sóng gió. Hãy vận công lại từ đầu — địch sẽ tới, và ngươi phải không phát hưởng cho tới khi chúng rút.' }]);
     if (!L.bagHas(state, 'ket_dan_dan')) return say([{ who: 'narrate', text: 'Ngươi chưa có vật dẫn Kết Đan trong túi. Về Thanh Vân Đại Điện gặp trưởng lão tông — vật dẫn phải được luyện ở đó.' }]);
     var rm = L.bagRemove(state, 'ket_dan_dan', 1);
     if (!rm.ok) { toast(rm.reason); return; }
@@ -4122,7 +4229,7 @@
     say(ST.SCENE_CH12_KET_DAN, function () {
       state.quest = 'q12_lenh_dau_tien';
       refreshHUD(); saveNow();
-      toast('Kết Đan thành công: ' + r.label + '! Ngôn Linh đã thành LỆNH — thử chiêu ĐỊNH (phím 4) vào tấm bia mới ở chân đài.', 5200);
+      toast('Kết Đan thành công: ' + r.label + '! Vạn Âm Cộng Hưởng đã thành bậc Hưởng — thử chiêu Định Âm (phím 4) vào tấm bia mới ở chân đài.', 5200);
     });
     refreshHUD();
   }
@@ -4130,16 +4237,16 @@
      PHONG khóa hai nhịp trong các trận về sau; ở sự kiện dạy lệnh tại đài,
      uy lực phải đạt ngưỡng của trưởng lão mới tính là chạm được bậc lệnh. */
   function castDinh() {
-    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Ngôn Linh bị khóa ở ải Thăng Long
+    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('dinh'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (dlg) return;
     if (enc) { encCastWord('dinh'); return; }
     if (startEncounterNear(3.2)) { encCastWord('dinh'); return; }
+    var beforeD = state.silence;
     var r = L.castWord(state, 'dinh');
     if (!r.ok) { toast(r.reason); return; }
-    rings.push({ x: px + 16, y: py + 16, r: 7, a: 0.95 });
+    castResonanceFx('dinh', px + 16, py + 30, { silenceBefore: beforeD, baseFreq: 220, noWave: true }); // thử bia: âm gốc cơ quan/bia 220 Hz, sân ĐỨNG YÊN
     addFloat(px + 16, py - 20, 'ĐỊNH!', '170,220,255');
-    sfxBell();
     if (state.quest === 'q12_lenh_dau_tien' && !state.flags.lenDinhDone) {
       if (r.power >= 160) {
         state.flags.lenDinhDone = true;
@@ -4148,22 +4255,21 @@
         say(ST.SCENE_CH12_LENH_2, function () { refreshHUD(); saveNow(); });
         return;
       }
-      toast('Uy lực ĐỊNH vừa rồi: ' + r.power + ' — chưa đủ 160 để bia đứng yên tuyệt đối. Hãy tích Tĩnh Mặc thêm (thổ nạp hoặc im lặng) rồi thử lại.', 4600);
+      toast('Uy lực Định Âm vừa rồi: ' + r.power + ' — chưa đủ 160 để bia đứng yên tuyệt đối. Hãy tích Tĩnh Âm thêm (thổ nạp hoặc lắng nghe) rồi thử lại.', 4600);
     }
     refreshHUD(); saveNow();
   }
   function castPhong() {
-    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Ngôn Linh bị khóa ở ải Thăng Long
+    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('phong'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (dlg) return;
     if (enc) { encCastWord('phong'); return; }
     if (startEncounterNear(3.2)) { encCastWord('phong'); return; }
+    var beforeP = state.silence;
     var r = L.castWord(state, 'phong');
     if (!r.ok) { toast(r.reason); return; }
-    rings.push({ x: px + 16, y: py + 16, r: 12, a: 0.95 });
-    rings.push({ x: px + 16, y: py + 16, r: 5, a: 0.85 });
+    castResonanceFx('phong', px + 16, py + 30, { silenceBefore: beforeP, baseFreq: 220, noWave: true }); // thử trận văn: sân xoay ngược chiều
     addFloat(px + 16, py - 20, 'PHONG!', '255,214,120');
-    sfxBigBell();
     if (state.quest === 'q12_lenh_dau_tien' && state.flags.lenDinhDone && !state.flags.lenPhongDone) {
       if (r.power >= 180) {
         state.flags.lenPhongDone = true;
@@ -4175,11 +4281,11 @@
             if (rk.ok) { state.flags.kimDanReward = true; toast('Thưởng của tông môn mừng tân Kim Đan: +50 Linh Thạch (số dư: ' + L.fmtNum(rk.balance) + ').', 4200); }
           }
           state.quest = 'q12_done'; refreshHUD(); saveNow();
-          toast('Hoàn thành chương 12: Kết Đan — phần ba khép lại ở Kim Đan Sơ Kỳ. Ngôn Linh của ngươi từ nay là LỆNH.', 5600);
+          toast('Hoàn thành chương 12: Kết Đan — phần ba khép lại ở Kim Đan Sơ Kỳ. Vạn Âm Cộng Hưởng của ngươi từ nay là bậc Hưởng.', 5600);
         });
         return;
       }
-      toast('Uy lực PHONG vừa rồi: ' + r.power + ' — chưa đủ 180 để khóa trọn vết rạn. Hãy tích Tĩnh Mặc thêm rồi thử lại.', 4600);
+      toast('Uy lực Phong Âm vừa rồi: ' + r.power + ' — chưa đủ 180 để khóa trọn vết rạn. Hãy tích Tĩnh Âm thêm rồi thử lại.', 4600);
     }
     refreshHUD(); saveNow();
   }
@@ -4248,11 +4354,19 @@
   function sfxWaveClear() { [659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.12, 'sine', 0.035, 'skill'); }, i * 60); }); }
   function sfxFirstClear() { beep(392, 0.25, 'triangle', 0.05, 'skill'); setTimeout(function () { beep(523, 0.25, 'triangle', 0.05, 'skill'); }, 180); setTimeout(function () { beep(784, 0.5, 'sine', 0.05, 'skill'); }, 360); }
   function sfxChimeSmall() { beep(1568, 0.7, 'sine', 0.04, 'skill'); }
-  function sfxSealBreak() { sfxCrack(true); beep(65, 0.5, 'sawtooth', 0.06, 'skill'); }
+  // Phá trấn/vách/cửa (bước 2 mục 5): PHÁ ÂM RÚT GỌN ở âm gốc vật liệu
+  // (đá 170 Hz / cơ quan-trận pháp 220 Hz) + tiếng đá vỡ. Tên hàm giữ
+  // nguyên; điểm gọi truyền tần vật liệu. Đường nghe thấu ở Kiếm Trủng
+  // KHÔNG dùng hàm này — trấn tan êm qua sfxTranFade, không tiếng vỡ.
+  function sfxSealBreak(freq) { sfxPha(freq || 170, 1); sfxCrack(true); }
   function sfxTranFade() { beep(660, 0.5, 'sine', 0.03, 'skill'); setTimeout(function () { beep(520, 0.7, 'sine', 0.03, 'skill'); }, 300); setTimeout(function () { beep(392, 0.9, 'sine', 0.025, 'skill'); }, 600); }
   function sfxHazardHit() { beep(220, 0.12, 'square', 0.05, 'skill'); beep(160, 0.14, 'sawtooth', 0.04, 'skill'); }
   function sfxGhostWail() { beep(700, 0.4, 'sine', 0.03, 'skill'); setTimeout(function () { beep(520, 0.5, 'sine', 0.03, 'skill'); }, 300); setTimeout(function () { beep(340, 0.8, 'sine', 0.025, 'skill'); }, 650); }
-  function sfxNameCall() { beep(1046, 0.5, 'sine', 0.05, 'skill'); setTimeout(function () { beep(1318, 0.6, 'sine', 0.035, 'skill'); }, 200); }
+  // ĐÁP ÂM (bước 2 mục 5): gọi tên ở Cổ Mộ không phải Giang Phàm "đọc
+  // tên" nữa — một sine ĐƠN ĐỘC ở âm gốc của oán hồn (cry của
+  // oan_hon_chien_truong = 240 Hz), 0,9s, gain 0,045: tiếng của chính
+  // oán hồn đáp lại tần số của nó. Tên hàm giữ nguyên (bất biến).
+  function sfxNameCall() { toneWave({ f0: resBaseFreqForSpecies('oan_hon_chien_truong'), dur: 0.9, type: 'sine', gain: 0.045 }); }
   function nextHitVariant() { var v = HIT_VARIANTS[hitVariantIdx % 3]; hitVariantIdx++; return v; }
 
   /* ----- Tiện ích ----- */
@@ -4288,7 +4402,7 @@
       zoneId: zoneId, lairX: tx, lairY: ty, x: tx * TILE, y: ty * TILE, face: 1, mode: 'wander',
       hp: def.hp, hpMax: def.hp, atk: def.atk, atkInterval: def.atkInterval, speed: def.speed,
       wt: 1 + Math.random() * 2, tx: tx * TILE, ty: ty * TILE, movingNow: false,
-      aggroT: 0, atkT: 0.6, atkAnimT: 0, flashT: 0, cryT: 0, kbx: 0, kby: 0, kbT: 0, shakeT: 0,
+      aggroT: 0, atkT: 0.6, atkAnimT: 0, flashT: 0, cryT: 0, kbx: 0, kby: 0, kbT: 0, shakeT: 0, resVibT: 0, resShatter: false,
       holdT: 0, sealT: 0, deathT: 0, state: 'alive', respawnT: 0, slideT: bossId ? 0.5 : 0, hitN: 0 };
   }
   function monsterHasArt(species) {
@@ -4357,6 +4471,7 @@
   }
   function updateMonster(m, dt) {
     if (m.flashT > 0) m.flashT = Math.max(0, m.flashT - dt);
+    if (m.resVibT > 0) m.resVibT = Math.max(0, m.resVibT - dt); // rung chấn trình diễn khi trúng đòn cộng hưởng (3.5)
     if (m.cryT > 0) m.cryT = Math.max(0, m.cryT - dt);
     if (m.shakeT > 0) m.shakeT = Math.max(0, m.shakeT - dt);
     if (m.kbT > 0) { m.kbT = Math.max(0, m.kbT - dt); if (m.kbT <= 0) { m.kbx = 0; m.kby = 0; } }
@@ -4503,7 +4618,7 @@
     if (!state || dmg <= 0 || !enc) return;
     var before = state.hp;
     state.hp = Math.max(0, state.hp - dmg);
-    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 15, targetKey: '__player' });
+    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
     if (before - state.hp >= state.hpMax * 0.05) hurtT = 0.33; // quầng đỏ mép màn khi mất >= 5% máu tối đa
     playerHurtT = 0.07;
     sfxHurt();
@@ -4587,6 +4702,10 @@
      - Cánh hoa: chiêu của U Nhàn trong tỉ thí, boss thung lũng gục.
      - Khói lam xám: kẻ bịt mặt xuất hiện, quái gục. */
   var pillars = [], streaks = [];
+  /* Sân cộng hưởng + đường sóng khóa Vạn Âm (bước 2, thiết kế 3.2–3.4):
+     cấu trúc trình diễn thuần, dọn trong resetPresentationState, cập
+     nhật bằng dtW nên tôn trọng dừng hình GF-03 như pillars/streaks. */
+  var resFields = [], resWaves = [], resSeedSeq = 0, resPassiveT = 9;
   // Neo biển mây của Thanh Vân Tông (gói phụ 12): tâm các hõm vực giữa
   // các đỉnh — tây bắc (hõm thác), tây (dưới đài), hõm cầu đá, hõm đông,
   // sau núi, vành bắc và sườn nam.
@@ -4726,6 +4845,202 @@
         ctx.restore();
       }
     });
+  }
+
+  /* ================= Sân cộng hưởng Vạn Âm (bước 2, thiết kế 3.2–3.5) ================= */
+  // Thang trình diễn bốn nấc theo Tĩnh Âm TRƯỚC khi ra đòn (3.3).
+  var RES_TIERS = [
+    null,
+    { R: 26, cols: 0, colH: 0, budget: 14 },
+    { R: 34, cols: 3, colH: 60, budget: 14 },
+    { R: 42, cols: 4, colH: 90, budget: 22 },
+    { R: 50, cols: 5, colH: 110, budget: 22 }
+  ];
+  function resTierFor(silence) { var s = silence || 0; return s < 30 ? 1 : s < 60 ? 2 : s < 85 ? 3 : 4; }
+  function spawnResParts(x, y, n, tier, skill) {
+    if (!fxOn()) return;
+    var budget = RES_TIERS[tier].budget;
+    n = Math.min(n, budget);
+    for (var i = 0; i < n; i++) {
+      if (parts.length >= MAX_PARTS) break; // cạn ngân sách: sân + chữ nổi vẫn hiện (spawnResField không phụ thuộc hạt)
+      var a = (i / Math.max(1, n)) * Math.PI * 2 + resSeedSeq * 0.7;
+      var gold = tier >= 3 && i % 4 === 3;
+      parts.push({
+        x: x + Math.cos(a) * 6, y: y - 6 - (i % 3) * 4, vx: Math.cos(a) * (14 + (i % 5) * 5), vy: -18 - (i % 4) * 7,
+        t: 0, life: 0.55 + (i % 3) * 0.12, col: gold ? '255,214,110' : (i % 3 === 0 ? '255,255,255' : '127,232,224'), size: gold ? 2.4 : 2
+      });
+    }
+  }
+  function spawnResWave(x0, y0, x1, y1, reach, tier) {
+    if (SET && SET.current && !SET.current.fxRings) return; // 3.8: fxRings tắt -> mất đường sóng
+    resWaves.push({ x0: x0, y0: y0, x1: x1, y1: y1, reach: reach == null ? 1 : reach, t: 0, dur: 0.12, tier: tier || 1 });
+    if (resWaves.length > 8) resWaves.shift();
+  }
+  function spawnResField(gx, gy, opts) {
+    opts = opts || {};
+    var tier = resTierFor(opts.silenceBefore);
+    var spec = RES_TIERS[tier];
+    var dur = opts.skill === 'pha' ? 0.7 : opts.skill === 'chan' ? 0.9 : opts.skill === 'phong' ? 0.95 : 0.85; // mở 0,18 + đỉnh 0,12–0,2 + tan 0,3–0,5
+    var seed = (++resSeedSeq) * 1.618;
+    var cols = [];
+    for (var i = 0; i < spec.cols; i++) cols.push({ ph: seed * (i + 1) * 0.9, h: spec.colH * (0.86 + ((i * 37 + Math.floor(seed * 10)) % 10) / 34) });
+    var f = { x: gx, y: gy, t: 0, dur: dur, skill: opts.skill || 'pha', tier: tier, R: spec.R, cols: cols, seed: seed, cracks: opts.skill === 'pha', target: opts.target || null };
+    resFields.push(f);
+    if (resFields.length > 6) resFields.shift();
+    if (tier >= 4) { // vòng sóng phụ: vật lân cận rung/nhấp nháy rất nhẹ (trình bày thuần, không đổi trạng thái trận)
+      mons.forEach(function (mm) { if (mm.hp > 0 && Math.abs(mm.x + 16 - gx) < 120 && Math.abs(mm.y + 16 - gy) < 120) mm.resVibT = Math.max(mm.resVibT || 0, 0.18); });
+    }
+    spawnResParts(gx, gy, tier === 1 ? 5 : tier === 2 ? 9 : tier === 3 ? 14 : 18, tier, f.skill);
+    return tier;
+  }
+  // Điểm vào duy nhất của bốn đòn cộng hưởng khi có mục tiêu: đường sóng
+  // khóa chạy trước, sân nở tại mục tiêu, tiếng theo âm gốc mục tiêu.
+  function castResonanceFx(skill, gx, gy, opts) {
+    opts = opts || {};
+    var pc = { x: px + 16, y: py + 16 };
+    var tier = resTierFor(opts.silenceBefore);
+    if (!opts.noWave) spawnResWave(pc.x, pc.y, gx, gy - 14, 1, tier);
+    spawnResField(gx, gy, { skill: skill, silenceBefore: opts.silenceBefore, target: opts.target || null });
+    var f = opts.baseFreq || 420;
+    if (skill === 'pha') sfxPha(f, tier);
+    else if (skill === 'chan') sfxChan(f);
+    else if (skill === 'dinh') sfxResDinh(f);
+    else if (skill === 'phong') sfxResPhong(f);
+    return tier;
+  }
+  function updateResFx(dt) {
+    for (var i = resFields.length - 1; i >= 0; i--) { resFields[i].t += dt; if (resFields[i].t >= resFields[i].dur) resFields.splice(i, 1); }
+    for (var j = resWaves.length - 1; j >= 0; j--) { resWaves[j].t += dt; if (resWaves[j].t >= resWaves[j].dur) resWaves.splice(j, 1); }
+  }
+  function drawResWaves() {
+    if (SET && SET.current && !SET.current.fxRings) return;
+    resWaves.forEach(function (w) {
+      var p = Math.min(1, w.t / w.dur);
+      var ex = w.x0 + (w.x1 - w.x0) * w.reach, ey = w.y0 + (w.y1 - w.y0) * w.reach;
+      var dx = ex - w.x0, dy = ey - w.y0, len = Math.max(1, Math.hypot(dx, dy));
+      var nx = -dy / len, ny = dx / len;
+      for (var pass = 0; pass < 2; pass++) {
+        ctx.strokeStyle = pass === 0 ? 'rgba(127,232,224,' + (0.32 * (1 - p * 0.4)) + ')' : 'rgba(255,255,255,' + (0.85 * (1 - p * 0.3)) + ')';
+        ctx.lineWidth = pass === 0 ? 5 : 2;
+        ctx.beginPath();
+        for (var s = 0; s <= 12; s++) {
+          var u = s / 12;
+          var amp = 7 * (1 - u) * Math.sin(u * Math.PI); // biên độ thu nhỏ dần về phía mục tiêu
+          var off = Math.sin(u * Math.PI * 3 - p * 6.3) * amp;
+          var px2 = w.x0 + dx * u + nx * off, py2 = w.y0 + dy * u + ny * off;
+          if (s === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+        }
+        ctx.stroke();
+      }
+    });
+  }
+  function drawResFields() {
+    if (SET && SET.current && !SET.current.fxRings) return; // 3.8: fxRings tắt -> mất sân, giữ chữ nổi/số/tiếng
+    var showFx = fxOn(); // fxParticles tắt -> mất cột/quầng/hạt, giữ vòng tĩnh tối thiểu
+    resFields.forEach(function (f) {
+      var k = f.t / f.dur;
+      var open = Math.min(1, f.t / 0.18), fade = k > 0.62 ? Math.max(0, 1 - (k - 0.62) / 0.38) : 1;
+      var peak = k >= 0.2 && k <= 0.42 ? Math.sin((k - 0.2) / 0.22 * Math.PI) : 0;
+      var env = open * fade;
+      var dir = f.skill === 'phong' ? -1 : 1;
+      var rot = f.skill === 'dinh' ? 0 : f.seed + f.t * 0.55 * dir; // Định: đứng yên tuyệt đối
+      var R = f.R * (0.55 + 0.45 * open);
+      if (f.skill === 'chan' && k > 0.72) R *= 1 - 0.15 * ((k - 0.72) / 0.28); // Chấn: vòng ngoài co ~15% ở nhịp cuối
+      ctx.save(); ctx.translate(f.x, f.y);
+      if (peak > 0) { ctx.fillStyle = 'rgba(4,8,12,' + (0.14 * peak) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, R * 2.3, R * 2.3 * 0.42, 0, 0, Math.PI * 2); ctx.fill(); } // tối nền rất nhẹ tại khung đỉnh 0,2s
+      // Lớp 1: vòng lõi trắng -> lam ngọc, nén elip ~0,42.
+      ctx.save(); ctx.scale(1, 0.42);
+      var grd = null; try { grd = ctx.createRadialGradient(0, 0, 2, 0, 0, R); } catch (e) { grd = null; }
+      if (grd) { grd.addColorStop(0, 'rgba(255,255,255,' + (0.5 * env) + ')'); grd.addColorStop(0.55, 'rgba(127,232,224,' + (0.3 * env) + ')'); grd.addColorStop(1, 'rgba(127,232,224,0)'); ctx.fillStyle = grd; }
+      else ctx.fillStyle = 'rgba(127,232,224,' + (0.3 * env) + ')';
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      if (f.skill === 'dinh' && showFx) { // quầng elip tím-trắng riêng của Định
+        ctx.strokeStyle = 'rgba(216,180,255,' + (0.55 * env) + ')'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(0, 0, R * 1.08, R * 1.08 * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (f.skill === 'chan') { // gợn đất như mặt nước: ba vòng elip lệch nhịp
+        for (var rip = 0; rip < 3; rip++) {
+          var rk = ((f.t * 1.4 + rip / 3) % 1);
+          ctx.strokeStyle = 'rgba(127,232,224,' + (0.3 * (1 - rk) * fade) + ')'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(0, 2, R * (0.4 + rk * 0.75), R * (0.4 + rk * 0.75) * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+      // Lớp 2: hai vòng sóng — một liền, một đứt đoạn xoay chậm.
+      ctx.strokeStyle = 'rgba(190,250,244,' + (0.8 * env) + ')'; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.ellipse(0, 0, R, R * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.save();
+      if (ctx.setLineDash) ctx.setLineDash([8, 7]);
+      ctx.strokeStyle = 'rgba(127,232,224,' + (0.65 * env) + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(0, 0, R * 1.14, R * 1.14 * 0.42, rot * 0.35, 0, Math.PI * 2); ctx.stroke();
+      if (ctx.setLineDash) ctx.setLineDash([]);
+      ctx.restore();
+      if (f.skill === 'pha' && peak > 0) { // Phá: viền sân chớp đỏ cam đúng một lần ở đỉnh
+        ctx.strokeStyle = 'rgba(255,96,44,' + (0.75 * peak) + ')'; ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.ellipse(0, 0, R * 1.2, R * 1.2 * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (f.tier >= 4) { // vòng sóng phụ nấc 4
+        ctx.strokeStyle = 'rgba(127,232,224,' + (0.2 * fade) + ')'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.ellipse(0, 0, R * (1.35 + k * 1.15), R * (1.35 + k * 1.15) * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      // Lớp 3: vòng phù văn — khối chữ nhật hướng tâm (ngôn ngữ vòng trận gói 10).
+      for (var bi = 0; bi < 12; bi++) {
+        var ba = rot * 0.5 + bi / 12 * Math.PI * 2;
+        var bAlpha = 0.75 * env;
+        if (f.skill === 'phong') { var th = 0.25 + (bi / 12) * 0.55; bAlpha *= (k < th ? 1 : 0.18); } // Phong: phù văn tắt dần từng mảng
+        ctx.save(); ctx.rotate(ba); ctx.translate(R * 0.94, 0); ctx.scale(1, 0.42); ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = 'rgba(127,232,224,' + bAlpha + ')'; ctx.fillRect(-1.6, -5, 3.2, 10);
+        ctx.fillStyle = 'rgba(255,255,255,' + (bAlpha * 0.8) + ')'; ctx.fillRect(-0.7, -2.6, 1.4, 5.2);
+        ctx.restore();
+      }
+      // Lớp 4: cột sóng đứng (chỉ nấc >= 2; tắt theo fxParticles). Định:
+      // cột TĨNH tuyệt đối — không nhấp nháy như luật đứng yên của đòn.
+      if (showFx && f.cols.length) {
+        f.cols.forEach(function (c, ci) {
+          var flick = f.skill === 'dinh' ? 1 : 0.78 + 0.22 * Math.sin(f.t * 21 + c.ph);
+          var ch = c.h * open * flick, cx2 = (ci - (f.cols.length - 1) / 2) * f.R * 0.36;
+          ctx.fillStyle = 'rgba(127,232,224,' + (0.3 * env) + ')'; ctx.fillRect(cx2 - 4.5, -ch, 9, ch);
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.9 * env) + ')'; ctx.fillRect(cx2 - 1.4, -ch, 2.8, ch);
+        });
+      }
+      // Phá: vết nứt sáng 2–3 đường trên mục tiêu ở đỉnh/tan.
+      if (f.cracks && k > 0.18) {
+        var ca = Math.min(1, (k - 0.18) / 0.2) * fade;
+        ctx.lineWidth = 2;
+        for (var ci2 = 0; ci2 < 3; ci2++) {
+          var sx = -8 + ci2 * 8 + Math.sin(f.seed * (ci2 + 2)) * 3, sy = -34 - ci2 * 3;
+          ctx.strokeStyle = 'rgba(255,120,60,' + (0.45 * ca) + ')'; ctx.lineWidth = 3.4;
+          ctx.beginPath(); ctx.moveTo(sx, sy + 16); ctx.lineTo(sx + 4, sy + 6); ctx.lineTo(sx - 2, sy - 2); ctx.lineTo(sx + 5, sy - 11); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,' + (0.9 * ca) + ')'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(sx, sy + 16); ctx.lineTo(sx + 4, sy + 6); ctx.lineTo(sx - 2, sy - 2); ctx.lineTo(sx + 5, sy - 11); ctx.stroke();
+        }
+      }
+      ctx.restore();
+    });
+  }
+  /* Lớp NGHE THỤ ĐỘNG (mục 6, parent duyệt — phụ, không chặn tiến độ):
+     Tĩnh Âm >= 85 + đứng yên + ngoài trận: theo nhịp thưa xác định
+     (11–17s, suy từ đồng hồ thế giới + ô đứng — không dùng Math.random)
+     phát nốt khóa sóng cực khẽ (<=0,02) của sinh vật/vật thể gần nhất.
+     Tắt cùng cổng tiếng chiêu 'skill'. */
+  function updateResPassive(dt) {
+    if (!state || enc || hhtFight || tlFight || dlg || moving) { resPassiveT = Math.max(resPassiveT, 4); return; }
+    if ((state.silence || 0) < 85) return;
+    resPassiveT -= dt;
+    if (resPassiveT > 0) return;
+    var hash = ((state.dayMinutes || 0) * 7 + Math.floor(px / TILE) * 13 + Math.floor(py / TILE) * 29) % 7;
+    resPassiveT = 11 + hash;
+    var pc = { x: px + 16, y: py + 16 }, best = null, bd = 4.2 * TILE;
+    mons.forEach(function (mm) { if (mm.hp <= 0) return; var d = Math.hypot(mm.x + 16 - pc.x, mm.y + 16 - pc.y); if (d < bd) { bd = d; best = resBaseFreqForMonster(mm); } });
+    if (best == null) {
+      var amp = L.activeMap();
+      var props = (amp && amp.props) || [];
+      for (var i = 0; i < props.length; i++) {
+        var pr = props[i]; if (state.hiddenProps && state.hiddenProps[pr.id]) continue;
+        var d2 = Math.hypot(pr.x * TILE + 16 - pc.x, pr.y * TILE + 16 - pc.y);
+        if (d2 < bd) { bd = d2; best = /coc|cot|bia|da_|thach|rock|stele/.test(pr.type || '') ? 170 : 220; }
+      }
+    }
+    if (best != null) lockNote(best, 0.02, 0.09, 0);
   }
 
   /* ================= Đánh đêm phủ Hứa: diễn thật tại sân (gói phụ 8) =================
@@ -5030,8 +5345,8 @@
      (phím 3) đúng lúc hình chiếu lao tới. Đúng nhịp = tlHits +1 như
      luật gốc; hụt = lãnh đòn (mất máu theo lớp cảm giác, máu không
      xuống dưới 1 — đài chỉ đo kiếm, kết cục thắng/thắng khó giữ nguyên
-     hai cảnh gốc). Ngôn Linh bị KHÓA: bấm bất kỳ phím/nút Ngôn Linh nào
-     = cất lời → ải đặt lại đúng nhánh tl_voice gốc. Lời dẫn từng hiệp
+     hai cảnh gốc). Vạn Âm Cộng Hưởng bị KHÓA: bấm bất kỳ phím/nút cộng hưởng nào
+     = phát hưởng → ải đặt lại đúng nhánh tl_voice gốc. Lời dẫn từng hiệp
      hiện thành PHỤ ĐỀ giữa trận (vẫn phát tiếng qua playVoiceFor như
      dòng thoại thường), không mở hộp thoại dừng trận. */
   var tlFight = null; /* {round, phase, t, bandX, waves, blocked, lunges, roundHit, fig, skillsUsed, skillName, skillTelegraph} */
@@ -5297,24 +5612,30 @@
 
   function encCastWord(skill) {
     var m = enc.mon;
-    if (!encTargetInRange(3.2)) { toast('Quái còn xa — lời nói không vang tới được.'); return; }
+    if (!encTargetInRange(3.2)) {
+      // Ngoài tầm khóa 3,2 ô (3.4): sóng chạy nửa đường rồi tan + lời
+      // nhắn mới. Thuần trình bày — điều kiện tầm không đổi.
+      var pcFar = { x: px + 16, y: py + 16 };
+      spawnResWave(pcFar.x, pcFar.y, m.x + 16, m.y + 16, 0.5, resTierFor(state.silence));
+      toast('Quái còn xa — sóng chưa khóa tới được.');
+      return;
+    }
     // Trần mỗi trận của LỆNH (đúng thiết kế phần 3): ĐỊNH tối đa 2 lần,
     // PHONG tối đa 1 lần trong một trận.
-    if (skill === 'dinh' && enc.usedDinh >= 2) { toast('Trận này đã dùng ĐỊNH hai lần — uy lực lệnh cần khoảng lặng dài mới tụ lại được.'); return; }
-    if (skill === 'phong' && enc.usedPhong >= 1) { toast('Trận này đã dùng PHONG một lần — ấn lệnh không thể chồng thêm ấn.'); return; }
+    if (skill === 'dinh' && enc.usedDinh >= 2) { toast('Trận này đã dùng Định Âm hai lần — uy lực hưởng cần khoảng lặng dài mới tụ lại được.'); return; }
+    if (skill === 'phong' && enc.usedPhong >= 1) { toast('Trận này đã dùng Phong Âm một lần — ấn hưởng không thể chồng thêm ấn.'); return; }
     faceMonster(m);
+    var silenceBefore = state.silence; // nấc trình diễn tính theo Tĩnh Âm TRƯỚC khi ra đòn (3.3)
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
     var wf = WORD_FLOAT[skill];
+    var baseF = resBaseFreqForMonster(m); // âm gốc của mục tiêu cho nốt khóa sóng (3.6)
     if (skill === 'pha') {
-      sfxPha();
-      rings.push({ x: m.x + 16, y: m.y + 16, r: 8, a: 0.95 });
+      castResonanceFx('pha', m.x + 16, m.y + 30, { silenceBefore: silenceBefore, baseFreq: baseF, target: m });
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.8 });
       applyHitToMonster(m, r.power, { kind: 'word', skill: 'pha' });
     } else if (skill === 'chan') {
-      sfxChan();
-      rings.push({ x: m.x + 16, y: m.y + 16, r: 10, a: 0.95 });
-      rings.push({ x: m.x + 16, y: m.y + 16, r: 3, a: 0.8 });
+      castResonanceFx('chan', m.x + 16, m.y + 30, { silenceBefore: silenceBefore, baseFreq: baseF, target: m });
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.8 });
       applyHitToMonster(m, r.power, { kind: 'word', skill: 'chan' });
     } else if (skill === 'dinh') {
@@ -5324,22 +5645,22 @@
       m.holdT = m.atkInterval;
       state.flags.lenDinhHold = 1;
       spawnPillar(m.x + 16, m.y + 30, { top: 'purple', dur: 0.85, h: 105 }); // cột ĐỊNH: vòng tím trên đỉnh (gói phụ 10)
-      sfxBell();
-      rings.push({ x: m.x + 16, y: m.y + 16, r: 10, a: 0.9 });
+      castResonanceFx('dinh', m.x + 16, m.y + 30, { silenceBefore: silenceBefore, baseFreq: baseF, target: m }); // chuông đứng yên + lớp sfxBell khẽ bên trong sfxResDinh
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.9 });
     } else if (skill === 'phong') {
       // PHONG: phong ấn hai chu kỳ tấn công + uy lực lời đánh thẳng vào quái.
       enc.usedPhong++;
       state.flags.lenUsedPhong = (state.flags.lenUsedPhong || 0) + 1;
       m.sealT = m.atkInterval * 2;
+      m.sealDur = m.sealT; // mốc để ấn PHONG khép xuống khóa trong giây đầu ở khâu vẽ
       state.flags.lenPhongSeal = 2;
       spawnPillar(m.x + 16, m.y + 30, { dur: 0.9, h: 112 }); // cột PHONG: vàng, hai lá bùa khép hai bên quái (gói phụ 10)
-      sfxBigBell();
+      castResonanceFx('phong', m.x + 16, m.y + 30, { silenceBefore: silenceBefore, baseFreq: baseF, target: m });
       addDmgFloat(m.x + 16, m.y - 12, wf[0], wf[1], { size: 22, life: 0.9 });
       applyHitToMonster(m, r.power, { kind: 'word', skill: 'phong' });
     }
-    // Móc Kiếm Trủng: lời thành công đầu tiên trong bí cảnh này, trước
-    // khi cửa mở, thì cửa mở ngay theo đường lời nói.
+    // Móc Kiếm Trủng: đòn cộng hưởng thành công đầu tiên trong bí cảnh này, trước
+    // khi cửa mở, thì cửa mở ngay theo đường đối hưởng.
     if (r.ok && bcSession && bcSession.realm === 'bc_kiemtrung' && !bcSession.speechUsed && !L.isSessionHidden('bc_kiemtrung', 'cua_mo_that')) {
       bcSession.speechUsed = true;
       L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_kiemtrung', []);
@@ -5349,7 +5670,7 @@
          vách y=9, nên chỉ ẩn cửa thì phòng boss vẫn không vào được.
          Trấn tan thì cả trấn lẫn cửa đều phải mở. */
       L.hideSessionProp('bc_kiemtrung', 'tinh_mac_tran');
-      sfxSealBreak();
+      sfxSealBreak(220);
       say([{ who: 'narrate', text: BC_SUCCESS_LINES.wordDoor }]);
     }
     refreshHUD(); saveNow();
@@ -5368,6 +5689,7 @@
     // Phản ứng của quái (GF-02): nhấp nháy trắng theo hạng, đẩy lùi thuần
     // trình bày (không đổi ô logic), boss không bị đẩy mà rung thân.
     m.flashT = crit ? (m.rank === 'normal' ? 0.11 : 0.14) : (m.rank === 'normal' ? 0.07 : 0.11);
+    if (opts.kind === 'word') m.resVibT = crit ? 0.25 : 0.2; // rung chấn mục tiêu khi trúng đòn cộng hưởng: 0,15–0,25s (3.5)
     var dx = (m.x + 16) - (px + 16), dy = (m.y + 16) - (py + 16), len = Math.hypot(dx, dy) || 1;
     if (m.rank === 'boss') m.shakeT = opts.kind === 'word' ? 0.12 : 0.08;
     else {
@@ -5378,17 +5700,18 @@
     }
     if (crit) { hitStop(0.06); shakeWorld(0.12); }
     else if (opts.kind === 'word') {
-      shakeWorld(0.35); // Ngôn Linh trúng: rung R2 qua cổng fxShake
-      if (m.hp > 0) hitStop(0.08); // dừng hình Ngôn Linh trúng chưa kết liễu (GF-03; hitStop tự khóa 1 lần/300ms)
+      shakeWorld(opts.skill === 'phong' ? 0.12 : 0.35); // rung màn theo bảng khóa 3.5 qua cổng fxShake (Định không tới nhánh gây sát thương này)
+      if (m.hp > 0) hitStop(0.08); // dừng hình cộng hưởng trúng chưa kết liễu (GF-03; hitStop tự khóa 1 lần/300ms)
     }
-    // Số sát thương bốn hạng (GF-01): kiếm lục nhạt 15px; chí mạng vàng
-    // ấm 21px kèm "!" và hiệu ứng phóng; Ngôn Linh 22px theo màu chiêu,
-    // số hiện sau chữ chiêu 90ms.
+    // Số sát thương bốn hạng (GF-01, nâng đọc rõ ở bước 2 mục 8 theo ghi
+    // chú Bui chơi live): kiếm lục nhạt 18px; chí mạng vàng ấm 24px kèm
+    // "!" và hiệu ứng phóng; cộng hưởng 25px theo màu chiêu, số hiện sau
+    // chữ chiêu 90ms; mọi số có viền tối tương phản ở khâu vẽ floats.
     var isWord = opts.kind === 'word';
     var col = isWord ? (WORD_FLOAT[opts.skill] || [])[1] || '255,235,170' : '190,235,200';
     if (crit) col = '255,205,84';
     addDmgFloat(m.x + 16, m.y - 6, '-' + dmg + (crit ? '!' : ''), col,
-      { size: crit ? 21 : (isWord ? 22 : 15), pop: crit, delay: isWord ? 0.09 : 0, targetKey: 'mon:' + m.species + ':' + m.lairX + ':' + m.lairY });
+      { size: crit ? 24 : (isWord ? 25 : 18), pop: crit, delay: isWord ? 0.09 : 0, targetKey: 'mon:' + m.species + ':' + m.lairX + ':' + m.lairY });
     // Tiếng chạm đích trễ 30ms sau tiếng vung, biến thể cao độ xoay vòng.
     var variant = nextHitVariant();
     setTimeout(function () {
@@ -5420,6 +5743,10 @@
       }
     }
     m.state = 'dying'; m.deathT = 0; m.holdT = 0; m.sealT = 0;
+    if (killOpts && killOpts.kind === 'word' && killOpts.skill === 'pha') {
+      m.resShatter = true; // vỡ vụn cộng hưởng thay khung mờ dần (bước 2 mục 4) — drawMonster vẽ mảnh thay thân
+      spawnResParts(m.x + 16, m.y + 16, 11, 3, 'pha'); // 8–12 mảnh hạt sóng cộng hưởng đi kèm
+    }
     spawnSmoke(m.x + 16, m.y + 12, 3); // khói lam xám khi quái gục (gói phụ 10)
     if (m.rank === 'boss' && state.map === 'hb_valley') spawnPetals(m.x + 16, m.y, 8); // boss thung lũng anh đào (gói phụ 10)
     if (m.rank === 'boss') { hitStop(0.16); shakeWorld(0.6); bossPillar = { x: m.x + 16, y: m.y + 16, t: 0.9 }; }
@@ -5715,7 +6042,8 @@
   function drawMonster(mn, labels) {
     var size = MON_SHEET[mn.species] || 76;
     var kbS = mn.kbT > 0 ? mn.kbT / 0.12 : 0;
-    var ox = mn.kbx * kbS + (mn.shakeT > 0 ? (Math.random() - 0.5) * (mn.rank === 'boss' ? 6 : 4) : 0);
+    var ox = mn.kbx * kbS + (mn.shakeT > 0 ? (Math.random() - 0.5) * (mn.rank === 'boss' ? 6 : 4) : 0)
+      + (mn.resVibT > 0 ? Math.sin(tNow / 16 + mn.lairX * 3.1 + mn.lairY * 1.7) * 2.6 * Math.min(1, mn.resVibT / 0.2) : 0); // rung chấn cộng hưởng 2–3px trong 0,15–0,25s (thuần vẽ)
     var oy = mn.kby * kbS;
     if (mn.bossId && mn.slideT > 0) ox -= mn.face * 24 * (mn.slideT / 0.5); // boss trượt vào trận 24px trong 0,5 giây
     var feetX = mn.x + 16 + ox, feetY = mn.y + 32 + oy;
@@ -5731,13 +6059,39 @@
       var white = mn.flashT > 0 ? whiteVariant(mn.species) : null;
       // Kiệt sức (máu <= 25%): thân khom xuống 2px, thở chậm theo nhịp 1,2 giây.
       var exh = (mn.state === 'alive' && mn.hp <= mn.hpMax * 0.25) ? 2 + Math.sin(tNow / 600) * 0.6 : 0;
-      ctx.save();
-      ctx.translate(feetX, feetY + exh);
-      if (mn.face < 0) ctx.scale(-1, 1);
-      if (mn.state === 'dying') ctx.globalAlpha = Math.max(0.3, 1 - mn.deathT / 1.1 * 0.55);
-      ctx.drawImage(white || mim, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
-      ctx.restore();
-      ctx.globalAlpha = 1;
+      if (mn.state === 'dying' && mn.resShatter) {
+        // Kết liễu bằng PHÁ ÂM: VỠ VỤN cộng hưởng thay khung mờ dần —
+        // nứt sáng toàn thân rồi thân vỡ thành 10 mảnh sáng bay tản ra
+        // kèm hạt sóng (hạt đã phát ở killMonster), trong đúng khung
+        // thời gian gục hiện hữu 0,38s. Thuần trình diễn.
+        var sk = Math.min(1, mn.deathT / 0.38);
+        ctx.save(); ctx.translate(feetX, feetY - size * 0.5);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (0.9 * (1 - sk)) + ')'; ctx.lineWidth = 1.6;
+        for (var cri = 0; cri < 3; cri++) {
+          var cax = -8 + cri * 8 + Math.sin(mn.lairX * 7 + cri * 2.4) * 3;
+          ctx.beginPath(); ctx.moveTo(cax, 14); ctx.lineTo(cax + 4, 2); ctx.lineTo(cax - 2, -8); ctx.lineTo(cax + 5, -18); ctx.stroke();
+        }
+        for (var shi = 0; shi < 10; shi++) {
+          var sang2 = shi / 10 * Math.PI * 2 + mn.lairX * 1.3 + mn.lairY;
+          var sdist = sk * (24 + (shi % 4) * 10);
+          ctx.save();
+          ctx.translate(Math.cos(sang2) * sdist, Math.sin(sang2) * sdist * 0.6 - sk * 8);
+          ctx.rotate(sang2 + sk * 2.4);
+          ctx.fillStyle = shi % 3 === 0 ? 'rgba(255,150,80,' + (0.9 * (1 - sk)) + ')' : 'rgba(127,232,224,' + (0.9 * (1 - sk)) + ')';
+          ctx.fillRect(-3.4, -2, 6.8, 4);
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.85 * (1 - sk)) + ')'; ctx.fillRect(-1.2, -0.8, 2.4, 1.6);
+          ctx.restore();
+        }
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.translate(feetX, feetY + exh);
+        if (mn.face < 0) ctx.scale(-1, 1);
+        if (mn.state === 'dying') ctx.globalAlpha = Math.max(0.3, 1 - mn.deathT / 1.1 * 0.55);
+        ctx.drawImage(white || mim, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
     }
     // Vòng ĐỊNH và ấn PHONG: hai dấu hiệu PHẢI phân biệt được bằng mắt —
     // ĐỊNH là vòng lam đứng yên ôm chân quái kèm hai cột sáng mảnh; PHONG
@@ -5786,9 +6140,14 @@
         ctx.restore();
       });
       var sa = tNow / 900, ss = 11;
+      // Ấn PHONG khép xuống khóa trong giây đầu của phong ấn rồi đứng
+      // yên giữ suốt thời gian còn lại (bước 2 mục 4); trước đây ấn xoay
+      // liên tục suốt phong ấn.
+      var sealElapsed = Math.max(0, (mn.sealDur || mn.sealT) - mn.sealT);
+      var sealDrop = sealElapsed < 1 ? (1 - sealElapsed) * 24 : 0;
       ctx.save();
-      ctx.translate(feetX, feetY - size - 14);
-      ctx.rotate(sa);
+      ctx.translate(feetX, feetY - size - 14 + sealDrop);
+      ctx.rotate(sealElapsed < 1 ? sa : 0.4);
       ctx.strokeStyle = 'rgba(255,205,84,0.95)'; ctx.lineWidth = 2.5;
       ctx.strokeRect(-ss, -ss, ss * 2, ss * 2);
       ctx.rotate(-2 * sa);
@@ -5881,7 +6240,7 @@
       return say(ST.SCENE_CH12_LEN_DAI, function () {
         say(state.flags.soulPublic ? ST.SCENE_CH12_HP_TCL : ST.SCENE_CH12_HP_TONG, function () {
           state.quest = 'q12_ho_phap'; refreshHUD(); saveNow();
-          toast('Hộ pháp đã vào vị trí. Tương tác lại với đài để bắt đầu vận công Kết Đan — địch sẽ tới, và ngươi tuyệt đối không được cất tiếng.', 4600);
+          toast('Hộ pháp đã vào vị trí. Tương tác lại với đài để bắt đầu vận công Kết Đan — địch sẽ tới, và ngươi tuyệt đối không được phát hưởng.', 4600);
         });
       });
     }
@@ -5893,7 +6252,7 @@
     if (state.quest === 'q12_lenh_dau_tien') {
       if (!state.flags.lenDinhDone) return say(ST.SCENE_CH12_LENH_1);
       if (!state.flags.lenPhongDone) return say(ST.SCENE_CH12_LENH_2);
-      return say([{ who: 'narrate', text: 'Tấm bia ở chân đài đứng yên tuyệt đối, vết rạn trên trận văn đã khép dưới vòng ấn vàng. Bậc lệnh của ngươi bắt đầu từ đây.' }]);
+      return say([{ who: 'narrate', text: 'Tấm bia ở chân đài đứng yên tuyệt đối, vết rạn trên trận văn đã khép dưới vòng ấn vàng. Bậc Hưởng của ngươi bắt đầu từ đây.' }]);
     }
     return say([{ who: 'narrate', text: 'Đài Trúc Cơ ở phía bắc tông môn: nền đá tròn khắc vòng trận văn cổ, linh khí quanh đài đậm đặc tới mức nhìn thấy được bằng mắt thường. Đây là nơi đệ tử Thanh Vân Tông bước qua mốc tu vi lớn đầu tiên của đời mình.' }]);
   }
@@ -6044,7 +6403,7 @@
 
   /* ---------- Hành động ---------- */
   function castPha() {
-    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Ngôn Linh bị khóa ở ải Thăng Long — bấm là cất lời, ải đặt lại
+    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long — bấm là phát hưởng, ải đặt lại
     if (hhtFight) { if (!dlg) hhtCastWord('pha'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (dlg) return;
     if (enc) { encCastWord('pha'); return; }
@@ -6052,8 +6411,7 @@
     var before = state.silence;
     var r = L.castWord(state, 'pha');
     if (!r.ok) { toast(r.reason); return; }
-    sfxPha();
-    rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+    castResonanceFx('pha', px + 16, py + 30, { silenceBefore: before, baseFreq: 170, noWave: true }); // ngoài trận: sân nở tại chân người, âm gốc vật liệu đặc 170 Hz
     addFloat(px + 16, py - 20, 'PHÁ!', '255,120,90');
     // cọc gỗ trong tầm 2 ô thì chịu đòn
     var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
@@ -6075,29 +6433,28 @@
       } else {
         sfxCrack(false);
         spawnParts(d.x * TILE + 16, d.y * TILE + 16, 5, '210,180,130', 26, false);
-        toast('Cọc gỗ nứt ra! Còn chịu được khoảng ' + state._dummyHp + ' uy lực. Tĩnh Mặc đã dùng: ' + before + ' → ' + state.silence + '.');
+        toast('Cọc gỗ nứt ra! Còn chịu được khoảng ' + state._dummyHp + ' uy lực. Tĩnh Âm đã dùng: ' + before + ' → ' + state.silence + '.');
       }
     }
     refreshHUD(); saveNow();
   }
   function castChan() {
-    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Ngôn Linh bị khóa ở ải Thăng Long
+    if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('chan'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (dlg) return;
     if (enc) { encCastWord('chan'); return; }
     if (startEncounterNear(3.2)) { encCastWord('chan'); return; }
+    var beforeC = state.silence;
     var r = L.castWord(state, 'chan');
     if (!r.ok) { toast(r.reason); return; }
-    sfxChan();
-    rings.push({ x: px + 16, y: py + 16, r: 10, a: 0.95 });
-    rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.8 });
+    castResonanceFx('chan', px + 16, py + 30, { silenceBefore: beforeC, baseFreq: 220, noWave: true });
     addFloat(px + 16, py - 20, 'CHẤN!', '150,200,255');
     shakeT = Math.max(shakeT, 0.35); // rung nhẹ — chỉ hiệu ứng trình diễn
     refreshHUD(); saveNow();
   }
   /* Kiếm quyết (chương 3): đòn vật lý không tốn Tĩnh Mặc, không ghi sổ lời
      nói. Đánh vào cọc gỗ thì nứt như mọi đòn nhưng không làm cọc đổ hẳn —
-     cọc gỗ của trấn vẫn là việc của một lời PHÁ. */
+     cọc gỗ của trấn vẫn là việc của một đòn Phá Âm. */
   function castSword() {
     if (tlFight) { tlSwordHeld = true; tlSwordHeldUntil = tNow + 350; tlSwordPress(); return; } // gói phụ 13: nút kiếm cảm ứng trong ải
     if (hhtFight) { if (!dlg) hhtCastSword(); return; } // Mục F: kiếm quyết trong trận đài
@@ -6119,7 +6476,7 @@
       spawnParts(p.x * TILE + 16, p.y * TILE + 16, 4, '210,180,130', 24, false);
       if (p.id === 'coc_go' && !state.flags.dummyBroken) {
         state._dummyHp = Math.max(1, (state._dummyHp == null ? 40 : state._dummyHp) - r.power);
-        toast('Cọc gỗ nứt nặng nhưng chưa đổ (còn 1). Nhát cuối của cọc này vẫn phải là một lời PHÁ.');
+        toast('Cọc gỗ nứt nặng nhưng chưa đổ (còn 1). Nhát cuối của cọc này vẫn phải là một đòn Phá Âm.');
       }
     }
     refreshHUD(); saveNow();
@@ -6161,6 +6518,13 @@
     var el = $(id); if (!el) return;
     el.classList.toggle('locked', locked);
     el.title = locked ? why : '';
+  }
+  /* Trạng thái .cant (không đủ Tĩnh Âm) — TRÌNH DIỄN THUẦN (bổ sung
+     2026-11-03): chỉ đổi lớp hiển thị của đế icon, không chạm điều kiện
+     ra chiêu; castWord và mọi handler giữ nguyên. */
+  function setSkillCant(id, cant) {
+    var el = $(id); if (!el) return;
+    el.classList.toggle('cant', !!cant);
   }
   /* Áp lại vị trí theo pha nhiệm vụ cho NPC sống (gói phụ 5): NPC đang
      bị cảnh ghim (sceneSpot) thì giữ nguyên; còn lại theo npcPosFor. */
@@ -6289,8 +6653,17 @@
     setSkillLock('sk-pha', state.unlocked.indexOf('voice') < 0, 'Mở khóa sau sự kiện mở miệng trước bia đá');
     setSkillLock('sk-chan', state.unlocked.indexOf('luyenkhi1') < 0, 'Mở khóa khi đạt Luyện Khí tầng 1');
     setSkillLock('sk-sword', state.unlocked.indexOf('that_tinh') < 0, 'Mở khóa khi nhận Thất Tinh Kiếm Quyết ở Kiểm Trắc Tháp');
-    setSkillLock('sk-dinh', state.unlocked.indexOf('kimdan') < 0, 'LỆNH chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
-    setSkillLock('sk-phong', state.unlocked.indexOf('kimdan') < 0, 'LỆNH chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
+    setSkillLock('sk-dinh', state.unlocked.indexOf('kimdan') < 0, 'bậc Hưởng chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
+    setSkillLock('sk-phong', state.unlocked.indexOf('kimdan') < 0, 'bậc Hưởng chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
+    // Đế icon mờ lạnh (.cant) khi chiêu ĐÃ mở khóa mà Tĩnh Âm chưa đủ chi
+    // phí (chi phí đọc từ L.WORD_SKILLS như castWord vẫn đọc); đang khóa
+    // thì không áp .cant — trạng thái khóa thắng.
+    var wsCost = {};
+    if (L.WORD_SKILLS) for (var wi = 0; wi < L.WORD_SKILLS.length; wi++) wsCost[L.WORD_SKILLS[wi].id] = L.WORD_SKILLS[wi].cost;
+    setSkillCant('sk-pha', state.unlocked.indexOf('voice') >= 0 && state.silence < (wsCost.pha || 30));
+    setSkillCant('sk-chan', state.unlocked.indexOf('luyenkhi1') >= 0 && state.silence < (wsCost.chan || 50));
+    setSkillCant('sk-dinh', state.unlocked.indexOf('kimdan') >= 0 && state.silence < (wsCost.dinh || 60));
+    setSkillCant('sk-phong', state.unlocked.indexOf('kimdan') >= 0 && state.silence < (wsCost.phong || 80));
     var bagBtn = $('btn-bag');
     if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
@@ -6379,6 +6752,8 @@
     });
     pillars = pillars.filter(function (pl) { pl.t += dtW; return pl.t < pl.dur; });
     streaks = streaks.filter(function (st) { st.t += dtW; return st.t < st.dur; });
+    updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
+    updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
     // Mờ chuyển cảnh: out -> chạy callback ở điểm tối nhất -> in.
     if (fade.phase === 'out') {
       fade.t = Math.min(1, fade.t + dt / 0.3);
@@ -6916,7 +7291,7 @@
     if (!state || $('screen-game').classList.contains('hidden')) return;
     // Ải Thăng Long thật (gói phụ 13): phím được ánh xạ lại trong trận —
     // cách/E = Thất Tinh Bộ lướt; 3 = kiếm (giữ để phong ngự hiệp 2, bấm
-    // để đối chém hiệp 3); mọi phím Ngôn Linh (1/2/4/5) = cất lời → đặt
+    // để đối chém hiệp 3); mọi phím cộng hưởng (1/2/4/5) = phát hưởng → đặt
     // lại ải theo luật đài.
     if (tlFight && !dlg) {
       if (k === ' ' || k === 'e') { tlDash(); e.preventDefault(); return; }
@@ -7293,15 +7668,15 @@
     pool: 'Linh khí trong các bí cảnh quanh vùng hôm nay đã bị ngươi khuấy động cạn kiệt. Hãy chờ sang ngày game mới — khí đất cần một đêm để lắng lại.'
   };
   var BC_HINT_LINES = {
-    vach: 'Một vách đá nứt chéo chắn ngang lối tắt. Các vết nứt đã sâu — một lời PHÁ đủ làm nó sập, nhưng tiếng động trong hang này sẽ vọng rất xa.',
+    vach: 'Một vách đá nứt chéo chắn ngang lối tắt. Các vết nứt đã sâu — một đòn Phá Âm gõ đúng âm gốc của đá đủ làm nó sập, nhưng tiếng động trong hang này sẽ vọng rất xa.',
     phe: "Cửa phế thước khắc chín vạch màu và một dòng chữ: 'Xếp lại trật tự cửu phẩm, cửa tự mở.'",
-    tran: "Tĩnh mặc trấn phong cửa mộ thất. Chữ khắc trên trấn viết: 'Người giữ được im lặng lâu như tiền bối thì là đồng đạo.' — và một dòng nhỏ hơn: 'Trấn này nhớ tiếng người.'"
+    tran: "Tĩnh mặc trấn phong cửa mộ thất. Chữ khắc trên trấn viết: 'Người giữ được im lặng lâu như tiền bối thì là đồng đạo.' — và một dòng nhỏ hơn: 'Trấn này nhớ dư âm người.'"
   };
   var BC_SUCCESS_LINES = {
     phe: 'Chín mảnh sắc vào đúng thứ tự. Một tiếng chuông nhỏ ngân lên từ lòng đá — cửa phế thước lặng lẽ trượt mở.',
-    tran: 'Hai mươi hơi thở đều đặn. Tĩnh mặc trấn cảm được sự kiên nhẫn ấy — vòng sáng mờ dần, cửa mộ thất tự mở, không một tiếng động.',
-    wordDoor: 'Tiếng nói vừa dứt, tĩnh mặc trấn rung lên như ghi nhớ. Cửa mộ thất mở ra — nhưng sâu trong động, kiếm ý cũng đã nhớ lấy tiếng người.',
-    soothe: 'Ngươi không nói một lời. Hồn lực tỏa ra như làn khói ấm, phủ lấy oán khí đang cuộn xoáy. Oán hồn khựng lại… rồi tan dần vào lòng đất, yên nghỉ trong im lặng.',
+    tran: 'Hai mươi hơi thở đều đặn. Tĩnh mặc trấn cảm được sự lắng nghe ấy — ngươi đã nghe thấu nhịp sóng đứng của trấn, vòng sáng mờ dần, cửa mộ thất tự mở, không một tiếng động.',
+    wordDoor: 'Đòn cộng hưởng vừa gõ xuống, tĩnh mặc trấn rung lên như ghi nhớ dư âm ấy. Cửa mộ thất mở ra — nhưng sâu trong động, kiếm ý cũng đã nhớ lấy dư âm ấy.',
+    soothe: 'Ngươi không nói một lời. Ngươi nghe hồn của oán hồn như nghe một bản nhạc lệch nhịp, rồi dùng hồn lực chỉnh lại từng dây một. Hồn lực tỏa ra như làn khói ấm, phủ lấy oán khí đang cuộn xoáy. Oán hồn khựng lại… rồi tan dần vào lòng đất, yên nghỉ trong im lặng.',
     reread: 'Bức thư chưa gửi vẫn nằm trên bệ đá. Tên người chết — Thạch Vạn Quân — ngươi đã ghi nhớ.'
   };
   var BC_INTRO_SCENE = { bc_thuyliem: 'SCENE_BC_THUYLIEM_INTRO', bc_tapha: 'SCENE_BC_TAPHA_INTRO', bc_tapsau: 'SCENE_BC_TAPSAU_INTRO', bc_kiemtrung: 'SCENE_BC_KIEMTRUNG_INTRO', bc_hoiphong_mo: 'SCENE_BC_HOIPHONG_INTRO' };
@@ -7886,7 +8261,7 @@
   function bcVachInteract() {
     return say([{ who: 'narrate', text: BC_HINT_LINES.vach },
       { who: 'choice', text: 'Ngươi sẽ…', options: [
-        { label: 'Dùng một lời PHÁ làm sập vách', action: 'bc_vach_pha' },
+        { label: 'Dùng một đòn Phá Âm làm sập vách', action: 'bc_vach_pha' },
         { label: 'Đi đường vòng, tránh gây tiếng động', action: 'bc_vach_round' }
       ] }]);
   }
@@ -7894,7 +8269,7 @@
     return say([{ who: 'narrate', text: BC_HINT_LINES.phe },
       { who: 'choice', text: 'Ngươi sẽ…', options: [
         { label: 'Xếp lại chín mảnh sắc theo thứ tự cửu phẩm', action: 'bc_phe_sort' },
-        { label: 'Dùng một lời CHẤN mở cửa', action: 'bc_phe_chan' },
+        { label: 'Dùng một đòn Chấn Âm mở cửa', action: 'bc_phe_chan' },
         { label: 'Để cửa này lại, quay lại sau', action: 'bc_phe_later' }
       ] }]);
   }
@@ -7936,7 +8311,7 @@
     bcSession.bossChoiceShown = true;
     say([{ who: 'narrate', text: 'Oán Hồn Chiến Trường cuộn xoáy giữa mộ thất, oán khí đặc quánh như sương. Ngươi sẽ đối mặt với nó bằng cách nào?' },
       { who: 'choice', text: 'Ngươi sẽ…', options: [
-        { label: 'Gọi tên người chết trong thư', action: 'bc_hb_namecall' },
+        { label: 'Đáp âm theo tên người chết trong thư', action: 'bc_hb_namecall' },
         { label: 'Trấn an oán hồn bằng hồn lực', action: 'bc_hb_soothe' },
         { label: 'Đánh thẳng — rút kiếm nghênh chiến', action: 'bc_hb_fight' },
         { label: 'Khoan đã — lùi lại suy tính', action: 'bc_hb_wait' }
@@ -7961,7 +8336,7 @@
       if (!rv.ok) return say([{ who: 'narrate', text: BC_HINT_LINES.vach }]); // thiếu Tĩnh Mặc: hiện lại gợi ý, không trừ gì
       L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_thuyliem', []);
       L.hideSessionProp('bc_thuyliem', 'vach_nut');
-      sfxSealBreak();
+      sfxSealBreak(170);
       toast('Vách đá nứt sập xuống — lối tắt đã mở.', 3600);
       return refreshHUD(), saveNow();
     }
@@ -7993,8 +8368,8 @@
       if (!rc.ok) return say([{ who: 'narrate', text: BC_HINT_LINES.phe }]); // thiếu Tĩnh Mặc: hiện lại gợi ý, không trừ gì
       L.recordSpeech(state, L.chapterOfQuest(state), 'bicanh_tapsau', 'thap_chu');
       L.hideSessionProp('bc_tapsau', 'cua_phe_thuoc');
-      sfxSealBreak();
-      toast('Tiếng CHẤN rung chuyển cửa phế thước — cửa đã mở.', 3600);
+      sfxSealBreak(220);
+      toast('Đòn Chấn Âm rung chuyển cửa phế thước — cửa đã mở.', 3600);
       return refreshHUD(), saveNow();
     }
     if (action === 'bc_phe_later') {
@@ -8003,11 +8378,11 @@
     }
     if (action === 'bc_hb_namecall') {
       if (!bcSession || !bcSession.letterRead) {
-        toast('Ngươi chưa đọc bức thư trong mộ — tên người chết vẫn còn là ẩn số. Hãy tìm bức thư trên đường vào mộ thất trước.', 4200);
+        toast('Ngươi chưa đọc bức thư trong mộ — chưa biết phải nghe tìm âm gốc của ai. Hãy tìm bức thư trên đường vào mộ thất trước.', 4200);
         return bcPresentHoiphongChoice();
       }
       if (state.silence < 40) {
-        toast('Tĩnh Mặc chưa đủ 40 để gọi tên — hãy im lặng tích lũy thêm rồi quay lại.', 4200);
+        toast('Tĩnh Âm chưa đủ 40 để đáp âm — hãy lắng nghe thêm rồi quay lại.', 4200);
         return bcPresentHoiphongChoice();
       }
       state.silence -= 40; // trừ trực tiếp, KHÔNG qua castWord (không vào WORD_SKILLS toàn cục)
@@ -8060,7 +8435,7 @@
         px = 23 * TILE; py = 24 * TILE; state.x = 23; state.y = 24; // đẩy về đầu hành lang
         bcSession.hazardCd = 1.5;
         sfxHazardHit();
-        addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 15, targetKey: '__player' });
+        addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
         toast('Kiếm khí quét qua hành lang — ngươi bị đẩy về đầu hành lang.', 3600);
         refreshHUD(); saveNow();
         return;
@@ -8075,7 +8450,7 @@
           if (bcSession.tranT >= 20) {
             bcSession.tranT = 0;
             L.hideSessionProp('bc_kiemtrung', 'cua_mo_that');
-            /* Như đường lời nói: trấn tan phải dọn cả footprint trấn ở
+            /* Như đường đối hưởng: trấn tan phải dọn cả footprint trấn ở
                khe vách y=9, nếu không cửa mở mà đường vẫn bịt kín. */
             L.hideSessionProp('bc_kiemtrung', 'tinh_mac_tran');
             sfxTranFade();
@@ -8389,7 +8764,12 @@
     cloudSea: function () { return (state && state.map === 'thanh_van_tong') ? CLOUD_SEA.length : 0; },
     streaks: function () { return streaks.length; },
     parts: function () { return parts.length; },
-    kind: function (k) { return parts.filter(function (pp) { return pp.kind === k; }).length; }
+    kind: function (k) { return parts.filter(function (pp) { return pp.kind === k; }).length; },
+    // Cầu cộng hưởng (bước 2 Vạn Âm, chỉ đọc, cộng thêm — không đổi cầu cũ):
+    resFields: function () { return resFields.map(function (f) { return { skill: f.skill, tier: f.tier, R: f.R, cols: f.cols.length, t: +f.t.toFixed(3), dur: f.dur }; }); },
+    resWaves: function () { return resWaves.length; },
+    resTier: function (s) { return resTierFor(s); },
+    resBaseFreq: function (species) { return resBaseFreqForSpecies(species); }
   };
 
   /* Cầu kiểm chứng chuỗi đánh đêm (gói phụ 8, chỉ đọc). */

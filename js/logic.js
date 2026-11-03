@@ -22,10 +22,10 @@
     return r.name + ' ' + r.stages[Math.min(stageIdx, r.stages.length - 1)];
   }
 
-  /* ---------------- Ngôn Linh / Tĩnh Mặc ---------------- */
-  // Tĩnh Mặc: điểm im lặng 0..100. Thổ nạp và thời gian sống im lặng tích lũy nó;
-  // cất tiếng ra chiêu thì tiêu hao — lời càng dồn lâu càng nặng (sáng tác bổ sung
-  // của đội theo móc truyện, xem docs/story-bible.md phần C).
+  /* ---------------- Vạn Âm Cộng Hưởng / Tĩnh Âm ---------------- */
+  // Tĩnh Âm: độ lắng âm 0..100. Thổ nạp và thời gian sống lặng tích lũy nó;
+  // gõ đòn cộng hưởng ra thì tiêu hao — nghe càng lâu càng trong, đòn gõ càng
+  // nặng (sáng tác bổ sung của đội, xem tài liệu thiết kế Vạn Âm Cộng Hưởng).
   var SILENCE_MAX = 100;
   var SILENCE_RATES = {
     meditate: 6,   // thổ nạp tích nhanh nhất (điểm/giây)
@@ -35,8 +35,8 @@
   var WORD_SKILLS = [
     { id: 'pha', word: 'PHÁ', cost: 30, basePower: 10, unlock: 'voice' },
     { id: 'chan', word: 'CHẤN', cost: 50, basePower: 26, unlock: 'luyenkhi1' },
-    /* LỆNH — bậc cao của Ngôn Linh, chỉ mở khi Kết Đan (phần 3, chương 12):
-       ĐỊNH định thân giữ địch một nhịp, PHONG phong ấn hai nhịp. Khóa mở
+    /* bậc Hưởng — bậc cao của Vạn Âm Cộng Hưởng, chỉ mở khi Kết Đan (phần 3, chương 12):
+       Định Âm định thân giữ địch một nhịp, Phong Âm phong ấn hai nhịp. Khóa mở
        'kimdan' chỉ được cấp tại MỘT điểm duy nhất: tryBreakthrough khi đạt
        Kim Đan Sơ Kỳ (và hồi tố trong normalizeSave cho save đã qua mốc). */
     { id: 'dinh', word: 'ĐỊNH', cost: 60, basePower: 20, unlock: 'kimdan' },
@@ -46,7 +46,7 @@
     var rate = SILENCE_RATES[mode] || 0;
     return Math.min(SILENCE_MAX, Math.max(0, cur + rate * seconds));
   }
-  // Uy lực một lời nói: gốc của chiêu + toàn bộ Tĩnh Mặc dồn nén quy đổi.
+  // Uy lực một đòn cộng hưởng: gốc của chiêu + toàn bộ Tĩnh Âm lắng được quy đổi.
   function wordPower(skill, silence) {
     return Math.round(skill.basePower + silence * 1.5);
   }
@@ -55,9 +55,9 @@
     for (var i = 0; i < WORD_SKILLS.length; i++) if (WORD_SKILLS[i].id === skillId) skill = WORD_SKILLS[i];
     if (!skill) return { ok: false, reason: 'Không có chiêu này.' };
     if (!state.unlocked || state.unlocked.indexOf(skill.unlock) < 0) return { ok: false, reason: 'Chưa mở khóa chiêu này.' };
-    if (state.silence < skill.cost) return { ok: false, reason: 'Tĩnh Mặc chưa đủ — hãy im lặng tích lũy thêm.' };
+    if (state.silence < skill.cost) return { ok: false, reason: 'Tĩnh Âm chưa đủ — hãy lắng nghe thêm.' };
     var power = wordPower(skill, state.silence);
-    power += weaponBonus(state).word; // vũ khí đang đeo trợ uy Ngôn Linh (Thanh Phong Kiếm +10, Thiết Kiếm Hứa Gia +3)
+    power += weaponBonus(state).word; // vũ khí đang đeo kiếm ngân trợ hưởng (Thanh Phong Kiếm +10, Thiết Kiếm Hứa Gia +3)
     state.silence = Math.max(0, state.silence - skill.cost);
     state.timesSpoken = (state.timesSpoken || 0) + 1;
     return { ok: true, power: power, skill: skill };
@@ -1536,7 +1536,7 @@
     { id: 'q_voice', name: 'Mười tám năm, một lời', desc: 'Đứng trước cả trấn, hãy cất tiếng lần đầu tiên.', hint: { x: 29, y: 18 } },
     { id: 'q_meditate', name: 'Thổ nạp đầu tiên', desc: 'Tới cạnh giếng nước đầu trấn, giữ phím T để thổ nạp, tích đủ 100 tu vi.', hint: { x: 50, y: 20 } },
     { id: 'q_break', name: 'Đột phá Luyện Khí tầng 1', desc: 'Tu vi đã đầy. Nhấn phím B để đột phá.', hint: null },
-    { id: 'q_dummy', name: 'Một lời phá cọc', desc: 'Dùng Ngôn Linh "PHÁ" (phím 1, cần 30 Tĩnh Mặc) phá cọc gỗ luyện công ở phía nam sân.', hint: { x: 36, y: 32 } },
+    { id: 'q_dummy', name: 'Một lời phá cọc', desc: 'Dùng Vạn Âm Cộng Hưởng "Phá Âm" (phím 1, cần 30 Tĩnh Âm) phá cọc gỗ luyện công ở phía nam sân.', hint: { x: 36, y: 32 } },
     { id: 'q_done', name: 'Lên đường dự kiểm trắc', desc: 'Cọc gỗ đã phá, lộ phí trưởng lão đã trao. Lên đường tới Cô Châu Thành dự kỳ kiểm trắc tại Kiểm Trắc Tháp.', hint: null },
     /* Chương 2 — lên đường (docs/part2-design.md mục 4) */
     { id: 'q2_len_duong', name: 'Lên đường tới Cô Châu Thành', desc: 'Ra cổng nam Hứa Gia Trấn, theo đường mòn xuyên rừng đi về phía nam.', hint: { map: 'tran', x: 29, y: 43 } },
@@ -1568,7 +1568,7 @@
     /* Chương 7 — Vào Thanh Vân Tông với thân phận vô linh căn */
     { id: 'q7_nhap_tong', name: 'Vào tông với thân phận vô linh căn', desc: 'Tới gặp trưởng lão tông ở Thanh Vân Đại Điện, trình thư mời nhập môn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q7_tap_dich', name: 'Việc tạp dịch', desc: 'Làm ba việc ở khu tạp dịch đông nam: bổ củi, gánh nước, chuyển bao dược, xong về gặp quản sự tạp dịch.', hint: { map: 'thanh_van_tong', x: 97, y: 69 } },
-    { id: 'q7_thang_long', name: 'Thăng Long Đạo', desc: 'Lên đài Thăng Long ở tây bắc tông, thắng hình chiếu bằng đúng ba chiêu kiếm, không dùng tiếng nói.', hint: { map: 'thanh_van_tong', x: 15, y: 9 } },
+    { id: 'q7_thang_long', name: 'Thăng Long Đạo', desc: 'Lên đài Thăng Long ở tây bắc tông, thắng hình chiếu bằng đúng ba chiêu kiếm, không dùng cộng hưởng.', hint: { map: 'thanh_van_tong', x: 15, y: 9 } },
     { id: 'q7_hoa_huong_than', name: 'Hoa Hướng Thần', desc: 'Gặp đại đệ tử Hoa Hướng Thần ở quảng trường tông.', hint: { map: 'thanh_van_tong', x: 62, y: 56 } },
     { id: 'q7_done', name: 'Chương 8: Chuẩn bị Trúc Cơ', desc: 'Vị thế trong tông đã đổi. Kỳ Trúc Cơ của tông đang tới gần.', hint: null },
     /* Chương 8 — Trúc Cơ: lời nói đầu tiên ở tầm cao mới */
@@ -1595,12 +1595,12 @@
     { id: 'q11_chuan_bi_ket_dan', name: 'Chuẩn bị Kết Đan', desc: 'Trưởng lão tông giao việc chuẩn bị Kết Đan: hái dược dẫn ở bãi bắc Thung Lũng Hồi Phong và tích đủ tu vi Trúc Cơ Viên Mãn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q11_vat_dan', name: 'Luyện vật dẫn Kết Đan', desc: 'Mang dược dẫn và Yêu Đan cấp 2 về đại điện: trưởng lão sẽ luyện vật dẫn Kết Đan cho ngươi.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q11_done', name: 'Sẵn sàng Kết Đan', desc: 'Vật dẫn đã trong tay, tu vi đã đầy. Chỉ còn chờ ngày lên đài.', hint: null },
-    /* Chương 12 — Kết Đan: Ngôn Linh thành LỆNH */
+    /* Chương 12 — Kết Đan: Vạn Âm Cộng Hưởng thành bậc Hưởng */
     { id: 'q12_len_dai', name: 'Lên Đài Trúc Cơ lần nữa', desc: 'Lên Đài Trúc Cơ ở phía bắc tông — lần này là để Kết Đan.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q12_ho_phap', name: 'Hộ pháp lúc Kết Đan', desc: 'Địch sẽ tới đúng thời khắc quyết định. Những người hộ pháp cho ngươi đang giữ các hướng quanh đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
     { id: 'q12_ket_dan', name: 'Kết Đan', desc: 'Vận công đã chín. Nuốt vật dẫn và Kết Đan tại đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
-    { id: 'q12_lenh_dau_tien', name: 'Lệnh đầu tiên', desc: 'Kim Đan đã thành, Ngôn Linh đã thành LỆNH. Thử tiếng nói mới của ngươi ngay tại đài.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
-    { id: 'q12_done', name: 'Kim Đan Sơ Kỳ', desc: 'Ngươi đã đứng ở Kim Đan Sơ Kỳ. Lời nói của ngươi từ nay là lệnh — và món nợ mười hai năm bắt đầu được tính từ đây.', hint: null }
+    { id: 'q12_lenh_dau_tien', name: 'Dạy cách nghe', desc: 'Kim Đan đã thành, tai nghe của ngươi đã sâu tới bậc Hưởng. Học cách nghe sóng đứng và độ lệch tần ngay tại đài — thử Định Âm và Phong Âm như trưởng lão dạy.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q12_done', name: 'Kim Đan Sơ Kỳ', desc: 'Ngươi đã đứng ở Kim Đan Sơ Kỳ. Tai nghe của ngươi từ nay chạm tới bậc Hưởng — và món nợ mười hai năm bắt đầu được tính từ đây.', hint: null }
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -1630,7 +1630,7 @@
       grind: defaultGrind(),     // trạng thái hệ cày: hồ trần ngày, khóa chống trùng, sổ trả thưởng
       sideQuests: defaultSideQuests(), // Mục H: chuỗi phụ quanh Trúc Cơ — { claimed, selected, socialMet } dữ kiện thuần, online-ready
       secretRealms: defaultSecretRealms(), // trạng thái bí cảnh: kho lượt ngày chung + từng bí cảnh
-      spokeLedger: [],           // sổ lời đã nói: {ch, ctx, witnesses} — nền cơ chế giá của lời nói
+      spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
       sectMerit: 0,              // điểm cống hiến tông môn — trục tích lũy thứ ba, tách khỏi Linh Thạch (chương 7)
@@ -1674,15 +1674,15 @@
     return state;
   }
   /* ---------------- Kiếm quyết (chương 3) ---------------- */
-  // Thất Tinh Kiếm Quyết: đòn vật lý KHÔNG dùng tiếng nói — không tốn Tĩnh
-  // Mặc, không ghi sổ lời đã nói. Đây là đường sức mạnh thứ hai buộc người
-  // chơi mạnh cả khi không cất lời (đất dùng lớn ở Thăng Long Đạo chương 7).
+  // Thất Tinh Kiếm Quyết: đòn vật lý KHÔNG dùng cộng hưởng — không tốn Tĩnh
+  // Âm, không ghi Sổ Dư Âm. Đây là đường sức mạnh thứ hai buộc người
+  // chơi mạnh cả khi không gõ đòn cộng hưởng (đất dùng lớn ở Thăng Long Đạo chương 7).
   /* ---------------- Vũ khí đang đeo (mục B đợt vá 2026-11-02) ----------------
      Người chơi chỉ ĐEO MỘT vũ khí: trong số vũ khí đang sở hữu (đọc qua
      gương state.gear như mọi hệ cũ), cây có swordBonus cao nhất là cây
      đang đeo và CHỈ cây đó cộng uy lực — vũ khí tốt hơn THAY THẾ vũ khí
      yếu hơn, không cộng dồn. Trước đợt này game chỉ có một vũ khí
-     (kiem_phong +8 kiếm / +10 lời) nên mọi số cũ giữ nguyên 100% khi chỉ
+     (kiem_phong +8 kiếm / +10 hưởng) nên mọi số cũ giữ nguyên 100% khi chỉ
      sở hữu Thanh Phong Kiếm. Chỉ số nằm ngay trong ITEM_DEFS
      (swordBonus/wordBonus) để vũ khí về sau chỉ cần khai báo thêm. */
   function equippedWeaponId(state) {
@@ -1751,7 +1751,7 @@
      quyết) có ngăn riêng (storySlot) — không vào túi thường, không tính
      sức chứa; chúng được ghi nhận qua state.unlocked như trước.
      Hai trường cũ items.dan và gear được giữ làm GƯƠNG đọc cho các hệ đã
-     xây (thổ nạp, kiếm quyết, Ngôn Linh) — syncBagMirrors là nơi duy nhất
+     xây (thổ nạp, kiếm quyết, Vạn Âm Cộng Hưởng) — syncBagMirrors là nơi duy nhất
      ghi chúng, từ dữ liệu túi. */
   var ITEM_DEFS = {
     hoi_khi_dan: { name: 'Hồi Khí Đan', type: 'dan', stack: true, glyph: 'Đan' },
@@ -1759,8 +1759,8 @@
     /* Vũ khí khởi đầu của tân thủ (lệnh Bui 18:40 ngày 2026-11-02 "Thiếu
        vũ khí cho tân thủ"): thanh kiếm sắt Hứa gia phát cho con em trong
        nhà mang theo ngày đi trắc linh — lưỡi khắc một phù văn dẫn khí thô
-       sơ của thợ rèn trong trấn nên dù chưa nhập phẩm pháp khí vẫn trợ uy
-       được chút ít (+3 kiếm / +3 lời, nhỏ hơn hẳn Thanh Phong Kiếm
+       sơ của thợ rèn trong trấn nên dù chưa nhập phẩm pháp khí vẫn kiếm ngân trợ hưởng
+       được chút ít (+3 kiếm / +3 hưởng, nhỏ hơn hẳn Thanh Phong Kiếm
        +8/+10; Thanh Phong về sau THAY THẾ nó theo luật vũ khí đang đeo).
        worn: kiếm đeo bên hông người, không cất vào Túi Trữ Vật nên không
        chiếm ô chứa (bagUsed bỏ qua như ngăn cốt truyện) — nhưng vẫn ghi
@@ -1922,7 +1922,7 @@
     state.tuvi = 0;
     state.hpMax += 20; state.hp = state.hpMax;
     if (state.realm === 1 && state.stage === 0 && state.unlocked.indexOf('luyenkhi1') < 0) state.unlocked.push('luyenkhi1');
-    // Đạt Kim Đan Sơ Kỳ: Ngôn Linh thành LỆNH — mở khóa ĐỊNH và PHONG.
+    // Đạt Kim Đan Sơ Kỳ: Vạn Âm Cộng Hưởng thành bậc Hưởng — mở khóa Định Âm và Phong Âm.
     // Đây là điểm cấp khóa 'kimdan' DUY NHẤT trong luồng chơi thường.
     if (state.realm === 3 && state.stage === 0 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     // Đạt Luyện Khí tầng 1 = bắt đầu tu tiên chính thức: mở ví Linh Thạch —
@@ -2171,7 +2171,7 @@
     if (typeof state.flags.benhSeen !== 'boolean') state.flags.benhSeen = false;
     if (typeof state.flags.ch9PlanSeen !== 'boolean') state.flags.ch9PlanSeen = false;
     if (typeof state.flags.kdBeastWave !== 'number') state.flags.kdBeastWave = 0;
-    // Hồi tố LỆNH: save đã qua mốc Kết Đan mà thiếu khóa 'kimdan' thì cấp lại.
+    // Hồi tố bậc Hưởng: save đã qua mốc Kết Đan mà thiếu khóa 'kimdan' thì cấp lại.
     if (state.unlocked && state.realm >= 3 && state.unlocked.indexOf('kimdan') < 0) state.unlocked.push('kimdan');
     if (!state.items || typeof state.items !== 'object') state.items = { dan: 0 };
     if (typeof state.items.dan !== 'number' || !(state.items.dan >= 0)) state.items.dan = 0;
@@ -2243,8 +2243,8 @@
     }
     return state;
   }
-  // Ghi một lần cất lời vào sổ: dữ kiện truyện (nhân chứng, bối cảnh), tách
-  // khỏi dữ liệu hiển thị — nền cho "giá của lời nói" ở các chương sau.
+  // Ghi một sự kiện âm thanh vào Sổ Dư Âm: dữ kiện truyện (nhân chứng, bối cảnh), tách
+  // khỏi dữ liệu hiển thị — nền cho "giá của dư âm" ở các chương sau.
   function recordSpeech(state, ch, ctx, witnesses) {
     if (!state) return 0;
     if (!Array.isArray(state.spokeLedger)) state.spokeLedger = [];
@@ -2751,7 +2751,7 @@
     son_chu: { name: 'Sơn Chủ', rank: 'boss', hp: 1500, atk: 20, atkInterval: 1.4, speed: 40, cry: 280 },
     /* Quái bí cảnh (đợt bí cảnh + hệ cày): số [ĐỀ XUẤT] neo uy lực kiếm
        hiện có như quái dã ngoại. wordResist của Kiếm Ý Tàn Hồn = kháng
-       Ngôn Linh 50% (bicanh-design S-9) — làn game.js áp khi tính sóng
+       cộng hưởng 50% (bicanh-design S-9) — làn game.js áp khi tính sóng
        âm lên boss này; các quái khác không có trường này (= không kháng). */
     dong_xa: { name: 'Động Xà', rank: 'normal', hp: 80, atk: 8, atkInterval: 1.6, speed: 44, cry: 520 },
     thuy_xa_tinh: { name: 'Thủy Xà Tinh', rank: 'boss', hp: 430, atk: 11, atkInterval: 1.4, speed: 42, cry: 380 },

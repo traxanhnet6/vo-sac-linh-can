@@ -350,13 +350,13 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "u_nhan"
   },
-  "be32c4ab8476": {
-   "f": "vbe32c4ab8476.mp3",
+  "28b30cd026cb": {
+   "f": "v28b30cd026cb.mp3",
    "k": "say",
    "s": "truong_lao"
   },
-  "8c63780375ae": {
-   "f": "v8c63780375ae.mp3",
+  "0b68d63dab9f": {
+   "f": "v0b68d63dab9f.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -375,8 +375,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "hero"
   },
-  "9bf320b3fd52": {
-   "f": "v9bf320b3fd52.mp3",
+  "b5bb3b2648ed": {
+   "f": "vb5bb3b2648ed.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -450,13 +450,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "b91a45365d57": {
-   "f": "vb91a45365d57.mp3",
+  "8b526da00856": {
+   "f": "v8b526da00856.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "09afd671c9ea": {
-   "f": "v09afd671c9ea.mp3",
+  "b98a196ec1b6": {
+   "f": "vb98a196ec1b6.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -585,13 +585,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "42d8f20dadab": {
-   "f": "v42d8f20dadab.mp3",
+  "e44376fffc0a": {
+   "f": "ve44376fffc0a.mp3",
    "k": "say",
    "s": "thap_chu"
   },
-  "4438ef189e92": {
-   "f": "v4438ef189e92.mp3",
+  "010f0df418a0": {
+   "f": "v010f0df418a0.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -615,13 +615,13 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "chu_quan"
   },
-  "28278984b75f": {
-   "f": "v28278984b75f.mp3",
+  "252f1cf6770b": {
+   "f": "v252f1cf6770b.mp3",
    "k": "say",
    "s": "duoc_su"
   },
-  "114c77f77a04": {
-   "f": "v114c77f77a04.mp3",
+  "63db287955d5": {
+   "f": "v63db287955d5.mp3",
    "k": "say",
    "s": "phap_khi_chu"
   },
@@ -770,18 +770,18 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "2e10965e96bb": {
-   "f": "v2e10965e96bb.mp3",
+  "8a1e0fccb711": {
+   "f": "v8a1e0fccb711.mp3",
    "k": "say",
    "s": "u_nhan"
   },
-  "0a2bf1df52e2": {
-   "f": "v0a2bf1df52e2.mp3",
+  "53a9fee24b8f": {
+   "f": "v53a9fee24b8f.mp3",
    "k": "say",
    "s": "tran_chinh_dao"
   },
-  "8cca6c31d362": {
-   "f": "v8cca6c31d362.mp3",
+  "16c62f850396": {
+   "f": "v16c62f850396.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -805,8 +805,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "tran_chinh_dao"
   },
-  "74d9c2314ebe": {
-   "f": "v74d9c2314ebe.mp3",
+  "db3b458922bc": {
+   "f": "vdb3b458922bc.mp3",
    "k": "say",
    "s": "tran_chinh_dao"
   },
@@ -840,8 +840,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "5c297aaaaf8f": {
-   "f": "v5c297aaaaf8f.mp3",
+  "8c7a69aac71e": {
+   "f": "v8c7a69aac71e.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -1180,8 +1180,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "truong_lao_tong"
   },
-  "25fb2aae6511": {
-   "f": "v25fb2aae6511.mp3",
+  "b29fa494e860": {
+   "f": "vb29fa494e860.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
@@ -1225,18 +1225,18 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "3b22ddce7c77": {
-   "f": "v3b22ddce7c77.mp3",
+  "70176665e2d8": {
+   "f": "v70176665e2d8.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "8fea4b15f171": {
-   "f": "v8fea4b15f171.mp3",
+  "292e50a2f907": {
+   "f": "v292e50a2f907.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
-  "8febd2f00f4a": {
-   "f": "v8febd2f00f4a.mp3",
+  "3958c4f1f6bc": {
+   "f": "v3958c4f1f6bc.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
@@ -1845,8 +1845,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "mo_cuu_u"
   },
-  "d56f2296886e": {
-   "f": "vd56f2296886e.mp3",
+  "82bb08b218e7": {
+   "f": "v82bb08b218e7.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -1865,8 +1865,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "5ac9d92bba02": {
-   "f": "v5ac9d92bba02.mp3",
+  "1819fceff0a8": {
+   "f": "v1819fceff0a8.mp3",
    "k": "say",
    "s": "u_nhan"
   },
@@ -1875,8 +1875,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "mo_cuu_u"
   },
-  "259e4643dc2a": {
-   "f": "v259e4643dc2a.mp3",
+  "af1eb7e2e07f": {
+   "f": "vaf1eb7e2e07f.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2135,8 +2135,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "1d7f1ec06875": {
-   "f": "v1d7f1ec06875.mp3",
+  "760b2e540725": {
+   "f": "v760b2e540725.mp3",
    "k": "say",
    "s": "bach_kinh_duong"
   },
@@ -2410,8 +2410,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "c3053d38e3da": {
-   "f": "vc3053d38e3da.mp3",
+  "d7d2e6f6b339": {
+   "f": "vd7d2e6f6b339.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2425,8 +2425,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "c32a1c8ffc32": {
-   "f": "vc32a1c8ffc32.mp3",
+  "ab7b1d2efdc1": {
+   "f": "vab7b1d2efdc1.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2445,8 +2445,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "eefa3b30ad54": {
-   "f": "veefa3b30ad54.mp3",
+  "cfe18a915df0": {
+   "f": "vcfe18a915df0.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2455,8 +2455,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "hero"
   },
-  "902f82b498aa": {
-   "f": "v902f82b498aa.mp3",
+  "485a5b80c1ce": {
+   "f": "v485a5b80c1ce.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2475,33 +2475,33 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "7c9c5f03a8d7": {
-   "f": "v7c9c5f03a8d7.mp3",
+  "e4244c9285ba": {
+   "f": "ve4244c9285ba.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "39328a2a225c": {
-   "f": "v39328a2a225c.mp3",
+  "a01dd1af5074": {
+   "f": "va01dd1af5074.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "b63a7a7916f2": {
-   "f": "vb63a7a7916f2.mp3",
+  "bcc3be7ac37d": {
+   "f": "vbcc3be7ac37d.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
-  "ed10aed4f699": {
-   "f": "ved10aed4f699.mp3",
+  "936479d9f10c": {
+   "f": "v936479d9f10c.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
-  "6928dd9f168f": {
-   "f": "v6928dd9f168f.mp3",
+  "92f7175ddf8b": {
+   "f": "v92f7175ddf8b.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "ee75af80076b": {
-   "f": "vee75af80076b.mp3",
+  "47a0ee124deb": {
+   "f": "v47a0ee124deb.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
@@ -2660,18 +2660,18 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "94b6b996aee1": {
-   "f": "v94b6b996aee1.mp3",
+  "fe3bac90e438": {
+   "f": "vfe3bac90e438.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "5a752a5ff9b0": {
-   "f": "v5a752a5ff9b0.mp3",
+  "d2f2f34620b6": {
+   "f": "vd2f2f34620b6.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "bd1beb7dad70": {
-   "f": "vbd1beb7dad70.mp3",
+  "9be6377a8032": {
+   "f": "v9be6377a8032.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2715,8 +2715,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "bb1f9dcb89bf": {
-   "f": "vbb1f9dcb89bf.mp3",
+  "fe800f20a684": {
+   "f": "vfe800f20a684.mp3",
    "k": "say",
    "s": "truong_lao_tong"
   },
@@ -2795,13 +2795,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "df52e86ffe29": {
-   "f": "vdf52e86ffe29.mp3",
+  "b8f608f44ec3": {
+   "f": "vb8f608f44ec3.mp3",
    "k": "say",
    "s": "de_tu_ho_tong"
   },
-  "d1018b245c71": {
-   "f": "vd1018b245c71.mp3",
+  "01d61d37f092": {
+   "f": "v01d61d37f092.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2815,23 +2815,23 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "c47aa7de2337": {
-   "f": "vc47aa7de2337.mp3",
+  "ac12b92f2332": {
+   "f": "vac12b92f2332.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "ff221bb7be43": {
-   "f": "vff221bb7be43.mp3",
+  "d4b3080ea5f4": {
+   "f": "vd4b3080ea5f4.mp3",
    "k": "say",
    "s": "oan_hon"
   },
-  "b4136f24d0e4": {
-   "f": "vb4136f24d0e4.mp3",
+  "5a032fd964ce": {
+   "f": "v5a032fd964ce.mp3",
    "k": "say",
    "s": "oan_hon"
   },
-  "c0ece9d747e7": {
-   "f": "vc0ece9d747e7.mp3",
+  "d29ea2517cc8": {
+   "f": "vd29ea2517cc8.mp3",
    "k": "say",
    "s": "oan_hon"
   },
@@ -2855,8 +2855,8 @@ window.VSLC_VOICE = {
    "k": "inner",
    "s": "narrate"
   },
-  "2a2a51595a16": {
-   "f": "v2a2a51595a16.mp3",
+  "93f8965cd6b0": {
+   "f": "v93f8965cd6b0.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -2885,8 +2885,8 @@ window.VSLC_VOICE = {
    "k": "inner",
    "s": "narrate"
   },
-  "f6d18446bbab": {
-   "f": "vf6d18446bbab.mp3",
+  "8037efe94830": {
+   "f": "v8037efe94830.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3055,8 +3055,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "chinh_ngon"
   },
-  "0abd3b68ef53": {
-   "f": "v0abd3b68ef53.mp3",
+  "ca72f94e7b94": {
+   "f": "vca72f94e7b94.mp3",
    "k": "say",
    "s": "truong_lao"
   },
@@ -3125,8 +3125,8 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "duoc_su"
   },
-  "c9eb95376b4a": {
-   "f": "vc9eb95376b4a.mp3",
+  "9f70bd9dec4a": {
+   "f": "v9f70bd9dec4a.mp3",
    "k": "say",
    "s": "phap_khi_chu"
   },
@@ -3400,8 +3400,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "ad88a84c1858": {
-   "f": "vad88a84c1858.mp3",
+  "f916a3460132": {
+   "f": "vf916a3460132.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3420,13 +3420,13 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "u_nhan"
   },
-  "28dbf8924401": {
-   "f": "v28dbf8924401.mp3",
+  "34fef967e5a1": {
+   "f": "v34fef967e5a1.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "dcbc164e1968": {
-   "f": "vdcbc164e1968.mp3",
+  "234a8af0391a": {
+   "f": "v234a8af0391a.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3490,13 +3490,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "0b2ad888a20c": {
-   "f": "v0b2ad888a20c.mp3",
+  "91fc50ecdfd3": {
+   "f": "v91fc50ecdfd3.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "e15cb907ef98": {
-   "f": "ve15cb907ef98.mp3",
+  "5040867aafd8": {
+   "f": "v5040867aafd8.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3590,13 +3590,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "f25c1e45d695": {
-   "f": "vf25c1e45d695.mp3",
+  "5dbdff05bb7e": {
+   "f": "v5dbdff05bb7e.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "2a5f972f0470": {
-   "f": "v2a5f972f0470.mp3",
+  "a519bb638f15": {
+   "f": "va519bb638f15.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3810,18 +3810,18 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "18ffca5be451": {
-   "f": "v18ffca5be451.mp3",
+  "77398473d9bf": {
+   "f": "v77398473d9bf.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "7e0245f582df": {
-   "f": "v7e0245f582df.mp3",
+  "8b58b516993c": {
+   "f": "v8b58b516993c.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "b7a286f1a530": {
-   "f": "vb7a286f1a530.mp3",
+  "fb8602ceee9e": {
+   "f": "vfb8602ceee9e.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3855,8 +3855,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "45425357e251": {
-   "f": "v45425357e251.mp3",
+  "ec0acd293aa9": {
+   "f": "vec0acd293aa9.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3865,8 +3865,8 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "b642b2070c6e": {
-   "f": "vb642b2070c6e.mp3",
+  "2d9aea4b7186": {
+   "f": "v2d9aea4b7186.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3905,18 +3905,18 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "46b199edd3dc": {
-   "f": "v46b199edd3dc.mp3",
+  "e50c914b0872": {
+   "f": "ve50c914b0872.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "c74b338fdb03": {
-   "f": "vc74b338fdb03.mp3",
+  "412a433e93a0": {
+   "f": "v412a433e93a0.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "6cfb6d04d140": {
-   "f": "v6cfb6d04d140.mp3",
+  "869e3ff9afc9": {
+   "f": "v869e3ff9afc9.mp3",
    "k": "narrate",
    "s": "narrate"
   },
@@ -3930,13 +3930,13 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
-  "18dca1211849": {
-   "f": "v18dca1211849.mp3",
+  "300db06ad2bb": {
+   "f": "v300db06ad2bb.mp3",
    "k": "narrate",
    "s": "narrate"
   },
-  "52ac4f36eea8": {
-   "f": "v52ac4f36eea8.mp3",
+  "fa299dd9a9f4": {
+   "f": "vfa299dd9a9f4.mp3",
    "k": "narrate",
    "s": "narrate"
   },

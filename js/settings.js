@@ -22,15 +22,15 @@
     /* Âm thanh */
     soundOn: true,        // bật/tắt tiếng tổng
     volume: 0.8,          // âm lượng tổng (hiệu ứng) 0..1
-    sfxSkill: true,       // hiệu ứng âm thanh chiêu thức/sự kiện (PHÁ, CHẤN, đột phá, mở miệng)
+    sfxSkill: true,       // hiệu ứng âm thanh chiêu thức/sự kiện (Phá Âm, Chấn Âm, đột phá, mở miệng)
     voiceOn: true,        // lồng tiếng lời thoại cốt truyện
     voiceVol: 0.9,        // âm lượng giọng nói riêng 0..1 (tách khỏi âm lượng hiệu ứng)
     /* Hình ảnh */
-    fxShake: true,        // rung màn hình khi dùng Ngôn Linh
+    fxShake: true,        // rung màn hình khi dùng Vạn Âm Cộng Hưởng
     fxRings: true,        // vòng sóng âm / hiệu ứng lan tỏa
     fxParticles: true,    // hạt linh khí + hào quang (đột phá, thổ nạp, hạt lơ lửng, ánh đèn lồng)
     showNames: true,      // tên + danh hiệu trên đầu nhân vật và NPC
-    showBars: true,       // thanh HP / Tu vi / Tĩnh Mặc trong khung nhân vật
+    showBars: true,       // thanh HP / Tu vi / Tĩnh Âm trong khung nhân vật
     /* Điều khiển */
     // Hiển thị cần điều khiển (lệnh Bui 11:59 ngày 2026-11-01):
     // 'on' = Luôn hiện sẵn (đế cố định góc dưới trái, nhận cả chuột kéo);

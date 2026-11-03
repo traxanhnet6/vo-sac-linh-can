@@ -72,7 +72,7 @@
       { who: 'npc', text: 'Đi tu luyện đi. Hứa gia từ nay, không ai được phép coi thường con nữa.' }
     ],
     truong_lao: [
-      { who: 'npc', text: 'Lão phu trắc linh bốn mươi năm, chưa từng gặp chuyện này. Bia không hiện màu… mà tiếng nói lại chấn động đất trời.' },
+      { who: 'npc', text: 'Lão phu trắc linh bốn mươi năm, chưa từng gặp chuyện này. Bia không hiện màu… mà một tiếng nói lại làm cả sân cùng rung theo — như đất trời tự cộng hưởng với nó.' },
       { who: 'npc', text: 'Cậu Giang, linh căn của cậu, e rằng không nằm trong chín màu của bia đá này. Hãy tới Kiểm Trắc Tháp, thước pha lê ở đó mới đo được tận cùng.' },
       { who: 'npc', text: 'Trước mắt, hãy tới giếng đầu trấn — nơi linh khí tụ — mà thổ nạp. Cậu đã mở miệng, kinh mạch cũng đã thông rồi.' }
     ],
@@ -101,7 +101,7 @@
       { who: 'npc', text: 'Đan dược không phải vạn năng, nhưng lúc cạn kiệt tinh thần mà có một viên, khác hẳn đấy.' }
     ],
     phap_khi_chu: [
-      { who: 'npc', text: 'Tụ Bảo Các chỉ bán hai món, nhưng món nào cũng là hàng thật: Thanh Phong Kiếm trợ uy cho cả kiếm quyết lẫn lời nói, Tụ Linh Ngọc giúp thổ nạp nhanh hơn hẳn.' },
+      { who: 'npc', text: 'Tụ Bảo Các chỉ bán hai món, nhưng món nào cũng là hàng thật: Thanh Phong Kiếm trợ uy cho kiếm quyết, lại thêm kiếm ngân trợ hưởng cho đòn cộng hưởng, Tụ Linh Ngọc giúp thổ nạp nhanh hơn hẳn.' },
       { who: 'npc', text: 'Pháp khí tốt không rẻ. Nhưng tu sĩ khôn ngoan thà chậm một bước còn hơn cầm đồ dởm vào lúc sinh tử.' }
     ],
     tran_chinh_dao: [
@@ -218,8 +218,8 @@
     { who: 'di_ninh', text: 'Ngươi… mười tám năm… ngươi lừa tất cả chúng ta?!' },
     { who: 'anh_phung', text: 'Ngươi… ngươi dám…! Hôn sự… chuyện hôn sự, để, để bàn lại…' },
     { who: 'u_nhan', text: 'Phàm ca! Huynh nói được! Muội biết mà… muội biết huynh không phải phế vật!' },
-    { who: 'truong_lao', text: 'Lão phu trắc linh bốn mươi năm… Bia đá không đo được cậu, vì linh căn của cậu KHÔNG NẰM TRONG CHÍN MÀU. Tiếng nói chấn động thiên địa — đây là điềm của linh căn ngoài cửu phẩm!' },
-    { who: 'narrate', text: 'Mười tám năm im lặng đã mở khóa. Từ nay: thổ nạp tu luyện được mở, và lời nói của ngươi là chiêu thức — hệ thống Ngôn Linh đã thức tỉnh. Nhưng nhớ lấy: lời càng ít, tiếng càng nặng.' }
+    { who: 'truong_lao', text: 'Lão phu trắc linh bốn mươi năm… Bia đá không đo được cậu, vì linh căn của cậu KHÔNG NẰM TRONG CHÍN MÀU. Một tiếng nói mà làm đất, đèn lồng và bia đá cùng rung lên — phát và hưởng trùng nhau trong một khoảnh khắc: đây là điềm của linh căn ngoài cửu phẩm!' },
+    { who: 'narrate', text: 'Mười tám năm im lặng đã mở khóa. Từ nay: thổ nạp tu luyện được mở, và Vạn Âm Cộng Hưởng đã thức tỉnh — tai ngươi nghe được âm gốc của vạn vật, gõ sóng không cần cất lời. Nhưng nhớ lấy: càng lắng nghe lâu, Tĩnh Âm càng trong, đòn cộng hưởng càng nặng.' }
   ];
 
   var SCENE_VOICE_RETRY = [
@@ -236,7 +236,7 @@
   var SCENE_BREAKTHROUGH = [
     { who: 'narrate', text: 'Tu vi tràn đầy. Linh khí từ bốn phương hội về, kinh mạch mười tám năm bế tắc lần lượt thông suốt.' },
     { who: 'hero', mode: 'say', text: 'Luyện Khí… tầng một.' },
-    { who: 'narrate', text: 'Đột phá thành công! Ngươi chính thức bước lên con đường tu tiên — và Ngôn Linh "CHẤN" cùng chiêu "PHÁ" đã sẵn sàng. Hãy phá cọc gỗ luyện công ở phía nam sân để thử tiếng nói của mình.' }
+    { who: 'narrate', text: 'Đột phá thành công! Ngươi chính thức bước lên con đường tu tiên — và Vạn Âm Cộng Hưởng "Chấn Âm" cùng chiêu "Phá Âm" đã sẵn sàng. Hãy phá cọc gỗ luyện công ở phía nam sân để thử đòn cộng hưởng của mình.' }
   ];
 
   var SCENE_DUMMY_DONE = [
@@ -270,7 +270,7 @@
       who: 'choice', text: 'Ngươi sẽ…',
       options: [
         { label: 'Lặng lẽ lùi vào bóng cây, tránh đối đầu', action: 'ambush_silent' },
-        { label: '[Cất lời] "CHẤN" — dằn mặt kẻ theo dõi', action: 'ambush_chan' }
+        { label: '[Phát hưởng] "Chấn Âm" — dằn mặt kẻ theo dõi', action: 'ambush_chan' }
       ]
     }
   ];
@@ -281,8 +281,8 @@
   ];
 
   var SCENE_AMBUSH_CHAN = [
-    { who: 'narrate', text: 'Một chữ "CHẤN" nổ ra giữa rừng. Lá khô tung lên, chim bay tán loạn. Bóng áo xám loạng choạng lùi ba bước, ôm tai, rồi quay đầu bỏ chạy vào sâu trong rừng.' },
-    { who: 'narrate', text: '(Lời của ngươi đã có nhân chứng không mong muốn. Từ giờ, có kẻ biết kẻ "phế căn" kia biết nói — và nói rất nặng. Đã ghi vào sổ lời đã nói.)' }
+    { who: 'narrate', text: 'Một đòn Chấn Âm nổ ra giữa rừng — sóng ngược pha dập thẳng vào kẻ theo dõi. Lá khô tung lên, chim bay tán loạn. Bóng áo xám loạng choạng lùi ba bước, ôm tai, rồi quay đầu bỏ chạy vào sâu trong rừng.' },
+    { who: 'narrate', text: '(Đòn cộng hưởng của ngươi đã có nhân chứng không mong muốn. Từ giờ, có kẻ biết kẻ "phế căn" kia để lại được thứ dư âm ấy. Đã ghi vào Sổ Dư Âm.)' }
   ];
 
   var SCENE_GATE = [
@@ -327,8 +327,8 @@
   var SCENE_MANUALS = [
     { who: 'thap_chu', text: 'Theo lệ ba trăm năm của tháp: người có linh căn vượt ngoài chín phẩm sẽ được cây thước ban thưởng công pháp. Cậu Giang, hãy nhận lấy.' },
     { who: 'narrate', text: 'Từ thân thước pha lê, hai luồng sáng tách ra, hóa thành hai quyển sách cổ rơi vào tay ngươi: "Thanh Phong Chân Kinh" — tâm pháp Hoàng cấp cao cấp; và "Thất Tinh Kiếm Quyết" — kiếm quyết Hoàng cấp cao cấp.' },
-    { who: 'thap_chu', text: 'Linh căn của cậu trong suốt — không thuộc hệ nào, nên học được MỌI hệ. Tâm pháp này giúp cậu thổ nạp nhanh hơn; kiếm quyết này cho cậu một đường sức mạnh không cần tới tiếng nói. Nhớ lấy: người có hai đường đi, đừng bao giờ để lộ cả hai cùng lúc.' },
-    { who: 'narrate', text: 'Đã mở khóa: Thanh Phong Chân Kinh (thổ nạp nhanh hơn) và Thất Tinh Kiếm Quyết (nút "Kiếm quyết", phím 3 — đòn kiếm không tốn Tĩnh Mặc). Lĩnh hội công pháp khiến tu vi dâng đầy — hãy đột phá khi sẵn sàng.' },
+    { who: 'thap_chu', text: 'Linh căn của cậu trong suốt — không thuộc hệ nào, nên học được MỌI hệ. Tâm pháp này giúp cậu thổ nạp nhanh hơn; kiếm quyết này cho cậu một đường sức mạnh không phụ thuộc vào cách nghe của cậu. Nhớ lấy: người có hai đường đi, đừng bao giờ để lộ cả hai cùng lúc.' },
+    { who: 'narrate', text: 'Đã mở khóa: Thanh Phong Chân Kinh (thổ nạp nhanh hơn) và Thất Tinh Kiếm Quyết (nút "Kiếm quyết", phím 3 — đòn kiếm không tốn Tĩnh Âm). Lĩnh hội công pháp khiến tu vi dâng đầy — hãy đột phá khi sẵn sàng.' },
     { who: 'thap_chu', text: 'Còn một vật nữa, theo lệ dành cho người có linh căn ngoài chín phẩm: Túi Trữ Vật của tháp. Từ nay đan dược, pháp khí và nguyên liệu ngươi kiếm được đều cất vào đây. Người ngoài chín phẩm — phải có chỗ đứng riêng, và một cái túi riêng.' },
     { who: 'narrate', text: 'Đã mở khóa Túi Trữ Vật (nút "Túi" ở hàng nút phía trên, hoặc phím I). Hai quyển công pháp được ghi vào ngăn riêng của người tu hành — không chiếm chỗ trong túi.' },
     { who: 'thap_chu', text: 'Đi đi. Nhưng cẩn thận: tin hôm nay lan ra, sẽ có những thế lực lớn tìm tới nhà cậu — không phải ai tới cũng mang ý tốt.' }
@@ -346,19 +346,19 @@
   ];
 
   var SCENE_PHARMACY = [
-    { who: 'duoc_su', text: 'Chào cậu. Hồi Khí Đan của hiệu ta — mười hai viên Linh Thạch một viên, uống vào hồi ngay hai mươi lăm điểm Tĩnh Mặc. Cậu đang có bao nhiêu đan, dùng thử là biết.' },
+    { who: 'duoc_su', text: 'Chào cậu. Hồi Khí Đan của hiệu ta — mười hai viên Linh Thạch một viên, uống vào hồi ngay hai mươi lăm điểm Tĩnh Âm. Cậu đang có bao nhiêu đan, dùng thử là biết.' },
     {
       who: 'choice', text: 'Hiệu thuốc Hồi Xuân',
       options: [
         { label: 'Mua một viên Hồi Khí Đan — 12 Linh Thạch', action: 'buy_dan' },
-        { label: 'Dùng một viên Hồi Khí Đan (hồi 25 Tĩnh Mặc)', action: 'use_dan' },
+        { label: 'Dùng một viên Hồi Khí Đan (hồi 25 Tĩnh Âm)', action: 'use_dan' },
         { label: 'Rời hiệu thuốc', action: 'shop_leave' }
       ]
     }
   ];
 
   var SCENE_FASHOP = [
-    { who: 'phap_khi_chu', text: 'Mời cậu xem. Thanh Phong Kiếm — một trăm năm mươi Linh Thạch: trợ thêm uy lực cho cả kiếm quyết lẫn Ngôn Linh. Tụ Linh Ngọc — hai trăm sáu mươi Linh Thạch: đeo vào, thổ nạp nhanh hơn hẳn. Hàng thật, không mặc cả.' },
+    { who: 'phap_khi_chu', text: 'Mời cậu xem. Thanh Phong Kiếm — một trăm năm mươi Linh Thạch: trợ thêm uy lực cho cả kiếm quyết lẫn Vạn Âm Cộng Hưởng — kiếm ngân trợ hưởng. Tụ Linh Ngọc — hai trăm sáu mươi Linh Thạch: đeo vào, thổ nạp nhanh hơn hẳn. Hàng thật, không mặc cả.' },
     {
       who: 'choice', text: 'Tụ Bảo Pháp Khí Các',
       options: [
@@ -395,7 +395,7 @@
       who: 'choice', text: 'Trước lời vu cáo, ngươi sẽ…',
       options: [
         { label: 'Im lặng — tự đi tìm bằng chứng lật lại vụ việc', action: 'ch4_evidence' },
-        { label: 'Dùng một tiếng CHẤN dẹp tan màn vu cáo ngay tại chỗ', action: 'ch4_chan' }
+        { label: 'Dùng một đòn Chấn Âm dẹp tan màn vu cáo ngay tại chỗ', action: 'ch4_chan' }
       ]
     }
   ];
@@ -428,9 +428,9 @@
   var SCENE_CHAN_QUELL = [
     { who: 'hero', mode: 'say', text: 'CHẤN!' },
     { who: 'narrate', text: 'Một tiếng nổ tung giữa sân phủ. Chén trà trên bàn vỡ tung, mái ngói rung lên rào rào, cả nhà họ Hứa chết lặng. Lục Tranh lùi ba bước, mặt cắt không còn giọt máu — lời vu cáo của hắn tan theo tiếng chấn ấy, không ai còn dám nhắc lại.' },
-    { who: 'u_nhan', text: 'Giang Phàm… cậu lại cất tiếng rồi. Vì chuyện này mà phải dùng tới nó, có đáng không…' },
-    { who: 'tran_chinh_dao', text: '(khẽ, chỉ đủ mình nghe) Tiếng nói ấy… không phải công pháp. Thiên hạ này, chưa từng có ghi chép nào về thứ sức mạnh như vậy.' },
-    { who: 'narrate', text: 'Vụ việc khép lại trong im lặng. Nhưng ánh mắt Trần Chính Đạo nhìn theo ngươi đã khác — Thiên Cơ Các vừa ghi thêm một dòng về ngươi, ở một cuốn sổ khác.' }
+    { who: 'u_nhan', text: 'Giang Phàm… cậu lại ra đòn ấy rồi. Vì chuyện này mà phải dùng tới nó, có đáng không…' },
+    { who: 'tran_chinh_dao', text: '(khẽ, chỉ đủ mình nghe) Dư âm ấy… không thuộc về ai trong sân, cũng không phải công pháp nào ta biết. Thiên hạ này, chưa từng có ghi chép nào về thứ sức mạnh như vậy.' },
+    { who: 'narrate', text: 'Vụ việc khép lại trong im lặng. Nhưng ánh mắt Trần Chính Đạo nhìn theo ngươi đã khác — Thiên Cơ Các vừa ghi thêm một dòng về ngươi, ở một cuốn sổ khác: dòng về thứ dư âm lạ không thuộc về ai trong sân ấy.' }
   ];
 
   var SCENE_FAREWELL4 = [
@@ -441,7 +441,7 @@
 
   var SCENE_FAREWELL4_CHAN = [
     { who: 'tran_chinh_dao', text: 'Vụ vu cáo đã khép lại — theo cách ồn ào nhất có thể. Sổ của các ghi: không thành, và sẽ không ai dám dựng lại.' },
-    { who: 'tran_chinh_dao', text: 'Cậu Giang, ta phải hỏi thẳng: tiếng nói của cậu là công pháp gì? Ta tra sổ ba mươi năm, không một dòng nào giống nó. …Không muốn nói cũng được. Thiên Cơ Các tôn trọng bí mật của người khác — nhưng các này sẽ ghi nhớ nó.' },
+    { who: 'tran_chinh_dao', text: 'Cậu Giang, ta phải hỏi thẳng: dư âm trong sân hôm ấy là của thứ công pháp gì? Ta tra sổ ba mươi năm, không một dòng nào giống nó — một dư âm lạ, không thuộc về ai trong sân. …Không muốn nói cũng được. Thiên Cơ Các tôn trọng bí mật của người khác — nhưng các này sẽ ghi nhớ nó.' },
     { who: 'tran_chinh_dao', text: 'Một tin để lại: Trần gia ở đông bắc thành đang gặp chuyện lạ về thần hồn, tìm khắp nơi một vị Hồn Sư thần bí. Nếu cậu nghe ngóng được gì, Trần gia sẽ biết ơn lắm. Và biết đâu… chuyện ấy hợp với cậu hơn cậu tưởng.' }
   ];
 
@@ -464,7 +464,7 @@
 
   var SCENE_SOUL_HEAL = [
     { who: 'narrate', text: 'Đêm đó. Ngươi vào Trần phủ bằng lối sau, áo choàng che kín mặt. Trong phòng bệnh, hồn lực của ngươi tỏa ra như một làn sương lạnh — lần đầu tiên sau nhiều năm, ngươi để nó hiện hình trọn vẹn.' },
-    { who: 'narrate', text: 'Thần hồn của lão gia bị một sợi tơ đen quấn chặt — thủ pháp này lạnh và quen: nó không thuộc về Cô Châu Thành. Ngươi gỡ từng sợi một, chậm rãi, không để lại một dấu vết nào của người đã tới.' },
+    { who: 'narrate', text: 'Thần hồn của lão gia bị một sợi tơ đen quấn chặt — trong tai nghe bằng hồn của ngươi, hồn ông lệch nhịp như một bản nhạc sai dây. Thủ pháp này lạnh và quen: nó không thuộc về Cô Châu Thành. Ngươi gỡ từng sợi một, chậm rãi, chỉnh lại từng nhịp lệch, không để lại một dấu vết nào của người đã tới.' },
     { who: 'tran_tu_linh', text: '(từ ngoài cửa, khẽ) Có… có ai trong đó không? Ông nội? Ông nội tỉnh rồi sao?' },
     { who: 'narrate', text: 'Trước khi ngươi rời đi, lão gia hé mắt, môi mấp máy trong cơn mê tỉnh: "Huyết… Bạc… Cung…" — rồi chìm vào giấc ngủ yên. Cái tên ấy, ngươi nghe lần đầu. Nhưng sợi tơ đen kia thì không lạ: kẻ đã hại lão gia cũng là kẻ săn lùng tin tức về Hồn Sư.' },
     { who: 'narrate', text: 'Sáng hôm sau, cả thành xôn xao: vị Hồn Sư thần bí lại xuất hiện, chữa khỏi cho Trần lão gia trong một đêm, chỉ để lại một tờ giấy viết bốn chữ: "Đã ổn. Đừng tìm." Thân phận Hồn Sư nhị phẩm của ngươi — vẫn là bí mật của riêng ngươi. (Hồn lực thức tỉnh: Hồn Sư nhị phẩm.)' }
@@ -542,8 +542,8 @@
   var ATK_CHOICE = {
     who: 'choice', text: 'Kẻ địch đã vào sân. Ngươi sẽ…',
     options: [
-      { label: 'Hét một tiếng PHÁ', action: 'atk_pha' },
-      { label: 'Hét một tiếng CHẤN', action: 'atk_chan' },
+      { label: 'Phát một đòn Phá Âm', action: 'atk_pha' },
+      { label: 'Phát một đòn Chấn Âm', action: 'atk_chan' },
       { label: 'Xuất Thất Tinh Kiếm Quyết nghênh địch', action: 'atk_sword' },
       { label: 'Lùi vào trong, gọi gia nhân và U Nhàn ứng cứu', action: 'atk_fallback' }
     ]
@@ -577,7 +577,7 @@
 
   /* ---------- Chương 7: Vào Thanh Vân Tông với thân phận vô linh căn ----------
      Thân phận vô linh căn, thắng hình chiếu Liễu Khuynh Tiên ở Thăng Long Đạo
-     bằng đúng ba chiêu không dùng Ngôn Linh và thắng Hoa Hướng Thần là
+     bằng đúng ba chiêu không dùng Vạn Âm Cộng Hưởng và thắng Hoa Hướng Thần là
      [TRUYỆN GỐC]; việc tạp dịch là sáng tác của game. */
   var SCENE_NHAP_TONG = [
     { who: 'narrate', text: 'Đại điện Thanh Vân Tông cao và lạnh, cột đá chạm mây, tiếng chuông sớm còn ngân ngoài sân. Ngươi bước vào giữa hàng đệ tử đang đứng chầu, thư mời trong tay, và cảm thấy mọi ánh mắt đều dừng lại ở cuốn hồ sơ mà trưởng lão đang mở trên án.' },
@@ -620,7 +620,7 @@
     { who: 'narrate', text: 'Đài Thăng Long ở phía tây bắc tông môn, bậc đá dài hun hút dẫn lên một đài cao chạm mây. Gió trên đài mạnh tới mức áo bào của hàng đệ tử đứng xem phần phật không ngừng. Trưởng lão đã chờ sẵn ở cuối bậc thang.' },
     { who: 'truong_lao_tong', text: 'Thăng Long Đạo là thước đo kiếm của Thanh Vân Tông. Trấn đài này là hình chiếu của Liễu Khuynh Tiên — con gái tông chủ, Luyện Khí tầng tám viên mãn — lưu lại từ ngày nàng qua đài.' },
     { who: 'truong_lao_tong', text: 'Luật của đài rất rõ: ngươi phải thắng hình chiếu bằng đúng ba chiêu kiếm. Thiếu một chiêu chưa thắng thì chưa xong, thừa một chiêu thì tính là kiếm chưa thuần. Ba chiêu — không hơn, không kém.' },
-    { who: 'truong_lao_tong', text: 'Và nghe cho kỹ điều này: tuyệt đối không dùng tiếng nói. Đài này đo kiếm, không đo miệng — ai cất tiếng, thử thách dừng ngay, kết quả hủy bỏ. Bí mật gì của ngươi, giữ lấy mà dùng ở chỗ khác.' },
+    { who: 'truong_lao_tong', text: 'Và nghe cho kỹ điều này: tuyệt đối không dùng cộng hưởng. Đài này đo kiếm, không đo cách nghe — ai phát hưởng, thử thách dừng ngay, kết quả hủy bỏ. Bí mật gì của ngươi, giữ lấy mà dùng ở chỗ khác.' },
     { who: 'lieu_khuynh_tien', text: 'Hình chiếu chỉ là cái bóng của ta năm ấy. Nhưng cái bóng ấy cũng chưa từng thua kẻ nào dưới ba chiêu — ngươi liệu mà giữ kiếm cho vững.' },
     { who: 'narrate', text: 'Giữa đài, hình chiếu nâng kiếm. Ánh sáng quanh thân nàng tụ lại thành một đường kiếm quang chói mắt — chiêu đầu tiên đã thành hình, và cả đài nín thở chờ nó chém xuống.' }
   ];
@@ -631,7 +631,7 @@
       { label: 'Thất Tinh Bộ — lách mình tránh kiếm quang', action: 'tl_thiem' },
       { label: 'Hoành kiếm phong ngự — đỡ thẳng mũi kiếm', action: 'tl_phong' },
       { label: 'Đối chém — một kiếm nghênh thẳng', action: 'tl_dao' },
-      { label: 'Cất tiếng CHẤN phá hình chiếu', action: 'tl_voice' }
+      { label: 'Phát Chấn Âm phá hình chiếu', action: 'tl_voice' }
     ]
   };
   var SCENE_TL1 = [
@@ -651,9 +651,9 @@
   ];
 
   var SCENE_TL_VOICE = [
-    { who: 'narrate', text: 'Tiếng nói vừa chớm dâng lên trong cổ họng ngươi — chưa thành chữ — thì trên đài cao, trưởng lão đã phất mạnh tay áo. Chuông của đài Thăng Long vang lên một tiếng dài, hình chiếu của Liễu Khuynh Tiên tan ra như khói gặp gió.' },
-    { who: 'truong_lao_tong', text: 'Thử thách dừng tại đây. Ta đã nói rõ luật từ đầu: đài này đo kiếm, không đo miệng.' },
-    { who: 'truong_lao_tong', text: 'Nghe đây, Giang Phàm. Tiếng nói của ngươi quý — quý vì nó ít, và vì chưa ai ở nơi này biết nó nặng tới đâu. Đừng phơi nó ra ở chỗ không cần thiết, trước mắt những người không cần biết.' },
+    { who: 'narrate', text: 'Sóng cộng hưởng vừa chớm tụ quanh ngươi — chưa thành đòn — thì trên đài cao, trưởng lão đã phất mạnh tay áo. Chuông của đài Thăng Long vang lên một tiếng dài, hình chiếu của Liễu Khuynh Tiên tan ra như khói gặp gió.' },
+    { who: 'truong_lao_tong', text: 'Thử thách dừng tại đây. Ta đã nói rõ luật từ đầu: đài này đo kiếm, không đo cộng hưởng.' },
+    { who: 'truong_lao_tong', text: 'Nghe đây, Giang Phàm. Cách nghe của ngươi là bí mật — một lần phát hưởng ở đây là phơi nó ra trước cả tông môn, và người tinh ý sẽ lần ra ngươi nghe bằng hồn, không phải bằng tai thường. Đừng phơi nó ra ở chỗ không cần thiết, trước mắt những người không cần biết.' },
     { who: 'narrate', text: 'Hình chiếu tụ lại giữa đài như chưa từng tan. Trưởng lão ra hiệu bắt đầu lại từ đầu — lần này, ngươi chỉ được dùng thanh kiếm trong tay mình.' }
   ];
 
@@ -694,10 +694,10 @@
   var HHT_CHOICE = {
     who: 'choice', text: 'Giữa trận đấu, ngươi sẽ…',
     options: [
-      { label: 'Hét một tiếng PHÁ', action: 'hht_pha' },
-      { label: 'Hét một tiếng CHẤN', action: 'hht_chan' },
+      { label: 'Phát một đòn Phá Âm', action: 'hht_pha' },
+      { label: 'Phát một đòn Chấn Âm', action: 'hht_chan' },
       { label: 'Xuất Thất Tinh Kiếm Quyết', action: 'hht_sword' },
-      { label: 'Thu kiếm giữ thế, thổ nạp lấy lại Tĩnh Mặc', action: 'hht_hold' }
+      { label: 'Thu kiếm giữ thế, thổ nạp lấy lại Tĩnh Âm', action: 'hht_hold' }
     ]
   };
   var SCENE_HHT1 = [
@@ -751,7 +751,7 @@
     who: 'choice', text: 'Vòng vây đang khép lại. Ngươi sẽ…',
     options: [
       { label: 'Xuất kiếm nghênh địch', action: 'chi_sword' },
-      { label: 'Hét một tiếng CHẤN', action: 'chi_chan' },
+      { label: 'Phát một đòn Chấn Âm', action: 'chi_chan' },
       { label: 'Lăn vào bụi linh chi, ẩn mình chờ chúng qua', action: 'chi_hide' }
     ]
   };
@@ -909,16 +909,16 @@
     { who: 'narrate', text: 'Ngươi theo lối mòn ven suối lách vào giữa thung lũng. Từ trên mỏm đá, bãi trống hiện ra phía dưới: vòng xe của Hứa gia, vòng lửa đã tắt từ lúc nào, và người của Huyết Bạc Cung đang khép vòng vây cuối cùng.' },
     { who: 'narrate', text: 'Rồi ngươi thấy U Nhàn. Nàng đứng một mình ở khoảng trống phía đông vòng xe, kiếm trong tay, cố ý tách khỏi đoàn — đúng như kế của nàng: kéo toàn bộ sự chú ý về phía mình. Tên chỉ huy của địch đã mắc câu, nhưng theo cách tệ nhất: hắn ra lệnh bắt đầu siết vòng, và mũi nhọn của vòng vây đang chĩa thẳng vào nàng.' },
     { who: 'mo_cuu_u', text: 'Hứa U Nhàn. Ngươi tự tách ra thì đừng trách bọn ta không khách khí. Bắt sống cô ta. Còn gia chủ của các ngươi — để ông ta xem con gái mình bị đưa đi, ông ta sẽ tự biết phải giao ra thứ gì.' },
-    { who: 'narrate', text: 'Vòng vây còn cách U Nhàn hai mươi bước. Ngươi đang ở trên mỏm đá, Tĩnh Mặc đầy ngực sau nhiều ngày im lặng — một lời từ đây sẽ dội xuống cả bãi trống như sấm, phá vòng vây ngay lập tức, nhưng cũng sẽ tuyên bố cho mọi kẻ có mặt ở đây biết: Giang Phàm đang ở trong thung lũng này, và lời nói của hắn là thứ vũ khí đó.' },
+    { who: 'narrate', text: 'Vòng vây còn cách U Nhàn hai mươi bước. Ngươi đang ở trên mỏm đá, Tĩnh Âm đầy sau nhiều ngày lắng nghe — một tiếng hét từ đây sẽ dội xuống cả bãi trống, và sóng âm thô của nó có thể khóa đúng cộng hưởng của cả bãi mà phá vòng vây ngay lập tức, nhưng cũng sẽ tuyên bố cho mọi kẻ có mặt ở đây biết: Giang Phàm đang ở trong thung lũng này, và hắn không hề câm điếc như lời đồn.' },
     { who: 'narrate', text: 'Đường vòng cũng có: men theo vách đá phía tây, lặng lẽ tới sau lưng vòng xe, nhập vào đoàn của U Nhàn mà không một tiếng động — chậm hơn, và trong lúc ngươi đi vòng, vòng vây vẫn đang siết lại quanh nàng.' },
     CH9_CHOICE
   ];
   var SCENE_CH9_SAY_RESCUE = [
     { who: 'hero', mode: 'say', text: 'TRÁNH RA.' },
     { who: 'narrate', text: 'Hai chữ từ mỏm đá dội xuống, sóng âm quét qua bãi trống như một bức tường vô hình. Hàng đầu của vòng vây bị hất ngã ngồi xuống đất, mấy tên ôm tai quỵ gối, vòng vây đang khép kín vỡ ra một khoảng trống lớn ngay trước mặt U Nhàn.' },
-    { who: 'u_nhan', text: 'Phàm ca! Muội biết huynh sẽ tới — nhưng huynh lại dùng tiếng nói rồi… Thôi, người an toàn trước đã. Đoàn xe, theo ta! Rút về phía mỏm đá, nhanh!' },
+    { who: 'u_nhan', text: 'Phàm ca! Muội biết huynh sẽ tới — nhưng huynh lại cất tiếng thật rồi… Thôi, người an toàn trước đã. Đoàn xe, theo ta! Rút về phía mỏm đá, nhanh!' },
     { who: 'mo_cuu_u', text: '(từ xa, lau máu ở khóe miệng) Tốt. Rất tốt. Cung chủ đoán không sai một chữ: chỉ cần động tới người của Hứa gia, con cá sẽ tự nhảy lên khỏi mặt nước. Giang Phàm — tiếng nói của ngươi, bọn ta đã nghe tận tai rồi.' },
-    { who: 'narrate', text: 'Người của đoàn Hứa gia thoát qua khoảng trống ấy, không ai mất mạng. Nhưng ngươi hiểu cái giá ngay khi nhìn thấy nụ cười của tên chỉ huy lúc rút lui: từ hôm nay, Huyết Bạc Cung không còn phải đoán nữa. Chúng biết chắc vũ khí của ngươi là gì — và chúng sẽ chuẩn bị cho nó.' }
+    { who: 'narrate', text: 'Người của đoàn Hứa gia thoát qua khoảng trống ấy, không ai mất mạng. Nhưng ngươi hiểu cái giá ngay khi nhìn thấy nụ cười của tên chỉ huy lúc rút lui: từ hôm nay, Huyết Bạc Cung không còn phải đoán nữa. Chúng biết chắc ngươi cất được tiếng — và dư âm của tiếng hét ấy còn rung lại trong thung lũng cho kẻ biết nghe lần theo.' }
   ];
   var SCENE_CH9_SILENT_ROUTE = [
     { who: 'narrate', text: 'Ngươi quay lưng khỏi mỏm đá, ép mình vào vách đá phía tây và đi xuống từng tấc một. Mỗi bước là một lần nghe tiếng vòng vây siết lại gần U Nhàn hơn. Mười tám năm im lặng dạy ngươi đi không một tiếng động — nhưng chưa bao giờ việc im lặng lại nặng như lúc này.' },
@@ -1021,7 +1021,7 @@
   ];
   var SCENE_CH10_BI_LO_1 = [
     { who: 'narrate', text: 'Ngươi đứng dậy, khẽ lắc đầu, và bước ra khỏi phòng kín mà không viết một chữ nào. Sau lưng, Bạch Kính Đường thở dài rất khẽ — tiếng thở của một người già vừa nhìn thấy một việc sắp hỏng mà không được phép ngăn.' },
-    { who: 'bach_kinh_duong', text: 'Vậy thì theo lệ. Ký lục quan — đóng hồ sơ này lại, ghi đúng một dòng: lai lịch bất minh. Và chuẩn bị tinh thần: khi các không nói, sẽ có kẻ khác nói thay, bằng cái miệng xấu nhất mà chúng tìm được.' }
+    { who: 'bach_kinh_duong', text: 'Vậy thì theo lệ. Ký lục quan — đóng hồ sơ này lại, ghi đúng một dòng: lai lịch bất minh. Và chuẩn bị tinh thần: dư âm không biết nói dối — khi các không nói, kẻ khác sẽ lần theo nó mà tìm ra cậu, bằng cách xấu nhất mà chúng tìm được.' }
   ];
   var SCENE_CH10_BI_LO_2 = [
     { who: 'narrate', text: 'Ba ngày sau, chợ Cô Châu Thành. Tin đồn chạy nhanh hơn ngựa: "đệ tử Thanh Vân Tông họ Giang là Hồn Sư giấu mặt", "chữa hồn là vỏ, rút hồn người sống mới là thật" — mỗi người kể lại thêm một chút ác ý.' },
@@ -1099,8 +1099,8 @@
     who: 'choice', text: 'Yêu thú gầm lên và lao tới. Ngươi sẽ…',
     options: [
       { label: 'Xuất kiếm nghênh địch', action: 'kd_sword' },
-      { label: 'Hét một tiếng CHẤN', action: 'kd_chan' },
-      { label: 'Lùi lại giữ thế, tích Tĩnh Mặc', action: 'kd_hold' }
+      { label: 'Phát một đòn Chấn Âm', action: 'kd_chan' },
+      { label: 'Lùi lại giữ thế, tích Tĩnh Âm', action: 'kd_hold' }
     ]
   };
   var SCENE_CH11_DUOC_FIGHT = [
@@ -1143,7 +1143,7 @@
   ];
   var SCENE_CH12_GUARD_INTRO = [
     { who: 'narrate', text: 'Chu thiên vừa vào vòng thứ hai thì từ bậc thang phía đông, tiếng hò hét vọng lên: dư nghiệt Huyết Bạc Cung đánh thẳng vào đài, dẫn đầu là một bóng áo xám quen thuộc — Mạc Cửu U. Hắn không hô giết. Hắn hô một câu rất lạ: "Đừng giết nó! Cứ để nó Kết Đan!"' },
-    { who: 'narrate', text: 'Lời ấy làm cả vòng hộ pháp khựng lại một nhịp. Nhưng địch vẫn đang leo lên đài — và ngươi, như lần Trúc Cơ, tuyệt đối không được cất tiếng cho tới khi vận công xong.' }
+    { who: 'narrate', text: 'Lời ấy làm cả vòng hộ pháp khựng lại một nhịp. Nhưng địch vẫn đang leo lên đài — và ngươi, như lần Trúc Cơ, tuyệt đối không được phát hưởng — không đòn cộng hưởng nào, cũng không cất lời thật — cho tới khi vận công xong.' }
   ];
   var KDGUARD_CHOICE = {
     who: 'choice', text: 'Vận công không thể dừng. Ngươi sẽ…',
@@ -1151,7 +1151,7 @@
       { label: 'Ra hiệu cho U Nhàn giữ phía đông', action: 'kdguard_dong' },
       { label: 'Để Hoa Hướng Thần đón đầu kẻ mạnh nhất', action: 'kdguard_hoa' },
       { label: 'Ngồi yên giữ vững tâm thần, mặc kệ khiêu khích', action: 'kdguard_tam' },
-      { label: 'Cất tiếng phá vây — dù phải vỡ vận công', action: 'kdguard_voice' }
+      { label: 'Phát hưởng phá vây — dù phải vỡ vận công', action: 'kdguard_voice' }
     ]
   };
   var SCENE_KDGUARD1 = [
@@ -1163,7 +1163,7 @@
     KDGUARD_CHOICE
   ];
   var SCENE_KDGUARD3 = [
-    { who: 'narrate', text: 'Đợt cuối: Mạc Cửu U tự mình bước lên ba bậc thang, dừng lại ở đúng tầm tiếng nói có thể chạm tới, và nói vọng lên đài: "Hét đi chứ, Hồn Sư. Hay là lần này, cái giá của một tiếng hét đã đắt hơn lần trước?"' },
+    { who: 'narrate', text: 'Đợt cuối: Mạc Cửu U tự mình bước lên ba bậc thang, dừng lại ở đúng tầm một đòn cộng hưởng có thể chạm tới, và nói vọng lên đài: "Ra đòn đi chứ, Hồn Sư. Hay là lần này, cái giá của một lần phát hưởng đã đắt hơn lần trước?"' },
     KDGUARD_CHOICE
   ];
   var SCENE_KDGUARD_END = [
@@ -1172,18 +1172,18 @@
   ];
   var SCENE_CH12_TAM_MA = [
     { who: 'narrate', text: 'Vận công tới vòng cuối cùng. Trong tâm thần, kim đan đang thành hình — và đúng lúc ấy, tâm ma tới, mang hình dạng quen thuộc nhất: một thung lũng đầy hoa anh đào, một vòng vây đang siết lại, và tiếng của chính ngươi vang lên từ khắp nơi: "Nói đi. Một lời thôi là cứu được người. Ngươi đã im lặng mười tám năm — còn định im lặng tới bao giờ?"' },
-    { who: 'narrate', text: 'Ngoài đài, cùng lúc ấy, bậc thang phía nam bỗng nứt một mảng đá lớn — trận văn hộ đài đang rạn, và người giữ phía nam đang ở ngay dưới mảng đá ấy. Một lời của ngươi lúc này có thể giữ mảng đá lại. Nhưng vận công đang ở khắc cuối: cất lời, đan sẽ thành nhưng mang một vết. Im lặng, đan trọn vẹn — và người ở phía nam sẽ chịu mảng đá ấy.' }
+    { who: 'narrate', text: 'Ngoài đài, cùng lúc ấy, bậc thang phía nam bỗng nứt một mảng đá lớn — trận văn hộ đài đang rạn, và người giữ phía nam đang ở ngay dưới mảng đá ấy. Một đòn phát hưởng của ngươi lúc này có thể giữ mảng đá lại. Nhưng vận công đang ở khắc cuối: phát hưởng, đan sẽ thành nhưng mang một vết. Giữ yên, đan trọn vẹn — và người ở phía nam sẽ chịu mảng đá ấy.' }
   ];
   var KD_TAMMA_CHOICE = {
     who: 'choice', text: 'Mảng đá đang rơi. Ngươi sẽ…',
     options: [
-      { label: 'Cất lời — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
-      { label: 'Giữ im lặng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
+      { label: 'Phát hưởng — giữ mảng đá lại, cứu người giữ đài', action: 'ketdan_say' },
+      { label: 'Không phát hưởng tới cùng — để đan trọn vẹn', action: 'ketdan_silent' }
     ]
   };
   var SCENE_CH12_TAMMA_SAY = [
     { who: 'hero', mode: 'say', text: 'LÙI LẠI!' },
-    { who: 'narrate', text: 'Tiếng hét phá vỡ chu thiên ở vòng cuối. Sóng âm hất mảng đá lệch đi nửa trượng — người giữ phía nam thoát trong gang tấc. Kim đan trong đan điền vẫn thành hình, nhưng trên mặt đan còn lại một vệt nứt mảnh như tóc — cái giá của một lời nói đúng lúc.' }
+    { who: 'narrate', text: 'Đòn phát hưởng phá vỡ chu thiên ở vòng cuối. Sóng cộng hưởng hất mảng đá lệch đi nửa trượng — người giữ phía nam thoát trong gang tấc. Kim đan trong đan điền vẫn thành hình, nhưng trên mặt đan còn lại một vệt nứt mảnh như tóc — cái giá của một lần phát hưởng đúng lúc.' }
   ];
   var SCENE_CH12_TAMMA_SILENT = [
     { who: 'narrate', text: 'Ngươi không mở miệng. Mảng đá rơi xuống phía nam đài trong tiếng rầm khô khốc — và từ trong bụi đá, người giữ đài bò ra được, vai đẫm máu nhưng còn sống, còn cười được một cái về phía đài: "Đan của sư huynh… đừng vì ta mà hỏng."' },
@@ -1191,18 +1191,18 @@
   ];
   var SCENE_CH12_KET_DAN = [
     { who: 'narrate', text: 'Bầu trời trên Thanh Vân Tông bỗng tối đi một khắc giữa ban ngày. Một cột sáng từ đài phóng thẳng lên, mây tụ thành vòng xoay chậm, và từng tiếng chuông không ai gõ tự vang lên khắp núi.' },
-    { who: 'narrate', text: 'Kim Đan Sơ Kỳ. Ngươi mở mắt ra — thế giới nghe rõ hơn, nhìn xa hơn, và tiếng nói trong ngực ngươi nặng hơn trước gấp bội: từ hôm nay, lời của ngươi không chỉ là tiếng. Nó là LỆNH.' }
+    { who: 'narrate', text: 'Kim Đan Sơ Kỳ. Ngươi mở mắt ra — thế giới nghe rõ hơn, nhìn xa hơn, và tai nghe của ngươi sâu hơn trước gấp bội: từ hôm nay, ngươi nghe được cả sóng đứng và độ lệch tần của vạn vật. Vạn Âm Cộng Hưởng của ngươi đã thành bậc Hưởng.' }
   ];
   var SCENE_CH12_LENH_1 = [
-    { who: 'narrate', text: 'Trưởng lão cho dựng một tấm bia đá mới ở chân đài. Ông nói: "Kim Đan thành rồi, tiếng nói của ngươi đã đổi bậc. Thử đi — không phải hét. Ra lệnh, như ra lệnh cho chính thiên địa quanh ngươi."' },
-    { who: 'truong_lao_tong', text: 'Nói một chữ ĐỊNH vào tấm bia kia. Nếu bia đứng yên tuyệt đối, không rung một hạt bụi, trong khi mặt đất quanh nó nứt ra — là ngươi đã chạm được vào bậc lệnh. Dùng phím 4, như ngươi vẫn dùng các chiêu tiếng nói.' }
+    { who: 'narrate', text: 'Trưởng lão cho dựng một tấm bia đá mới ở chân đài. Ông nói: "Kim Đan thành rồi, cách nghe của ngươi đã đổi bậc. Thử đi — không phải gõ mạnh hơn. Nghe sâu hơn: nghe cho ra sóng đứng của chính thiên địa quanh ngươi."' },
+    { who: 'truong_lao_tong', text: 'Gõ một đòn Định Âm vào tấm bia kia. Nếu bia đứng yên tuyệt đối, không rung một hạt bụi, trong khi mặt đất quanh nó nứt ra — là ngươi đã chạm được vào bậc Hưởng: sóng đứng khóa mọi rung động tại chỗ. Dùng phím 4, như ngươi vẫn dùng các đòn cộng hưởng.' }
   ];
   var SCENE_CH12_LENH_2 = [
-    { who: 'truong_lao_tong', text: 'Bia đứng yên như bị đóng băng giữa trời — tốt. Giờ khó hơn: trận văn quanh đài này đang rạn từ trận đánh lúc nãy. Nói một chữ PHONG — phong ấn vết rạn ấy lại. Phong không phải phá, cũng không phải giữ: là khóa chặt một thứ đang chuyển động thành vĩnh viễn đứng yên. Dùng phím 5.' }
+    { who: 'truong_lao_tong', text: 'Bia đứng yên như bị đóng băng giữa trời — tốt. Giờ khó hơn: trận văn quanh đài này đang rạn từ trận đánh lúc nãy. Gõ một đòn Phong Âm — làm lệch tần của vết rạn ấy để phong ấn nó lại. Phong Âm không phải phá, cũng không phải giữ: là làm một thứ đang chuyển động mất nhịp vận hành của chính nó mà đứng yên. Dùng phím 5.' }
   ];
   var SCENE_CH12_LENH_DONE = [
-    { who: 'narrate', text: 'Vết rạn trên trận văn khép lại dưới một vòng ấn vàng, rồi đứng yên như chưa từng nứt. Cả đài im phăng phắc. Lần dùng lệnh đầu tiên của ngươi không nhắm vào kẻ thù nào — nó giữ yên một góc đài cho những người vừa giữ đài cho ngươi.' },
-    { who: 'truong_lao_tong', text: 'ĐỊNH giữ một nhịp. PHONG khóa hai nhịp. Nhớ lấy giới hạn của chúng — và nhớ cả cái giá: thiên hạ từ nay sẽ nghe lệnh của ngươi, và cũng sẽ sợ lệnh của ngươi. Dùng nó như ngươi đã dùng sự im lặng mười tám năm: chỉ khi thật cần.' },
+    { who: 'narrate', text: 'Vết rạn trên trận văn khép lại dưới một vòng ấn vàng, rồi đứng yên như chưa từng nứt. Cả đài im phăng phắc. Lần dùng bậc Hưởng đầu tiên của ngươi không nhắm vào kẻ thù nào — nó giữ yên một góc đài cho những người vừa giữ đài cho ngươi.' },
+    { who: 'truong_lao_tong', text: 'Định Âm giữ một nhịp. Phong Âm khóa hai nhịp. Nhớ lấy giới hạn của chúng — và nhớ cả cái giá: thiên hạ từ nay sẽ để ý dư âm của ngươi, và cũng sẽ sợ nó. Dùng bậc Hưởng như ngươi đã dùng sự lắng nghe mười tám năm: chỉ khi thật cần.' },
     { who: 'u_nhan', text: 'Phàm ca. Muội hỏi huynh một câu cuối của ngày hôm nay — huynh có hối hận lần nào đã mở miệng, hay lần nào đã im lặng không?' },
     { who: 'hero', mode: 'write', text: '(viết) "Không. Lời nói không nặng vì nó hiếm. Nó nặng vì nói ra rồi, mình phải chịu trách nhiệm với nó mãi. Ta chỉ hối hận nếu một ngày ta nói mà không chịu trách nhiệm nữa."' },
     { who: 'narrate', text: 'Nàng đọc xong, gấp tờ giấy lại rất cẩn thận và cất vào ngực áo — như cất một tờ tự thư khác. Trên đài, chuông tông ngân dài. Một phần đường đã khép lại bằng chữ viết, đúng như nó đã bắt đầu bằng chữ viết.' }
@@ -1288,9 +1288,9 @@
     { who: 'narrate', text: 'Nó không đo ta. Nó nhận ra ta — như gặp lại một người từng đi qua nơi này, từ rất lâu trước khi ta ra đời.' },
     { who: 'narrate', text: 'Cuối sảnh, một tàn ảnh không mặt đứng lặng trước phế thước: hình bóng mờ như khói, không nói, không cử động, chỉ hướng về phía ngươi như đang chờ.' },
     { who: 'narrate', text: 'Không khí trong hầm nặng dần. Tàn ảnh giơ một tay về phía phế thước — chín vạch màu trên thân thước sáng lên lần lượt, rồi tắt dần, như một câu hỏi không lời: ngươi có xếp lại được trật tự của chúng không?' },
-    { who: 'narrate', text: 'Ngươi hiểu ra: cửa vào phòng tàn ảnh nằm sau cửa phế thước kia. Xếp chín mảnh sắc đúng thứ tự thước đã leo — hoặc dùng một lời CHẤN phá cửa, nếu ngươi chấp nhận cái giá của tiếng nói trong nơi này.' },
-    { who: 'narrate', text: 'Phía trên, người giữ tháp vẫn ở tầng ngoài. Ông sẽ nghe thấy tiếng động nếu cửa bị phá — nghe thấy tiếng, nhưng không nghe rõ lời. Một nhân chứng gián tiếp, nhẹ nhất mà vẫn là nhân chứng.' },
-    { who: 'narrate', text: 'Ngươi hít sâu, để Tĩnh Mặc lắng xuống. Tầng sâu này không đòi ngươi mạnh hơn — nó đòi ngươi nhớ rõ mình đã đi qua những vạch nào, và dám đi tiếp khi không còn vạch nào để bám.' },
+    { who: 'narrate', text: 'Ngươi hiểu ra: cửa vào phòng tàn ảnh nằm sau cửa phế thước kia. Xếp chín mảnh sắc đúng thứ tự thước đã leo — hoặc dùng một đòn Chấn Âm phá cửa, nếu ngươi chấp nhận cái giá của dư âm trong nơi này.' },
+    { who: 'narrate', text: 'Phía trên, người giữ tháp vẫn ở tầng ngoài. Ông sẽ nghe thấy tiếng động nếu cửa bị phá — và dư âm của đòn ấy sẽ còn rung lại trong hầm. Một nhân chứng gián tiếp, nhẹ nhất mà vẫn là nhân chứng.' },
+    { who: 'narrate', text: 'Ngươi hít sâu, để Tĩnh Âm lắng xuống. Tầng sâu này không đòi ngươi mạnh hơn — nó đòi ngươi nhớ rõ mình đã đi qua những vạch nào, và dám đi tiếp khi không còn vạch nào để bám.' },
     { who: 'narrate', text: 'Tàn ảnh khẽ nghiêng đầu, như gật. Vạch sáng thứ mười trên phế thước vẫn còn đó, lặng lẽ — dữ kiện chỉ mình ngươi biết, và từ nay cũng là dấu hiệu rằng tầng sâu đã mở mắt với ngươi.' },
     { who: 'narrate', text: 'Từ đây, Tàn Tích tầng sâu là nơi ngươi có thể quay lại mỗi ngày: luyện hồn, đối mặt tàn ảnh, và giữ lấy bí mật mà Thiên Cơ Các đang muốn biết — bí mật về một linh căn không nằm trong chín màu.' }
   ];
@@ -1301,7 +1301,7 @@
     { who: 'truong_lao_tong', text: 'Tông ghi người ấy là niềm xấu hổ bị giấu. Ta không nói thế. Một kiếm tu bị thước đo bỏ sót mà vẫn luyện tới mức kiếm ý còn lại sau khi chết — người như thế, tông nợ họ một dòng sửa trong tàng thư.' },
     { who: 'truong_lao_tong', text: 'Vào được Kiếm Trủng, đi tới mộ thất, thì tông sẽ lặng lẽ sửa lại một dòng trong tàng thư cho tiền bối ấy. Không phải vì ngươi xin — vì có người cuối cùng đã tới được nơi mà hồ sơ nói là không ai tới được.' },
     { who: 'narrate', text: 'Ông đưa ngươi một tấm lệnh bài gỗ đã mòn: "Cầm lấy. Kiếm cắm ở cửa động nhận lệnh bài này thì dạt sang hai bên. Còn kiếm trận trong hành lang — cái đó không nhận lệnh bài, chỉ nhận bước chân vững."' },
-    { who: 'truong_lao_tong', text: 'Nghe kỹ: mộ thất bị tĩnh mặc trấn phong. Muốn mở, hoặc đứng yên trong vòng tròn trước cửa mà thổ nạp đủ lâu — im lặng như tiền bối đã im lặng; hoặc cất một lời phá trấn, và chấp nhận rằng kiếm ý trong động sẽ nhớ lấy tiếng người.' },
+    { who: 'truong_lao_tong', text: 'Nghe kỹ: mộ thất bị tĩnh mặc trấn phong. Muốn mở, hoặc đứng yên trong vòng tròn trước cửa mà thổ nạp đủ lâu — lắng nghe cho thấu như tiền bối đã lắng nghe; hoặc gõ một đòn đối hưởng phá trấn, và chấp nhận rằng kiếm ý trong động sẽ nhớ lấy dư âm ấy.' },
     { who: 'narrate', text: 'Ngươi nắm chặt lệnh bài. Sau núi, nơi từng chỉ có phục kích và dược thảo, nay có thêm một nấm mộ kiếm đang chờ người đo được bằng thước khác — thước của chính mình.' },
     { who: 'truong_lao_tong', text: 'Đi đi. Và nhớ: tiền bối ấy không phải họ hàng của ngươi, cũng không phải sư phụ nào đó chờ nhận đồ đệ. Đừng tự thêu thêm thân phận cho người đã khuất — chỉ cần tới nơi, và đi hết con đường của họ.' },
     { who: 'narrate', text: 'Cửa Kiếm Trủng sau núi đã mở với ngươi. Mỗi ngày, ngươi có thể vào một lượt — qua sảnh kiếm gỉ, hành lang kiếm trận, khoang bia, tới mộ thất nơi kiếm ý tàn hồn đang chờ.' }
@@ -1319,25 +1319,25 @@
     { who: 'de_tu_ho_tong', text: 'Sư huynh, nghe kìa… từ mộ thất vọng ra tiếng gì đó như tiếng thở dài, không phải gió. Ta đi trước soi đường — huynh đi sau, giữ khoảng cách với oán khí, đừng để nó chạm vào thần hồn.' },
     { who: 'narrate', text: 'Hành lang cơ quan nhẹ: đá rơi theo nhịp, từng đợt một, đủ để người cẩn thận đi qua mà không sứt mẻ — và đủ để kẻ vội vàng phải trả giá.' },
     { who: 'narrate', text: 'Qua hậu thất, một tinh anh mộ giữ cửa cuối cùng gục xuống dưới kiếm của ngươi. Trước mặt chỉ còn mộ thất — nơi oán hồn của người chết trận năm xưa đang chờ, chưa yên.' },
-    { who: 'de_tu_ho_tong', text: 'Tới đây thì ta không đi trước nữa đâu, sư huynh. Oán hồn trong kia chỉ nghe được tiếng của người nó chờ — hoặc cảm được hồn lực của người biết trấn an. Huynh chọn đường nào, ta đứng sau lưng huynh mà chứng kiến.' },
-    { who: 'narrate', text: 'Cổ Mộ Hồi Phong đã mở. Từ nay, mỗi ngày ngươi có thể xuống đây một lượt — đọc thư, đi qua ba khoang, và đối mặt với oán hồn bằng lời nói, bằng luyện hồn, hoặc bằng kiếm.' }
+    { who: 'de_tu_ho_tong', text: 'Tới đây thì ta không đi trước nữa đâu, sư huynh. Oán hồn trong kia chỉ đáp lại âm gốc của chính nó — hoặc cảm được hồn lực của người biết trấn an. Huynh chọn đường nào, ta đứng sau lưng huynh mà chứng kiến.' },
+    { who: 'narrate', text: 'Cổ Mộ Hồi Phong đã mở. Từ nay, mỗi ngày ngươi có thể xuống đây một lượt — đọc thư, đi qua ba khoang, và đối mặt với oán hồn bằng đáp âm, bằng luyện hồn, hoặc bằng kiếm.' }
   ];
   var SCENE_BC_HOIPHONG_THU = [
     { who: 'narrate', text: 'Ngươi mở bức thư chưa gửi trên bệ đá. Giấy ố vàng, nét chữ run run — nhưng những dòng trong thư thuộc về một câu chuyện mà người viết chưa kịp gửi đi, nên ngươi không đọc thành lời ở đây.' },
     { who: 'narrate', text: 'Một điều ngươi ghi nhớ chắc chắn, không thể nhầm: tên người chết trong mộ này là Thạch Vạn Quân.' },
-    { who: 'narrate', text: 'Ngươi gấp thư lại, đặt về bệ đá. Cái tên ấy — Thạch Vạn Quân — là chìa khóa để gọi oán hồn, nếu ngươi chọn đường gọi tên. Còn nội dung thư, hãy để tới khi câu chuyện cần tới nó.' }
+    { who: 'narrate', text: 'Ngươi gấp thư lại, đặt về bệ đá. Cái tên ấy — Thạch Vạn Quân — cho ngươi biết phải nghe tìm âm gốc của ai trong đám oán khí, nếu ngươi chọn đường đáp âm. Còn nội dung thư, hãy để tới khi câu chuyện cần tới nó.' }
   ];
   var SCENE_BC_HOIPHONG_TRANTOI = [
-    { who: 'oan_hon', text: 'Thạch Vạn Quân… Đã bao nhiêu năm rồi, mới có người gọi đúng cái tên này.' },
-    { who: 'oan_hon', text: 'Ta chết trận năm ấy, oán khí giữ ta lại nơi này — không phải vì hận, mà vì chưa có ai gọi ta về bằng đúng tên.' },
-    { who: 'oan_hon', text: 'Người trẻ, cảm ơn ngươi đã đọc bức thư chưa gửi và gọi tên ta. Một người chết trận, chỉ cần có thế là đủ để buông kiếm xuống.' },
+    { who: 'oan_hon', text: 'Thạch Vạn Quân… Đã bao nhiêu năm rồi, mới có người gõ trả đúng âm gốc của ta — như gọi đúng tên ta vậy.' },
+    { who: 'oan_hon', text: 'Ta chết trận năm ấy, oán khí giữ ta lại nơi này — không phải vì hận, mà vì chưa có ai đáp lại đúng âm của ta để gọi ta về.' },
+    { who: 'oan_hon', text: 'Người trẻ, cảm ơn ngươi đã đọc bức thư chưa gửi và đáp đúng âm của ta. Một người chết trận, chỉ cần có thế là đủ để buông kiếm xuống.' },
     { who: 'oan_hon', text: 'Ta yên nghỉ đây… Gió trong mộ từ nay sẽ nhẹ hơn. Đi đi, và sống thay cả phần của những kẻ đã nằm xuống…' }
   ];
   var SCENE_C10_SOUL_A = [
     { who: 'narrate', text: 'Tàn Tích tầng sâu sau một thời gian im ắng lại mở cửa với ngươi. Lần này ngươi tới không phải để khám phá — mà để luyện hồn, công khai, như một Hồn Sư đã tự mình nói ra thân phận.' },
     { who: 'narrate', text: 'Phế thước vẫn đứng đó, vạch sáng thứ mười lặng lẽ hiện lên khi ngươi tới gần. Tàn ảnh không mặt nghiêng đầu, như nhận ra người quen.' },
     { who: 'narrate', text: 'Tự mình nói ra — từ nay không còn đêm nào phải luyện trong bóng tối nữa. Hồn lực này là của ta, và ta không giấu nó.' },
-    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Oán khí còn sót trong hầm tan dần dưới hồn lực ấm — không một tiếng động, không một lời nói, chỉ có ánh sáng trong suốt lan ra từ lòng bàn tay.' },
+    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Ngươi nghe hồn khí còn sót trong hầm như nghe một bản nhạc lệch nhịp, rồi chỉnh lại từng dây một. Oán khí tan dần dưới hồn lực ấm — không một tiếng động, không một lời nói, chỉ có ánh sáng trong suốt lan ra từ lòng bàn tay.' },
     { who: 'narrate', text: 'Một lượt luyện hồn khép lại. Thần hồn vững thêm một phần, và phế thước ghi nhận thêm một vạch sáng mờ — dấu vết của một Hồn Sư luyện hồn ngay giữa nơi từng chỉ dành cho người đo dị thường.' },
     { who: 'narrate', text: 'Ngươi đứng dậy, phủi bụi trên áo. Tầng sâu vẫn im lặng như cũ — nhưng sự im lặng này khác: nó là im lặng của người đã chọn nói ra, rồi chọn trở lại với im lặng của riêng mình.' }
   ];
@@ -1345,7 +1345,7 @@
     { who: 'narrate', text: 'Tàn Tích tầng sâu mở cửa với ngươi trong một tâm trạng khác: thân phận Hồn Sư đã bị lộ ra ngoài chợ, bằng cái miệng xấu nhất mà kẻ khác tìm được.' },
     { who: 'narrate', text: 'Phế thước vẫn đứng đó, nhưng vạch sáng thứ mười hiện lên chậm hơn, như dè chừng. Tàn ảnh không mặt quay về phía ngươi, lặng lẽ — nơi này không đồn nhảm, và cũng không hỏi ngươi điều gì.' },
     { who: 'narrate', text: 'Thiên hạ nói thay ta — nhưng hồn lực này vẫn là của ta. Bị lộ không làm nó bẩn đi, cũng không làm nó yếu đi.' },
-    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Oán khí trong hầm cuộn lên một nhịp rồi lắng xuống — như chính những lời đồn ngoài kia, ầm ĩ một lúc rồi cũng phải tan khi gặp thứ thật.' },
+    { who: 'narrate', text: 'Ngươi ngồi xuống trước phế thước, vận hồn lực chậm rãi. Ngươi nghe oán khí trong hầm lệch nhịp như một bản nhạc sai dây, rồi để hồn lực chỉnh nó lắng lại từng chút. Oán khí cuộn lên một nhịp rồi lắng xuống — như chính những lời đồn ngoài kia, ầm ĩ một lúc rồi cũng phải tan khi gặp thứ thật.' },
     { who: 'narrate', text: 'Một lượt luyện hồn khép lại trong im lặng. Thần hồn vững thêm một phần, và điều quan trọng hơn: ngươi vừa luyện hồn mà không cần xin phép ai, không cần thanh minh với ai.' },
     { who: 'narrate', text: 'Ngươi đứng dậy, bước lên cầu thang về phía ánh sáng. Ngoài kia, lời đồn vẫn còn — nhưng trong này, ngươi đã có một nơi để trở về, mỗi ngày một lượt, cho tới khi sự thật tự nó đứng vững.' }
   ];

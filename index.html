@@ -65,7 +65,7 @@
           <div class="bar"><div id="hud-tuvi-bar" class="bar-fill tuvi"></div></div>
           <b id="hud-tuvi">0 / 100</b>
         </div>
-        <div class="bar-row"><span>Tĩnh Mặc</span>
+        <div class="bar-row"><span>Tĩnh Âm</span>
           <div class="bar"><div id="hud-silence-bar" class="bar-fill silence"></div></div>
           <b id="hud-silence">100 / 100</b>
         </div>
@@ -129,23 +129,23 @@
     <!-- Cụm nút chiến đấu VÒNG CUNG ở góc dưới phải (Mục G đợt vá
          2026-11-02, lệnh Bui 19:44): nút ĐÁNH lớn làm tâm ở góc dưới
          phải, các nút kỹ năng xếp thành vòng cung quanh nó — cung ngoài
-         là 5 nút chiến đấu (PHÁ / CHẤN / Kiếm quyết / ĐỊNH / PHONG),
+         là 5 nút chiến đấu (Phá Âm / Chấn Âm / Kiếm quyết / Định Âm / Phong Âm),
          cung trong là 3 nút phụ (Thổ nạp / Đột phá / Tương tác). Mọi
          nút giữ nguyên id, phím hiển thị, trạng thái khóa/mở và handler
          cũ — chỉ bố cục hiển thị đổi. Nút ĐÁNH gọi đúng đường đánh
          thường hiện có (castSword — đòn kiếm vật lý không tốn Tĩnh
-         Mặc, cùng đường của nút Kiếm quyết / phím 3) và có thêm phím
+         Âm, cùng đường của nút Kiếm quyết / phím 3) và có thêm phím
          tắt phụ J; không một hành vi chiến đấu nào thay đổi. -->
     <div id="skillbar">
-      <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-name">PHÁ</span></button>
-      <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-name">CHẤN</span></button>
-      <button class="sk" id="sk-sword" type="button"><span class="sk-key">3</span><span class="sk-name">Kiếm quyết</span></button>
-      <button class="sk" id="sk-dinh" type="button"><span class="sk-key">4</span><span class="sk-name">ĐỊNH</span></button>
-      <button class="sk" id="sk-phong" type="button"><span class="sk-key">5</span><span class="sk-name">PHONG</span></button>
-      <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-name">Thổ nạp</span></button>
-      <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-name">Đột phá</span></button>
-      <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-name">Tương tác</span></button>
-      <button class="sk sk-attack" id="sk-attack" type="button"><span class="sk-key">J</span><span class="sk-name">ĐÁNH</span></button>
+      <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M2 12c1.8-6.5 3.7-6.5 5.5 0 1.5 5.4 3 6.2 5 1.4"/><path d="M16.6 8.4l2.1-1.9M17.3 12h3.4M16.6 15.6l2.1 1.9"/></svg></span><span class="sk-name">Phá Âm</span></button>
+      <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="3.1"/><circle cx="12" cy="12" r="7.1"/><path d="M12 1.9v2.1M12 20v2.1M1.9 12h2.1M20 12h2.1M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/></svg></span><span class="sk-name">Chấn Âm</span></button>
+      <button class="sk" id="sk-sword" type="button"><span class="sk-key">3</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 2.2l2.3 2.8v8.2h-4.6V5z"/><path d="M12 5.2v8M7.4 15.3h9.2M12 15.3v3.5"/><circle cx="12" cy="20.4" r="1.2"/></svg></span><span class="sk-name">Kiếm quyết</span></button>
+      <button class="sk" id="sk-dinh" type="button"><span class="sk-key">4</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4.6 3.8v16.4M19.4 3.8v16.4"/><path d="M7.6 12c1-5 2-5 3 0s2 5 3 0 2-5 2.8 0"/></svg></span><span class="sk-name">Định Âm</span></button>
+      <button class="sk" id="sk-phong" type="button"><span class="sk-key">5</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="6" y="3.6" width="12" height="13.4" rx="1.6"/><circle cx="12" cy="10.2" r="2.3"/><path d="M12 7.9V6.4M12 12.5v1.5M9.7 10.2H8.2M15.8 10.2h-1.5M9.2 17v2.9M14.8 17v2.9"/></svg></span><span class="sk-name">Phong Âm</span></button>
+      <button class="sk" id="sk-med" type="button"><span class="sk-key">T</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 12.1c.9.1 1.4-.5 1.2-1.2-.2-1-1.4-1.4-2.3-.8-1.3.9-1.2 3 .2 4 1.9 1.3 4.5.3 5.2-1.9.8-2.6-1-5.3-3.7-5.7-3.4-.5-6.3 2.1-6.5 5.5-.2 3.8 3 6.9 6.9 7"/></svg></span><span class="sk-name">Thổ nạp</span></button>
+      <button class="sk" id="sk-break" type="button"><span class="sk-key">B</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5.4 9.2a7.6 7.6 0 1 0 13.2 0"/><path d="M12 19.2V5M7.9 8.6L12 4.5l4.1 4.1"/></svg></span><span class="sk-name">Đột phá</span></button>
+      <button class="sk" id="sk-interact" type="button"><span class="sk-key">E</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 4.2h14a1.7 1.7 0 0 1 1.7 1.7v7.9a1.7 1.7 0 0 1-1.7 1.7h-7.4L7.2 19.6v-4.1H5a1.7 1.7 0 0 1-1.7-1.7V5.9A1.7 1.7 0 0 1 5 4.2z"/><circle cx="8.3" cy="9.9" r="1.05" fill="currentColor" stroke="none"/><circle cx="12" cy="9.9" r="1.05" fill="currentColor" stroke="none"/><circle cx="15.7" cy="9.9" r="1.05" fill="currentColor" stroke="none"/></svg></span><span class="sk-name">Tương tác</span></button>
+      <button class="sk sk-attack" id="sk-attack" type="button"><span class="sk-key">J</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3.6 19.6c4.6 1.3 9.8.1 13.3-3.2" stroke="#7fe8e0" stroke-width="2.1"/><path d="M5.2 15.4c3.4.7 7-.3 9.6-2.6" stroke="#7fe8e0" stroke-width="1.7" opacity="0.75"/><g stroke="#ffd94e" stroke-width="2.4"><path d="M19.2 2.6L10.6 11.2"/><path d="M19.2 2.6l.9 3.9-3.4-1z"/><path d="M8.2 9.8l4.2 4.2M10.9 13.1l-1.2 3.9M6.4 15.2l1.9 1.9"/></g></svg></span><span class="sk-name">ĐÁNH</span></button>
     </div>
 
     <div id="settings-panel" class="hidden" role="dialog" aria-label="Cài đặt">
@@ -168,7 +168,7 @@
         <label class="set-row"><span>Tiếng động môi trường</span><input id="set-ambience" type="checkbox"></label>
         <label class="set-row"><span>Âm lượng môi trường</span><input id="set-ambiencevol" type="range" min="0" max="100" step="5"></label>
         <div class="set-sec">Hình ảnh</div>
-        <label class="set-row"><span>Rung màn hình khi dùng Ngôn Linh</span><input id="set-shake" type="checkbox"></label>
+        <label class="set-row"><span>Rung màn hình khi dùng Vạn Âm Cộng Hưởng</span><input id="set-shake" type="checkbox"></label>
         <label class="set-row"><span>Vòng sóng âm</span><input id="set-rings" type="checkbox"></label>
         <label class="set-row"><span>Hạt linh khí và hào quang</span><input id="set-particles" type="checkbox"></label>
         <label class="set-row"><span>Tên + danh hiệu trên đầu</span><input id="set-names" type="checkbox"></label>
