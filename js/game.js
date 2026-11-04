@@ -198,6 +198,32 @@
       src.connect(g); g.connect(AC.destination); src.start(t0);
     } catch (e) { /* im lặng */ }
   }
+  /* WHOOSH — tiếng gió rít của lưỡi kiếm vung (đợt walk2, giai đoạn hai):
+     nhiễu qua lọc thông dải quét tần — tiếng vung cũ là hai nốt răng cưa
+     tĩnh (sfxSword bản trước) nghe như tiếng bíp, không phân biệt nổi
+     chiêu. Cùng kỷ luật cổng 'skill' và trần gain từng lớp như toneWave. */
+  function whoosh(dur, f0, f1, gain, delay, q) {
+    if (SET && SET.sfxAllowed && !SET.sfxAllowed('skill')) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (!AC.createBuffer || !AC.createBufferSource || !AC.createBiquadFilter) return;
+      var scale = SET && SET.gainScale ? SET.gainScale() : 1;
+      var len = Math.max(1, Math.floor(AC.sampleRate * dur));
+      var buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+      var src = AC.createBufferSource(); src.buffer = buf;
+      var flt = AC.createBiquadFilter(); flt.type = 'bandpass'; flt.Q.value = q || 1.1;
+      var t0 = AC.currentTime + (delay || 0);
+      flt.frequency.setValueAtTime(Math.max(40, f0), t0);
+      flt.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t0 + dur);
+      var g = AC.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(Math.min(0.14, gain || 0.08) * scale, t0 + dur * 0.35);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(flt); flt.connect(g); g.connect(AC.destination);
+      src.start(t0); src.stop(t0 + dur + 0.03);
+    } catch (e) { /* im lặng */ }
+  }
   function lockNote(freq, gain, dur, delay) { toneWave({ f0: freq || 420, dur: dur || 0.09, type: 'sine', gain: gain == null ? 0.05 : gain, delay: delay || 0 }); }
   function resBaseFreqForMonster(m) {
     if (!m) return 420;
@@ -265,9 +291,39 @@
     setTimeout(function () { sfxBell(); }, notes.length * 140 + 60);
   }
   // Kiếm quyết: tiếng xé gió hai nhịp, sắc và ngắn — khác hẳn tiếng lời nói.
-  function sfxSword() { beep(1180, 0.08, 'sawtooth', 0.03, 'skill'); setTimeout(function () { beep(760, 0.12, 'sawtooth', 0.035, 'skill'); }, 45); }
+  /* Tiếng VUNG KIẾM theo chiêu (đợt walk2 giai đoạn hai — lệnh Bui
+     11:49 "tiếng đánh nhau rõ ràng"): mỗi chiêu một dải gió rít riêng
+     nghe phân biệt được; bản cũ hai nốt răng cưa tĩnh cho mọi chiêu.
+     Đòn chờ nhịp hai (Liên Hoàn) có tiếng vung hai trễ đúng 120ms khớp
+     thời điểm áp sát thương nhịp hai. */
+  function sfxSword(move) {
+    if (move === 'lien_hoan') { whoosh(0.10, 1000, 2800, 0.095, 0, 1.2); whoosh(0.10, 900, 2400, 0.085, 0.12, 1.2); return; }
+    if (move === 'pha_quan') { whoosh(0.26, 420, 1500, 0.13, 0, 0.9); toneWave({ f0: 160, f1: 60, dur: 0.2, type: 'triangle', gain: 0.06 }); return; }
+    if (move === 'quy_nhat') { whoosh(0.34, 500, 3200, 0.10, 0, 1.4); toneWave({ f0: 880, f1: 1760, dur: 0.3, type: 'sine', gain: 0.03 }); return; }
+    if (move === 'huyen_tinh_tram') { whoosh(0.22, 700, 2400, 0.10, 0, 1.2); toneWave({ f0: 1180, f1: 2360, dur: 0.18, type: 'sine', gain: 0.025 }); return; }
+    whoosh(0.16, 800, 2600, 0.11, 0, 1.15); toneWave({ f0: 1400, f1: 2400, dur: 0.1, type: 'sine', gain: 0.018 });
+  }
   // Hồn lực (chương 5): âm trầm lạnh hai lớp, trầm và dài — không giống bất kỳ âm nào khác.
   function sfxSoul() { beep(196, 0.7, 'sine', 0.05, 'skill'); setTimeout(function () { beep(147, 0.9, 'sine', 0.045, 'skill'); }, 160); setTimeout(function () { beep(294, 0.5, 'sine', 0.025, 'skill'); }, 320); }
+  /* Tiếng BƯỚC CHÂN (đợt sửa walk2 tiếp — engine trước đây thiếu hẳn):
+     tiếng chạm đất ngắn và nhẹ, hai chân lệch cao độ nhẹ để nghe ra nhịp
+     trái/phải; mặt 'da' (sàn đá: trấn thành, tông môn, tháp, các bí
+     cảnh...) thêm tiếng gõ trong và khô, mặt 'dat' (đất/cỏ ngoài trời)
+     trầm và mềm hơn. Gain giữ ~0,02-0,03 — dưới xa tiếng vung kiếm
+     (0,09-0,13) để không bao giờ át tiếng đánh. Kích hoạt tại đúng
+     khung chạm đất trong khối cập nhật bước (xem lastStepPhaseSfx). */
+  var stepSfxN = 0, stepAlt = false, lastStepPhaseSfx = 0;
+  function stepSurface() {
+    var m = (state && state.map) || '';
+    if (m.indexOf('bc_') === 0) return 'da';
+    return (m === 'co_chau' || m === 'thanh_van_tong' || m === 'kiem_trac_thap' ||
+            m === 'thap_noi' || m === 'thien_co_lau' || m === 'dai_dau_kiem') ? 'da' : 'dat';
+  }
+  function sfxStep(surface, alt) {
+    noiseBurst(0.05, surface === 'da' ? 0.020 : 0.027);
+    toneWave({ f0: alt ? 99 : 88, f1: 54, dur: 0.06, type: 'triangle', gain: 0.020 });
+    if (surface === 'da') toneWave({ f0: 1750, f1: 1150, dur: 0.022, type: 'sine', gain: 0.006 });
+  }
   // Gió xé qua đài cao (chương 7-8): hai nốt sine TRƯỢT XUỐNG 800->300 và
   // 600->240 Hz, gain thấp — beep() không trượt tần được nên đi thẳng WebAudio
   // qua cùng cổng cài đặt 'skill' như mọi âm sự kiện khác.
@@ -828,6 +884,25 @@
   ASSETS.atk = { nam: loadImg('assets/chars/player_nam-atk.png'), nu: loadImg('assets/chars/player_nu-atk.png'),
     namKc: loadImg('assets/chars/player_nam-atk-kiemchi.png'), nuKc: loadImg('assets/chars/player_nu-atk-kiemchi.png'),
     namPq: loadImg('assets/chars/player_nam-pq.png'), nuPq: loadImg('assets/chars/player_nu-pq.png') };
+  /* Lớp trình diễn kiếm + ngự kiếm (đợt sửa walk2 tiếp — lệnh Bui 16:13
+     2026-11-04): sheet bay (đứng trên kiếm) và sprite kiếm rời cho hai
+     trạng thái đeo sau lưng / bay lơ lửng bên cạnh; xem swordStateNow. */
+  ASSETS.fly = { nam: loadImg('assets/chars/player_nam-fly.png'), nu: loadImg('assets/chars/player_nu-fly.png') };
+  ASSETS.swordLoose = loadImg('assets/chars/sword-loose.png');
+  /* Bản SẠCH (không có kiếm trên lưng) của sheet đi bộ + pháp quyết —
+     đợt fix4: ở trạng thái bay lơ lửng ('hover') kiếm đã rời lưng bay
+     bên cạnh nên thân phải vẽ bằng bản sạch, kẻo thành HAI kiếm cùng
+     lúc; bản sạch là đúng sheet trước đợt nướng (cùng khổ, cùng bố cục
+     ô). Bản sạch chưa nạp kịp thì tạm không vẽ kiếm bay (giữ nguyên bao
+     kiếm trên lưng như trạng thái 'back'). Chỉ người chơi dùng; NPC
+     dùng sheet thường vì họ không có trạng thái bay lơ lửng. */
+  ASSETS.charsClean = { player_nam: loadImg('assets/chars/player_nam-clean.png'), player_nu: loadImg('assets/chars/player_nu-clean.png') };
+  ASSETS.pqClean = { nam: loadImg('assets/chars/player_nam-pq-clean.png'), nu: loadImg('assets/chars/player_nu-pq-clean.png') };
+  /* Sprite kiếm TRONG BAO (assets/chars/sword-sheathed.png — bao sơn mài
+     sẫm, chi tiết đồng, dây đỏ; đợt fix3) từ đợt fix4 là NGUỒN NƯỚNG:
+     bao kiếm đã được nướng vào từng khung của sheet đi bộ + pháp quyết
+     kèm dây đeo chéo (tools-walk2/fix4/bake_sword.py) nên engine không
+     nạp/vẽ nó như sprite rời nữa. */
   // Chân dung thoại (gói phụ 4): cắt từ khung mặt trước của chính tấm
   // hình từng look (assets/portraits) — nạp trước cùng đợt để đổi người
   // nói là ảnh hiện ngay, không nhấp nháy tải.
@@ -914,14 +989,23 @@
     // nhanh hơn thân đi ~35%, đúng cảm giác "lướt" Bui báo nặng nhất
     // ở hướng xuống. Sau: 25,7/24,7 -> nhịp dọc ~4,9-5,1, khóa với
     // ngang. Sáu hướng ngang/chéo giữ nguyên số Mục D 2026-11-02.
-    player_nam: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8],
-    // player_nu[7] (xuống-trái) 18,9 -> 21,9: đợt VẼ LẠI ĐI BỘ 2026-11-03 —
-    // hàng xuống-trái của sheet mới là phản chiếu thật của xuống-phải nên
-    // sải bằng đúng xuống-phải (21,9); số cũ 18,9 xuất thân từ hàng hỏng
-    // trộn thiết kế của sheet trước (đo khung cha mới:
-    // tools/work/walk-redraw/report.md mục 6). Mọi hằng số khác giữ nguyên.
-    player_nu: [24.7, 21.9, 24.7, 25.9, 24.7, 21.2, 24.7, 21.9],
-    _default: [25.7, 16.3, 25.7, 17.5, 25.7, 18.4, 25.0, 19.8]
+    // ĐỢT LÀM LẠI DI CHUYỂN walk2 (2026-11-04, lệnh Bui 11:46 "không bị
+    // gò bó — làm di chuyển như video"): sheet MỚI 25 cột (chu kỳ 24
+    // khung) dựng từ tư thế cha thật + mảnh chân cắt thật đặt theo quỹ
+    // đạo bước có pha chống tuyến tính (khóa chân theo thiết kế).
+    // STRIDE_DIR nay THỐNG NHẤT một giá trị cho cả 8 hướng của mỗi nhân
+    // vật: quãng đường mặt đất của một bước là đại lượng theo mặt đất,
+    // không phụ thuộc góc nhìn — các giá trị chéo cũ mã hóa độ tách
+    // CHIẾU của giày nên nhịp chéo vọt tới ~8 bước/giây so với ~5 ở
+    // hướng thẳng (một nguồn gây cảm giác giật). Giá trị suy từ sải vẽ
+    // thật của chu kỳ mới: sải ngang vẽ S (nam 43,7px sheet, nữ 47,3px
+    // sheet — đo từ mảnh chân của hàng ngang) / (2 bước × pha chống
+    // 0,52 × 96/64) = S/1,56 -> nam 28,0, nữ 30,3 px thế giới/bước;
+    // nhịp ở 132px/s: nam ~4,7, nữ ~4,4 bước/giây, khớp nhịp ~4
+    // bước/giây đo từ clip mẫu mau-2 của Bui.
+    player_nam: [28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0],
+    player_nu: [30.3, 30.3, 30.3, 30.3, 30.3, 30.3, 30.3, 30.3],
+    _default: [28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0]
   };
   var BOB_AMP = 2.0;     // biên độ nhún thân (px thế giới): thân hạ +2,0 ở tiếp đất, nâng -2,0 ở qua giữa
   var BOB_AMP_VERT = 3.2; // biên độ nhún RIÊNG cho hướng dọc (dir8 0/4): chân bị tà áo che nên nhịp nhún là tín hiệu bước chính của hướng dọc — tăng lên 3,2 để bước đọc được (bổ sung 2026-11-03)
@@ -2003,18 +2087,63 @@
         ctx.fillText(d.s.text, gx + 16, gy + 9.5);
       } else if (d.kind === 'player') {
         var look = state.gender === 'nu' ? 'player_nu' : 'player_nam';
-        ctx.fillStyle = 'rgba(24,34,18,0.28)';
-        ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var bf = (typeof bodyFrameNow === 'function') ? bodyFrameNow() : null;
+        var swState = (typeof swordStateNow === 'function') ? swordStateNow(bf) : 'back';
+        // Bóng tiếp xúc: neo thị giác của điểm chạm đất — luôn ôm sát
+        // chân và KHÔNG nhún theo thân (tiêu chí chạm đất, Bui 16:13
+        // 2026-11-04). Khi cưỡi kiếm bay bóng nhỏ và nhạt đi nhưng vẫn
+        // giữ đúng điểm đất dưới chân.
+        if (swState === 'ride') {
+          ctx.fillStyle = 'rgba(24,34,18,0.16)';
+          ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 11, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(24,34,18,0.28)';
+          ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        }
         var plim = ASSETS.chars[look], pTop;
+        var flyIm = ASSETS.fly && ASSETS.fly[state.gender === 'nu' ? 'nu' : 'nam'];
+        if (swState === 'ride' && imgReady(flyIm)) {
+          // Cưỡi kiếm: sheet bay riêng (kiếm dưới chân trong sheet),
+          // thân nâng khỏi mặt đất, bóng đất giữ nguyên ở dưới.
+          var flyCol = moving ? Math.floor(tNow / 110) % 5 : 0;
+          ctx.drawImage(flyIm, flyCol * 96, dir8 * 120, 96, 120, px + 16 - 32, py + 32 - 80 - 20, 64, 80);
+          pTop = py + 32 - 80 - 20;
+          labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
+          return;
+        }
         if (imgReady(plim)) {
           // Sheet mới: hàng dir8, cột = pha bước 1..4 (đứng yên cột 0).
           // Sheet cũ: hàng DIR_ROW theo facing, cột = pha%2 khi đi, 0 khi đứng.
           var psrc = charSrc(look, plim, facing, dir8, moving ? stepPhase : 0, moving ? stepPhase % 2 : 0);
-          var bf = (typeof bodyFrameNow === 'function') ? bodyFrameNow() : null;
-          if (bf) { ctx.drawImage(bf.im, bf.x, bf.y, 96, 120, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80); pTop = py + 32 - 80 + walkBobY; labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' }); return; }
+          // Kiếm đeo sau lưng ĐÃ NƯỚNG vào từng khung của sheet đi bộ và
+          // sheet pháp quyết (đợt fix4 — Bui 22:49 ngày 2026-11-04: kiếm
+          // rời vẽ bằng một phép biến đổi cố định theo hàng không áp sát
+          // lưng từng tư thế, đọc như dán nổi): engine không còn vẽ kiếm
+          // rời cho trạng thái 'back'. Chỉ trạng thái bay lơ lửng
+          // ('hover') còn vẽ kiếm trần rời, ở các điểm SAU thân dưới đây.
+          var swCx = px + 16, swCy = py + 32 - 40 + walkBobY;
+          var hoverOn = swState === 'hover';
+          if (bf) {
+            var bim = bf.im;
+            if (hoverOn) {
+              // Khung pháp quyết + kiếm bay bên cạnh: dùng sheet pq SẠCH.
+              var cpq = ASSETS.pqClean && ASSETS.pqClean[state.gender === 'nu' ? 'nu' : 'nam'];
+              if (imgReady(cpq)) bim = cpq; else hoverOn = false;
+            }
+            ctx.drawImage(bim, bf.x, bf.y, 96, 120, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
+            if (hoverOn) drawLooseSword(swCx, swCy, dir8, 'hover');
+            pTop = py + 32 - 80 + walkBobY; labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' }); return;
+          }
           // Nhún thân theo pha bước (walkBobY): chỉ dời HÌNH VẼ theo chiều
           // dọc, bóng chân và ô logic giữ nguyên trên mặt đất.
-          ctx.drawImage(plim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
+          var wim = plim;
+          if (hoverOn) {
+            // Đi/đứng + kiếm bay bên cạnh: dùng sheet đi bộ SẠCH.
+            var cwk = ASSETS.charsClean && ASSETS.charsClean[look];
+            if (imgReady(cwk)) wim = cwk; else hoverOn = false;
+          }
+          ctx.drawImage(wim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
+          if (hoverOn) drawLooseSword(swCx, swCy, dir8, 'hover');
           pTop = py + 32 - 80 + walkBobY;
         } else {
           // Ảnh chưa tải: sprite lưới theo hướng chính gần nhất của dir8, khung 1 khi đi / 0 khi đứng.
@@ -7066,9 +7195,16 @@
   });
 
   /* ----- Âm thanh chạm đích / quái / rơi đồ (họ tiếng mới của đợt) ----- */
-  function sfxHitBeast(v) { v = v || 1; beep(160 * v, 0.08, 'sine', 0.05, 'skill'); beep(95 * v, 0.06, 'sawtooth', 0.022, 'skill'); }
-  function sfxHitBlade(v) { v = v || 1; beep(2400 * v, 0.03, 'square', 0.02, 'skill'); beep(150 * v, 0.06, 'sine', 0.04, 'skill'); }
-  function sfxCrit() { beep(1320, 0.12, 'sine', 0.045, 'skill'); beep(1980, 0.1, 'sine', 0.028, 'skill'); }
+  /* Tiếng TRÚNG ĐÒN lên thân quái (đợt walk2 giai đoạn hai): "thụp"
+     trầm ngắn + vỡ nhiễu — bản cũ hai nốt sine/răng cưa nhỏ (0,05/0,022)
+     nghe như tiếng gõ mờ, lẫn vào nhạc nền. */
+  function sfxHitBeast(v) { v = v || 1; noiseBurst(0.06, 0.045); toneWave({ f0: 150 * v, f1: 60, dur: 0.11, type: 'triangle', gain: 0.11 }); beep(90 * v, 0.07, 'sine', 0.05, 'skill'); }
+  /* Tiếng LƯỠI KIẾM CHẠM ĐÍCH (đợt walk2 giai đoạn hai): tíc nhiễu sắc
+     + thụp tam giác + leng keng kim loại mỏng — bản cũ square 2400Hz
+     gain 0,02 gần như không nghe thấy. Phát ĐÚNG khung áp sát thương
+     (điểm gọi đã bỏ trễ 30ms — xem applyHitToMonster). */
+  function sfxHitBlade(v) { v = v || 1; noiseBurst(0.05, 0.05); toneWave({ f0: 210 * v, f1: 75, dur: 0.09, type: 'triangle', gain: 0.105 }); beep(2500 * v, 0.035, 'sine', 0.028, 'skill'); }
+  function sfxCrit() { noiseBurst(0.08, 0.04); toneWave({ f0: 1560, f1: 2340, dur: 0.12, type: 'sine', gain: 0.05 }); beep(1320, 0.12, 'sine', 0.045, 'skill'); beep(1980, 0.1, 'sine', 0.028, 'skill'); beep(2600, 0.06, 'square', 0.02, 'skill'); }
   function sfxMonsterCry(species, death) {
     var def = L.MONSTER_DEFS[species] || {};
     var f = def.cry || 420;
@@ -7076,14 +7212,14 @@
     if (death) { beep(f * 0.6, 0.15, 'square', 0.03, 'skill'); }
     else beep(f, 0.07, 'square', 0.026, 'skill');
   }
-  function sfxKill() { beep(90, 0.12, 'triangle', 0.055, 'skill'); beep(58, 0.1, 'sine', 0.04, 'skill'); }
+  function sfxKill() { toneWave({ f0: 320, f1: 55, dur: 0.38, type: 'triangle', gain: 0.10 }); noiseBurst(0.18, 0.035, 0.02); beep(55, 0.25, 'sine', 0.06, 'skill'); }
   function sfxDropRare() { [659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.16, 'sine', 0.032, 'skill'); }, i * 70); }); }
   function sfxRoar(short) {
     var d = short ? 0.3 : 0.7;
     beep(65, d, 'sawtooth', 0.06, 'skill'); beep(47, d, 'triangle', 0.05, 'skill');
     if (!short) setTimeout(function () { beep(46, 0.3, 'sawtooth', 0.04, 'skill'); }, 420);
   }
-  function sfxHurt() { beep(110, 0.09, 'triangle', 0.05, 'skill'); }
+  function sfxHurt() { toneWave({ f0: 200, f1: 95, dur: 0.13, type: 'triangle', gain: 0.09 }); noiseBurst(0.05, 0.03); }
   /* ----- Âm thanh đợt bí cảnh + hệ cày (làn C, danh mục effects-catalog
      mục 9 — đúng 12 tên chốt, qua cổng beep như các họ tiếng hiện có) ----- */
   function sfxBoardAccept() { beep(520, 0.09, 'sine', 0.04, 'ui'); setTimeout(function () { beep(780, 0.12, 'sine', 0.04, 'ui'); }, 80); }
@@ -7549,7 +7685,7 @@
     var r = L.castSword(state, mv.id);
     if (!r.ok) { toast(r.reason); return; }
     faceMonster(m);
-    sfxSword();
+    sfxSword(mv.id);
     // Điểm kiếm quyết: +2 cho mỗi LẦN GỌI chiêu thành công trong trận
     // (Liên Hoàn hai đòn vẫn chỉ là một lần gọi — cùng luật đếm với
     // trận Thăng Long Đạo của cốt truyện).
@@ -7618,6 +7754,13 @@
     opts = opts || {};
     streaks.push({ x: x, y: y, ang: ang, t: 0, dur: big ? 0.55 : 0.45, col: col || '170,230,255', big: !!big,
       scale: opts.scale || 1, guard: opts.guard || null, core: opts.core || null, thick: opts.thick || 0, swordFx: true,
+      // arc (đợt walk2 giai đoạn hai — lệnh Bui 11:48 bỏ "hình kiếm bay
+      // ra" cho đòn kiếm NGƯỜI CHƠI): vệt được vẽ bằng drawArcSlash —
+      // cung mỏng ôm quỹ đạo lưỡi đang vung, không chuôi/quai/tán kiếm,
+      // không đọc thành thanh kiếm rời. Chỉ các điểm gọi của người chơi
+      // trong presentSwordHit/presentHuyenTinh truyền arc:true; vệt của
+      // boss/quái và cộng hưởng giữ nguyên renderer hình kiếm cũ.
+      arc: !!opts.arc,
       // opts của lớp hiệu ứng boss (gộp đợt boss-fx): wave = biên độ lệch
       // sin vuông góc lúc trượt (vệt sóng nước Thủy Xà); flick = alpha
       // nhấp nháy mất-hiện (trảo ảnh Tàn Ảnh); alpha = hệ số mờ tổng
@@ -7733,9 +7876,33 @@
     ctx.restore(); ctx.globalAlpha = 1;
   }
   function shadeCol(col, k) { var a = String(col).split(','); return Math.round(+a[0] * k) + ',' + Math.round(+a[1] * k) + ',' + Math.round(+a[2] * k); }
+  /* Cung chém mỏng cho đòn kiếm NGƯỜI CHƠI (đợt walk2 giai đoạn hai):
+     chỉ lưỡi cong thon (dùng lại streakBladePath với bề dày ~4,5% dài)
+     + một sợi lõi sáng — tuyệt đối không vẽ quai/chuôi/tán. */
+  function drawArcSlash(cx, cy, ang, L, col, core, alpha) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha)) * 0.9;
+    ctx.fillStyle = 'rgb(' + col + ')';
+    streakBladePath(L, Math.max(2.2, L * 0.045)); ctx.fill();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.strokeStyle = 'rgb(' + core + ')'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.quadraticCurveTo(0, -L * 0.02, L / 2, 0); ctx.stroke();
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
   function drawStreaks() {
     streaks.forEach(function (st) {
       if (st.delay > 0) return; // boss-fx: vệt đang chờ nhịp lao nối tiếp (Kiếm Ý mở màn) — chưa hiện
+      if (st.arc) { // vệt cung của người chơi: ngắn (ôm lưỡi đang vung), trượt ít, một bóng mờ bám đuôi
+        var ka = st.t / st.dur, aa = Math.sin(Math.min(1, ka) * Math.PI);
+        if (st.alpha != null) aa *= st.alpha;
+        var La = (st.big ? 92 : 64) * (st.scale || 1);
+        var ha = (ka - 0.5) * La * 0.2;
+        var cax = st.x + Math.cos(st.ang) * ha, cay = st.y + Math.sin(st.ang) * ha;
+        var coreA = st.core || '235,245,255';
+        drawArcSlash(cax - Math.cos(st.ang) * 9, cay - Math.sin(st.ang) * 9, st.ang, La * 0.94, st.col, coreA, aa * 0.16);
+        drawArcSlash(cax, cay, st.ang, La, st.col, coreA, Math.max(0.2, aa));
+        return;
+      }
       var k = st.t / st.dur, a = Math.sin(Math.min(1, k) * Math.PI);
       if (st.alpha != null) a *= st.alpha; // boss-fx: mờ tổng (vệt trảo khói của Oán Hồn)
       if (st.flick) a *= (Math.sin(st.t * 46) > -0.25 ? 1 : 0.12); // boss-fx: trảo ảnh nhấp nháy mất-hiện hai lần trong lúc trượt
@@ -7832,9 +7999,76 @@
       var acc = 0, col = sg.cols[sg.cols.length - 1];
       for (var j = 0; j < sg.cols.length; j++) { if (el < acc + sg.durs[j]) { col = sg.cols[j]; break; } acc += sg.durs[j]; }
       var im = ASSETS.atk[sg.sheet]; if (!imgReady(im)) return null;
-      return { im: im, x: col * 96, y: sg.row * 120 };
+      return { im: im, x: col * 96, y: sg.row * 120, sheet: sg.sheet };
     }
     return null;
+  }
+  /* Lớp trình diễn KIẾM của người chơi (đợt sửa walk2 tiếp — lệnh Bui
+     16:13 2026-11-04): ba trạng thái chuyển sạch — không bao giờ hai
+     kiếm cùng lúc, không bao giờ mất kiếm:
+       'hand'  — khung thân kiếm chỉ/gốc đang chạy: kiếm nằm trong sheet
+                 tấn công, không vẽ kiếm rời. Khung pháp quyết (pq) vẫn
+                 tính là không cầm kiếm: kiếm đeo lưng nằm trong chính
+                 sheet pq (đã nướng, đợt fix4).
+       'ride'  — đã mở ngự kiếm VÀ đang bay (cờ flags.flyRiding): vẽ
+                 sheet bay, kiếm ở dưới chân trong chính sheet đó.
+       'hover' — đã mở ngự kiếm (flags.flyLearned hoặc flags.flyStage>=2,
+                 theo hồ sơ docs/ngukiem-prep/ đã duyệt): kiếm lơ lửng
+                 bay bên cạnh, nhún và nghiêng theo nhịp; thân vẽ bằng
+                 BẢN SẠCH của sheet (không kiếm nướng trên lưng) kẻo
+                 thành hai kiếm (đợt fix4).
+       'back'  — mặc định: đeo chéo sau lưng, thấy ở đứng yên và đi bộ;
+                 trình diễn ĐÃ NƯỚNG vào từng khung sheet đi bộ kèm dây
+                 đeo (đợt fix4), engine không vẽ sprite rời cho trạng
+                 thái này nữa.
+     Chuỗi nhiệm vụ ngự kiếm tự thân thuộc đợt tích hợp riêng — lớp này
+     chỉ ĐỌC cờ mở khóa hiện có, không tự đặt cờ. */
+  function flyUnlocked() { return !!(state && state.flags && (state.flags.flyLearned || (state.flags.flyStage | 0) >= 2)); }
+  function flyRiding() { return flyUnlocked() && !!(state.flags && state.flags.flyRiding); }
+  function swordStateNow(bf) {
+    if (bf && bf.sheet !== 'namPq' && bf.sheet !== 'nuPq') return 'hand';
+    if (flyRiding()) return 'ride';
+    if (flyUnlocked()) return 'hover';
+    return 'back';
+  }
+  // Vẽ sprite kiếm TRẦN rời quanh điểm neo thân (cx, cy = tâm hình vẽ
+  // nhân vật) — CHỈ còn dùng cho trạng thái bay lơ lửng bên cạnh (mode
+  // 'hover'): kiếm dựng lơ lửng ở phía trái theo hướng nhìn, nhún sin
+  // theo thời gian. Trạng thái đeo sau lưng ('back') KHÔNG vẽ ở đây
+  // nữa: từ đợt fix4 bao kiếm đã nướng vào từng khung của sheet đi bộ
+  // + pháp quyết kèm dây đeo (tools-walk2/fix4/bake_sword.py), bám
+  // theo bề mặt lưng của chính khung đó.
+  function drawLooseSword(cx, cy, row, mode) {
+    var im = ASSETS.swordLoose;
+    if (!imgReady(im)) return;
+    var t = tNow / 1000;
+    ctx.save();
+    if (mode === 'hover') {
+      var ang = [Math.PI / 2, Math.PI / 4, 0, -Math.PI / 4, -Math.PI / 2, -3 * Math.PI / 4, Math.PI, 3 * Math.PI / 4][row] || 0;
+      var fx = Math.cos(ang), fy = Math.sin(ang);
+      // phía trái của nhân vật theo hướng nhìn (tay trái nhất quán)
+      var lx = Math.cos(ang - Math.PI / 2), ly = Math.sin(ang - Math.PI / 2);
+      var bobH = Math.sin(t * 2.6) * 2.6;
+      var gx, gy, dx, dy;
+      if (row === 2 || row === 6) {
+        // Hướng ngang thuần: trục "bên trái" chiếu thành phía trên màn
+        // hình — công thức cũ dựng kiếm đứng ngay trên đầu như ngọn
+        // nến (soi khung clip đợt sửa tiếp phát hiện). Đặt kiếm sau
+        // vai, mũi chĩa về trước-xuống như thế sẵn sàng: đọc rõ là
+        // kiếm bay BÊN CẠNH người.
+        gx = cx - fx * 20; gy = cy - 14 + bobH;
+        dx = fx; dy = 0.55;
+      } else {
+        gx = cx + lx * 24 - fx * 4; gy = cy - 12 + ly * 8 + bobH;
+        dx = fx; dy = fy;
+      }
+      var nl = Math.hypot(dx, dy) || 1; dx /= nl; dy /= nl;
+      ctx.translate(gx, gy);
+      ctx.rotate(Math.atan2(dx, -dy) + Math.sin(t * 2.2) * 0.06);
+    }
+    // neo xoay tại chuôi kiếm trong sprite (48,76)/(96,120) -> (32,51)
+    ctx.drawImage(im, -32, -51, 64, 80);
+    ctx.restore();
   }
   function startSwordBody(move, hitAtAbs, secondHitAtAbs) {
     var kc = state && state.gender === 'nu' ? 'nuKc' : 'namKc';
@@ -7869,7 +8103,7 @@
     if (move === 'pha_quan') {
       var n = P >= 4 ? 7 : 5, sang = ang;
       for (var i = 0; i < n; i++) { var off = (i - (n - 1) / 2) * 26; spawnStar(tx + Math.cos(sang) * off, ty + Math.sin(sang) * off - 6, '150,200,255', '235,245,255', 0.95, i * 0.02, 0.5); }
-      spawnStreak(tx, ty - 12, sang, colBody, true, { scale: P_SCALE[P] });
+      spawnStreak(tx, ty - 12, sang, colBody, true, { scale: P_SCALE[P], arc: true });
       addFloat(tx, ty - 34, 'PHÁ QUÂN!', '150,200,255');
       shakeWorld(0.35); hitStop(0.06);
       beep(660, 0.1, 'sine', 0.03, 'skill'); setTimeout(function () { beep(98, 0.15, 'triangle', 0.07, 'skill'); }, 40);
@@ -7881,7 +8115,7 @@
       for (var q = 0; q < 7; q++) {
         miniSwords.push({ x0: tx + (BEIDOU[q][0] - 50), y0: ty - 55 + (BEIDOU[q][1] - 31) * 0.62, x1: tx, y1: ty - 8, t: -q * 0.012, dur: 0.15, L: 54, body: '150,200,255', core: '235,245,255', guard: '45,70,110' });
       }
-      spawnStreak(tx, ty - 12, ang, colBody, true, { scale: 1.3 });
+      spawnStreak(tx, ty - 12, ang, colBody, true, { scale: 1.3, arc: true });
       addFloat(tx, ty - 40, 'QUY NHẤT!', '150,200,255');
       shakeWorld(crit ? 0.6 : 0.35);
       for (var qi = 0; qi < 7; qi++) setTimeout((function (k) { return function () { beep(Math.round(1318 * Math.pow(1.135, k)), 0.07, 'sine', 0.04, 'skill'); }; })(qi), qi * 15);
@@ -7896,9 +8130,9 @@
         if (P >= 3) for (var e = 0; e < P_STARS[P] - 3; e++) spawnStar(tx - 18 + e * 18, ty - 40, '150,200,255', '235,245,255', 0.7, e * 0.03, 0.4);
         addFloat(tx, ty - 34, 'LIÊN HOÀN!', '150,200,255');
         lienFirstHitPos = { x: tx, y: ty };
-        spawnStreak(tx, ty - 12, ang + 0.5, colBody, false, { scale: P_SCALE[P] });
+        spawnStreak(tx, ty - 12, ang + 0.5, colBody, false, { scale: P_SCALE[P], arc: true });
       } else {
-        spawnStreak(tx, ty - 12, Math.PI - (ang + 0.5), colBody, false, { scale: P_SCALE[P] }); // kiếm 2 phản gương, khép X
+        spawnStreak(tx, ty - 12, Math.PI - (ang + 0.5), colBody, false, { scale: P_SCALE[P], arc: true }); // cung 2 phản gương, khép X
         if (lienFirstHitPos) constFx.push({ cx: (lienFirstHitPos.x + tx) / 2, cy: (lienFirstHitPos.y + ty) / 2 - 12, w: 2, pts: [], lines: [], col: '90,140,220', lineCol: '90,140,220', core: '235,245,255', t: 0, dur: 0.2, spin: 0, seg: [lienFirstHitPos.x, lienFirstHitPos.y - 12, tx, ty - 12] });
       }
       spawnStarBurst(tx, ty, Math.ceil(P_BURST[P] / 2), '150,200,255', '235,245,255');
@@ -7908,7 +8142,7 @@
     spawnStar(px + 30, py - 14, '150,200,255', '235,245,255', 0.9, 0, 0.4);
     if (P >= 2) for (var a2 = 1; a2 < P_STARS[P]; a2++) spawnStar(px + 16 + (a2 - (P_STARS[P] - 1) / 2) * 13, py - 34 - Math.abs(a2 - (P_STARS[P] - 1) / 2) * -3, '150,200,255', '235,245,255', 0.7, a2 * 0.025, 0.4);
     if (P >= 4) spawnConstellation(tx, ty - 20, 46, BEIDOU, BEIDOU_LINES, '150,200,255', '90,140,220', '235,245,255', 0.3, 0);
-    spawnStreak(tx, ty - 12, ang, colBody, crit, { scale: P_SCALE[P] });
+    spawnStreak(tx, ty - 12, ang, colBody, crit, { scale: P_SCALE[P], arc: true });
     spawnStarBurst(tx, ty, P_BURST[P], '150,200,255', '235,245,255');
   }
   /* --- Huyền Tinh Trảm (đặc tả fx/huyen-tinh-tram-spec.md) --- */
@@ -7920,7 +8154,7 @@
     HUYENCAU.forEach(function (pt, i) { spawnStar(tx + (pt[0] - 50) * 1.1, ty - 58 + (pt[1] - 31) * 0.68, '110,122,240', '216,222,255', 1.0, (4 - i) * -0.025, 0.55); });
     constFx.push({ cx: tx, cy: ty - 58, w: 110, pts: HUYENCAU, lines: HUYENCAU_LINES, col: '110,122,240', lineCol: '94,84,205', core: '216,222,255', t: 0, dur: 0.55, spin: 0 });
     // kiếm L=221px bay dọc xương sống chòm (đoạn 2->3->4): big 170 x 1,30
-    spawnStreak(tx, ty - 12, ang, crit ? '255,226,150' : '110,122,240', true, { scale: 1.30, guard: '36,30,84', core: '216,222,255' });
+    spawnStreak(tx, ty - 12, ang, crit ? '255,226,150' : '110,122,240', true, { scale: 1.30, guard: '36,30,84', core: '216,222,255', arc: true });
     addFloat(tx, ty - 42, 'HUYỀN TINH TRẢM!', '168,176,255');
     shakeWorld(0.35);
     spawnStarBurst(tx, ty, 8, '110,122,240', '216,222,255'); // 8 sao bốn cánh chàm
@@ -9407,12 +9641,13 @@
     if (crit) col = '255,205,84';
     addDmgFloat(m.x + 16, m.y - 6, '-' + dmg + (crit ? '!' : ''), col,
       { size: crit ? 24 : (isWord ? 25 : 18), pop: crit, delay: isWord ? 0.09 : 0, targetKey: 'mon:' + m.species + ':' + m.lairX + ':' + m.lairY });
-    // Tiếng chạm đích trễ 30ms sau tiếng vung, biến thể cao độ xoay vòng.
+    // Tiếng chạm đích phát ĐÚNG khung áp sát thương (đợt walk2 giai
+    // đoạn hai — lệnh Bui 11:49: tiếng trúng khớp khung trúng, không
+    // sớm không muộn; bản cũ trễ 30ms sau số sát thương). Biến thể cao
+    // độ xoay vòng giữ nguyên.
     var variant = nextHitVariant();
-    setTimeout(function () {
-      if (opts.kind === 'sword') sfxHitBlade(variant); else sfxHitBeast(variant);
-      if (crit) sfxCrit();
-    }, 30);
+    if (opts.kind === 'sword') sfxHitBlade(variant); else sfxHitBeast(variant);
+    if (crit) sfxCrit();
     if (m.cryT <= 0) { m.cryT = 0.3; sfxMonsterCry(m.species, false); }
     if (m.bossId) updateBossBar(m);
     if (m.hp <= 0) killMonster(m, opts);
@@ -11105,11 +11340,30 @@
           while (stepAcc >= thr) { stepAcc -= thr; stepPhase = stepPhase % cyc + 1; }
         }
         var contPhase = ((stepPhase - 1) + stepAcc / thr) / cyc;
-        walkBobY = ((dir8 === 0 || dir8 === 4) ? BOB_AMP_VERT : BOB_AMP) * Math.cos(4 * Math.PI * contPhase);
+        // [KHAI BÁO — đợt sửa walk2 tiếp, tiêu chí chạm đất của Bui 16:13
+        // 2026-11-04] Sheet đi bộ hiện tại (2400px, 25 cột) đã NUNG nhún
+        // thân vào riêng lớp THÂN trong builder (chân không rời mặt đất),
+        // nên nhún engine phải TẮT với sheet này: cộng cả hai thì bàn
+        // chân bị nhấc khỏi điểm tiếp đất/bóng chân mỗi nhịp = "lơ
+        // lửng". Sheet cũ (khổ nhỏ hơn) vẫn dùng nhún engine như trước.
+        // [KHAI BÁO — đợt walk2 sửa tiếp] Hằng số gắn với chính sheet
+        // đang giao thay cho phép đo khổ ảnh (không đọc được khổ thật
+        // trong harness kiểm thử): sheet đi bộ người chơi hiện tại đã
+        // nung nhún nên nhún engine TẮT; đợt nào thay sheet không nung
+        // nhún thì đổi hằng số này và khôi phục tiền đề §31B/§31E.
+        var PLAYER_BOB_BAKED = true;
+        walkBobY = PLAYER_BOB_BAKED ? 0 : ((dir8 === 0 || dir8 === 4) ? BOB_AMP_VERT : BOB_AMP) * Math.cos(4 * Math.PI * contPhase);
+        // Tiếng bước chân (đợt sửa walk2 tiếp): phát đúng khung chạm đất
+        // — pha 1 và pha 1+nửa chu kỳ, cùng điểm tiếp đất của khóa chân;
+        // không phát khi đang bay (flyRiding) vì chân không chạm đất.
+        if (stepPhase !== lastStepPhaseSfx) {
+          if ((stepPhase - 1) % (cyc / 2) === 0 && !flyRiding()) { sfxStep(stepSurface(), stepAlt); stepAlt = !stepAlt; stepSfxN++; }
+          lastStepPhaseSfx = stepPhase;
+        }
         walkFrame = stepPhase % 2;
         state.silence = L.silenceGain('walk', dt, state.silence);
       } else {
-        walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; walkBobY = 0;
+        walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; walkBobY = 0; lastStepPhaseSfx = 0;
         state.silence = L.silenceGain('idle', dt, state.silence);
       }
       // thổ nạp tại điểm linh khí của bản đồ hiện tại (phím T giữ, hoặc chốt từ thanh kỹ năng)
@@ -13089,7 +13343,16 @@
     bobY: function () { return walkBobY; },
     stridePerFrame: function () { return stridePerFrame(); },
     cycleFrames: function () { return walkCycleFrames(); },
-    strideGroup: function () { return strideGroupOf(dir8); }
+    strideGroup: function () { return strideGroupOf(dir8); },
+    // Tay nắm kiểm chứng lớp kiếm + tiếng bước chân (đợt sửa walk2
+    // tiếp): đọc trạng thái kiếm hiện tại, bật/tắt cờ ngự kiếm trong
+    // harness (chuỗi nhiệm vụ thật thuộc đợt tích hợp riêng), đếm số
+    // tiếng bước chân đã phát.
+    swordState: function () { return swordStateNow((typeof bodyFrameNow === 'function') ? bodyFrameNow() : null); },
+    setFlyLearned: function (on) { state.flags = state.flags || {}; state.flags.flyLearned = !!on; if (!on) state.flags.flyStage = 0; },
+    setFlyRiding: function (on) { state.flags = state.flags || {}; state.flags.flyRiding = !!on; },
+    stepSfxCount: function () { return stepSfxN; },
+    stepSurface: function () { return stepSurface(); }
   };
 
   /* Tay nắm kiểm chứng cho cảnh đo (gói I): người đang được ghim tại đá
