@@ -908,7 +908,37 @@
     var pts = [{ x: 35, y: 52, r: 3 }, { x: 35, y: 13, r: 3 }, { x: 8, y: 48, r: 3 },
       { x: 35, y: 0, r: 2 }, { x: 35, y: 55, r: 2 }]
       .concat(npcPoints(TOWER_NPCS)).concat(signPoints(TOWER_SIGNS));
-    return props.concat(scatterTrees(TOWER_GRID, TOWER_W, TOWER_H, 'cay_t', 37, null, 1, makeAvoid(pts, propRects(props))));
+    return props.concat(scatterTrees(TOWER_GRID, TOWER_W, TOWER_H, 'cay_t', 37, null, 1, makeAvoid(pts, propRects(props)))).concat([
+      /* Đợt làm giàu hình ảnh tháp 2026-11-04: vật thể trang trí bố cục
+         lại sân tháp (trụ cổng bắc, lư hương đài, đèn đá dọc trục, bia
+         cổng nam, anh đào hai góc bắc, góc thiền tây nam, bồn hoa bốn
+         góc sân). Nối SAU scatter để 47 cây rải hạt 37 giữ nguyên vị
+         trí; mọi footprint khai thật, không đè neo nhiệm vụ/cổng/NPC. */
+      { id: 'tru_cua_bac_a', type: 'gate_pillar', x: 31, y: 1, w: 2, h: 3, fx: 2, fy: 1, name: 'Trụ Cổng Tháp' },
+      { id: 'tru_cua_bac_b', type: 'gate_pillar', x: 39, y: 1, w: 2, h: 3, fx: 2, fy: 1, name: 'Trụ Cổng Tháp' },
+      { id: 'lu_huong_dai_a', type: 'lu_huong', x: 32, y: 6, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đài Thước' },
+      { id: 'lu_huong_dai_b', type: 'lu_huong', x: 39, y: 6, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đài Thước' },
+      { id: 'den_truc_a', type: 'lantern2', x: 33, y: 19, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'den_truc_b', type: 'lantern2', x: 38, y: 19, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'den_truc_c', type: 'lantern2', x: 33, y: 35, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'den_truc_d', type: 'lantern2', x: 38, y: 35, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'den_truc_e', type: 'lantern2', x: 33, y: 47, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'den_truc_f', type: 'lantern2', x: 38, y: 47, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Ven Đường' },
+      { id: 'bia_cong_nam_a', type: 'stele_small', x: 31, y: 50, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Nhỏ Cổng Nam' },
+      { id: 'bia_cong_nam_b', type: 'stele_small', x: 40, y: 50, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Nhỏ Cổng Nam' },
+      { id: 'dao_tay_bac', type: 'sakura_big', x: 17, y: 2, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'dao_dong_bac', type: 'sakura_big', x: 54, y: 2, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'thong_thien_a', type: 'pine2', x: 4, y: 43, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_thien_a', type: 'lantern_low', x: 6, y: 46, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'den_thien_b', type: 'lantern_low', x: 11, y: 46, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'ghe_thien', type: 'bench_stone', x: 11, y: 49, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_thien_a', type: 'flower_bush', x: 5, y: 51, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_thien_b', type: 'flower_bush', x: 12, y: 50, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_san_a', type: 'flower_bush', x: 15, y: 15, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_san_b', type: 'flower_bush', x: 56, y: 15, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_san_c', type: 'flower_bush', x: 15, y: 49, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hoa_san_d', type: 'flower_bush', x: 56, y: 49, w: 1, h: 1, fx: 1, fy: 1 }
+    ]);
   })();
 
   /* ---- Nội thất tháp 40x30 ---- */
@@ -932,7 +962,13 @@
     { id: 'den_noi_a', type: 'lantern', x: 6, y: 4, w: 1, h: 2, fx: 1, fy: 1 },
     { id: 'den_noi_b', type: 'lantern', x: 32, y: 4, w: 1, h: 2, fx: 1, fy: 1 },
     { id: 'den_noi_c', type: 'lantern', x: 6, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
-    { id: 'den_noi_d', type: 'lantern', x: 32, y: 24, w: 1, h: 2, fx: 1, fy: 1 }
+    { id: 'den_noi_d', type: 'lantern', x: 32, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    /* Đợt làm giàu hình ảnh tháp 2026-11-04: lư hương hai bên thước
+       lớn + ghế đá chờ hai phía sảnh (footprint khai thật). */
+    { id: 'lu_huong_sanh_a', type: 'lu_huong', x: 16, y: 5, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Sảnh Tháp' },
+    { id: 'lu_huong_sanh_b', type: 'lu_huong', x: 23, y: 5, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Sảnh Tháp' },
+    { id: 'ghe_sanh_a', type: 'bench_stone', x: 8, y: 20, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'ghe_sanh_b', type: 'bench_stone', x: 31, y: 20, w: 1, h: 1, fx: 1, fy: 1 }
   ];
 
   /* ---- Thanh Vân Tông 124x92 ---- */
