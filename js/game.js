@@ -434,6 +434,90 @@
         col: col || '148,163,184', r: 4 + Math.random() * 5 });
     }
   }
+  /* Đợt cảnh vật map boss (04/11): hạt môi trường theo bản đồ cho các
+     không gian đánh boss — sương thác/hang, bụi đá, khói lạnh mộ, khói
+     hương đài đấu, lá trôi bãi phục kích. Dùng ĐÚNG họ hạt sẵn có (khói
+     của spawnSmoke, chấm/lá trong parts) và ngân sách chung MAX_PARTS,
+     không hệ thống mới. Chỉ phát khi hiệu ứng bật và người chơi ở gần
+     điểm neo (<= 40 ô ngang / 30 ô dọc); nhịp 0,25 giây/lượt rà, mỗi
+     điểm neo tối đa ~1 hạt/giây nên tổng hạt sống đồng thời của lớp này
+     luôn dưới ~15. */
+  var AMB_SCENERY = {
+    bc_thuyliem: [
+      { x: 21, y: 3, kind: 'smoke', col: '190,220,255', rate: 0.9, spread: 5 },
+      { x: 10, y: 16, kind: 'dot', col: '150,200,255', rate: 0.8, spread: 6 },
+      { x: 32, y: 16, kind: 'dot', col: '150,200,255', rate: 0.8, spread: 6 },
+      { x: 14, y: 12, kind: 'drip', period: 0.9, spread: 0 },
+      { x: 30, y: 19, kind: 'drip', period: 1.3, spread: 0 },
+      { x: 36, y: 10, kind: 'drip', period: 1.1, spread: 0 },
+      { x: 20, y: 27, kind: 'mote', col: '235,242,255', rate: 1.1, spread: 2 },
+      { x: 12, y: 26, kind: 'dot', col: '170,210,245', rate: 0.5, spread: 2 },
+      { x: 24, y: 19, kind: 'dot', col: '170,210,245', rate: 0.5, spread: 2 }],
+    bc_tapha: [
+      { x: 19, y: 5, kind: 'dot', col: '210,205,190', rate: 0.7, spread: 6 },
+      { x: 19, y: 24, kind: 'dot', col: '210,205,190', rate: 0.5, spread: 5 },
+      { x: 24, y: 15, kind: 'dot', col: '200,205,210', rate: 0.45, spread: 2 }],
+    bc_tapsau: [
+      { x: 19, y: 5, kind: 'dot', col: '185,185,205', rate: 0.7, spread: 6 },
+      { x: 20, y: 11, kind: 'smoke', col: '150,170,200', rate: 0.35, spread: 1 },
+      { x: 20, y: 11, kind: 'drip', period: 1.4, spread: 0 }],
+    bc_kiemtrung: [
+      { x: 23, y: 4, kind: 'smoke', col: '170,190,220', rate: 0.55, spread: 6 },
+      { x: 23, y: 20, kind: 'dot', col: '200,230,255', rate: 0.6, spread: 7 },
+      { x: 23, y: 10, kind: 'drip', period: 1.6, spread: 0 }],
+    bc_kiemtrung_sau: [
+      { x: 22, y: 5, kind: 'smoke', col: '170,190,220', rate: 0.6, spread: 5 },
+      { x: 22, y: 5, kind: 'dot', col: '170,150,255', rate: 0.55, spread: 3 },
+      { x: 22, y: 10, kind: 'drip', period: 1.5, spread: 0 }],
+    bc_hoiphong_mo: [
+      { x: 25, y: 5, kind: 'smoke', col: '160,210,190', rate: 0.55, spread: 6 },
+      { x: 25, y: 32, kind: 'dot', col: '205,200,185', rate: 0.5, spread: 5 },
+      { x: 23, y: 10, kind: 'drip', period: 1.2, spread: 0 }],
+    dai_dau_kiem: [
+      { x: 16, y: 5, kind: 'smoke', col: null, rate: 0.55, spread: 1 },
+      { x: 25, y: 5, kind: 'smoke', col: null, rate: 0.55, spread: 1 },
+      { x: 20, y: 14, kind: 'dot', col: '215,210,200', rate: 0.55, spread: 8 }],
+    duong_mon: [
+      { x: 43, y: 52, kind: 'smoke', col: '180,190,180', rate: 0.35, spread: 5 },
+      { x: 43, y: 52, kind: 'leaf', col: '120,160,80', rate: 0.5, spread: 6 }],
+    hb_valley: [
+      { x: 49, y: 13, kind: 'leaf', col: '120,160,80', rate: 0.6, spread: 6 },
+      { x: 49, y: 14, kind: 'dot', col: '205,200,185', rate: 0.45, spread: 5 }]
+  };
+  var ambSceneryT = 0, ambClock = 0;
+  function spawnAmb(e) {
+    var wx = (e.x + (Math.random() * 2 - 1) * (e.spread || 3)) * TILE + 16;
+    var wy = (e.y + (Math.random() * 2 - 1) * 1.5) * TILE + 16;
+    if (e.kind === 'smoke') { spawnSmoke(wx, wy, 1, e.col || undefined); return; }
+    if (parts.length >= MAX_PARTS) return;
+    if (e.kind === 'leaf') parts.push({ kind: 'leaf', x: wx, y: wy, vx: 6 + Math.random() * 12, vy: 3 + Math.random() * 7, life: 2.4, t: 0, col: e.col, r: 2.4, rot: Math.random() * 6.28, vr: 2 });
+    else if (e.kind === 'drip') parts.push({ x: e.x * TILE + 16, y: e.y * TILE + 4, vx: 0, vy: 55, life: 0.55, t: 0, col: '170,215,255', r: 1.8 });
+    else if (e.kind === 'mote') parts.push({ kind: 'petal', x: wx, y: wy, vx: 2 + Math.random() * 3, vy: 4 + Math.random() * 4, life: 3, t: 0, col: e.col, r: 1.7, rot: Math.random() * 6.28, vr: 0.6, sw: Math.random() * 6.28 });
+    else parts.push({ x: wx, y: wy, vx: (Math.random() - 0.5) * 6, vy: -4 - Math.random() * 6, life: 1.8, t: 0, col: e.col, r: 1.6 });
+  }
+  function updateAmbScenery(dt) {
+    if (!state || !fxOn()) return;
+    var list = AMB_SCENERY[state.map];
+    if (!list) return;
+    ambSceneryT -= dt;
+    if (ambSceneryT > 0) return;
+    ambSceneryT = 0.25;
+    ambClock += 0.25;
+    var pt = playerTile();
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (Math.abs(pt.x - e.x) > 40 || Math.abs(pt.y - e.y) > 30) continue;
+      // 'drip' phát theo NHỊP cố định (period giây, ghi mốc riêng trên
+      // từng điểm neo); các loại khác phát theo xác suất rate/giây.
+      if (e.period) {
+        if (ambClock >= (e._nx || 0)) { spawnAmb(e); e._nx = ambClock + e.period * (0.9 + Math.random() * 0.2); }
+        continue;
+      }
+      if (Math.random() >= e.rate * 0.25) continue;
+      spawnAmb(e);
+    }
+  }
+
   function fadeTransition(cb) {
     if (fade.phase !== 'idle') { if (cb) cb(); return; }
     fade.phase = 'out'; fade.t = 0; fade.cb = cb || null;
@@ -705,7 +789,12 @@
        chính rock_l_a) và cửa đá tàn tích trong sảnh tháp (bia đá lớn) —
        trước đây hai loại này không có trong PROP_TYPES nên cổng vô hình
        dù vẫn tương tác được. */
-    'bc_gate', 'cua_tan_tich', 'kiem_cum'];
+    'bc_gate', 'cua_tan_tich', 'kiem_cum',
+    /* Đợt cảnh vật map boss (04/11): măng đá hang ướt, cột cờ tông môn,
+       quan tài đá cổ mộ, thân cây cổ gãy — sprite riêng trong
+       assets/props, sản xuất bằng cùng đường ống khử nền magenta.
+       Vòng 2 (mở rộng toàn hang): tinh thể phát sáng + nấm phát sáng. */
+    'mang_da', 'cot_co', 'quan_tai_da', 'cay_gay', 'tinh_the', 'nam_phat_sang'];
   var ASSETS = { bgByMap: {}, chars: {}, portraits: {}, props: {}, mons: {}, monsWhite: {}, monsBad: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
@@ -10728,6 +10817,7 @@
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
     updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
+    updateAmbScenery(dtW); // đợt cảnh vật map boss: hạt môi trường theo bản đồ (tôn trọng dừng hình như mọi hạt)
     // Mờ chuyển cảnh: out -> chạy callback ở điểm tối nhất -> in.
     if (fade.phase === 'out') {
       fade.t = Math.min(1, fade.t + dt / 0.3);

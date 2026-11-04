@@ -1618,6 +1618,153 @@
   MAPS.thap_noi.props.push({ id: 'cua_tan_tich', type: 'cua_tan_tich', x: 3, y: 26, w: 2, h: 2, fx: 2, fy: 1, name: 'Cửa Tàn Tích Dưới Tháp', interact: true });
   MAPS.thanh_van_tong.props.push({ id: 'bc_gate_kiemtrung', type: 'kiem_cum', x: 97, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Chắn Động', interact: true });
   MAPS.hb_valley.props.push({ id: 'bc_gate_hoiphong', type: 'bc_gate', x: 54, y: 16, w: 2, h: 2, fx: 2, fy: 1, name: 'Cửa Hồi Phong Cổ Mộ', interact: true });
+  /* Đợt cảnh vật map boss (lệnh Bui 03:56 ngày 2026-11-04 "Map boss thêm
+     cảnh vật để sinh động hơn"): trang trí theo bản sắc từng không gian
+     đánh boss — chỉ THÊM prop, không đổi tọa độ neo truyện/trận, không
+     đổi lưới. Mọi footprint đã qua kiểm vị trí trên lưới thật (ô chân đi
+     được, không đè prop/cổng/điểm sinh/ô đứng tương tác, ngoài vùng cấm
+     quanh boss + ô đợt quái + vùng phục kích): xem
+     docs/boss-map-scenery-report.md. Bốn loại prop mới của đợt:
+     mang_da (măng đá hang ướt), cot_co (cột cờ tông môn),
+     quan_tai_da (quan tài đá cổ mộ), cay_gay (thân cây cổ gãy). */
+  MAPS.bc_thuyliem.props.push(
+    { id: 'bm_tl_mang1', type: 'mang_da', x: 3, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_mang2', type: 'mang_da', x: 39, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_mang3', type: 'mang_da', x: 13, y: 7, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_mang4', type: 'mang_da', x: 28, y: 8, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_rock1', type: 'rock_m', x: 6, y: 9, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_tl_rock2', type: 'rock_s', x: 34, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_tl_reeds1', type: 'reeds', x: 6, y: 13, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_reeds2', type: 'reeds', x: 28, y: 18, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_mang5', type: 'mang_da', x: 34, y: 25, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_tl_rock3', type: 'rock_s', x: 15, y: 24, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_tapha.props.push(
+    { id: 'bm_th_stele1', type: 'stele_small', x: 13, y: 4, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_th_stele2', type: 'stele_small', x: 24, y: 4, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_th_plat', type: 'stone_platform', x: 14, y: 7, w: 3, h: 2, fx: 3, fy: 1 },
+    { id: 'bm_th_rock1', type: 'rock_s', x: 28, y: 7, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_th_bones', type: 'bones', x: 31, y: 3, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_th_rock2', type: 'rock_m', x: 6, y: 17, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_th_stele3', type: 'stele_small', x: 33, y: 11, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_th_rock3', type: 'rock_s', x: 24, y: 17, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_th_bones2', type: 'bones', x: 34, y: 25, w: 2, h: 1, fx: 2, fy: 1 });
+  MAPS.bc_tapsau.props.push(
+    { id: 'bm_ts_lant1', type: 'lantern_low', x: 13, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_ts_lant2', type: 'lantern_low', x: 25, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_ts_stele1', type: 'stele_small', x: 12, y: 7, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_ts_stele2', type: 'stele_small', x: 26, y: 7, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_ts_bones', type: 'bones', x: 8, y: 3, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_ts_rock1', type: 'rock_m', x: 32, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_ts_lant3', type: 'lantern_low', x: 34, y: 16, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_ts_rock2', type: 'rock_s', x: 7, y: 13, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_kiemtrung.props.push(
+    { id: 'bm_kt_kiem1', type: 'kiem_cum', x: 8, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_kiem2', type: 'kiem_cum', x: 36, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_kiem3', type: 'kiem_cum', x: 13, y: 4, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_kiem4', type: 'kiem_cum', x: 31, y: 4, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_stele', type: 'stele', x: 16, y: 2, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_bones', type: 'bones', x: 39, y: 5, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_kt_kiem5', type: 'kiem_cum', x: 19, y: 13, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_rock1', type: 'rock_s', x: 40, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_kt_kiem6', type: 'kiem_cum', x: 6, y: 20, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_kiem7', type: 'kiem_cum', x: 40, y: 22, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kt_bones2', type: 'bones', x: 15, y: 31, w: 2, h: 1, fx: 2, fy: 1 });
+  MAPS.bc_kiemtrung_sau.props.push(
+    { id: 'bm_kts_kiem1', type: 'kiem_cum', x: 15, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kts_kiem2', type: 'kiem_cum', x: 27, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kts_stele1', type: 'stele_small', x: 15, y: 8, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kts_stele2', type: 'stele_small', x: 27, y: 8, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kts_rock1', type: 'rock_s', x: 10, y: 20, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_kts_kiem3', type: 'kiem_cum', x: 13, y: 27, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_kts_kiem4', type: 'kiem_cum', x: 28, y: 26, w: 2, h: 2, fx: 2, fy: 1 });
+  MAPS.bc_hoiphong_mo.props.push(
+    { id: 'bm_hp_coffin1', type: 'quan_tai_da', x: 17, y: 4, w: 3, h: 2, fx: 3, fy: 1 },
+    { id: 'bm_hp_coffin2', type: 'quan_tai_da', x: 30, y: 4, w: 3, h: 2, fx: 3, fy: 1 },
+    { id: 'bm_hp_stele', type: 'stele', x: 44, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_hp_lant1', type: 'lantern_low', x: 14, y: 8, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_hp_lant2', type: 'lantern_low', x: 36, y: 7, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_hp_bones', type: 'bones', x: 45, y: 6, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_hp_coffin3', type: 'quan_tai_da', x: 8, y: 15, w: 3, h: 2, fx: 3, fy: 1 },
+    { id: 'bm_hp_rock1', type: 'rock_s', x: 45, y: 17, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_hp_lant3', type: 'lantern_low', x: 15, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_hp_bones2', type: 'bones', x: 19, y: 26, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_hp_stele2', type: 'stele_small', x: 44, y: 32, w: 2, h: 2, fx: 2, fy: 1 });
+  MAPS.dai_dau_kiem.props.push(
+    { id: 'bm_dd_cot1', type: 'cot_co', x: 8, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_dd_cot2', type: 'cot_co', x: 30, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_dd_cot3', type: 'cot_co', x: 8, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_dd_cot4', type: 'cot_co', x: 30, y: 24, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_dd_bench1', type: 'bench_stone', x: 11, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_bench2', type: 'bench_stone', x: 12, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_bench3', type: 'bench_stone', x: 26, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_bench4', type: 'bench_stone', x: 27, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence1', type: 'fence_post', x: 2, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence2', type: 'fence_post', x: 2, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence3', type: 'fence_post', x: 2, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence4', type: 'fence_post', x: 37, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence5', type: 'fence_post', x: 37, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_fence6', type: 'fence_post', x: 37, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_plat', type: 'stone_platform', x: 18, y: 24, w: 3, h: 2, fx: 3, fy: 1 },
+    { id: 'bm_dd_pot1', type: 'flower_pot', x: 13, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dd_pot2', type: 'flower_pot', x: 26, y: 3, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.duong_mon.props.push(
+    { id: 'bm_dm_cay', type: 'cay_gay', x: 38, y: 48, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm_dm_bones', type: 'bones', x: 48, y: 48, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_dm_stake', type: 'stake_cluster', x: 37, y: 53, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dm_rock', type: 'rock_m', x: 48, y: 55, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dm_bush', type: 'bush2', x: 39, y: 56, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_dm_bones2', type: 'bones', x: 42, y: 57, w: 2, h: 1, fx: 2, fy: 1 });
+  MAPS.hb_valley.props.push(
+    { id: 'bm_hb_rock1', type: 'rock_l_b', x: 41, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_hb_kiem1', type: 'kiem_cum', x: 44, y: 6, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_hb_kiem2', type: 'kiem_cum', x: 49, y: 6, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_hb_stele', type: 'stele_small', x: 57, y: 12, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm_hb_rock2', type: 'rock_m', x: 42, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm_hb_bones', type: 'bones', x: 57, y: 16, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm_hb_rock3', type: 'rock_l_a', x: 47, y: 21, w: 1, h: 1, fx: 1, fy: 1 });
+  /* Đợt cảnh vật hang — vòng 2 (mở rộng 04/11 theo lệnh Bui "cả cảnh
+     trong hang cũng sinh động hơn"): cảnh vật dọc đường đi và các phòng
+     thường của mọi bí cảnh, không dồn vào phòng boss — măng đá, tinh thể
+     phát sáng (loại mới tinh_the), nấm phát sáng (loại mới
+     nam_phat_sang), lau bờ suối, đèn đá, bia vụn, xương, đá vụn. Cùng
+     kỷ luật footprint và kiểm vị trí như vòng 1. */
+  MAPS.bc_thuyliem.props.push(
+    { id: 'bm2_tl_mang6', type: 'mang_da', x: 16, y: 23, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_tl_rock4', type: 'rock_m', x: 26, y: 23, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_tl_bones', type: 'bones', x: 7, y: 29, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm2_tl_nam1', type: 'nam_phat_sang', x: 18, y: 30, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_tl_tinh1', type: 'tinh_the', x: 30, y: 22, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_tl_reeds3', type: 'reeds', x: 14, y: 13, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_tl_reeds4', type: 'reeds', x: 12, y: 18, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_tl_tinh2', type: 'tinh_the', x: 37, y: 8, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_tl_nam2', type: 'nam_phat_sang', x: 17, y: 3, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_tapha.props.push(
+    { id: 'bm2_th_bones3', type: 'bones', x: 12, y: 28, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm2_th_rock4', type: 'rock_s', x: 26, y: 27, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_th_lant1', type: 'lantern_low', x: 16, y: 25, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm2_th_lant2', type: 'lantern_low', x: 23, y: 25, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm2_th_stele4', type: 'stele_small', x: 5, y: 12, w: 2, h: 2, fx: 2, fy: 1 });
+  MAPS.bc_tapsau.props.push(
+    { id: 'bm2_ts_nam1', type: 'nam_phat_sang', x: 16, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_ts_nam2', type: 'nam_phat_sang', x: 24, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_ts_tinh1', type: 'tinh_the', x: 6, y: 2, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_ts_tinh2', type: 'tinh_the', x: 33, y: 3, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_ts_rock3', type: 'rock_m', x: 34, y: 24, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_kiemtrung.props.push(
+    { id: 'bm2_kt_kiem8', type: 'kiem_cum', x: 16, y: 18, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_kt_kiem9', type: 'kiem_cum', x: 30, y: 19, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_kt_rock2', type: 'rock_s', x: 12, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_kt_rock3', type: 'rock_s', x: 34, y: 23, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_kiemtrung_sau.props.push(
+    { id: 'bm2_kts_kiem5', type: 'kiem_cum', x: 10, y: 16, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_kts_bones', type: 'bones', x: 36, y: 17, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm2_kts_rock2', type: 'rock_m', x: 20, y: 20, w: 1, h: 1, fx: 1, fy: 1 });
+  MAPS.bc_hoiphong_mo.props.push(
+    { id: 'bm2_hp_bones3', type: 'bones', x: 12, y: 35, w: 2, h: 1, fx: 2, fy: 1 },
+    { id: 'bm2_hp_lant4', type: 'lantern_low', x: 44, y: 29, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'bm2_hp_stele3', type: 'stele_small', x: 12, y: 21, w: 2, h: 2, fx: 2, fy: 1 },
+    { id: 'bm2_hp_nam1', type: 'nam_phat_sang', x: 6, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'bm2_hp_nam2', type: 'nam_phat_sang', x: 45, y: 2, w: 1, h: 1, fx: 1, fy: 1 });
   // Điều kiện mở cổng — dữ kiện khai báo, không phải logic hiển thị:
   // không cond -> mở; 'dummy' -> đã phá cọc gỗ; 'flag:<tên>' -> cờ trong
   // state.flags; 'quest:<id>' -> nhiệm vụ hiện tại đã tới hoặc qua <id>
