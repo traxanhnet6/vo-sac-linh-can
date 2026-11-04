@@ -653,6 +653,7 @@
     // Làn chạm trán: trận/ quái/ vật rơi/ tinh bay cũng là trạng thái
     // phiên — dọn cùng đợt để không rò sang tài khoản kế tiếp.
     enc = null; mons = []; drops = []; orbs = []; orbBatches = {}; huntSession = null;
+    foodCdUntil = 0; // nhịp chờ ăn trong trận là trạng thái phiên (đợt đồ ăn 2026-11-04) — không rò qua tài khoản
     duel = null; // trận tỉ thí kịch bản cũng là trạng thái phiên — không rò qua tài khoản (gói phụ 7)
     tlFight = null; tlSwordHeld = false; tlSub(null); // ải Thăng Long thật (gói phụ 13) cũng là trạng thái phiên
     hhtFight = null; hhtLastSkills = []; hideBossBanner(); // trận tỉ thí Hoa Hướng Thần trên đài (Mục F) cũng là trạng thái phiên
@@ -2668,6 +2669,17 @@
       say([{ who: 'chu_quan', text: 'Xong ca rồi đấy. Tiền của cậu đây — làm ăn với lão Chu này thì cứ yên tâm, một đồng cũng không thiếu.' }], function () { refreshHUD(); saveNow(); });
     } else if (action === 'inn_leave' || action === 'shop_leave') {
       say([{ who: 'narrate', text: 'Ngươi gật đầu chào rồi rời đi.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'food_leave') {
+      // Rời quán/bếp đồ ăn: dùng lại đúng câu rời đi đã có sẵn trong
+      // bản kê giọng (cùng câu của inn_leave/shop_leave).
+      say([{ who: 'narrate', text: 'Ngươi gật đầu chào rồi rời đi.' }], function () { refreshHUD(); saveNow(); });
+    } else if (action === 'food_open_buy') { say(foodBuyScene());
+    } else if (action === 'food_open_cook') { say(foodCookScene('bep'));
+    } else if (action === 'food_buy_com_nam') { doFoodBuy('com_nam');
+    } else if (action === 'food_buy_banh_hap') { doFoodBuy('banh_hap');
+    } else if (action === 'food_cook_canh_nam_thao') { doFoodCook('canh_nam_thao');
+    } else if (action === 'food_cook_thit_nuong') { doFoodCook('thit_nuong');
+    } else if (action === 'food_cook_canh_bo_khi') { doFoodCook('canh_bo_khi');
     } else if (action === 'buy_dan') {
       // Vật phẩm mua vào phải qua Túi Trữ Vật: kiểm sức chứa TRƯỚC khi trừ tiền.
       var chkD = L.bagCanAdd(state, 'hoi_khi_dan', 1);
@@ -3002,6 +3014,14 @@
       return say([{ who: 'narrate', text: 'Cọc gỗ luyện công. ' + (state.unlocked.indexOf('voice') >= 0 ? 'Đứng gần và nhấn phím 1 để dùng Vạn Âm Cộng Hưởng "Phá Âm" (cần 30 Tĩnh Âm).' : 'Gỗ chắc thế này, tay không không làm gì được.') }]);
     }
     if (p && p.id === 'gieng') return say([{ who: 'narrate', text: 'Giếng nước đầu trấn. Nước trong, hơi mát bốc lên — linh khí quanh đây đậm hơn hẳn nơi khác.' }]);
+    // Hệ đồ ăn (đợt 2026-11-04): quán trọ trấn = điểm mua + bếp nấu +
+    // quà cơm nắm lần đầu; trạm nghỉ giữa đường = bếp nấu; hai bãi nấm
+    // = điểm hái nguyên liệu. Toàn bộ qua menu lựa chọn + thông báo,
+    // KHÔNG có lời thoại lồng tiếng mới trong đợt này.
+    if (p && p.id === 'tuu_diem') return openFoodInn();
+    if (p && p.id === 'tram_nghi') return say(foodCookScene('tram'));
+    if (p && p.id === 'bai_nam_tran') return gatherFoodHere('tran');
+    if (p && p.id === 'bai_nam_duong') return gatherFoodHere('duong_mon');
     if (p && p.id === 'vet_tich') return touchTracks();
     if (p && p.id === 'thuoc_lon') return towerMeasure();
     if (p && p.id === 'kho_hua') {
@@ -4105,6 +4125,7 @@
       grindTalkNpcId = npc.id; grindTalkNpcName = npc.name;
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: [
         { label: 'Xem bảng treo thưởng', action: 'grind_open_hunt' },
+        { label: 'Mua đồ ăn', action: 'food_open_buy' },
         { label: 'Trò chuyện', action: 'grind_idle' }
       ] }]);
     }
@@ -7313,6 +7334,11 @@
     else beep(f, 0.07, 'square', 0.026, 'skill');
   }
   function sfxKill() { toneWave({ f0: 320, f1: 55, dur: 0.38, type: 'triangle', gain: 0.10 }); noiseBurst(0.18, 0.035, 0.02); beep(55, 0.25, 'sine', 0.06, 'skill'); }
+  /* Tiếng ĂN và tiếng NẤU của hệ đồ ăn (đợt 2026-11-04): ăn = cắn nhẹ
+     rồi hai nốt chuông ấm dâng; nấu = hai nhịp lửa lách tách rồi chuông
+     khi món dọn ra. Định nghĩa đặt cạnh nhóm sfx chiến đấu như cây nguồn. */
+  function sfxEat() { beep(392, 0.08, 'triangle', 0.032, 'ui'); setTimeout(function () { beep(587, 0.16, 'sine', 0.03, 'skill'); }, 70); setTimeout(function () { beep(880, 0.3, 'sine', 0.024, 'skill'); }, 150); }
+  function sfxCook() { beep(220, 0.12, 'triangle', 0.026, 'ui'); setTimeout(function () { beep(330, 0.12, 'triangle', 0.024, 'ui'); }, 110); setTimeout(function () { beep(523, 0.24, 'sine', 0.026, 'skill'); }, 230); }
   function sfxDropRare() { [659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.16, 'sine', 0.032, 'skill'); }, i * 70); }); }
   function sfxRoar(short) {
     var d = short ? 0.3 : 0.7;
@@ -10003,6 +10029,10 @@
     m.respawnT = 20; // quái thường hồi ổ sau 20 giây (bộ nhớ phiên); boss hồi theo chu kỳ ngày
     refreshHUD(); saveNow();
   }
+  /* Loài quái THÚ rơi Thịt Thú Rừng khi hạ ở dã ngoại (đợt đồ ăn
+     2026-11-04) — khớp MONSTER_DEFS: sói/xà/trư/ưng dã ngoại + lang
+     nhiễm sông ở thung lũng. Quái người, hồn, tượng đá, cơ quan: không. */
+  var FOOD_BEAST_SPECIES = { son_lang: 1, doc_vu_xa: 1, thiet_giap_tru: 1, phong_ung: 1, lang_nhiem_song: 1 };
   function normalKillDrops(m) {
     var z = L.HUNT_ZONES[m.zoneId];
     var lvl = z ? z.yeuDanLevel : 1;
@@ -10035,6 +10065,14 @@
     // Rút theo id phiên: nạp lại giữa phiên không quay lại được kết quả khác.
     if (L.yeuDanDropFor(enc.sessionId, chance)) spawnDrop('yeu_dan_' + lvl, 1, m.x + 16, m.y + 16);
     if (m.def.biTich && L.rollSessionValue(enc.sessionId, ':bitich') < m.def.biTichChance) spawnDrop(m.def.biTich, 1, m.x + 16, m.y + 16);
+    /* Thịt Thú Rừng (đợt đồ ăn 2026-11-04): quái THÚ dã ngoại rơi
+       nguyên liệu nấu Thịt Thú Nướng Que và Canh Bổ Khí — tinh anh rơi
+       chắc chắn, quái thường 40% theo rút phiên ':thit' (nạp lại giữa
+       phiên không quay lại được). Quái người/hồn/cơ quan không rơi
+       thịt. Cùng đường nhặt spawnDrop như yêu đan/bí tịch. */
+    if (FOOD_BEAST_SPECIES[m.species] && (m.rank === 'elite' || L.rollSessionValue(enc.sessionId, ':thit') < 0.4)) {
+      spawnDrop('thit_thu', 1, m.x + 16, m.y + 16);
+    }
   }
   function bossKillRewards(m) {
     var bd = L.BOSS_DEFS[m.bossId];
@@ -10238,6 +10276,116 @@
     summaryShownAt = 0; summaryMoveT = 0;
   }
 
+  /* ================= ĐỒ ĂN — LỚP TRÌNH DIỄN + ĐIỂM LẤY (đợt 2026-11-04) =================
+     Số học nằm hết ở js/logic.js (buyFood/cookFood/eatFood/
+     gatherFoodPatch); ở đây chỉ có điểm bán, điểm nấu, bãi hái, nút
+     dùng nhanh và hiệu ứng. Nhịp chờ ăn TRONG TRẬN dùng đồng hồ phiên
+     (foodCdUntil, mốc ms theo tNow) — ngoài trận không chờ. */
+  var foodCdUntil = 0;
+  function foodInCombat() {
+    return !!(enc || duel || tlFight || hhtFight || arcFig || (atkFigs && atkFigs.length));
+  }
+  function foodBuyScene() {
+    return [{ who: 'choice', text: 'Mua đồ ăn mang theo — ăn là hồi máu và Tĩnh Âm ngay:', options: [
+      { label: 'Cơm Nắm Lá Sen — 3 Linh Thạch (hồi 30 máu, 10 Tĩnh Âm)', action: 'food_buy_com_nam' },
+      { label: 'Bánh Hấp Nhân Thịt — 5 Linh Thạch (hồi 45 máu, 15 Tĩnh Âm)', action: 'food_buy_banh_hap' },
+      { label: 'Thôi, để khi khác', action: 'food_leave' }
+    ] }];
+  }
+  function foodCookScene(where) {
+    var head = where === 'tram'
+      ? 'Bếp lửa của trạm nghỉ còn ấm. Nấu món gì bằng nguyên liệu mang theo?'
+      : 'Bếp quán đang đỏ lửa. Nấu món gì?';
+    return [{ who: 'choice', text: head, options: [
+      { label: 'Nấu Canh Nấm Thảo Dược (cần Nấm Rừng ×1 — đang có ' + L.bagCount(state, 'nam_rung') + ')', action: 'food_cook_canh_nam_thao' },
+      { label: 'Nấu Thịt Thú Nướng Que (cần Thịt Thú Rừng ×1 — đang có ' + L.bagCount(state, 'thit_thu') + ')', action: 'food_cook_thit_nuong' },
+      { label: 'Nấu Canh Bổ Khí (cần Nấm Rừng ×1 + Thịt Thú Rừng ×1 — món dải Luyện Khí)', action: 'food_cook_canh_bo_khi' },
+      { label: 'Rời bếp', action: 'food_leave' }
+    ] }];
+  }
+  function foodInnScene() {
+    return [{ who: 'choice', text: 'Vọng Tiên Tửu Điếm — quán bán đồ ăn mang theo, bếp quán cũng cho khách nấu món từ nguyên liệu sẵn có.', options: [
+      { label: 'Mua đồ ăn', action: 'food_open_buy' },
+      { label: 'Dùng bếp quán để nấu', action: 'food_open_cook' },
+      { label: 'Rời quán', action: 'food_leave' }
+    ] }];
+  }
+  function doFoodBuy(id) {
+    var r = L.buyFood(state, id);
+    if (!r.ok) toast(r.text || 'Không mua được món này.', 4000);
+    else { sfxUi(); toast('Đã mua ' + r.def.name + ' (−' + r.price + ' Linh Thạch, trong túi: ' + L.bagCount(state, id) + ' phần). Ăn bằng nút Đồ Ăn (phím R) hoặc mở túi.', 4200); }
+    refreshHUD(); saveNow();
+    say(foodBuyScene());
+  }
+  function doFoodCook(recipeId) {
+    var r = L.cookFood(state, recipeId);
+    if (!r.ok) {
+      if (r.reason === 'need_linh') toast('Canh Bổ Khí là món cho người đã nhập đạo — hãy đột phá Luyện Khí rồi quay lại nấu.', 4400);
+      else if (r.reason === 'no_ingredient') toast('Thiếu ' + (L.ITEM_DEFS[r.missing] ? L.ITEM_DEFS[r.missing].name : 'nguyên liệu') + ' — hái nấm ở bãi nấm ven đường mòn/trấn, hoặc săn thú rừng lấy thịt.', 4600);
+      else toast(r.text || 'Chưa nấu được món này.', 3800);
+    } else { sfxCook(); toast('Đã nấu xong ' + r.def.name + ' (trong túi: ' + r.count + ' phần). Ăn bằng nút Đồ Ăn (phím R) hoặc mở túi.', 4200); }
+    refreshHUD(); saveNow();
+    say(foodCookScene('bep'));
+  }
+  /* Mở quán trọ trấn: lần đầu vào quán, chủ quán bưng ra phần cơm nắm
+     nhà Hứa gửi — món đồ ăn mở đầu của chương 1 (quà một lần, không
+     phải điểm farm; mua/nấu lại mới là nguồn lặp). */
+  function openFoodInn() {
+    if (!state.flags.foodGiftInn) {
+      state.flags.foodGiftInn = true;
+      if (L.bagCanAdd(state, 'com_nam', 2).ok) {
+        L.bagAdd(state, 'com_nam', 2);
+        toast('Chủ quán bưng ra hai phần Cơm Nắm Lá Sen: "Phần ăn đường nhà Hứa gửi cho cậu Giang — đi xa nhớ ăn uống tử tế." Máu hoặc Tĩnh Âm xuống thấp thì bấm nút Đồ Ăn (phím R) để ăn.', 5600);
+      }
+    }
+    say(foodInnScene());
+  }
+  /* Hái nấm ở bãi nấm (prop bai_nam_tran / bai_nam_duong): mỗi bãi một
+     cây mỗi ngày game — cùng nhịp mọc lại theo ngày của bãi dược. */
+  function gatherFoodHere(patchId) {
+    var r = L.gatherFoodPatch(state, patchId);
+    if (!r.ok) {
+      if (r.reason === 'picked') return toast('Bãi nấm này hôm nay đã hái rồi — nấm mọc lại vào ngày game mai.', 3400);
+      return toast(r.text || 'Chưa hái được.', 3600);
+    }
+    sfxHarvest();
+    toast('Đã hái Nấm Rừng ×1 (trong túi: ' + r.count + '). Mang tới bếp Vọng Tiên Tửu Điếm ở trấn hoặc bếp trạm nghỉ giữa đường để nấu Canh Nấm Thảo Dược.', 4600);
+    refreshHUD(); saveNow();
+  }
+  /* Trình diễn ăn: hạt sáng xanh (hồi máu) bay lên quanh người, thêm
+     hạt lam nhạt khi có hồi Tĩnh Âm; số hồi bay trên đầu — đúng chuẩn
+     hạt/số bay của các đợt hiệu ứng trước (spawnParts/addFloat). */
+  function presentEat(r) {
+    sfxEat();
+    spawnParts(px + 16, py + 8, 10, '130,240,150', 20, true);
+    if (r.taGain > 0) spawnParts(px + 16, py + 8, 6, '140,220,255', 16, true);
+    if (r.hpGain > 0) addFloat(px + 16, py - 24, '+' + r.hpGain + ' máu', '130,240,150');
+    if (r.taGain > 0) addFloat(px + 16, py - 38, '+' + r.taGain + ' Tĩnh Âm', '140,220,255');
+  }
+  /* Đường ăn DUY NHẤT cho cả nút dùng nhanh lẫn nút Ăn trong túi. */
+  function eatFoodFlow(id) {
+    if (!state || !id) return;
+    if (dlg || dlgQueue.length) { toast('Đang trong hội thoại — dứt lời rồi hãy ăn.', 2600); return; }
+    var inC = foodInCombat();
+    if (inC && tNow < foodCdUntil) { toast('Vừa ăn xong — chờ ' + Math.max(1, Math.ceil((foodCdUntil - tNow) / 1000)) + ' giây nữa mới ăn tiếp được.', 2600); return; }
+    var r = L.eatFood(state, id);
+    if (!r.ok) {
+      if (r.reason === 'full') toast('Máu và Tĩnh Âm đều đã đầy — ăn lúc này chỉ phí đồ ăn.', 3200);
+      else if (r.reason === 'no_item') toast('Không còn ' + (L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : 'món này') + ' trong túi.', 3200);
+      return;
+    }
+    if (inC) foodCdUntil = tNow + L.FOOD_CD_SEC * 1000; // nhịp chờ CHỈ trong trận; ngoài trận ăn tự do
+    presentEat(r);
+    toast('Đã ăn ' + r.def.name + ': hồi ' + r.hpGain + ' máu' + (r.taGain > 0 ? ', ' + r.taGain + ' Tĩnh Âm' : '') + ' (còn ' + r.left + ' phần trong túi).', 3400);
+    refreshHUD(); renderBag(); saveNow();
+  }
+  function quickEatFood() {
+    if (!state) return;
+    var id = L.bestFoodId(state);
+    if (!id) { toast('Không có đồ ăn trong túi — mua ở Vọng Tiên Tửu Điếm tại trấn hoặc sạp chợ Cô Châu Thành; hái Nấm Rừng về nấu canh, săn thú rừng lấy thịt nướng.', 5000); return; }
+    eatFoodFlow(id);
+  }
+
   /* ----- Dùng vật phẩm trong túi: đổi yêu đan / đọc bí tịch ----- */
   function useBagItem(id) {
     if (!state) return;
@@ -10257,6 +10405,10 @@
       addFloat(px + 16, py - 24, '+' + rb.points + ' điểm tu luyện', '255,232,160');
       toast('Đọc xong ' + def.name + ': +' + rb.points + ' điểm tu luyện cho ' + L.TECHNIQUE_DEFS[rb.technique].name +
         (rb.tierUps.length ? ' — công pháp LÊN TẦNG ' + rb.tier + '!' : ' (đang tầng ' + rb.tier + ').'), 4600);
+    } else if (def && def.type === 'do_an') {
+      // Đồ ăn dùng ngay từ túi (đợt 2026-11-04): cùng đường ăn duy
+      // nhất với nút dùng nhanh Đồ Ăn ở cụm nút chiến đấu.
+      eatFoodFlow(id);
     } else if (id.indexOf('yeu_dan_') === 0) {
       var lvl = parseInt(id.slice('yeu_dan_'.length), 10);
       var re = L.exchangeYeuDan(state, lvl);
@@ -11219,7 +11371,7 @@
     list.innerHTML = '';
     if (!items.length) {
       var d0 = document.createElement('div');
-      d0.className = 'quest-desc'; d0.textContent = 'Chưa mở — chuỗi phụ mở ở chương 8 khi chuẩn bị Trúc Cơ.';
+      d0.className = 'quest-desc'; d0.textContent = 'Chưa mở — nhiệm vụ phụ mở dần theo hành trình: nhiệm vụ hướng dẫn đồ ăn ngay ở chương đầu, chuỗi phụ quanh Trúc Cơ mở ở chương 8.';
       list.appendChild(d0);
       return;
     }
@@ -11339,6 +11491,26 @@
     if (bagBtn) bagBtn.classList.toggle('hidden', !state.flags.bagUnlocked); // nút Túi chỉ hiện sau mốc mở khóa chương 3
     var medBtn = $('sk-med');
     if (medBtn) medBtn.classList.toggle('active', medLatch);
+    /* Nút Đồ Ăn (đợt 2026-11-04): xám hẳn (.locked) khi túi không còn
+       món nào; mờ lạnh (.cant) khi đang trong trận mà nhịp chờ ăn còn
+       chạy hoặc máu + Tĩnh Âm đều đã đầy — trình diễn thuần, điều kiện
+       ăn thật nằm ở eatFoodFlow/eatFood. */
+    var foodBtn = $('sk-food');
+    if (foodBtn) {
+      var foodN = L.foodCount(state);
+      foodBtn.classList.toggle('locked', foodN < 1);
+      foodBtn.classList.toggle('cant', foodN > 0 && ((foodInCombat() && tNow < foodCdUntil) || (state.hp >= state.hpMax && state.silence >= 100)));
+      foodBtn.title = foodN > 0 ? ('Đồ ăn (' + foodN + ' phần) — ăn món hợp nhất: hồi máu + Tĩnh Âm') : 'Đồ ăn — chưa có món nào trong túi';
+    }
+    /* Gợi ý đồ ăn lần đầu máu xuống thấp ở giai đoạn đầu (yêu cầu dạy
+       người chơi của đợt 2026-11-04): một lần duy nhất, có cờ ghi save;
+       có đồ ăn thì chỉ nút ăn, chưa có thì chỉ nơi mua/hái/nấu. */
+    if (!state.flags.foodHintSeen && state.hp > 0 && state.hp <= state.hpMax * 0.35 && !L.questReached(state, 'q3_done')) {
+      state.flags.foodHintSeen = true;
+      toast(L.foodCount(state) > 0
+        ? 'Máu đang thấp! Bấm nút Đồ Ăn (phím R) để ăn ngay một món — hồi cả máu lẫn Tĩnh Âm.'
+        : 'Máu đang thấp! Ghé Vọng Tiên Tửu Điếm ở trấn mua đồ ăn mang theo, hoặc hái Nấm Rừng ven đường mòn về nấu canh — ăn là hồi máu và Tĩnh Âm.', 5400);
+    }
   }
 
   /* ---------- Chỉ thị giờ thế giới (chu kỳ ngày đêm) ---------- */
@@ -12261,6 +12433,7 @@
     else if (k === '4') castDinh();
     else if (k === '5') castPhong();
     else if (k === 'b') doBreakthrough();
+    else if (k === 'r') quickEatFood(); // nút Đồ Ăn (đợt 2026-11-04): ăn nhanh món hợp nhất trong túi
     else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; if (e.key === '3') tlSwordHeld = false; });
@@ -12638,6 +12811,7 @@
   onTap($('sk-phong'), function () { castPhong(); });
   onTap($('sk-med'), function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
   onTap($('sk-break'), function () { doBreakthrough(); });
+  onTap($('sk-food'), function () { quickEatFood(); }); // nút Đồ Ăn ở vòng cung trong (đợt đồ ăn 2026-11-04; nối qua onTap như mọi nút cụm chiến đấu theo đợt cảm ứng)
   onTap($('sk-interact'), function () { sfxUi(); interact(); });
   // Mục G: nút ĐÁNH ở tâm vòng cung — gọi đúng castSword (đường đánh
   // thường duy nhất của game: kiếm quyết vật lý, tự rẽ nhánh chạm trán /
@@ -13869,11 +14043,11 @@
         (def.stack ? '<span class="bag-count">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">' + (def.worn ? 'Đang đeo' : 'Pháp khí') + '</span>');
       // Vật phẩm dùng được ngay trong túi (làn chạm trán): bí tịch thì
       // Đọc để lấy điểm tu luyện; yêu đan thì Đổi thành tu vi qua cửa cày.
-      if (def.teaches || id.indexOf('yeu_dan_') === 0) {
+      if (def.teaches || id.indexOf('yeu_dan_') === 0 || def.type === 'do_an') {
         var ub = document.createElement('button');
         ub.className = 'bag-use';
         ub.type = 'button';
-        ub.textContent = def.teaches ? 'Đọc' : 'Đổi tu vi';
+        ub.textContent = def.type === 'do_an' ? 'Ăn' : (def.teaches ? 'Đọc' : 'Đổi tu vi');
         ub.addEventListener('click', function () { useBagItem(id); });
         cell.appendChild(ub);
       }
@@ -14068,6 +14242,25 @@
     select: function (id) { var r = L.selectSideQuest(state, id); sidePanelSig = ''; refreshHUD(); saveNow(); return r; },
     claim: function (id) { var r = L.claimSideQuest(state, id); sidePanelSig = ''; refreshHUD(); saveNow(); return r; },
     panelCount: function () { var l = $('hud-side-list'); return l ? l.children.length : -1; }
+  };
+
+  /* Tay nắm kiểm chứng hệ đồ ăn (đợt 2026-11-04): chạy ĐÚNG các đường
+     người chơi dùng — mua/nấu/ăn/hái qua hàm thuần của logic trên
+     state thật của phiên, ăn nhanh qua quickEatFood, cảnh menu qua
+     đúng hàm dựng cảnh của điểm bán/bếp. Cầu nối chỉ để kiểm chứng,
+     không mở thêm đường lấy đồ ăn nào khác. */
+  window.VSLC_FOOD = {
+    buy: function (id) { return state ? L.buyFood(state, id) : null; },
+    cook: function (id) { return state ? L.cookFood(state, id) : null; },
+    eat: function (id) { return state ? L.eatFood(state, id) : null; },
+    gather: function (p) { return state ? L.gatherFoodPatch(state, p) : null; },
+    quickEat: function () { quickEatFood(); },
+    innScene: function () { return foodInnScene(); },
+    buyScene: function () { return foodBuyScene(); },
+    cookScene: function (w) { return foodCookScene(w || 'bep'); },
+    inCombat: function () { return foodInCombat(); },
+    cdLeftMs: function () { return Math.max(0, foodCdUntil - tNow); },
+    count: function () { return state ? L.foodCount(state) : 0; }
   };
 
   /* Tay nắm kiểm chứng cho làn chạm trán: đọc trạng thái thuần túy của

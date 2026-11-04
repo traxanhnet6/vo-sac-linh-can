@@ -121,7 +121,7 @@
     { id: 'nha_bac', type: 'house_b', x: 18, y: 4, w: 5, h: 3, fx: 5, fy: 1, name: 'Nhà dân thôn' },
     { id: 'nha_kho', type: 'house', x: 44, y: 4, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà kho Hứa gia' },
     { id: 'nha_dong_bac', type: 'house_c', x: 52, y: 11, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân thôn' },
-    { id: 'tuu_diem', type: 'inn', x: 44, y: 18, w: 6, h: 4, fx: 6, fy: 1, name: 'Vọng Tiên Tửu Điếm' },
+    { id: 'tuu_diem', type: 'inn', x: 44, y: 18, w: 6, h: 4, fx: 6, fy: 1, name: 'Vọng Tiên Tửu Điếm', interact: true },
     { id: 'nha_tay', type: 'house', x: 5, y: 20, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân thôn' },
     { id: 'nha_tay_nam', type: 'house_c', x: 8, y: 34, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân thôn' },
     { id: 'nha_nam', type: 'house_b', x: 41, y: 34, w: 5, h: 3, fx: 5, fy: 1, name: 'Nhà dân thôn' },
@@ -134,6 +134,11 @@
     { id: 'ban_tra_tran_a', type: 'table_stone', x: 27, y: 22, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân Hứa gia' },
     { id: 'ban_tra_tran_b', type: 'table_stone', x: 28, y: 22, w: 1, h: 1, fx: 1, fy: 1, name: 'Bàn trà sân Hứa gia' },
     { id: 'gieng', type: 'well', x: 51, y: 19, w: 2, h: 2, fx: 2, fy: 1, name: 'Giếng nước đầu trấn', interact: true },
+    /* Bãi nấm của hệ đồ ăn (đợt 2026-11-04): bụi cây phía tây trấn,
+       hái được 1 Nấm Rừng mỗi ngày game qua L.gatherFoodPatch('tran').
+       Ô (17,33) là cỏ trống, bốn ô kề đều đứng được và tới được từ
+       điểm xuất phát (đã kiểm bằng propAt/isWalkable/reachable). */
+    { id: 'bai_nam_tran', type: 'bush1', x: 17, y: 33, w: 1, h: 1, fx: 1, fy: 1, name: 'Bãi Nấm Rừng', interact: true },
     { id: 'coc_go', type: 'dummy', x: 36, y: 30, w: 1, h: 2, fx: 1, fy: 1, name: 'Cọc gỗ luyện công', interact: true },
     { id: 'sap_cho_1', type: 'stall', x: 22, y: 38, w: 4, h: 2, fx: 4, fy: 1, name: 'Sạp hàng' },
     { id: 'sap_cho_2', type: 'stall', x: 35, y: 38, w: 4, h: 2, fx: 4, fy: 1, name: 'Sạp hàng' },
@@ -425,7 +430,12 @@
   var ROAD_GRID = buildRoadGrid();
   var ROAD_PROPS = (function () {
     var props = [
-      { id: 'tram_nghi', type: 'stall', x: roadCX(20) + 1, y: 18, w: 4, h: 2, fx: 4, fy: 1, name: 'Trạm nghỉ giữa đường' },
+      { id: 'tram_nghi', type: 'stall', x: roadCX(20) + 1, y: 18, w: 4, h: 2, fx: 4, fy: 1, name: 'Trạm nghỉ giữa đường', interact: true },
+      /* Bãi nấm ven đường của hệ đồ ăn (đợt 2026-11-04): bụi cây phía
+         tây trạm nghỉ ở (50,15) — ô cỏ trống, không trùng cây rải theo
+         hàm băm (đã kiểm propAt), đứng hái từ các ô kề, tới được từ
+         sân trạm nghỉ và từ quảng trường cổng thành. */
+      { id: 'bai_nam_duong', type: 'bush1', x: 50, y: 15, w: 1, h: 1, fx: 1, fy: 1, name: 'Bãi Nấm Rừng', interact: true },
       { id: 'vet_tich', type: 'sacks', x: roadCX(20) - 3, y: 22, w: 2, h: 2, fx: 2, fy: 1, name: 'Dấu vết bên đường', interact: true }
     ];
     for (var y = 3; y < ROAD_H - 3; y++) for (var x = 3; x < ROAD_W - 3; x++) {
@@ -2233,7 +2243,7 @@
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
 
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, ch13Reward: false, ch14Reward: false, ch15Reward: false, ch16Reward: false, ch15ResonanceLock: false, thanhLongPending: false, challengeWinsNoiMon: 0, challengeWinsTinhAnh: 0, bcSauFirstPaid: false, ch17Reward: false, ch18Reward: false, ch19Reward: false, ch20Reward: false, ch21Reward: false, ch22Reward: false, ch23Reward: false, ch24Reward: false, ch18Insight: false, ch19Insight: false, ch20SoulRecognized: false, challengeWinsVoDich: 0, soulGrandPaidFor: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, ch13Reward: false, ch14Reward: false, ch15Reward: false, ch16Reward: false, ch15ResonanceLock: false, thanhLongPending: false, challengeWinsNoiMon: 0, challengeWinsTinhAnh: 0, bcSauFirstPaid: false, ch17Reward: false, ch18Reward: false, ch19Reward: false, ch20Reward: false, ch21Reward: false, ch22Reward: false, ch23Reward: false, ch24Reward: false, ch18Insight: false, ch19Insight: false, ch20SoulRecognized: false, challengeWinsVoDich: 0, soulGrandPaidFor: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false, foodBought: false, foodGathered: false, foodCooked: false, foodEaten: false, foodGiftInn: false, foodHintSeen: false, foodPatchDayTran: -1, foodPatchDayDuongMon: -1 },
 
       hp: 100, hpMax: 100
     };
@@ -2408,6 +2418,23 @@
        và type chuyển từ 'dan' sang 'phu' — loại vật phẩm mới đã duyệt. */
     ti_loi_phu: { name: 'Tị Lôi Phù', type: 'phu', stack: true, glyph: 'Phù' },
     phuc_linh_dan: { name: 'Phục Linh Đan', type: 'dan', stack: true, glyph: 'Linh' },
+    /* ĐỒ ĂN hồi máu + Tĩnh Âm (lệnh của Bui 06:11 ngày 2026-11-04):
+       vật phẩm tiêu hao dân dã dùng được từ chương 1–2 — "linh lực"
+       diễn giải là thanh Tĩnh Âm. Số hồi neo bể đầu game (Luyện Khí
+       tầng 1: máu tối đa 120, Tĩnh Âm tối đa 100); đan dược giữ vị thế
+       cao cấp (Hồi Khí Đan hồi 25 Tĩnh Âm giá 12 Linh Thạch, không hồi
+       máu) nên đồ ăn rẻ hơn hẳn và hồi máu là chính. Nguồn: mua ở quán
+       trọ trấn + chợ Cô Châu (priceLt), nấu từ nguyên liệu hái/săn
+       (FOOD_RECIPES ở khối đồ ăn). */
+    com_nam: { name: 'Cơm Nắm Lá Sen', type: 'do_an', stack: true, glyph: 'Cơm', hp: 30, ta: 10, priceLt: 3 },
+    banh_hap: { name: 'Bánh Hấp Nhân Thịt', type: 'do_an', stack: true, glyph: 'Bánh', hp: 45, ta: 15, priceLt: 5 },
+    canh_nam_thao: { name: 'Canh Nấm Thảo Dược', type: 'do_an', stack: true, glyph: 'Canh', hp: 35, ta: 25 },
+    thit_nuong: { name: 'Thịt Thú Nướng Que', type: 'do_an', stack: true, glyph: 'Thịt', hp: 60, ta: 10 },
+    canh_bo_khi: { name: 'Canh Bổ Khí', type: 'do_an', stack: true, glyph: 'Bổ', hp: 90, ta: 40 },
+    /* Nguyên liệu nấu ăn: nấm hái ở bãi nấm (mọc lại theo ngày game),
+       thịt rơi từ quái thú dã ngoại lúc hạ (làn game.js phát rơi). */
+    nam_rung: { name: 'Nấm Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Nấm' },
+    thit_thu: { name: 'Thịt Thú Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Thú' },
     /* Nguyên liệu thu thập của hệ cày (docs/grind-prep/systems-data.md
        mục 4.3): cùng khuôn nguyen_lieu + stack:true như linh_chi. */
     xich_tam_hoa: { name: 'Xích Tâm Hoa', type: 'nguyen_lieu', stack: true, glyph: 'Hoa' },
@@ -2981,6 +3008,15 @@
     if (typeof state.flags.atkFallback !== 'boolean') state.flags.atkFallback = false;
     if (typeof state.flags.hbcPaid !== 'boolean') state.flags.hbcPaid = false;
     if (typeof state.flags.bagUnlocked !== 'boolean') state.flags.bagUnlocked = false;
+    // Đợt đồ ăn (2026-11-04): cờ vòng đời đồ ăn + ngày hái của hai bãi nấm — save cũ thiếu thì dựng mặc định an toàn.
+    if (typeof state.flags.foodBought !== 'boolean') state.flags.foodBought = false;
+    if (typeof state.flags.foodGathered !== 'boolean') state.flags.foodGathered = false;
+    if (typeof state.flags.foodCooked !== 'boolean') state.flags.foodCooked = false;
+    if (typeof state.flags.foodEaten !== 'boolean') state.flags.foodEaten = false;
+    if (typeof state.flags.foodGiftInn !== 'boolean') state.flags.foodGiftInn = false;
+    if (typeof state.flags.foodHintSeen !== 'boolean') state.flags.foodHintSeen = false;
+    if (typeof state.flags.foodPatchDayTran !== 'number') state.flags.foodPatchDayTran = -1;
+    if (typeof state.flags.foodPatchDayDuongMon !== 'number') state.flags.foodPatchDayDuongMon = -1;
     if (typeof state.sectMerit !== 'number' || !isFinite(state.sectMerit) || state.sectMerit < 0) state.sectMerit = 0;
     else state.sectMerit = Math.floor(state.sectMerit);
     if (typeof state.flags.sectSeen !== 'boolean') state.flags.sectSeen = false;
@@ -3899,6 +3935,101 @@
     return { ok: true, technique: def.teaches, points: BI_TICH_POINTS, tier: r.tier, tierUps: r.tierUps };
   }
 
+  /* ================= ĐỒ ĂN HỒI MÁU + TĨNH ÂM (lệnh của Bui 06:11 + 06:15 ngày 2026-11-04) =================
+     Hệ tiêu hao dân dã dùng từ chương 1–2: ăn hồi máu (trường hp) và
+     Tĩnh Âm (trường ta) theo số khai trong ITEM_DEFS. Toàn bộ hàm THUẦN
+     trên state — lớp game.js chỉ gắn điểm bán (quán trọ trấn, sạp chợ
+     Cô Châu), điểm nấu (bếp quán trọ + bếp trạm nghỉ đường mòn), bãi
+     hái nấm, rơi thịt thú và nút dùng nhanh. Hai luật cứng: (1) đồ ăn
+     KHÔNG phải điều kiện của bất kỳ cổng truyện/đột phá nào — save
+     sạch không có đồ ăn vẫn qua mọi cổng như cũ (khẳng định §66);
+     (2) không bịa tiền tệ: mua bằng Linh Thạch qua spendLinhThach như
+     mọi mua bán khác, nguyên liệu lấy từ hái/săn có thật trong game. */
+  var FOOD_CD_SEC = 6; // nhịp chờ ăn liên tục TRONG TRẬN (giây) — lớp game áp theo đồng hồ phiên; ngoài trận ăn tự do, không chờ
+  function foodDef(id) { var d = ITEM_DEFS[id]; return (d && d.type === 'do_an') ? d : null; }
+  function foodIds() { return Object.keys(ITEM_DEFS).filter(function (id) { return ITEM_DEFS[id].type === 'do_an'; }); }
+  function foodCount(state) { return foodIds().reduce(function (n, id) { return n + bagCount(state, id); }, 0); }
+  /* Món "hợp nhất" cho nút dùng nhanh: phủ được nhiều phần máu + Tĩnh
+     Âm đang thiếu nhất; hòa điểm thì món khai trước (yếu/rẻ hơn) thắng
+     để giữ món mạnh cho lúc nguy cấp. */
+  function bestFoodId(state) {
+    var missHp = Math.max(0, (state.hpMax || 0) - (state.hp || 0));
+    var missTa = Math.max(0, SILENCE_MAX - (state.silence || 0));
+    var best = null, bestScore = -1;
+    foodIds().forEach(function (id) {
+      if (bagCount(state, id) < 1) return;
+      var d = ITEM_DEFS[id];
+      var score = Math.min(d.hp || 0, missHp) + Math.min(d.ta || 0, missTa);
+      if (score > bestScore) { bestScore = score; best = id; }
+    });
+    return best;
+  }
+  function eatFood(state, id) {
+    var def = foodDef(id);
+    if (!def) return { ok: false, reason: 'not_food' };
+    if (bagCount(state, id) < 1) return { ok: false, reason: 'no_item' };
+    var hpFull = (state.hp || 0) >= (state.hpMax || 0);
+    var taFull = (state.silence || 0) >= SILENCE_MAX;
+    if (hpFull && taFull) return { ok: false, reason: 'full' }; // cả hai cùng đầy: không ăn, không trừ đồ
+    var hpGain = Math.min(def.hp || 0, Math.max(0, (state.hpMax || 0) - (state.hp || 0)));
+    var taGain = Math.min(def.ta || 0, Math.max(0, SILENCE_MAX - (state.silence || 0)));
+    bagRemove(state, id, 1);
+    state.hp = (state.hp || 0) + hpGain;
+    state.silence = (state.silence || 0) + taGain;
+    if (state.flags && !state.flags.foodEaten) state.flags.foodEaten = true; // bước ĂN của nhiệm vụ hướng dẫn đồ ăn
+    return { ok: true, def: def, hpGain: hpGain, taGain: taGain, left: bagCount(state, id) };
+  }
+  function buyFood(state, id) {
+    var def = foodDef(id);
+    if (!def || typeof def.priceLt !== 'number') return { ok: false, reason: 'not_for_sale' };
+    var chk = bagCanAdd(state, id, 1);
+    if (!chk.ok) return { ok: false, reason: 'bag_full', text: chk.reason };
+    var rs = spendLinhThach(state, def.priceLt);
+    if (!rs.ok) return { ok: false, reason: 'no_lt', text: rs.reason };
+    var ra = bagAdd(state, id, 1);
+    if (!ra.ok) return { ok: false, reason: 'bag_full', text: ra.reason };
+    if (state.flags && !state.flags.foodBought) state.flags.foodBought = true; // bước MUA của nhiệm vụ hướng dẫn đồ ăn
+    return { ok: true, def: def, price: def.priceLt, count: ra.count };
+  }
+  /* Công thức nấu: needs = nguyên liệu trừ lúc nấu; needLinh = món
+     dải Luyện Khí (ví Linh Thạch còn khóa ở giai đoạn phàm nhân thì
+     chưa nấu được — nhịp nâng cấp của hệ đồ ăn, mở cùng đột phá). */
+  var FOOD_RECIPES = {
+    canh_nam_thao: { needs: { nam_rung: 1 } },
+    thit_nuong: { needs: { thit_thu: 1 } },
+    canh_bo_khi: { needs: { nam_rung: 1, thit_thu: 1 }, needLinh: true }
+  };
+  function cookFood(state, recipeId) {
+    var rec = FOOD_RECIPES[recipeId], def = foodDef(recipeId);
+    if (!rec || !def) return { ok: false, reason: 'no_recipe' };
+    if (rec.needLinh && !walletOpen(state)) return { ok: false, reason: 'need_linh' };
+    var needN = 0;
+    for (var ing in rec.needs) { needN += rec.needs[ing]; if (bagCount(state, ing) < rec.needs[ing]) return { ok: false, reason: 'no_ingredient', missing: ing }; }
+    // Nấu là biến đổi tại chỗ: trừ nguyên liệu rồi thêm thành phẩm nên
+    // sức chứa sau nấu không bao giờ vượt quá trước nấu (needs >= 1).
+    if (bagUsed(state) - needN + 1 > bagCap(state)) return { ok: false, reason: 'bag_full', text: 'Túi trữ vật đã đầy.' };
+    for (var ing2 in rec.needs) bagRemove(state, ing2, rec.needs[ing2]);
+    bagAdd(state, recipeId, 1);
+    if (state.flags && !state.flags.foodCooked) state.flags.foodCooked = true; // bước NẤU của nhiệm vụ hướng dẫn đồ ăn
+    return { ok: true, def: def, count: bagCount(state, recipeId) };
+  }
+  /* Bãi nấm: mỗi bãi cho 1 Nấm Rừng mỗi ngày game (mọc lại theo ngày).
+     Hai bãi: bãi trấn (patchId 'tran') và bãi ven đường mòn gần trạm
+     nghỉ (patchId 'duong_mon'). Không qua cổng Túi Trữ Vật như dược
+     liệu hệ cày — đây là đồ ăn dân dã của chương 1–2, mang theo người
+     như hành lý lên đường (sức chứa túi vẫn áp như thường qua bagAdd). */
+  function gatherFoodPatch(state, patchId) {
+    if (!state || !state.flags) return { ok: false, reason: 'no_state' };
+    var key = patchId === 'duong_mon' ? 'foodPatchDayDuongMon' : 'foodPatchDayTran';
+    if (state.flags[key] === state.dayCount) return { ok: false, reason: 'picked' };
+    var chk = bagCanAdd(state, 'nam_rung', 1);
+    if (!chk.ok) return { ok: false, reason: 'bag_full', text: chk.reason };
+    state.flags[key] = state.dayCount;
+    bagAdd(state, 'nam_rung', 1);
+    if (!state.flags.foodGathered) state.flags.foodGathered = true; // bước NGUYÊN LIỆU của nhiệm vụ hướng dẫn đồ ăn
+    return { ok: true, count: bagCount(state, 'nam_rung') };
+  }
+
   /* ===== CƠ CHẾ TÍCH LŨY DÒNG ngu_hanh (khung ẩn — bản đồ mục 3.3 + 5) =====
      Dữ kiện nằm ở state.nguHanh, dựng/sửa qua ensureNguHanh (gọi trong
      normalizeSave ngay sau ensureTechniques): fragments = số mảnh đang
@@ -4744,6 +4875,21 @@
      tu vi/Linh Thạch ngoài khung. KHÔNG bịa nguồn rơi: bảng đối chiếu
      nguồn nằm trong báo cáo đợt (mucH) và trong desc từng nhiệm vụ. */
   var SIDE_QUEST_DEFS = [
+    /* Nhiệm vụ PHỤ HƯỚNG DẪN ĐỒ ĂN (lệnh của Bui 06:15 ngày 2026-11-04):
+       mở ngay sau đột phá Luyện Khí tầng 1 (mốc q_dummy, ví Linh Thạch
+       đã mở để bước MUA chạy được) và TRƯỚC giai đoạn săn đầu tiên
+       quanh q2_cong_thanh. Người giao: Hứa U Nhàn — nàng dặn dò trong
+       desc, nhận/trả qua bảng nhiệm vụ phụ như mọi nhiệm vụ Mục H.
+       Bốn bước đi trọn vòng đời đồ ăn bằng đúng hệ thống của đợt đồ
+       ăn: MUA ở quán trọ trấn -> HÁI nấm ở bãi ven đường mòn -> NẤU ở
+       bếp trạm nghỉ (hoặc bếp quán trọ) -> ĂN thử. Không một cổng
+       truyện chính nào đọc các cờ food* — bỏ qua nhiệm vụ này vẫn đi
+       trọn cốt truyện (khẳng định §66). */
+    { id: 'sq_food_tutorial', phase: 'pre', unlockQuest: 'q_dummy',
+      name: 'Bữa Ăn Đường Xa',
+      desc: 'Hứa U Nhàn dặn: lên đường xa phải tự lo được bữa ăn hồi sức. Làm quen bốn việc: (1) MUA một món ăn ở Vọng Tiên Tửu Điếm tại Hứa Gia Trấn (sạp chợ Cô Châu Thành cũng có bán). (2) HÁI một cây Nấm Rừng ở bãi nấm ven đường mòn xuyên rừng, phía tây trạm nghỉ (bãi nấm mọc lại mỗi ngày; bãi sau trấn cũng có). (3) NẤU một món từ nguyên liệu ở bếp trạm nghỉ giữa đường hoặc bếp quán trọ trấn. (4) ĂN thử một món và xem máu cùng Tĩnh Âm hồi lại. Chọn "Chọn dẫn đường" để mũi tên chỉ tới từng bước. Sau này cứ theo đúng những nơi ấy mà tự làm lại: quán trọ và chợ bán sẵn, bãi nấm và thú rừng cho nguyên liệu, hai bếp để nấu.',
+      system: 'đồ ăn (mua/nấu/ăn)', reward: { items: { com_nam: 2, banh_hap: 1 } },
+      guide: { map: 'tran', x: 47, y: 22 } },
     { id: 'sq_pre_bicanh', phase: 'pre', unlockQuest: 'q8_chuan_bi',
       name: 'Luyện tay trong bí cảnh Luyện Khí',
       desc: 'Qua ải lần đầu Thủy Liêm Động (cổng ở đường mòn) và Tàn Tích Dưới Tháp tầng ngoài (cửa trong sảnh Kiểm Trắc Tháp). Boss Thủy Liêm rơi chắc Yêu Đan Cấp 1 ở thưởng lần đầu; mỗi đợt quái và boss đều cho tu vi qua hệ cày — đường cày cấp chính trước Trúc Cơ.',
@@ -4809,6 +4955,12 @@
   /* Tiến độ thuần từ trạng thái thật: { cur, target, text, done } */
   function sideQuestProgress(state, def) {
     if (!def) return { cur: 0, target: 1, text: '', done: false };
+    if (def.id === 'sq_food_tutorial') {
+      var ff = state.flags || {};
+      var f1 = ff.foodBought ? 1 : 0, f2 = ff.foodGathered ? 1 : 0, f3 = ff.foodCooked ? 1 : 0, f4 = ff.foodEaten ? 1 : 0;
+      var fcur = f1 + f2 + f3 + f4;
+      return { cur: fcur, target: 4, text: 'Mua món ' + f1 + '/1 · Hái nấm ' + f2 + '/1 · Nấu món ' + f3 + '/1 · Ăn thử ' + f4 + '/1', done: fcur >= 4 };
+    }
     if (def.id === 'sq_pre_bicanh') {
       var c1 = (sideRealmFirstClear(state, 'bc_thuyliem') ? 1 : 0) + (sideRealmFirstClear(state, 'bc_tapha') ? 1 : 0);
       return { cur: c1, target: 2, text: 'Đã qua ải lần đầu: ' + c1 + '/2 bí cảnh', done: c1 >= 2 };
@@ -4867,6 +5019,14 @@
      H6 chưa gặp đồng môn thì chỉ quảng trường, gặp rồi thì chỉ quản sự. */
   function sideQuestGuideHint(state, def) {
     if (!def) return null;
+    if (def.id === 'sq_food_tutorial') {
+      var fg = state.flags || {};
+      if (!fg.foodBought) return { map: 'tran', x: 47, y: 22 };       // đứng trước cửa Vọng Tiên Tửu Điếm — điểm MUA
+      if (!fg.foodGathered) return { map: 'duong_mon', x: 50, y: 16 }; // ô đứng phía nam bãi nấm (bãi ở 50,15) — bước HÁI
+      if (!fg.foodCooked) return { map: 'duong_mon', x: 58, y: 20 };   // sân trạm nghỉ — bếp NẤU tại trạm
+      if (!fg.foodEaten) return { map: 'duong_mon', x: 58, y: 20 };    // ĂN thử ngay tại trạm nghỉ sau khi nấu
+      return { map: 'tran', x: 28, y: 29 };                             // xong bốn bước: về sân Hứa gia chỗ Hứa U Nhàn (người giao)
+    }
     if (def.id === 'sq_pre_bicanh') {
       if (!sideRealmFirstClear(state, 'bc_thuyliem')) return { map: 'duong_mon', x: 20, y: 36 };
       if (!sideRealmFirstClear(state, 'bc_tapha')) return { map: 'thap_noi', x: 3, y: 28 };
@@ -4906,7 +5066,7 @@
     var st = sideQuestStatus(state, def);
     if (st === 'claimed') return { ok: false, reason: 'duplicate', duplicate: true };
     if (st !== 'ready') return { ok: false, reason: 'not_ready', status: st };
-    var spec = { tuviPct: def.reward.tuviPct || 0, lt: def.reward.lt || 0, merit: def.reward.merit || 0, profileId: 'side:' + id };
+    var spec = { tuviPct: def.reward.tuviPct || 0, lt: def.reward.lt || 0, merit: def.reward.merit || 0, items: def.reward.items || undefined, profileId: 'side:' + id };
     var r = grantReward(state, spec, { claimKey: 'side:' + id, sourceId: 'sideQuest:' + id });
     if (!r.ok) return r;
     var sq = ensureSideQuests(state);
@@ -5256,6 +5416,7 @@
     SIDE_QUEST_DEFS: SIDE_QUEST_DEFS, sideQuestDef: sideQuestDef, defaultSideQuests: defaultSideQuests, ensureSideQuests: ensureSideQuests,
     sideQuestProgress: sideQuestProgress, sideQuestStatus: sideQuestStatus, sideQuestList: sideQuestList,
     sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
+    FOOD_CD_SEC: FOOD_CD_SEC, FOOD_RECIPES: FOOD_RECIPES, foodDef: foodDef, foodIds: foodIds, foodCount: foodCount, bestFoodId: bestFoodId, eatFood: eatFood, buyFood: buyFood, cookFood: cookFood, gatherFoodPatch: gatherFoodPatch,
     sideGrindClaimedCount: sideGrindClaimedCount,
     PHE_THUOC_COLOR_ORDER: PHE_THUOC_COLOR_ORDER,
     isSessionHidden: isSessionHidden, hideSessionProp: hideSessionProp, showSessionProp: showSessionProp, clearSessionHiddenProps: clearSessionHiddenProps,

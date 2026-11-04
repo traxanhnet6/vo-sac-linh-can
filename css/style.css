@@ -250,6 +250,7 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 #sk-med .sk-ico { color: #a8e6b0; }
 #sk-break .sk-ico { color: #ffd98a; }
 #sk-interact .sk-ico { color: #f7ead0; }
+#sk-food .sk-ico { color: #ffb36b; }
 /* Không đủ Tĩnh Âm (.cant, engine gắn ở refreshHUD — trình diễn thuần,
    khóa thì không áp): đế tắt quầng lam ngọc, biểu tượng + tên ngả tông
    lạnh xám-lam và giảm bão hòa vừa — mờ đi nhưng VẪN CÒN MÀU, khác hẳn
@@ -291,12 +292,18 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 #sk-sword { left: 84px;  top: 75px; }
 #sk-dinh  { left: 56px;  top: 113px; }
 #sk-phong { left: 45px;  top: 159px; }
-/* Cung trong (bán kính 74px từ tâm ĐÁNH) — nút phụ 42px. */
-#sk-med      { left: 150px; top: 90px;  width: 42px; height: 42px; }
-#sk-break    { left: 111px; top: 111px; width: 42px; height: 42px; }
-#sk-interact { left: 90px;  top: 150px; width: 42px; height: 42px; }
-#sk-med .sk-name, #sk-break .sk-name, #sk-interact .sk-name { font-size: 9px; }
-#sk-med .sk-ico svg, #sk-break .sk-ico svg, #sk-interact .sk-ico svg { width: 15px; height: 15px; }
+/* Cung trong — nút phụ. Đợt đồ ăn 2026-11-04: thêm nút Đồ Ăn (sk-food)
+   thành nút phụ thứ tư; bốn nút thu còn 40px và dãn đều trên cung
+   r~74–84 quanh tâm ĐÁNH (202,202) sao cho không nút nào chạm nút
+   chiến đấu ở cung ngoài (đã đo khoảng cách tâm-tâm đều lớn hơn tổng
+   bán kính hai nút; nút ĐÁNH và năm nút chiêu giữ nguyên vị trí/kích
+   thước). */
+#sk-med      { left: 178px; top: 91px;  width: 40px; height: 40px; }
+#sk-break    { left: 136px; top: 94px;  width: 40px; height: 40px; }
+#sk-interact { left: 103px; top: 120px; width: 40px; height: 40px; }
+#sk-food     { left: 89px;  top: 159px; width: 40px; height: 40px; }
+#sk-med .sk-name, #sk-break .sk-name, #sk-interact .sk-name, #sk-food .sk-name { font-size: 9px; }
+#sk-med .sk-ico svg, #sk-break .sk-ico svg, #sk-interact .sk-ico svg, #sk-food .sk-ico svg { width: 15px; height: 15px; }
 
 /* Hộp thoại mỏng hơn, sát đáy */
 #dialogue { position: absolute; left: 2%; right: 2%; bottom: 8px; z-index: 5; max-height: 32dvh; overflow-y: auto;
