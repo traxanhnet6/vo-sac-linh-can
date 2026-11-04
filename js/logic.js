@@ -871,10 +871,98 @@
       { id: 'den_tinh_a', type: 'lantern', x: 10, y: 57, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_tinh_b', type: 'lantern', x: 13, y: 57, w: 1, h: 2, fx: 1, fy: 1 }
     ];
+    /* ---- Đợt làm lại Cô Châu Thành (04/11): trang viên Hứa Gia quây
+       tứ hợp viện + vật thể trang trí các khu. Mọi vật thể dưới đây đều
+       là lớp trình diễn: footprint khai thật theo quy ước chung; cổng
+       trang viên chỉ là khoảng mở trong tuyến tường (KHÔNG phải cổng
+       chuyển bản đồ, không đổi portal nào). Cổng phụ phía đông để mở
+       đúng hàng 33–34: đó là đường ba đợt đánh đêm chương 5 xông vào
+       sân (điểm xuất hiện (29,31)/(30,34)/(29,35) và các điểm đứng
+       đích đều đã kiểm BFS — xem docs/co-chau-scenery-report.md). */
+    var extra = [];
+    function huaWall(x, y) {
+      var t = ((x * 7 + y * 13) % 5 === 0) ? 'hua_wall_b' : 'hua_wall';
+      extra.push({ id: 'hua_tuong_' + x + '_' + y, type: t, x: x, y: y, w: 1, h: 1, fx: 1, fy: 1 });
+    }
+    function huaWallV(x, y) {
+      // tuyến dọc dùng mặt vôi liền (hua_wall_v): đoạn xếp chồng theo
+      // chiều sâu chỉ lộ phần trên, giữ dải ngói sẽ thành cột sọc
+      extra.push({ id: 'hua_tuong_' + x + '_' + y, type: 'hua_wall_v', x: x, y: y, w: 1, h: 1, fx: 1, fy: 1 });
+    }
+    var wx, wy;
+    for (wx = 5; wx <= 29; wx++) huaWall(wx, 23);        // tường bắc, sau dãy nhà chính
+    for (wy = 24; wy <= 40; wy++) huaWallV(4, wy);       // tường tây
+    for (wy = 24; wy <= 32; wy++) huaWallV(30, wy);      // tường đông, đoạn bắc
+    for (wy = 35; wy <= 40; wy++) huaWallV(30, wy);      // tường đông, đoạn nam (giữa là cổng phụ)
+    for (wx = 5; wx <= 15; wx++) huaWall(wx, 41);        // tường nam, đoạn tây
+    for (wx = 20; wx <= 29; wx++) huaWall(wx, 41);       // tường nam, đoạn đông
+    extra.push(
+      /* Bốn trụ góc trang viên (footprint = đúng ô góc). */
+      { id: 'hua_tru_tb', type: 'hua_pillar', x: 4, y: 22, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_tru_db', type: 'hua_pillar', x: 30, y: 22, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_tru_tn', type: 'hua_pillar', x: 4, y: 40, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_tru_dn', type: 'hua_pillar', x: 30, y: 40, w: 1, h: 2, fx: 1, fy: 1 },
+      /* Cổng chính phía nam: hai trụ chặn hai bên, môn lâu phủ qua với
+         fx: 0 (không chặn — người đi dưới mái như xà cổng sơn môn);
+         lối qua là hai ô (17,41) và (18,41) khớp lối vào hiện hữu. */
+      { id: 'hua_tru_cong_a', type: 'hua_pillar', x: 16, y: 40, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_tru_cong_b', type: 'hua_pillar', x: 19, y: 40, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_mon_lau', type: 'hua_gate', x: 16, y: 39, w: 4, h: 3, fx: 0, fy: 1, name: 'Cổng Hứa Phủ' },
+      /* Chiếu bích ngay trong cổng: chặn trục giữa, vào sân vòng hai bên. */
+      { id: 'hua_chieu_bich', type: 'hua_screen', x: 16, y: 40, w: 3, h: 1, fx: 3, fy: 1, name: 'Chiếu Bích Hứa Phủ' },
+      /* Xà cổng phụ phía đông (fx: 0 — không chặn lối qua hàng 33–34). */
+      { id: 'hua_xa_cong_phu', type: 'hua_beam', x: 29, y: 31, w: 3, h: 2, fx: 0, fy: 1 },
+      /* Sương phòng tây và bắc-đông (nhà chính + đông sương đã có sẵn). */
+      { id: 'phu_hua_tay', type: 'house_b', x: 5, y: 32, w: 5, h: 3, fx: 5, fy: 1, name: 'Tây Sương Hứa Phủ' },
+      { id: 'phu_hua_bac_dong', type: 'house', x: 24, y: 25, w: 4, h: 3, fx: 4, fy: 1, name: 'Bắc Sương Hứa Phủ' },
+      /* Cây cổ thụ góc tây-bắc sân, hồ sen + ghế đá + bụi hoa góc tây-nam. */
+      { id: 'hua_cay_co', type: 'tree_big', x: 6, y: 29, w: 2, h: 3, fx: 2, fy: 1 },
+      { id: 'hua_ho', type: 'hua_pond', x: 6, y: 37, w: 3, h: 2, fx: 3, fy: 1, name: 'Hồ Sen Nhỏ' },
+      { id: 'hua_ghe_da', type: 'bench_stone', x: 10, y: 38, w: 2, h: 1, fx: 2, fy: 1 },
+      { id: 'hua_hoa_a', type: 'flower_bush', x: 10, y: 36, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'hua_den_a', type: 'lantern', x: 14, y: 30, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_den_b', type: 'lantern', x: 27, y: 38, w: 1, h: 2, fx: 1, fy: 1 },
+      /* Đèn đá ngoài cổng chính, hai bên lối vào từ phố nam. */
+      { id: 'hua_den_cong_a', type: 'lantern', x: 15, y: 42, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'hua_den_cong_b', type: 'lantern', x: 20, y: 42, w: 1, h: 2, fx: 1, fy: 1 },
+      /* --- Trang trí các khu còn lại (loại vật thể sẵn có) --- */
+      /* Chợ: bốn đèn đá ở bốn góc quảng trường + bao/chum/rổ cạnh sạp + đống củi sau khách điếm. */
+      { id: 'cho_den_a', type: 'lantern', x: 65, y: 25, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cho_den_b', type: 'lantern', x: 85, y: 25, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cho_den_c', type: 'lantern', x: 65, y: 39, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cho_den_d', type: 'lantern', x: 85, y: 39, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cho_bao', type: 'sacks', x: 71, y: 33, w: 2, h: 2, fx: 2, fy: 1 },
+      { id: 'cho_chum', type: 'jar_big', x: 85, y: 33, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'cho_ro', type: 'basket', x: 77, y: 36, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'cho_cui', type: 'woodpile', x: 74, y: 27, w: 2, h: 2, fx: 2, fy: 1 },
+      /* Quảng trường tháp: hai đèn đá ôm hai sườn tây/đông. */
+      { id: 'thap_den_c', type: 'lantern', x: 41, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'thap_den_d', type: 'lantern', x: 61, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+      /* Quảng trường cổng nam: đèn đá hai sườn + bia nhỏ + ghế đá. */
+      { id: 'nam_den_a', type: 'lantern', x: 43, y: 69, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'nam_den_b', type: 'lantern', x: 59, y: 69, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'nam_bia_nho', type: 'stele_small', x: 47, y: 68, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'nam_ghe_da', type: 'bench_stone', x: 56, y: 71, w: 2, h: 1, fx: 2, fy: 1 },
+      /* Khu Thiên Cơ Các: đèn đá thấp trước phân đà + bia nhỏ phía đông (tông trầm, kín đáo). */
+      { id: 'tc_den_a', type: 'lantern_low', x: 60, y: 67, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'tc_den_b', type: 'lantern_low', x: 64, y: 67, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'tc_bia_nho', type: 'stele_small', x: 66, y: 63, w: 1, h: 1, fx: 1, fy: 1 },
+      /* Góc đông bắc lên tông: ghế đá ở bãi đáp + đèn thấp mép đông. */
+      { id: 'tb_ghe_da', type: 'bench_stone', x: 91, y: 8, w: 2, h: 1, fx: 2, fy: 1 },
+      { id: 'tb_den', type: 'lantern_low', x: 99, y: 6, w: 1, h: 1, fx: 1, fy: 1 },
+      /* Phố nam giữa thành: chậu hoa trước hiệu thuốc, ghế đá, cột biển ở góc phố. */
+      { id: 'pn_chau_hoa', type: 'flower_pot', x: 43, y: 49, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'pn_ghe_da', type: 'bench_stone', x: 53, y: 52, w: 2, h: 1, fx: 2, fy: 1 },
+      { id: 'pn_cot_bien', type: 'signpost', x: 54, y: 46, w: 1, h: 1, fx: 1, fy: 1 },
+      /* Góc thiền (11,59): ghế đá + bụi hoa (hai đèn đá đã có sẵn). */
+      { id: 'thien_ghe_da', type: 'bench_stone', x: 9, y: 60, w: 2, h: 1, fx: 2, fy: 1 },
+      { id: 'thien_hoa', type: 'flower_bush', x: 13, y: 60, w: 1, h: 1, fx: 1, fy: 1 }
+    );
     var pts = [{ x: 51, y: 74, r: 3 }, { x: 51, y: 6, r: 3 }, { x: 94, y: 8, r: 3 }, { x: 11, y: 59, r: 3 },
       { x: 51, y: 0, r: 2 }, { x: 97, y: 0, r: 2 }, { x: 51, y: 77, r: 2 }]
       .concat(npcPoints(CITY_NPCS)).concat(signPoints(CITY_SIGNS));
-    return props.concat(scatterTrees(CITY_GRID, CITY_W, CITY_H, 'cay_c', 37, null, 1, makeAvoid(pts, propRects(props))));
+    var allBase = props.concat(extra);
+    return allBase.concat(scatterTrees(CITY_GRID, CITY_W, CITY_H, 'cay_c', 37, null, 1, makeAvoid(pts, propRects(allBase))));
   })();
 
   /* ---- Khuôn viên Kiểm Trắc Tháp 72x56 ---- */

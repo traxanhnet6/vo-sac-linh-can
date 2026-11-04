@@ -794,7 +794,11 @@
        quan tài đá cổ mộ, thân cây cổ gãy — sprite riêng trong
        assets/props, sản xuất bằng cùng đường ống khử nền magenta.
        Vòng 2 (mở rộng toàn hang): tinh thể phát sáng + nấm phát sáng. */
-    'mang_da', 'cot_co', 'quan_tai_da', 'cay_gay', 'tinh_the', 'nam_phat_sang'];
+    'mang_da', 'cot_co', 'quan_tai_da', 'cay_gay', 'tinh_the', 'nam_phat_sang',
+    /* Đợt làm lại Cô Châu Thành (04/11): vật thể trang viên Hứa Gia —
+       tường bao, trụ cổng, môn lâu, xà cổng phụ, chiếu bích, hồ sen
+       (sản xuất bằng tools/build-hua-props.py). */
+    'hua_wall', 'hua_wall_b', 'hua_wall_v', 'hua_pillar', 'hua_gate', 'hua_beam', 'hua_screen', 'hua_pond'];
   var ASSETS = { bgByMap: {}, chars: {}, portraits: {}, props: {}, mons: {}, monsWhite: {}, monsBad: {} };
   function loadImg(src) { var im = new Image(); im.src = src; return im; }
   ASSETS.bgByMap.tran = loadImg('assets/bg.png'); // bản đồ chưa có tranh nền thì engine vẽ lưới ô (dự phòng)
