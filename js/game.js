@@ -900,16 +900,26 @@
     var k = Math.round(Math.atan2(dx, dy) / (Math.PI / 4)) % 8;
     return k < 0 ? k + 8 : k;
   }
-  function steerDir8Display(vx, vy, dt) {
+  function steerDir8Display(vx, vy, dt, spd) {
     var raw = dir8RawSector(vx, vy);
     if (raw === dir8) { dir8PendD = -1; dir8PendT = 0; return; }
     var a = Math.atan2(vx, vy);
     var center = (raw <= 4 ? raw * 45 : (raw - 8) * 45) * Math.PI / 180;
     var diff = Math.abs(Math.atan2(Math.sin(a - center), Math.cos(a - center)));
-    if (diff <= (22.5 - 3) * Math.PI / 180) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; return; }
+    /* ĐỢT ĐI NHƯ THẬT 2026-11-04 (chống nhấp nháy hàng ở cuối chặng
+       bấm-đi): khi thân lết chậm áp sát đích (spd < 56 px/giây), hướng
+       vận tốc dao động mạnh quanh biên khu vực — vector có thể nằm sâu
+       trong khu vực kề ở cả hai phía biên nên luật "sâu thì chuyển
+       ngay" lật hàng qua lại từng khung (tái hiện bằng harness: cuối
+       chặng chéo nông, dir8 nhảy 1<->2 mười lần trong 0,5 giây). Ở dải
+       tốc này MỌI lần chuyển hàng đều phải qua điểm chờ bền, và điểm
+       chờ nới lên 0,14 giây; ở tốc độ đi thường (>= 56) giữ nguyên
+       hành vi cũ. Chỉ đổi hướng HIỂN THỊ, không đụng số gameplay. */
+    var lowSpd = (typeof spd === 'number' && spd < 56);
+    if (!lowSpd && diff <= (22.5 - 3) * Math.PI / 180) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; return; }
     if (dir8PendD !== raw) { dir8PendD = raw; dir8PendT = 0; }
     dir8PendT += dt;
-    if (dir8PendT >= 0.09) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; }
+    if (dir8PendT >= (lowSpd ? 0.14 : 0.09)) { dir8 = raw; dir8PendD = -1; dir8PendT = 0; }
   }
   /* ---------- Cần điều khiển cảm ứng (floating joystick) ---------- */
   var JOY_R = 37; // bán kính vòng cần (px, hệ tọa độ màn hình) — Mục G đợt vá 2026-11-02: giảm ~1/3 từ 56 theo lệnh Bui (joystick bé lại)
@@ -10830,7 +10840,15 @@
           var aimX = axS + abx * tAim - px, aimY = ayS + aby * tAim - py;
           var aimLen = Math.hypot(aimX, aimY);
           if (aimLen > 0.01) {
-            dir8 = L.dir8FromVector(aimX, aimY, dir8);
+            /* ĐỢT ĐI NHƯ THẬT 2026-11-04: trong vùng hãm áp sát đích
+               cuối (distWp < 78, cùng vùng giảm tốc ở dưới), vector nhắm
+               rất ngắn và dao động góc mạnh quanh biên khu vực — ghi
+               dir8 theo vector nhắm ở đây làm hàng hiển thị lật qua lại
+               từng khung ở cuối chặng chéo nông. Trong vùng này KHÔNG
+               ghi dir8 theo nhắm nữa; hướng hiển thị do
+               steerDir8Display (bám vận tốc + chờ bền ở tốc chậm) sở
+               hữu ở cuối khung. Ngoài vùng hãm giữ nguyên như cũ. */
+            if (!(isFinalWp && distWp < 78)) dir8 = L.dir8FromVector(aimX, aimY, dir8);
             var spdWp = sp;
             // Giảm tốc áp sát đích (gói E tăng cường): vùng hãm nới từ
             // 30px lên 78px và sàn tốc hạ xuống 24px/giây — người chơi
@@ -10942,7 +10960,7 @@
                 (tgX * lgX + tgY * lgY) / (tgLen * lgLen) > Math.cos(45 * Math.PI / 180)) { stDx = lgX; stDy = lgY; }
           }
         }
-        steerDir8Display(stDx, stDy, dt);
+        steerDir8Display(stDx, stDy, dt, speedNow);
       }
       moving = !!(dx || dy) || speedNow > 6;
       // Đường THÔ kẹt một khung vì hộp chân còn vương sang ô kề chéo
@@ -11512,17 +11530,52 @@
     else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; if (e.key === '3') tlSwordHeld = false; });
-  $('dialogue').addEventListener('click', function () { if (dlgTypeFinish()) return; if (dlg && dlg.who !== 'choice') nextLine(); });
-  $('btn-save').addEventListener('click', function () {
+  /* ===== ĐỢT CẢM ỨNG ĐIỆN THOẠI 2026-11-04 (lệnh Bui 06:28) =====
+     Gốc lỗi "khi đánh phải ấn 2 cái": toàn bộ nút trên màn hình game chỉ
+     nghe sự kiện 'click'. Trên trình duyệt di động, click bị giữ lại để
+     chờ phân biệt chạm đúp (phóng to trang) nên nhịp chạm đầu tiên bị
+     nuốt; ấn cái thứ hai mới ăn. onTap là hàm trợ giúp DÙNG CHUNG: gắn
+     'pointerdown' để hành động chạy NGAY khi ngón chạm xuống, đồng thời
+     giữ đường 'click' cho chuột máy tính, phím Enter/Space trên nút đang
+     focus và harness kiểm thử. Khóa chống chạy hai lần: sau một
+     pointerdown đã chạy, click nối tiếp của chính chạm đó (bắn ngay sau
+     pointerup) bị bỏ qua trong cửa sổ 500ms kể từ pointerdown, được làm
+     mới ở pointerup/pointercancel để cả chạm giữ lâu cũng không chạy
+     hai lần; click đơn độc (không pointerdown đi trước) vẫn chạy đúng
+     một lần. Chạm nhanh liên tiếp không bị khóa vì mỗi pointerdown đều
+     chạy ngay. Chuột phải (button khác 0) không kích hoạt. */
+  function onTap(el, fn) {
+    if (!el) return;
+    var suppressClickUntil = 0;
+    el.addEventListener('pointerdown', function (e) {
+      if (e && e.pointerType === 'mouse' && typeof e.button === 'number' && e.button !== 0) return;
+      suppressClickUntil = Date.now() + 500;
+      fn();
+    });
+    el.addEventListener('pointerup', function () { suppressClickUntil = Date.now() + 500; });
+    el.addEventListener('pointercancel', function () { suppressClickUntil = Date.now() + 500; });
+    el.addEventListener('click', function () {
+      if (Date.now() < suppressClickUntil) return;
+      fn();
+    });
+  }
+  /* iOS Safari: chặn sự kiện cử chỉ riêng của iOS (gesturestart /
+     gesturechange) để trang không phóng to bằng chụm hai ngón trên màn
+     hình game. Chụm phóng to CAMERA bản đồ trong game đi qua pointer
+     trên canvas (mục zoom riêng) — không phải sự kiện này, giữ nguyên. */
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+  onTap($('dialogue'), function () { if (dlgTypeFinish()) return; if (dlg && dlg.who !== 'choice') nextLine(); });
+  onTap($('btn-save'), function () {
     if (saveNow()) toast('Đã lưu tiến trình.');
     else toast('Chưa lưu được: tiến trình mới hơn đang ở một phiên chơi khác — hãy tải lại trang để chơi tiếp từ bản mới nhất.', 4600);
   });
   var settingsBtnEl = $('btn-settings');
-  if (settingsBtnEl && SET && SET.openPanel) settingsBtnEl.addEventListener('click', function () { SET.openPanel(); });
+  if (settingsBtnEl && SET && SET.openPanel) onTap(settingsBtnEl, function () { SET.openPanel(); });
   var questToggleEl = $('quest-toggle');
-  if (questToggleEl) questToggleEl.addEventListener('click', function () { questMinimized = true; applyQuestMin(); });
+  if (questToggleEl) onTap(questToggleEl, function () { questMinimized = true; applyQuestMin(); });
   var questTabEl = $('quest-tab');
-  if (questTabEl) questTabEl.addEventListener('click', function () {
+  if (questTabEl) onTap(questTabEl, function () {
     questMinimized = false; applyQuestMin();
     questTabEl.classList.remove('pulse');
     if (lastQuestId) seenQuestIds[lastQuestId] = true;
@@ -11531,13 +11584,13 @@
   // Tự tìm đường làm nhiệm vụ: nút riêng trong ô nhiệm vụ, và bấm thẳng
   // vào tên/mô tả nhiệm vụ cũng bắt đầu (đúng hai cách Bui mô tả).
   var questNavBtn = $('quest-nav-btn');
-  if (questNavBtn) questNavBtn.addEventListener('click', function () { startQuestNav(); });
+  if (questNavBtn) onTap(questNavBtn, function () { startQuestNav(); });
   ['hud-quest-name', 'hud-quest-desc'].forEach(function (qid) {
     var qel = $(qid);
-    if (qel) qel.addEventListener('click', function () { startQuestNav(); });
+    if (qel) onTap(qel, function () { startQuestNav(); });
   });
   var toastMinEl = $('toast-min');
-  if (toastMinEl) toastMinEl.addEventListener('click', function () {
+  if (toastMinEl) onTap(toastMinEl, function () {
     toastMinimized = true;
     try { localStorage.setItem('vslc_toast_min', '1'); } catch (e) {}
     var t = $('toast'); if (t) t.classList.add('hidden');
@@ -11546,7 +11599,7 @@
     updateToastTab();
   });
   var toastTabEl = $('toast-tab');
-  if (toastTabEl) toastTabEl.addEventListener('click', function () {
+  if (toastTabEl) onTap(toastTabEl, function () {
     toastMinimized = false;
     try { localStorage.setItem('vslc_toast_min', '0'); } catch (e) {}
     toastUnread = 0;
@@ -11841,18 +11894,21 @@
   cv.addEventListener('pointercancel', joyEnd);
   cv.addEventListener('pointerup', pinchPointerEnd);
   cv.addEventListener('pointercancel', pinchPointerEnd);
-  $('sk-pha').addEventListener('click', function () { castPha(); });
-  $('sk-chan').addEventListener('click', function () { castChan(); });
-  $('sk-sword').addEventListener('click', function () { castSword(); });
-  $('sk-dinh').addEventListener('click', function () { castDinh(); });
-  $('sk-phong').addEventListener('click', function () { castPhong(); });
-  $('sk-med').addEventListener('click', function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
-  $('sk-break').addEventListener('click', function () { doBreakthrough(); });
-  $('sk-interact').addEventListener('click', function () { sfxUi(); interact(); });
+  // ĐỢT CẢM ỨNG ĐIỆN THOẠI 2026-11-04: toàn bộ cụm chiến đấu nối qua
+  // onTap — chiêu ra NGAY ở nhịp chạm đầu (pointerdown), không còn phải
+  // ấn hai cái; thân handler giữ nguyên từng chữ, không số nào đổi.
+  onTap($('sk-pha'), function () { castPha(); });
+  onTap($('sk-chan'), function () { castChan(); });
+  onTap($('sk-sword'), function () { castSword(); });
+  onTap($('sk-dinh'), function () { castDinh(); });
+  onTap($('sk-phong'), function () { castPhong(); });
+  onTap($('sk-med'), function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
+  onTap($('sk-break'), function () { doBreakthrough(); });
+  onTap($('sk-interact'), function () { sfxUi(); interact(); });
   // Mục G: nút ĐÁNH ở tâm vòng cung — gọi đúng castSword (đường đánh
   // thường duy nhất của game: kiếm quyết vật lý, tự rẽ nhánh chạm trán /
   // trận đài / Thăng Long trong chính castSword như nút Kiếm quyết).
-  $('sk-attack').addEventListener('click', function () { castSword(); });
+  onTap($('sk-attack'), function () { castSword(); });
 
   /* ================= LÀN C — HỆ CÀY + BÍ CẢNH =================
      Hợp đồng làn A (js/logic.js, qua VSLC) được dùng đúng tên; số đã
@@ -11995,7 +12051,7 @@
     var p = $('grind-panel'); if (p) p.classList.add('hidden');
   }
   var grindCloseEl = $('grind-close');
-  if (grindCloseEl) grindCloseEl.addEventListener('click', closeGrindBoard);
+  if (grindCloseEl) onTap(grindCloseEl, closeGrindBoard);
   function renderGrindBoard() {
     if (!state || !grindBoardOpen) return;
     var boardId = grindBoardOpen;
@@ -12855,13 +12911,13 @@
     var p = $('bag-panel'); if (p) p.classList.remove('hidden');
   }
   function closeBag() { var p = $('bag-panel'); if (p) p.classList.add('hidden'); }
-  $('btn-bag').addEventListener('click', openBag);
-  $('bag-close').addEventListener('click', closeBag);
+  onTap($('btn-bag'), openBag);
+  onTap($('bag-close'), closeBag);
   // Tổng kết phiên săn: chạm vào bảng là đóng (cơ chế ẩn chủ động duy
   // nhất ngoài mốc 30 giây tuyệt đối — xem maybeShowHuntSummary).
   var hsEl = $('hunt-summary');
-  if (hsEl) hsEl.addEventListener('click', hideHuntSummary);
-  $('bag-upgrade').addEventListener('click', function () {
+  if (hsEl) onTap(hsEl, hideHuntSummary);
+  onTap($('bag-upgrade'), function () {
     if (!state) return;
     var bag = L.bagOf(state);
     var next = L.BAG_TIERS[bag.tier + 1];
