@@ -2,8 +2,14 @@
    "Bản đồ mượt + Ngày đêm" (lệnh Bui 13:48 ngày 2026-11-01: thêm nhạc nền
    theo bản đồ, biến thể đêm dịu hơn, crossfade khi chuyển cảnh/pha; tiếng
    động môi trường: chim ngày / dế đêm, suối theo khoảng cách, gió, chợ).
-   TOÀN BỘ tổng hợp bằng WebAudio trong mã — KHÔNG tệp âm thanh ngoài,
-   đúng kiến trúc âm hiệu ứng hiện tại của dự án (js/game.js beep/sfx*).
+   Các lớp tiếng động và giai điệu theo bản đồ tổng hợp bằng WebAudio
+   trong mã, đúng kiến trúc âm hiệu ứng hiện tại của dự án (js/game.js
+   beep/sfx*). NGOẠI LỆ DUY NHẤT, có khai báo: lớp NHẠC NỀN có thêm
+   "khe nhạc tệp" từ đợt tích hợp nhạc nền đã chọn (Bui chốt bản
+   "tiên khí hùng vĩ" 16:51 ngày 2026-11-04) — một tệp OGG phát vòng
+   qua AudioBufferSourceNode làm nhạc nền chính, giai điệu thủ tục
+   theo bản đồ chỉ còn là dự phòng khi tệp nạp lỗi; xem hằng số
+   FILE_MUSIC_* và docs/music-integration-report.md.
    Module độc lập phơi MỘT đối tượng toàn cục VSLC_MUSIC, không phụ thuộc
    module nào khác: đầu vào pha ngày đêm / bản đồ / khoảng cách suối /
    thoại đang phát đều nhận qua hàm (hợp đồng nối dây ở cuối tệp và trong
@@ -40,6 +46,58 @@
   var STREAM_MAX = 0.20;          // trần lớp suối (x âm lượng môi trường x khoảng cách)
   var WIND_MAX = 0.15;            // trần lớp gió
   var MARKET_MAX = 0.16;          // trần lớp chợ lao xao
+  /* Đợt sửa TIẾNG ỒN MÔI TRƯỜNG (Bui chơi thật trên bản live, 11:49
+     ngày 2026-11-04: "Ở Cô Châu Thành, Thanh Vân Tông các tiếng ồn
+     quá nhiều"). Đo bằng chính module (mặc định ambVol 0,6): ở thành,
+     lớp chợ chạy KHÔNG NGẮT ở mức tuyệt đối 0,096 TRÊN MỌI Ô của bản
+     đồ 104x78 (không hề giảm theo khoảng cách tới chợ), cả ngày lẫn
+     chạng vạng; ở tông, gió 0,09 phủ toàn bản đồ 124x92 cộng suối
+     tiệm cận tối đa 0,12 thành tổng 0,21 tại mép nước. Cả hai đều CAO
+     HƠN đỉnh nốt giai điệu của chính nhạc nền (0,075 x musicVol 0,7 =
+     0,0525) — nền ồn ngồi trên nhạc nên nghe thành "ồn", và hai bản
+     đồ này không có lấy một ô yên tĩnh vào ban ngày (đối chiếu trấn:
+     giữa trấn tổng liên tục = 0, chỉ chim rời rạc đỉnh 0,03). Cả hai
+     bản đồ đều KHÔNG có lớp rời rạc nào (hồ sơ AMBIENCE_DEFS chỉ có
+     chợ, resp. suối+gió) nên phần "ồn" là 100% ở các lớp liên tục.
+     Cách sửa của đợt này (chỉ hai bản đồ bị phàn nàn):
+     - AMB_MAP_SCALE: hệ số riêng theo bản đồ nhân vào cả ba lớp liên
+       tục: hai bản đồ này x 0,5 (thành còn 0,048; tông gió còn 0,045,
+       suối tối đa còn 0,06, tổng tại mép nước còn 0,105).
+     - MARKET_DUSK_FACTOR: chợ chạng vạng x 0,6 thêm nữa (thành về
+       chiều lắng xuống): thành chạng vạng còn 0,0288.
+     - AMB_CONT_SUM_MAX: trần CỨNG cho TỔNG ba lớp liên tục (đơn vị
+       tương đối trước khi nhân bus): vượt trần thì co đều tỉ lệ.
+       Giá trị 0,35 bằng đúng tổng tối đa hiện hữu (suối 0,20 + gió
+       0,15 ở đường mòn/tông trước đợt này) — hôm nay nó không tự ý
+       đổi mức của bất kỳ bản đồ nào ngoài hai bản đồ trên, nhưng từ
+       nay không một thay đổi hồ sơ/hằng số nào đẩy được nền ồn liên
+       tục của một bản đồ qua mức đó. */
+  var AMB_MAP_SCALE = { co_chau: 0.5, thanh_van_tong: 0.5 };
+  var MARKET_DUSK_FACTOR = 0.6;   // chợ ở chạng vạng lắng còn x 0,6
+  var AMB_CONT_SUM_MAX = 0.35;    // trần tổng ba lớp ồn liên tục (tương đối, trước bus)
+  /* KHE NHẠC TỆP (đợt tích hợp nhạc nền đã chọn, 2026-11-04): Bui
+     chốt bản "tiên khí hùng vĩ" (~/workspace/game-music/BAO-CAO-TIEN-
+     KHI.md) là NHẠC NỀN CHÍNH của game. Tệp OGG (vòng lặp đã khâu
+     liền ở mức mẫu, dùng OGG thay MP3 vì MP3 có đệm mã hoá ở đầu tệp
+     làm lệch vòng) phát qua AudioBufferSourceNode loop = true, qua
+     một gain bao riêng (FILE_MUSIC_GAIN) rồi vào ĐÚNG bus nhạc hiện
+     có — nên mọi hành vi bus giữ nguyên: âm lượng/công tắc nhạc trong
+     cài đặt, duck khi thoại (DUCK_MUSIC), hạ nhạc trận boss
+     (BOSS_MUSIC_FACTOR). Giai điệu thủ tục theo bản đồ (hệ deck) chỉ
+     còn là DỰ PHÒNG: chạy trong lúc tệp đang nạp và chạy hẳn khi tệp
+     nạp lỗi/không giải mã được; tệp sẵn sàng thì crossfade
+     CROSSFADE_SEC sang tệp (deck mờ xuống, tệp mờ lên) và bộ lập lịch
+     ngừng lên nốt cho deck. Gain khe: hồ sơ cả hai bản nhạc đều dặn
+     đặt thấp hơn lớp tổng hợp khoảng 3 dB ở lần gắn đầu vì RMS của
+     tệp cao hơn hẳn nốt thủ tục (đoạn đầy khoảng −16 dBFS, đỉnh
+     −1 dBFS); FILE_MUSIC_GAIN_DB = −3 là giá trị KHỞI ĐẦU theo ghi
+     chú đó, chốt lại bằng tai khi nghe thử trong game thật.
+     Bản nhạc là MỘT bản cho mọi bản đồ: ở chế độ tệp, setScene chỉ
+     còn đổi lớp môi trường theo bản đồ/pha — nhạc không crossfade,
+     không có biến thể đêm riêng (khai báo trong báo cáo đợt). */
+  var FILE_MUSIC_URL = 'assets/music/nhac-tien-khi.ogg';
+  var FILE_MUSIC_GAIN_DB = -3;              // gain khởi đầu của khe nhạc tệp (dB)
+  var FILE_MUSIC_GAIN = 0.7079457843841379; // = 10^(FILE_MUSIC_GAIN_DB/20)
   var PAD_LEVEL = 0.055;          // gain mỗi nốt đệm hợp âm (trước deck x bus)
   var MOTIF_LEVEL = 0.075;        // gain nốt giai điệu
   var BASS_LEVEL = 0.06;          // gain nốt trầm đầu nhịp
@@ -345,6 +403,16 @@
     decks: [],            // [{variant, gainNode, gain, ramp, step, nextTime, active, seed}]
     lastCrossfade: null,  // {fromVariant, toVariant, durationSec, kind}
     timer: null,
+    /* Khe nhạc tệp: status idle -> loading -> ready | error |
+       unavailable (không có fetch/decodeAudioData thì unavailable
+       ngay, xác định — môi trường kiểm thử Node rơi vào nhánh này
+       nên hành vi thủ tục không đổi). buffer giữ qua stop() để khởi
+       động lại không tải lại; gain/ramp là bao crossfade riêng của
+       khe, cùng khuôn ramp của deck. fileLoader: bộ nạp tiêm từ
+       kiểm thử (unlock(factory, loader)); mặc định null -> dùng
+       defaultFileLoader (fetch + decodeAudioData của trình duyệt). */
+    file: { status: 'idle', buffer: null, source: null, gainNode: null, gain: 0, ramp: null, active: false },
+    fileLoader: null,
     noiseBuf: null, layers: null,   // {stream:{gain}, wind:{gain}, market:{gain}}
     nextBirdAt: 0, nextCricketAt: 0, rngState: 123456789,
     nextDripAt: 0, nextStoneAt: 0, nextHowlAt: 0,
@@ -381,12 +449,33 @@
     return (S.ambOn ? S.ambVol : 0) * (S.duck ? DUCK_AMBIENCE : 1);
   }
   function ambFlags() { return resolveAmbience(S.mapId, S.phase); }
-  function streamLevel() {
-    var f = ambFlags();
-    return f.stream ? ambBusLevel() * clamp01(S.proximity, 0) * STREAM_MAX : 0;
+  /* Hệ số môi trường riêng của bản đồ hiện tại (đợt tiếng ồn
+     2026-11-04): bản đồ không có trong AMB_MAP_SCALE dùng 1. */
+  function ambMapScale() {
+    var s = AMB_MAP_SCALE[S.mapId];
+    return (typeof s === 'number' && isFinite(s) && s > 0) ? Math.min(1, s) : 1;
   }
-  function windLevel() { return ambFlags().wind ? ambBusLevel() * WIND_MAX : 0; }
-  function marketLevel() { return ambFlags().market ? ambBusLevel() * MARKET_MAX : 0; }
+  /* Mức thuần của BA lớp ồn liên tục — nguồn sự thật duy nhất cho cả
+     ba hàm *Level() bên dưới và cho applyGains(): mức tương đối của
+     từng lớp (suối theo khoảng cách, chợ lắng ở chạng vạng) nhân hệ
+     số riêng của bản đồ, rồi co đều tỉ lệ nếu TỔNG vượt trần cứng
+     AMB_CONT_SUM_MAX, cuối cùng nhân mức bus môi trường. Suối lấy
+     khoảng cách tới ô nước GẦN NHẤT (tích hợp musicProximity quét
+     min) và clamp01 giữ trong trần — theo cấu trúc không thể cộng
+     dồn nhiều nguồn nước qua trần. */
+  function contLevels() {
+    var f = ambFlags(), bus = ambBusLevel(), scale = ambMapScale();
+    var s = f.stream ? clamp01(S.proximity, 0) * STREAM_MAX : 0;
+    var w = f.wind ? WIND_MAX : 0;
+    var m = f.market ? MARKET_MAX * (S.phase.bucket === 'dusk' ? MARKET_DUSK_FACTOR : 1) : 0;
+    s *= scale; w *= scale; m *= scale;
+    var sum = s + w + m;
+    var k = sum > AMB_CONT_SUM_MAX ? AMB_CONT_SUM_MAX / sum : 1;
+    return { stream: bus * s * k, wind: bus * w * k, market: bus * m * k };
+  }
+  function streamLevel() { return contLevels().stream; }
+  function windLevel() { return contLevels().wind; }
+  function marketLevel() { return contLevels().market; }
 
   /* ================= WebAudio: xây graph ================= */
   function defaultContextFactory() {
@@ -476,8 +565,10 @@
         if (p >= 1) { d.gain = d.ramp.to; d.ramp = null; }
         else d.gain = d.ramp.from + (d.ramp.to - d.ramp.from) * Math.max(0, p);
       }
-      if (d.gain <= 0.0001 && !d.ramp && d.variant.id !== S.variantId) {
+      if (d.gain <= 0.0001 && !d.ramp && (d.variant.id !== S.variantId || d.superseded)) {
         // Deck của biến thể cũ đã mờ hết -> dọn khỏi danh sách.
+        // d.superseded: deck bị khe nhạc tệp thay thế (đợt tích hợp
+        // nhạc tệp) — mờ hết thì dọn kể cả deck của biến thể hiện tại.
         d.active = false;
         if (d.gainNode && typeof d.gainNode.disconnect === 'function') { try { d.gainNode.disconnect(); } catch (e) {} }
         continue;
@@ -495,6 +586,7 @@
     var prevId = S.variantId;
     S.variantId = variant.id;
     if (!S.unlocked || !S.ctx) return; // chưa unlock: chỉ ghi trạng thái, im lặng
+    if (fileActive()) return; // chế độ tệp: một bản nhạc cho mọi cảnh — trạng thái biến thể vẫn ghi ở trên, nhưng không dựng deck và không crossfade nhạc (chỉ lớp môi trường đổi theo cảnh qua applyGains)
     var t = nowSec();
     var existing = currentDeck();
     if (existing && prevId === variant.id) return; // cùng biến thể: không crossfade
@@ -505,6 +597,87 @@
     if (prevId && prevId !== variant.id) {
       S.lastCrossfade = { fromVariant: prevId, toVariant: variant.id, durationSec: fadeSec, kind: kind || 'linearRamp' };
     }
+  }
+
+  /* ================= Khe nhạc tệp (đợt tích hợp 2026-11-04) =================
+     Máy trạng thái: idle -> loading -> ready (phát tệp, hệ deck im)
+     hoặc -> error / unavailable (hệ deck thủ tục gánh hẳn, không thử
+     lại trong phiên). Nạp bắt đầu ở unlock()/restartEngine(); trong
+     lúc nạp, nhạc thủ tục phát bình thường nên không có khoảng lặng. */
+  function fileActive() { return S.file.active && S.file.status === 'ready'; }
+  /* Bộ nạp mặc định của trình duyệt: fetch -> decodeAudioData.
+     Môi trường không có một trong hai (kiểm thử Node với ngữ cảnh
+     giả) -> onErr('unavailable') NGAY, xác định, không chạm mạng. */
+  function defaultFileLoader(url, ctx, onOk, onErr) {
+    if (!ctx || typeof ctx.decodeAudioData !== 'function' || typeof fetch !== 'function') { onErr('unavailable'); return; }
+    var done = false;
+    function ok(buf) { if (!done) { done = true; onOk(buf); } }
+    function bad(e) { if (!done) { done = true; onErr(e); } }
+    fetch(url).then(function (r) {
+      if (!r || !r.ok) throw new Error('http ' + (r && r.status));
+      return r.arrayBuffer();
+    }).then(function (ab) {
+      var p = null;
+      try { p = ctx.decodeAudioData(ab, ok, bad); } catch (e) { bad(e); return; }
+      if (p && typeof p.then === 'function') p.then(ok, bad);
+    }).then(null, bad);
+  }
+  function startFileLoad() {
+    if (!S.ctx) return;
+    if (S.file.status !== 'idle') return; // loading/ready: đang/đã có; error/unavailable: phiên này không thử lại
+    S.file.status = 'loading';
+    var loader = S.fileLoader || defaultFileLoader;
+    try {
+      loader(FILE_MUSIC_URL, S.ctx, function (buf) {
+        if (!buf) { S.file.status = 'error'; return; }
+        S.file.buffer = buf;
+        S.file.status = 'ready';
+        activateFileMusic();
+      }, function (err) {
+        S.file.status = (err === 'unavailable') ? 'unavailable' : 'error';
+      });
+    } catch (e) { S.file.status = 'error'; }
+  }
+  function startFileSource() {
+    if (!S.ctx || !S.file.buffer || typeof S.ctx.createBufferSource !== 'function') return;
+    stopFileSource();
+    if (!S.file.gainNode) { S.file.gainNode = makeGain(); S.file.gainNode.connect(S.musicBus); }
+    var src = S.ctx.createBufferSource();
+    src.buffer = S.file.buffer;
+    src.loop = true; // buffer đã khâu vòng liền ở mức mẫu — lặp nguyên buffer
+    src.connect(S.file.gainNode);
+    try { src.start(); } catch (e) {}
+    S.file.source = src;
+  }
+  function stopFileSource() {
+    if (S.file.source && typeof S.file.source.stop === 'function') { try { S.file.source.stop(); } catch (e) {} }
+    S.file.source = null;
+  }
+  function startFileRamp(to, dur) {
+    var t = nowSec();
+    S.file.ramp = { from: S.file.gain, to: to, t0: t, dur: Math.max(0.01, dur) };
+    if (S.file.gainNode) rampParam(S.file.gainNode.gain, to, t, dur);
+  }
+  /* Tiến bao gain của khe theo thời gian — cùng công thức nội suy
+     tuyến tính của updateDeckGains, gọi từ schedulerTick. */
+  function advanceFileGain() {
+    if (!S.file.ramp) return;
+    var p = (nowSec() - S.file.ramp.t0) / S.file.ramp.dur;
+    if (p >= 1) { S.file.gain = S.file.ramp.to; S.file.ramp = null; }
+    else S.file.gain = S.file.ramp.from + (S.file.ramp.to - S.file.ramp.from) * Math.max(0, p);
+  }
+  /* Tệp sẵn sàng (hoặc khởi động lại khi buffer còn): bật nguồn lặp,
+     crossfade CROSSFADE_SEC — deck mờ xuống và bị đánh dấu thay thế,
+     khe mờ lên FILE_MUSIC_GAIN — ghi vào lastCrossfade như một lần
+     chuyển tuyến nhạc (kind 'fileMusic'). Máy đang dừng thì chỉ ghi
+     trạng thái ready; lần restartEngine tới sẽ tự kích hoạt. */
+  function activateFileMusic() {
+    if (!S.ctx || !S.file.buffer || !S.running || S.file.active) return;
+    S.file.active = true;
+    startFileSource();
+    for (var i = 0; i < S.decks.length; i++) { S.decks[i].superseded = true; startDeckRamp(S.decks[i], 0, CROSSFADE_SEC); }
+    startFileRamp(FILE_MUSIC_GAIN, CROSSFADE_SEC);
+    S.lastCrossfade = { fromVariant: S.variantId, toVariant: 'file', durationSec: CROSSFADE_SEC, kind: 'fileMusic' };
   }
 
   /* ================= Lập lịch nốt (lookahead) ================= */
@@ -662,16 +835,22 @@
   function schedulerTick() {
     if (!S.ctx || !S.running || S.suspended) return;
     updateDeckGains();
+    advanceFileGain();
     var horizon = nowSec() + SCHED_LOOKAHEAD_SEC;
-    for (var i = 0; i < S.decks.length; i++) {
-      var d = S.decks[i];
-      if (!d.active || d.gain <= 0.0001 && d.variant.id !== S.variantId) continue;
-      var stepDur = 60 / d.variant.bpm / 2;
-      if (d.nextTime < nowSec() - 0.05) d.nextTime = nowSec();
-      while (d.nextTime < horizon) {
-        scheduleDeckStep(d, d.step, d.nextTime);
-        d.step++;
-        d.nextTime += stepDur;
+    // Chế độ tệp: bộ lập lịch KHÔNG lên nốt cho deck nữa (nguồn lặp
+    // của khe tự phát qua bus nhạc). Trống trận boss ở dưới vẫn chạy
+    // — nó là tuyến riêng qua bus, không thuộc hệ deck.
+    if (!fileActive()) {
+      for (var i = 0; i < S.decks.length; i++) {
+        var d = S.decks[i];
+        if (!d.active || d.gain <= 0.0001 && d.variant.id !== S.variantId) continue;
+        var stepDur = 60 / d.variant.bpm / 2;
+        if (d.nextTime < nowSec() - 0.05) d.nextTime = nowSec();
+        while (d.nextTime < horizon) {
+          scheduleDeckStep(d, d.step, d.nextTime);
+          d.step++;
+          d.nextTime += stepDur;
+        }
       }
     }
     // Trống trận boss 60 nhịp/phút khi chế độ boss đang bật.
@@ -746,10 +925,18 @@
     applySceneToDecks(FADE_IN_SEC, 'fadeIn');
     S.lastCrossfade = null;
     applyGains();
+    // Khe nhạc tệp: buffer còn từ phiên trước thì phát lại ngay
+    // (không tải lại); chưa từng nạp thì bắt đầu nạp — trong lúc nạp
+    // deck vừa dựng ở trên gánh nhạc như thường.
+    if (S.file.status === 'ready') activateFileMusic(); else startFileLoad();
     startTimer();
     schedulerTick();
   }
-  function unlock(factory) {
+  function unlock(factory, fileLoader) {
+    // fileLoader (tuỳ chọn, chỉ kiểm thử dùng): bộ nạp tệp nhạc tiêm
+    // vào thay defaultFileLoader; trình duyệt gọi unlock() không
+    // đối số như cũ.
+    if (typeof fileLoader === 'function' && !S.fileLoader) S.fileLoader = fileLoader;
     if (S.ctx && !S.running) { restartEngine(); return getState(); }
     if (S.ctx && S.suspended) { resume(); return getState(); }
     if (S.unlocked && S.ctx) {
@@ -771,6 +958,10 @@
     // Deck đầu mờ vào từ 0: applySceneToDecks đã ramp deck mới lên 1.
     S.lastCrossfade = null;
     applyGains();
+    // Bắt đầu nạp tệp nhạc nền: trong lúc nạp deck thủ tục phát như
+    // thường; nạp xong activateFileMusic() tự crossfade sang tệp;
+    // nạp lỗi thì hệ deck gánh hẳn (dự phòng theo thiết kế khe).
+    startFileLoad();
     startTimer();
     schedulerTick();
     return getState();
@@ -800,6 +991,12 @@
     S.running = false;
     S.boss = false; S.nextDrumAt = 0; // dừng máy là thoát hẳn chế độ boss — phiên sau không dính trống trận cũ
     S.decks = [];
+    // Khe nhạc tệp dừng theo máy: tắt nguồn lặp và đưa bao gain về 0,
+    // nhưng GIỮ buffer + trạng thái ready — khởi động lại phát tiếp
+    // ngay, không tải lại tệp.
+    S.file.active = false; S.file.gain = 0; S.file.ramp = null;
+    if (S.file.gainNode) rampParam(S.file.gainNode.gain, 0, nowSec(), STOP_FADE_SEC);
+    stopFileSource();
     stopLayers();
     if (S.timer) { clearInterval(S.timer); S.timer = null; }
     if (S.ctx && typeof S.ctx.suspend === 'function') { try { S.ctx.suspend(); } catch (e) {} }
@@ -873,6 +1070,15 @@
       streamGain: streamLevel(), windGain: windLevel(), marketGain: marketLevel(),
       ambience: ambFlags(),
       decks: S.decks.map(function (d) { return { variantId: d.variant.id, gain: d.gain, active: d.active, hasRamp: !!d.ramp }; }),
+      /* Khe nhạc tệp: musicSource là tuyến nhạc ĐANG gánh ('file'
+         khi tệp đã kích hoạt, còn lại 'procedural' — gồm cả lúc tệp
+         đang nạp và lúc nạp lỗi). */
+      musicSource: fileActive() ? 'file' : 'procedural',
+      fileMusic: {
+        status: S.file.status, url: FILE_MUSIC_URL,
+        gain: S.file.gain, active: S.file.active,
+        playing: !!S.file.source, hasRamp: !!S.file.ramp
+      },
       crossfadeActive: S.decks.some(function (d) { return !!d.ramp; }),
       lastCrossfade: S.lastCrossfade,
       scheduledNotes: S.scheduledNotes, scheduledChirps: S.scheduledChirps,
@@ -905,6 +1111,8 @@
     SCHED_LOOKAHEAD_SEC: SCHED_LOOKAHEAD_SEC, SCHED_INTERVAL_MS: SCHED_INTERVAL_MS,
     DUCK_MUSIC: DUCK_MUSIC, DUCK_AMBIENCE: DUCK_AMBIENCE, BOSS_MUSIC_FACTOR: BOSS_MUSIC_FACTOR,
     STREAM_MAX: STREAM_MAX, WIND_MAX: WIND_MAX, MARKET_MAX: MARKET_MAX,
+    AMB_MAP_SCALE: AMB_MAP_SCALE, MARKET_DUSK_FACTOR: MARKET_DUSK_FACTOR, AMB_CONT_SUM_MAX: AMB_CONT_SUM_MAX,
+    FILE_MUSIC_URL: FILE_MUSIC_URL, FILE_MUSIC_GAIN_DB: FILE_MUSIC_GAIN_DB, FILE_MUSIC_GAIN: FILE_MUSIC_GAIN,
     DRIP_LEVEL: DRIP_LEVEL, STONE_LEVEL: STONE_LEVEL, HOWL_LEVEL: HOWL_LEVEL, SWORDQI_LEVEL: SWORDQI_LEVEL,
     MUSIC_DEFAULT_VOL: MUSIC_DEFAULT_VOL, AMB_DEFAULT_VOL: AMB_DEFAULT_VOL,
     MAP_IDS: MAP_IDS, TRACKS: TRACKS, AMBIENCE_DEFS: AMBIENCE_DEFS,
