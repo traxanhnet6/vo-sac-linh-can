@@ -668,6 +668,7 @@
     // panel bảng đều là trạng thái phiên — dọn cùng đợt, không rò sang
     // tài khoản kế tiếp; vật thể ẩn theo phiên cũng xóa hết.
     bcSession = null; bcColorSort = null; escortT = 0;
+    partyBotsLive = []; bcTelegraphs = []; // bot ghép tổ + vòng báo đòn boss tổ đội cũng là trạng thái phiên
     guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
     closeGrindBoard();
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
@@ -923,6 +924,8 @@
   ASSETS.mons.tan_hon_kiem_y_sau = ASSETS.mons.kiem_y_tan_hon;
   ASSETS.mons.lang_nhiem_song = ASSETS.mons.son_lang;
   ASSETS.bgByMap.bc_kiemtrung_sau = loadImg('assets/bg-bc_kiemtrung_sau.png');
+  ASSETS.bgByMap.bc_tran_tam = loadImg('assets/bg-bc_tran_tam.png');
+  ASSETS.bgByMap.bc_tran_tam_sau = loadImg('assets/bg-bc_tran_tam_sau.png');
   PROP_TYPES.forEach(function (t) { ASSETS.props[t] = loadImg('assets/props/' + t + '.png'); });
   function imgReady(im) { return !!(im && im.complete && im.naturalWidth > 0); }
   var DIR_ROW = { down: 0, up: 1, right: 2, left: 3 }; // hàng trong sheet nhân vật
@@ -1840,6 +1843,7 @@
     if (daiFight) { draws.push({ depth: daiFight.boss.y + TILE, kind: 'daiboss', f: daiFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // ARCIV ch.13: đài thách đấu dùng chung vòng khán giả quanh đài
     if (arcFig) arcFig.figs.forEach(function (fg) { if (!fg.dead) draws.push({ depth: fg.y + TILE, kind: 'arcfig', f: fg }); }); // ARCIV ch.14/15: figure người của trận kịch bản dã ngoại
     if (arcFig && arcFig.escorts) arcFig.escorts.forEach(function (es) { draws.push({ depth: es.y + TILE, kind: 'arcfig', f: es }); }); // ARCIV đợt 2 ch.19: nhân chứng hộ tống vẽ qua cùng nhánh arcfig (thanh máu + nhãn tên)
+    partyBotsLive.forEach(function (pb2) { draws.push({ depth: pb2.y + TILE, kind: 'partybot', b: pb2 }); }); // bot ghép tổ Trận Tâm: vẽ như figure người, nhánh riêng 'partybot'
     (defR.signs || SIGNS).forEach(function (s) { draws.push({ depth: (s.y + 1) * TILE, kind: 'sign', s: s }); });
     draws.push({ depth: py + TILE, kind: 'player' });
     draws.sort(function (a, b) { return a.depth - b.depth; });
@@ -2057,6 +2061,31 @@
         ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(dbx - 1, dby - 1, 48, 7);
         ctx.fillStyle = df.hp / df.hpMax > 0.35 ? '#7ec850' : '#e04c3c'; ctx.fillRect(dbx, dby, 46 * Math.max(0, df.hp / df.hpMax), 5);
         labels.push({ key: 'df_' + df.name, name: df.name, title: df.title || '', cx: df.x + 16, wantY: df.y - 48 - 30, color: '#ffe9b0' });
+      } else if (d.kind === 'partybot') {
+        // Bot ghép tổ Trận Tâm: sheet theo vai trò qua cùng ống nhân vật
+        // 8 hướng; gục thì vẽ xám mờ + nhãn 'gục'; thanh máu hiện khi
+        // đang trong trận hoặc khi đã mất máu.
+        var bot = d.b, bDown = bot.state === 'down';
+        ctx.save();
+        if (bDown) ctx.globalAlpha = 0.45;
+        ctx.fillStyle = 'rgba(24,34,18,0.28)';
+        ctx.beginPath(); ctx.ellipse(bot.x + 16, bot.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var bim = ASSETS.chars[bot.sprite];
+        if (imgReady(bim)) {
+          var bsrc = charSrc(bot.sprite, bim, bot.dir, DIR8_ROW4[bot.dir] || 0, (!bDown && bot.movingNow) ? (Math.floor(bot.walkT * 8) % charCycleFrames(bot.sprite)) : 0, 0);
+          if (bDown) ctx.filter = 'grayscale(1)';
+          ctx.drawImage(bim, bsrc.x, bsrc.y, bsrc.w, bsrc.h, bot.x - 16, bot.y - 48, 64, 80);
+          ctx.filter = 'none';
+        } else if (!bDown) {
+          drawSprite(S.charSprite(bot.sprite, bot.dir, 0), bot.x, bot.y - 8, 2);
+        }
+        ctx.restore();
+        if (enc || bot.hp < bot.hpMax) {
+          var bbx = bot.x + 16 - 23, bby = bot.y - 62;
+          ctx.fillStyle = 'rgba(10,10,10,0.62)'; ctx.fillRect(bbx - 1, bby - 1, 48, 7);
+          ctx.fillStyle = bot.hp / bot.hpMax > 0.35 ? '#7ec850' : '#e04c3c'; ctx.fillRect(bbx, bby, 46 * Math.max(0, bot.hp / bot.hpMax), 5);
+        }
+        labels.push({ key: 'bot_' + bot.botId, name: bot.name, title: bDown ? 'gục' : '', cx: bot.x + 16, wantY: bot.y - 48 - 30, color: bDown ? '#c9c9c9' : '#bfeaff' });
       } else if (d.kind === 'hhtaud') {
         // Đệ tử đứng xem (Mục F): đứng yên ngoài bệ đấu, nhúc nhích theo
         // nhịp thở (lệch dọc ±1,5px theo pha riêng), mặt hướng vào đài —
@@ -2180,6 +2209,7 @@
       ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
     });
     bcDrawOverlays(); // lớp phủ bí cảnh: bẫy kiếm trận, vòng trấn, điểm hái
+    drawBcTelegraphs(); // vòng báo đòn diện rộng của boss tổ đội (Trận Văn Phá)
     drawResWaves(); // đường sóng khóa Vạn Âm (bước 2 mục 3) — cổng fxRings bên trong hàm
     drawResFields(); // sân cộng hưởng Vạn Âm (bước 2 mục 1–2) — cổng fxRings/fxParticles bên trong hàm
     // chữ bay (sát thương, thông báo nhỏ): cỡ chữ theo hạng đòn; chí mạng
@@ -2826,6 +2856,8 @@
       grindChoiceAction(action);
     } else if (action.indexOf('bc_') === 0) {
       bcChoiceAction(action);
+    } else if (action.indexOf('party_') === 0) {
+      partyChoiceAction(action);
     } else if (action === 'ambush_silent') {
       say(ST.SCENE_AMBUSH_SILENT, function () { state.quest = 'q2_cong_thanh'; refreshHUD(); saveNow(); });
     } else if (action === 'ambush_chan') {
@@ -3020,6 +3052,8 @@
     if (p && p.id === 'bc_gate_thuyliem') return bcGateInteract('bc_thuyliem');
     if (p && p.id === 'cua_tan_tich') return bcTanTichInteract();
     if (p && p.id === 'bc_gate_kiemtrung') return bcGateKiemTrungInteract();
+    if (p && p.id === 'bc_gate_tran_tam') return bcGateTranTamInteract();
+    if (p && p.id === 'tap_ket_tran_tam') return partyStagingInteract();
     if (p && p.id === 'bc_gate_hoiphong') return bcGateInteract('bc_hoiphong_mo');
     if (p && p.id === 'vach_nut') return bcVachInteract();
     if (p && p.id === 'cua_phe_thuoc') return bcPheInteract();
@@ -4751,7 +4785,7 @@
     refreshHUD(); saveNow();
   }
   function arcIvBcBossFragment(realmId) {
-    var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau' }[realmId];
+    var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau', bc_tran_tam_sau: 'boss:bc_tran_tam_sau' }[realmId];
     if (src) arcIvBossFragmentToast(src);
   }
   // Kỳ ngộ (A.3): chỉ nối bộ đếm + tập bộ; cảnh kỳ ngộ để đợt sau.
@@ -6271,6 +6305,62 @@
     }
     return bcGateInteract('bc_kiemtrung');
   }
+  /* ---------- Cổng Di Tích Trận Tâm + bia tập kết tổ đội ---------- */
+  function bcGateTranTamInteract() {
+    if (enc) { toast('Đang giao chiến — thoát trận rồi hãy vào bí cảnh.'); return; }
+    if (bcSession) return bcGateInteract('bc_tran_tam');
+    if (!L.secretRealmUnlocked(state, 'bc_tran_tam')) return say([{ who: 'narrate', text: BC_LOCK_LINES.bc_tran_tam }]);
+    if (L.bcTranTamSauOpen && L.bcTranTamSauOpen(state)) {
+      return say([{ who: 'choice', text: 'Cụm kiếm phong ấn rung lên khe khẽ: tầng ngoài của di tích ở ngay sau cụm kiếm; sâu hơn nữa là tâm trận — nơi chỉ mở cho tổ đội đã dọn sạch tầng ngoài. Ngươi sẽ…', options: [
+        { label: 'Xuống Tâm Trận (cần tổ đội)', action: 'bc_floor_tran_tam_sau' },
+        { label: 'Vào Tầng Ngoài Di Tích', action: 'bc_floor_tran_tam' },
+        { label: 'Chưa xuống — quay lại sau', action: 'bc_floor_later' }
+      ] }]);
+    }
+    return bcGateInteract('bc_tran_tam');
+  }
+  function partyStagingInteract() {
+    if (enc) { toast('Đang giao chiến — xong trận rồi hãy tới bia tập kết.'); return; }
+    return say([{ who: 'choice', text: 'Bia tập kết của Di Tích Trận Tâm. Các tổ đội xuống tâm trận đều ghi tên tại đây trước khi qua cổng phong ấn. Ngươi sẽ…', options: [
+      { label: 'Ghép tổ đội (AI tạo bot)', action: 'party_matchmake' },
+      { label: 'Xem tổ đội hiện tại', action: 'party_view' },
+      { label: 'Giải tán tổ đội', action: 'party_disband' },
+      { label: 'Rời đi', action: 'party_close' }
+    ] }]);
+  }
+  function partyChoiceAction(action) {
+    if (action === 'party_matchmake') {
+      grindCloseDlg();
+      if (!L.partyMatchmake) { toast('Hệ ghép tổ chưa sẵn sàng.', 3600); return; }
+      var r = L.partyMatchmake(state, 'bc_tran_tam_sau');
+      var added = (r && r.added) || [];
+      if (!added.length) toast('Tổ đội đã đủ 3 thành viên.', 3600);
+      added.forEach(function (bot) {
+        toast('Đã ghép tổ: ' + bot.name + ' — ' + bot.sect + ' · ' + ((L.PARTY_ROLE_LABEL || {})[bot.role] || bot.role) + ' (máu ' + bot.hpMax + ', lực ' + (bot.power != null ? bot.power : bot.atk) + ').', 4200);
+      });
+      toast('Tổ đội hiện có ' + (L.partySize ? L.partySize(state) : 1) + '/3 thành viên — đủ người xuống Tâm Trận.', 4200);
+      saveNow(); refreshHUD();
+      return;
+    }
+    if (action === 'party_view') {
+      grindCloseDlg();
+      var bots = (state.party && state.party.bots) || [];
+      if (!bots.length) { toast('Tổ đội hiện chỉ có mình ngươi. Dùng Ghép tổ đội (AI) tại bia này để lấp đủ người.', 4200); return; }
+      var lines = ['Đội trưởng: ' + state.name];
+      bots.forEach(function (bot) { lines.push(bot.name + ' · ' + bot.sect + ' · ' + ((L.PARTY_ROLE_LABEL || {})[bot.role] || bot.role)); });
+      toast(lines.join(' — '), 5200);
+      return;
+    }
+    if (action === 'party_disband') {
+      grindCloseDlg();
+      if (L.partyClearBots) L.partyClearBots(state);
+      partyBotsLive = [];
+      toast('Đã giải tán tổ đội ghép. Các tu sĩ được ghép đã rời đi.', 3600);
+      saveNow(); refreshHUD();
+      return;
+    }
+    if (action === 'party_close') { grindCloseDlg(); return; }
+  }
   function bcSauBossRewards(m, def, rec) {
     if (!rec.firstClear) {
       // Thưởng lần đầu nằm NGOÀI hồ sơ phẳng: qua bcSauFirstClearRewards
@@ -7182,6 +7272,16 @@
      bcColorSort: trò xếp chín mảnh sắc đang dở. escortT: nhịp bước của
      bạn hộ tống việc tông. grindBoardOpen: bảng cày đang mở (panel DOM). */
   var bcSession = null, bcColorSort = null, escortT = 0, grindBoardOpen = null;
+  /* Bot ghép tổ SỐNG trong phiên bí cảnh Trận Tâm (trạng thái bộ nhớ
+     thuần, KHÔNG ghi save — save chỉ giữ state.party.bots của logic):
+     dựng khi vào hai tầng Trận Tâm, giữ qua lại giữa hai tầng, xóa ở
+     mọi điểm bcSession bị hủy. bcTelegraphs: vòng báo đòn diện rộng
+     của boss tổ đội (trình diễn + thời điểm nổ là số trận thật). */
+  var partyBotsLive = [], bcTelegraphs = [];
+  var PARTY_REALMS = { bc_tran_tam: 1, bc_tran_tam_sau: 1 };
+  var PARTY_HOLD_PADS = [{ key: 'padA', x: 5, y: 14 }, { key: 'padB', x: 34, y: 14 }]; // điểm trận tâm trận (docs/party-boss-coords.json / thiết kế mục 1)
+  var PARTY_ROLE_SPRITE = { dps: 'player_nam', tank: 'villager_m', support: 'player_nu' };
+  var PARTY_ROLE_CD = { dps: 1.1, tank: 1.3, support: 1.2 };
   var HIT_VARIANTS = [0.94, 1.0, 1.06]; // biến thể cao độ tiếng chạm đích: xoay vòng xác định theo thứ tự đòn, không ngẫu nhiên
   var PENTA_NOTES = [523, 587, 659, 784, 880];
   var MON_SHEET = { son_lang: 76, doc_vu_xa: 72, thiet_giap_tru: 92, phong_ung: 88, lang_vuong: 124, son_chu: 136,
@@ -7407,6 +7507,7 @@
     if (curZoneId && huntUnlocked()) zoneDwell += dt; else zoneDwell = 0;
     for (var i = 0; i < mons.length; i++) updateMonster(mons[i], dtW);
     if (enc) updateEncounter(dtW);
+    updatePartyBots(dtW); // bot ghép tổ Trận Tâm: bám theo / đánh / giữ điểm / né báo đòn
     updateDrops(dt);
     updateOrbs(dt);
   }
@@ -7458,8 +7559,21 @@
     if (m.bossId === 'boss_hb_ho_tran_kiem_linh') {
       enc.arcT = { quat: 2.8, quatTele: -1, cyc: 7.5, cycWin: -1 };
     }
+    // Boss TỔ ĐỘI Trận Tâm Ma Ảnh (chỉ ở tâm trận bc_tran_tam_sau):
+    // trạng thái mẫu chạy trên đồng hồ trận tích lũy pb.t của chính nó.
+    if (m.bcBoss && m.species === 'tran_tam_ma_anh' && m.bcRealm === 'bc_tran_tam_sau') {
+      m.partyBoss = { phase: 'fight', t: 0, nextCast: 7, holdsDone: {}, holdT: 0, holdElapsed: 0, enraged: false, stunUntil: 0, holders: {}, sealFloatT: -9 };
+      bcTelegraphs = [];
+    }
   }
   function endEncounterCleanup() {
+    // Trận khép (thắng / chạy / tan / thua): bot ghép tổ đang gục hồi
+    // 50% máu tối đa và đứng dậy theo đội; bot còn sống GIỮ NGUYÊN máu.
+    partyBotsLive.forEach(function (b) {
+      if (b.state === 'down') { b.hp = Math.round(b.hpMax * 0.5); b.state = 'follow'; }
+    });
+    bcTelegraphs = [];
+    if (enc && enc.mon && enc.mon.partyBoss) enc.mon.partyBoss = null;
     // ARCIV: trận boss Trận Nhãn khép (thắng/thua/tan trận) -> dừng chu
     // kỳ kiếm trận + dọn hai mắt phụ, im tuyệt đối từ đây.
     if (enc && enc.mon && enc.mon.species === 'tran_nhan_kiem_linh') { arcStopCycle(); arcEyes.length = 0; }
@@ -7483,7 +7597,11 @@
     if (m.holdT > 0) { m.holdT = Math.max(0, m.holdT - dt); if (m.holdT <= 0) state.flags.lenDinhHold = 0; }
     if (m.sealT > 0) { m.sealT = Math.max(0, m.sealT - dt); state.flags.lenPhongSeal = m.sealT > 0 ? Math.ceil(m.sealT / m.atkInterval) : 0; }
     var frozen = m.holdT > 0 || m.sealT > 0;
-    if (dist > 40) monStep(m, pcx, pcy, m.speed, dt, true);
+    // Boss tổ đội: đồng hồ mẫu (Trận Văn Phá / Phong Ấn Hai Điểm) chạy
+    // trên đồng hồ trận tích lũy của chính boss; đang hold/stun thì boss
+    // đứng yên tại trận tâm, không đuổi theo người chơi.
+    if (m.partyBoss) { updatePartyBoss(m, dt); if (!enc) return; }
+    if (dist > 40 && !(m.partyBoss && m.partyBoss.phase !== 'fight')) monStep(m, pcx, pcy, m.speed, dt, true);
     else if (!frozen) {
       m.atkT -= dt;
       if (m.atkT <= 0) {
@@ -7499,7 +7617,15 @@
     // thế, đúng cái giá của Ngôn Linh).
     encStance = !moving;
     if (encStance) state.silence = L.silenceGain('meditate', dt, state.silence);
-    if (dist > 208) { // rút xa quá: trận tan, quái lùi về ổ, không thưởng phạt
+    // Boss tổ đội lúc PHONG ẤN/CHOÁNG thì neo chết tại bệ (không đuổi
+    // theo được): trận KHÔNG tan theo khoảng cách ở hai nhịp này, vì
+    // cơ chế giữ hai điểm bắt cả tổ phải tản ra hai đầu phòng — hai
+    // điểm trận cách bệ 16–17 ô, xa hơn hẳn tầm tan trận 208 này
+    // (bản đầu không có ngoại lệ này: vừa đi tới điểm là trận tan,
+    // cơ chế không thể hoàn thành — clip kiểm chứng lượt B5/B6 ngày
+    // 2026-11-04 bắt được). Lật nhịp về 'fight' được nạp 6 giây ân
+    // hạn (leashGraceT, nạp trong updatePartyBoss) để cả tổ chạy về.
+    if (dist > 208 && !(m.partyBoss && (m.partyBoss.phase === 'hold' || m.partyBoss.phase === 'stun' || (m.partyBoss.leashGraceT || 0) > 0))) { // rút xa quá: trận tan, quái lùi về ổ, không thưởng phạt
       endEncounterCleanup();
       m.mode = 'return';
       toast('Quái đã lùi về ổ — trận tan, không thắng không thua.', 2600);
@@ -7508,6 +7634,8 @@
     if (m.bossId || m.bcBoss) updateBossBar(m);
   }
   function monsterStrike(m) {
+    // Boss tổ đội đang PHONG ẤN (hold) hoặc đang CHOÁNG (stun): ngừng đánh hẳn.
+    if (m.partyBoss && (m.partyBoss.phase === 'hold' || m.partyBoss.phase === 'stun')) return;
     enc.hitN += 1;
     var v = 0.85 + 0.3 * L.rollSessionValue(enc.sessionId, ':matk' + enc.hitN);
     hurtPlayer(Math.max(1, Math.round(m.atk * v)));
@@ -7524,7 +7652,7 @@
      chu kỳ atkT sẵn có, không thêm thời gian né nào. Ngân sách: mỗi
      đòn cộng thêm tối đa ~11 hạt, tự co khi parts đã cao (bossFxBudget),
      trần chung MAX_PARTS 90 do spawnParts/spawnSmoke tự giữ. */
-  var BOSS_FX_SPECIES = { lang_vuong: 1, son_chu: 1, thuy_xa_tinh: 1, thach_tuong_thu_ve: 1, tan_anh_vo_cuc: 1, kiem_y_tan_hon: 1, oan_hon_chien_truong: 1 };
+  var BOSS_FX_SPECIES = { lang_vuong: 1, son_chu: 1, thuy_xa_tinh: 1, thach_tuong_thu_ve: 1, tan_anh_vo_cuc: 1, kiem_y_tan_hon: 1, oan_hon_chien_truong: 1, ho_tam_thach_tuong: 1 };
   function bossFxBudget(n) { // tự co ngân sách hạt khi parts.length đã cao (đúng thói quen của spawnResParts)
     if (parts.length >= MAX_PARTS) return 0;
     if (parts.length > MAX_PARTS - 24) return Math.min(n, 2);
@@ -7629,6 +7757,23 @@
       spawnSmoke(mcx, mcy - 10, bossFxBudget(5), '110,130,170');
       spawnStreak(mcx, mcy - 6, ang, '150,160,200', false, { alpha: 0.55 });
       spawnSmoke((mcx + pcx) / 2, (mcy + pcy) / 2, Math.min(3, bossFxBudget(3)), '110,130,170');
+    } else if (m.species === 'ho_tam_thach_tuong') {
+      // Hộ Tâm Thạch Tướng (boss giữa Di Tích Trận Tâm): ngôn ngữ ĐÁ /
+      // TRẬN — vòng tụ NỨT ĐẤT lan từ chân boss về phía người chơi,
+      // mảnh đá văng + bụi đá ở điểm chạm, gầm trầm của đá. Chỉ trình
+      // diễn sau khi số đòn đã áp ở monsterStrike như mọi case trên.
+      sfxRoar(true);
+      if (!SET || SET.current.fxRings) rings.push({ x: mcx, y: m.y + 30, r: 10, a: 0.8, col: '190,170,120' });
+      var cpts = [], cjit = [0, 6, -5, 4, -3, 2, 0];
+      for (var cci = 0; cci <= 6; cci++) {
+        var ccf = cci / 6;
+        cpts.push([mcx + (pcx - mcx) * ccf, (m.y + 30) + ((py + 30) - (m.y + 30)) * ccf + cjit[cci]]);
+      }
+      bossFx.push({ kind: 'crack', pts: cpts, t: 0, dur: 0.8 });
+      spawnParts(pcx, py + 28, bossFxBudget(8), '172,164,148', 36, true); // mảnh đá văng tại điểm chạm
+      spawnParts(mcx, m.y + 28, bossFxBudget(5), '150,142,128', 24, false);
+      spawnSmoke(mcx, m.y + 24, Math.min(3, bossFxBudget(3)), '168,160,148'); // bụi đá quanh chân boss
+      shakeWorld(0.3);
     }
   }
   function hurtPlayer(dmg) {
@@ -9607,6 +9752,15 @@
   function applyHitToMonster(m, power, opts) {
     opts = opts || {};
     if (!enc || m.state !== 'alive') return;
+    // Boss tổ đội đang PHONG ẤN: bất tử — không trừ máu, chỉ báo trạng
+    // thái (tối đa 1 lần/0,8s theo đồng hồ trận của boss).
+    if (m.partyBoss && m.partyBoss.phase === 'hold') {
+      if (m.partyBoss.t - (m.partyBoss.sealFloatT || -9) >= 0.8) {
+        m.partyBoss.sealFloatT = m.partyBoss.t;
+        addFloat(m.x + 16, m.y - 30, 'ĐANG PHONG ẤN', '216,180,255');
+      }
+      return;
+    }
     var crit = enc.critRng() < CRIT_CHANCE;
     var dmg = crit ? Math.round(power * CRIT_MULT) : power;
     if (opts.kind === 'word' && m.def && m.def.wordResist) dmg = Math.max(1, Math.round(dmg * m.def.wordResist)); // kháng Ngôn Linh: chỉ kiem_y_tan_hon 0.5
@@ -11470,7 +11624,14 @@
   function switchMap(po) {
     var prevMap = state ? state.map : null;
     fadeTransition(function () {
-      if (prevMap && prevMap.indexOf('bc_') === 0) { if (bcSession && bcSession.realm === prevMap) bcSession = null; bcColorSort = null; if (L.clearSessionHiddenProps) L.clearSessionHiddenProps(prevMap); } // rời bí cảnh: hủy phiên + xóa vật thể đã mở của bản đồ đó
+      if (prevMap && prevMap.indexOf('bc_') === 0) { if (bcSession && bcSession.realm === prevMap) { bcSession = null; if (!PARTY_REALMS[po.to]) { partyBotsLive = []; bcTelegraphs = []; } } bcColorSort = null; if (L.clearSessionHiddenProps) L.clearSessionHiddenProps(prevMap); } // rời bí cảnh: hủy phiên + xóa vật thể đã mở của bản đồ đó (bot Trận Tâm giữ qua lại hai tầng nên chỉ dọn khi đích không thuộc hai tầng)
+      // Tổ ghép Trận Tâm: rời hẳn di tích (đích không thuộc hai tầng)
+      // thì tổ tự giải tán; qua lại giữa hai tầng thì bot theo sang.
+      if (prevMap && PARTY_REALMS[prevMap] && !PARTY_REALMS[po.to] && state.party && (state.party.bots || []).length) {
+        if (L.partyClearBots) L.partyClearBots(state);
+        partyBotsLive = []; bcTelegraphs = [];
+        toast('Rời di tích — tổ đội ghép đã tự giải tán.', 3600);
+      }
       state.map = po.to; state.x = po.toX; state.y = po.toY;
       // Vừa đặt chân lên tông mà save còn dừng ở cuối chương 6 thì nâng
       // nhiệm vụ ngay trong cùng phiên (di trú lúc nạp vẫn giữ cho save cũ).
@@ -11487,6 +11648,7 @@
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
       npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; }); // vị trí theo pha nhiệm vụ (gói phụ 5)
       spawnMonstersForMap();
+      if (prevMap && PARTY_REALMS[prevMap] && PARTY_REALMS[po.to] && partyBotsLive.length) partyPlaceBotsNearPlayer(); // bot giữ qua lại giữa hai tầng Trận Tâm
       if (!isHuntMap(po.to)) maybeShowHuntSummary(); // rời hẳn vùng săn: chốt phiên săn trong bộ nhớ
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
@@ -12269,6 +12431,9 @@
     bc_tapsau: 'Tầng sâu hơn nữa vẫn im lìm sau lớp đá. Người giữ tháp từng nói: chỉ khi ngươi đã đứng ở Trúc Cơ, phế tích dưới này mới chịu mở mắt.',
     bc_kiemtrung: 'Cửa động bị kiếm cắm chắn kín, kiếm ý sắc đến mức đứng gần đã thấy da thịt rin rít. Với tu vi hiện tại, bước vào chỉ tổ làm mồi cho kiếm khí.',
     bc_hoiphong_mo: 'Nền mộ vừa lộ sau trận sạt đất, oán khí đặc quánh như sương. Nơi này chỉ mở khi chuyện thung lũng đã đi tới hồi đối đầu.',
+    bc_tran_tam: 'Sau cụm kiếm phong ấn, hành lang đá lạnh ngắt còn in trận văn chưa tắt. Di tích này chỉ mở khi chuyện vòng vây ba động đã khép hẳn — người chưa xong việc ở đoạn hai vách không nên bước vào.',
+    bc_tran_tam_sau: 'Tâm trận nằm sâu dưới tầng ngoài, ma khí đặc như mực. Cửa này chỉ mở cho người đã dọn sạch tầng ngoài và khép xong chuyện cung này.',
+    party: 'Trận văn quanh cửa tâm trận quét qua người ngươi rồi lặng đi: nơi này không mở cho kẻ đi một mình. Tới bia tập kết cạnh cổng, ghép đủ tổ đội rồi hãy xuống.',
     pool: 'Linh khí trong các bí cảnh quanh vùng hôm nay đã bị ngươi khuấy động cạn kiệt. Hãy chờ sang ngày game mới — khí đất cần một đêm để lắng lại.'
   };
   var BC_HINT_LINES = {
@@ -12283,7 +12448,7 @@
     soothe: 'Ngươi không nói một lời. Ngươi nghe hồn của oán hồn như nghe một bản nhạc lệch nhịp, rồi dùng hồn lực chỉnh lại từng dây một. Hồn lực tỏa ra như làn khói ấm, phủ lấy oán khí đang cuộn xoáy. Oán hồn khựng lại… rồi tan dần vào lòng đất, yên nghỉ trong im lặng.',
     reread: 'Bức thư chưa gửi vẫn nằm trên bệ đá. Tên người chết — Thạch Vạn Quân — ngươi đã ghi nhớ.'
   };
-  var BC_INTRO_SCENE = { bc_thuyliem: 'SCENE_BC_THUYLIEM_INTRO', bc_tapha: 'SCENE_BC_TAPHA_INTRO', bc_tapsau: 'SCENE_BC_TAPSAU_INTRO', bc_kiemtrung: 'SCENE_BC_KIEMTRUNG_INTRO', bc_hoiphong_mo: 'SCENE_BC_HOIPHONG_INTRO' };
+  var BC_INTRO_SCENE = { bc_thuyliem: 'SCENE_BC_THUYLIEM_INTRO', bc_tapha: 'SCENE_BC_TAPHA_INTRO', bc_tapsau: 'SCENE_BC_TAPSAU_INTRO', bc_kiemtrung: 'SCENE_BC_KIEMTRUNG_INTRO', bc_hoiphong_mo: 'SCENE_BC_HOIPHONG_INTRO', bc_tran_tam: 'SCENE_BC_TRANTAM_INTRO' };
   // Đợt quái theo khoang (làn C): mỗi khoang một đợt quái thường đi lại
   // tự do trong khoang (tường X chặn di chuyển nên quái không tràn khoang);
   // boss ở khoang cuối, sinh cùng lượt vào nhưng bị tường/vách chặn lại.
@@ -12306,7 +12471,7 @@
       [{ species: 'oan_binh', x: 16, y: 33 }, { species: 'oan_binh', x: 38, y: 33 }],
       [{ species: 'oan_binh', x: 16, y: 14 }, { species: 'oan_binh', x: 38, y: 14 }] ] }
   };
-  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 }, bc_kiemtrung_sau: { x: 22, y: 5 } }; // ARCIV A.2
+  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 }, bc_kiemtrung_sau: { x: 22, y: 5 }, bc_tran_tam: { x: 22, y: 5 }, bc_tran_tam_sau: { x: 19, y: 6 } }; // ARCIV A.2 + Trận Tâm
   // ARCIV A.2: BC_KIEMTRUNG_SAU_WAVES của logic có dạng [[loài, số]...]
   // KHÁC định dạng bcSpawnMonsters ({species,x,y}) — chuyển đổi tại đây
   // thành tọa độ thật trên lưới đi được của tầng sâu, giữ đúng số lượng
@@ -12314,6 +12479,12 @@
   BC_WAVES.bc_kiemtrung_sau = { zone: 'zone_bc_kiemtrung_sau', waves: [
     [{ species: 'tan_hon_kiem_y_sau', x: 12, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 32, y: 14 }],
     [{ species: 'tan_hon_kiem_y_sau', x: 18, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 26, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 21, y: 24 }] ] };
+  // Di Tích Trận Tâm (boss tổ đội): tầng ngoài hai đợt như Kiếm Trủng sâu;
+  // tâm trận KHÔNG đợt quái — chỉ boss tổ đội (BC_WAVES rỗng, boss qua BC_BOSS_POS).
+  BC_WAVES.bc_tran_tam = { zone: 'zone_bc_tran_tam', waves: [
+    [{ species: 'tan_hon_kiem_y_sau', x: 6, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 8, y: 14 }],
+    [{ species: 'tan_hon_kiem_y_sau', x: 37, y: 13 }, { species: 'tan_hon_kiem_y_sau', x: 38, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 36, y: 15 }] ] }; // tọa độ waves1 trong docs/party-boss-coords.json
+  BC_WAVES.bc_tran_tam_sau = { zone: 'zone_bc_tran_tam_sau', waves: [] };
   // Thưởng LẦN ĐẦU (ngoài hồ trần, cờ firstClear chống trùng — đúng hồ sơ
   // đã duyệt; ti_loi_phu là thưởng lần đầu đã duyệt, KHÔNG phải Dẫn Lôi
   // Pháp và không bao giờ phát dan_loi_phap trong bí cảnh).
@@ -12322,7 +12493,9 @@
     bc_tapha: { lt: 20, items: { ti_loi_phu: 1 }, tech: null, story: [] },
     bc_tapsau: { lt: 30, items: { ti_loi_phu: 1 }, tech: { id: 'that_tinh', pts: 60 }, story: [] },
     bc_kiemtrung: { lt: 25, items: { yeu_dan_2: 1 }, tech: { id: 'that_tinh', pts: 120 }, story: [] },
-    bc_hoiphong_mo: { lt: 25, items: { ti_loi_phu: 1, yeu_dan_2: 1 }, tech: null, story: ['thu_trong_mo', 'ngoc_boi_nua'] }
+    bc_hoiphong_mo: { lt: 25, items: { ti_loi_phu: 1, yeu_dan_2: 1 }, tech: null, story: ['thu_trong_mo', 'ngoc_boi_nua'] },
+    bc_tran_tam: { lt: 30, items: { yeu_dan_3: 1 }, tech: null, story: [] },
+    bc_tran_tam_sau: { lt: 40, items: { yeu_dan_3: 1, phuc_linh_dan: 1 }, tech: null, story: [] }
   };
   var ZONE_SHORT = { zone_duong_mon_rung: 'rừng đường mòn', zone_duong_mon_phuc_kich: 'bãi phục kích', zone_tong_sau_nui: 'rừng sau núi tông', zone_hb_rung: 'rừng thung lũng', zone_hb_bac: 'bãi bắc thung lũng' };
   var SECT_JOB_LABEL = { cleanup: 'Dọn dẹp', delivery: 'Giao hàng', patrol: 'Tuần tra', escort: 'Hộ tống' };
@@ -12738,6 +12911,11 @@
   }
   function bcEnter(realmId) {
     if (enc || bcSession) return;
+    // Cổng tổ đội: kiểm TRƯỚC bcConsumeEntry — chặn solo không tốn lượt bể.
+    if (L.partyGateCheck) {
+      var pg = L.partyGateCheck(state, realmId);
+      if (pg && !pg.ok) return say([{ who: 'narrate', text: BC_LOCK_LINES.party }]);
+    }
     var entry = L.bcConsumeEntry(state, realmId);
     if (!entry.ok) {
       if (entry.reason === 'pool_empty') return say([{ who: 'narrate', text: BC_LOCK_LINES.pool }]);
@@ -12768,12 +12946,240 @@
       npcsLive = [];
       spawnMonstersForMap();
       bcSpawnMonsters();
+      partySpawnBotsLive(); // bot ghép tổ theo vào hai tầng Trận Tâm (hàm tự lọc realm + tổ)
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy();
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       sfxRealmEntry();
       saveNow(); refreshHUD();
       toast('Đã vào: ' + dest.name + '. Lượt kho chung còn lại hôm nay: ' + L.bcPoolLeft(state) + '.', 4200);
+    });
+  }
+  /* ================= BOT GHÉP TỔ SỐNG TRONG PHIÊN + BOSS TỔ ĐỘI ================= */
+  function partyBotFootFree(nx, ny) {
+    var tx = Math.floor((nx + 16) / TILE), ty = Math.floor((ny + 30) / TILE);
+    return L.isWalkable(tx, ty, npcsLive);
+  }
+  function partyPlaceBotsNearPlayer() {
+    var pt = playerTile();
+    var offs = [[-1, 1], [1, 1], [0, 1], [-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1]];
+    partyBotsLive.forEach(function (b, i) {
+      for (var k = 0; k < offs.length; k++) {
+        var ox = offs[(i + k) % offs.length][0], oy = offs[(i + k) % offs.length][1];
+        if (L.isWalkable(pt.x + ox, pt.y + oy, npcsLive)) { b.x = (pt.x + ox) * TILE; b.y = (pt.y + oy) * TILE; b.stuckT = 0; return; }
+      }
+      b.x = px; b.y = py;
+    });
+  }
+  function partySpawnBotsLive() {
+    partyBotsLive = []; bcTelegraphs = [];
+    if (!state || !PARTY_REALMS[state.map]) return;
+    var bots = (state.party && state.party.bots) || [];
+    bots.forEach(function (bot, i) {
+      partyBotsLive.push({
+        botId: bot.id || bot.botId || ('bot' + i), name: bot.name || 'Tu sĩ', role: bot.role || 'dps', sect: bot.sect || '',
+        sprite: bot.sprite || bot.look || PARTY_ROLE_SPRITE[bot.role] || 'villager_m',
+        x: px, y: py, hp: (typeof bot.hp === 'number' ? bot.hp : bot.hpMax), hpMax: bot.hpMax || 1, power: (bot.power != null ? bot.power : (bot.atk || 1)),
+        cdMs: bot.cdMs || bot.atkIntervalMs || (bot.atkInterval ? bot.atkInterval * 1000 : (PARTY_ROLE_CD[bot.role] || 1.2) * 1000),
+        healPct: bot.healPct || 6, healCdMs: bot.healCdMs || 6000,
+        cdT: 0.4 + i * 0.2, state: 'follow', healCdT: 3, dir: 'down', walkT: 0, movingNow: false, stuckT: 0
+      });
+    });
+    if (partyBotsLive.length) partyPlaceBotsNearPlayer();
+  }
+  // Bước đi thẳng theo trục tách (như monStep): gx, gy là TÂM đích.
+  function partyBotStep(b, gx, gy, speed, dt) {
+    var cx = b.x + 16, cy = b.y + 16;
+    var dx = gx - cx, dy = gy - cy, d = Math.hypot(dx, dy);
+    if (d < 3) { b.stuckT = 0; return true; }
+    var step = Math.min(d, speed * dt), ox = b.x, oy = b.y;
+    if (dx) { var nx = b.x + dx / d * step; if (partyBotFootFree(nx, b.y)) b.x = nx; }
+    if (dy) { var ny = b.y + dy / d * step; if (partyBotFootFree(b.x, ny)) b.y = ny; }
+    if (b.x !== ox || b.y !== oy) {
+      b.movingNow = true; b.walkT += dt; b.stuckT = 0;
+      var mx = b.x - ox, my = b.y - oy;
+      b.dir = Math.abs(mx) >= Math.abs(my) ? (mx > 0 ? 'right' : 'left') : (my > 0 ? 'down' : 'up');
+    } else b.stuckT += dt;
+    return false;
+  }
+  function partyHoldHolders() {
+    var holders = { padA: null, padB: null }, R = 1.6 * TILE;
+    var pcx = px + 16, pcy = py + 16;
+    PARTY_HOLD_PADS.forEach(function (pad) {
+      var cxp = pad.x * TILE + 16, cyp = pad.y * TILE + 16;
+      if (Math.hypot(pcx - cxp, pcy - cyp) <= R) { holders[pad.key] = 'player'; return; }
+      for (var i = 0; i < partyBotsLive.length; i++) {
+        var b = partyBotsLive[i];
+        if (b.state !== 'down' && Math.hypot(b.x + 16 - cxp, b.y + 16 - cyp) <= R) { holders[pad.key] = b.botId; break; }
+      }
+    });
+    return holders;
+  }
+  function partyHoldTargetFor(b, bi) {
+    var holders = partyHoldHolders(), R = 1.6 * TILE;
+    for (var i = 0; i < PARTY_HOLD_PADS.length; i++) {
+      var pad = PARTY_HOLD_PADS[i];
+      if (holders[pad.key] === b.botId) return { x: pad.x * TILE + 16, y: pad.y * TILE + 16 };
+    }
+    // Phân điểm theo thứ tự bot (vá đợt tổ đội 2026-11-04, sau khi xem
+    // clip ghi hình): mỗi bot ƯU TIÊN một điểm khác nhau ngay từ đầu —
+    // trước đây cả hai bot cùng dồn vào điểm trống đầu tiên rồi bot thứ
+    // hai mới vòng sang điểm còn lại, phí nửa cửa sổ giữ 25 giây.
+    var pref = PARTY_HOLD_PADS[(bi || 0) % PARTY_HOLD_PADS.length];
+    if (pref && !holders[pref.key]) return { x: pref.x * TILE + 16, y: pref.y * TILE + 16 };
+    for (var j = 0; j < PARTY_HOLD_PADS.length; j++) {
+      var p2 = PARTY_HOLD_PADS[j];
+      if (!holders[p2.key]) return { x: p2.x * TILE + 16, y: p2.y * TILE + 16 };
+    }
+    return null;
+  }
+  function partyTelegraphThreat(b) {
+    for (var i = 0; i < bcTelegraphs.length; i++) {
+      var tg = bcTelegraphs[i], pb = tg.boss && tg.boss.partyBoss;
+      if (!pb) continue;
+      if (Math.hypot(b.x + 16 - tg.x, b.y + 16 - tg.y) <= tg.r && (tg.at - pb.t) > 0.35) return tg;
+    }
+    return null;
+  }
+  function partyBotDamage(b, dmg) {
+    if (b.state === 'down' || dmg <= 0) return;
+    b.hp = Math.max(0, b.hp - dmg);
+    addDmgFloat(b.x + 16, b.y - 10, '-' + dmg, '255,110,100', { size: 16 });
+    if (b.hp <= 0) { b.state = 'down'; addFloat(b.x + 16, b.y - 26, b.name + ' gục xuống!', '255,150,140'); }
+  }
+  function partySupportHeal(b) {
+    var best = null, bestPct = 1, bestMax = 0, bx = 0, by = 0, isPlayer = false;
+    if (state.hp > 0 && state.hp < state.hpMax) { bestPct = state.hp / state.hpMax; bestMax = state.hpMax; bx = px; by = py; isPlayer = true; best = 'player'; }
+    partyBotsLive.forEach(function (ob) {
+      if (ob.state === 'down' || ob.hp <= 0 || ob.hp >= ob.hpMax) return;
+      var pct = ob.hp / ob.hpMax;
+      if (pct < bestPct) { bestPct = pct; best = ob; bestMax = ob.hpMax; bx = ob.x; by = ob.y; isPlayer = false; }
+    });
+    if (!best) return false;
+    var amt = Math.max(1, Math.round(bestMax * (b.healPct || 6) / 100));
+    if (isPlayer) { state.hp = Math.min(state.hpMax, state.hp + amt); refreshHUD(); }
+    else best.hp = Math.min(best.hpMax, best.hp + amt);
+    addFloat(bx + 16, by - 14, '+' + amt, '120,255,140');
+    return true;
+  }
+  function updatePartyBots(dt) {
+    if (!state || !partyBotsLive.length || dt <= 0) return;
+    var pcx = px + 16, pcy = py + 16;
+    var backByFacing = { down: [0, -1], up: [0, 1], left: [1, 0], right: [-1, 0] }[facing] || [0, 1];
+    partyBotsLive.forEach(function (b, bi) {
+      if (b.cdT > 0) b.cdT -= dt;
+      if (b.healCdT > 0) b.healCdT -= dt;
+      b.movingNow = false;
+      if (b.state === 'down') return;
+      if (b.role === 'support' && b.healCdT <= 0) b.healCdT = partySupportHeal(b) ? (b.healCdMs / 1000) : 1;
+      if (enc && enc.mon && enc.mon.state === 'alive') {
+        var m = enc.mon;
+        if (m.partyBoss && m.partyBoss.phase === 'hold') {
+          var padT = partyHoldTargetFor(b, bi);
+          if (padT) partyBotStep(b, padT.x, padT.y, 175, dt);
+          return;
+        }
+        var tg = partyTelegraphThreat(b);
+        if (tg) {
+          var dxo = b.x + 16 - tg.x, dyo = b.y + 16 - tg.y, dl = Math.hypot(dxo, dyo) || 1;
+          partyBotStep(b, tg.x + dxo / dl * (tg.r + 26), tg.y + dyo / dl * (tg.r + 26), 175, dt);
+          return;
+        }
+        var mcx = m.x + 16, mcy = m.y + 16;
+        var distM = Math.hypot(mcx - (b.x + 16), mcy - (b.y + 16));
+        if (distM > 46) partyBotStep(b, mcx, mcy, 175, dt);
+        else if (b.cdT <= 0) {
+          b.cdT = b.cdMs / 1000;
+          b.dir = Math.abs(mcx - (b.x + 16)) >= Math.abs(mcy - (b.y + 16)) ? (mcx > b.x + 16 ? 'right' : 'left') : (mcy > b.y + 16 ? 'down' : 'up');
+          applyHitToMonster(m, b.power, { kind: 'sword' });
+        }
+        return;
+      }
+      // Không chạm trán: bám điểm lệch sau lưng người chơi; kẹt >1,5s
+      // hoặc cách >6 ô thì dịch tới ô kề người chơi.
+      var side = bi === 0 ? -24 : 24;
+      var gx = pcx + backByFacing[0] * 38 - backByFacing[1] * side;
+      var gy = pcy + backByFacing[1] * 38 + backByFacing[0] * side;
+      var dP = Math.hypot(b.x + 16 - pcx, b.y + 16 - pcy);
+      if (dP > 6 * TILE || b.stuckT > 1.5) { partyPlaceBotsNearPlayer(); return; }
+      partyBotStep(b, gx, gy, 150, dt);
+    });
+  }
+  /* ----- Boss tổ đội Trận Tâm Ma Ảnh ----- */
+  function partyBossEnterHold(m, key) {
+    var pb = m.partyBoss;
+    pb.holdsDone[key] = true;
+    pb.phase = 'hold'; pb.holdT = 0; pb.holdElapsed = 0; pb.holders = {};
+    addFloat(m.x + 16, m.y - 48, 'TRẬN TÂM PHONG ẤN — GIỮ CẢ HAI ĐIỂM TRẬN!', '216,180,255');
+    toast('TRẬN TÂM PHONG ẤN — GIỮ CẢ HAI ĐIỂM TRẬN!', 4600);
+  }
+  function partyTelegraphExplode(m, tg) {
+    if (!SET || SET.current.fxRings) rings.push({ x: tg.x, y: tg.y, r: 10, a: 0.95, col: '216,180,255' });
+    spawnParts(tg.x, tg.y, 18, '216,180,255', 52, false);
+    shakeWorld(0.25);
+    var dmg = Math.round(m.atk * 2.2);
+    if (Math.hypot(px + 16 - tg.x, py + 16 - tg.y) <= tg.r) {
+      hurtPlayer(Math.max(1, dmg));
+      if (!enc) return;
+    }
+    partyBotsLive.slice().forEach(function (b) {
+      if (b.state !== 'down' && Math.hypot(b.x + 16 - tg.x, b.y + 16 - tg.y) <= tg.r) partyBotDamage(b, dmg);
+    });
+  }
+  function updatePartyBoss(m, dt) {
+    var pb = m.partyBoss;
+    if (!pb || dt <= 0) return;
+    pb.t += dt;
+    if ((pb.leashGraceT || 0) > 0) pb.leashGraceT = Math.max(0, pb.leashGraceT - dt);
+    for (var i = bcTelegraphs.length - 1; i >= 0; i--) {
+      var tg = bcTelegraphs[i];
+      if (tg.boss !== m) continue;
+      if (pb.t >= tg.at) { bcTelegraphs.splice(i, 1); partyTelegraphExplode(m, tg); if (!enc) return; }
+    }
+    var mcx = m.x + 16, mcy = m.y + 16;
+    if (pb.phase === 'hold') {
+      pb.holders = partyHoldHolders();
+      var sat = L.partyHoldSatisfied ? L.partyHoldSatisfied(pb.holders)
+        : !!(pb.holders.padA && pb.holders.padB && pb.holders.padA !== pb.holders.padB);
+      if (sat) pb.holdT += dt;
+      pb.holdElapsed += dt;
+      if (pb.holdT >= 4) {
+        pb.phase = 'stun'; pb.stunUntil = pb.t + 5;
+        addFloat(mcx, mcy - 48, 'PHONG ẤN ĐÃ VỠ!', '255,214,120');
+      } else if (pb.holdElapsed >= 25) {
+        pb.phase = 'fight'; pb.nextCast = pb.t + 3; pb.leashGraceT = 6;
+        if (!pb.enraged) { pb.enraged = true; m.atk = Math.round(m.atk * 1.1); }
+        addFloat(mcx, mcy - 48, 'PHONG ẤN TỰ VỠ — MA ẢNH NỔI GIẬN!', '255,120,90');
+      }
+      return;
+    }
+    if (pb.phase === 'stun') {
+      if (pb.t >= pb.stunUntil) { pb.phase = 'fight'; pb.nextCast = pb.t + 3; pb.leashGraceT = 6; }
+      return;
+    }
+    var pct = m.hp / m.hpMax;
+    if (!pb.holdsDone.t66 && pct <= 0.66) return partyBossEnterHold(m, 't66');
+    if (!pb.holdsDone.t33 && pct <= 0.33) return partyBossEnterHold(m, 't33');
+    if (pb.t >= pb.nextCast) {
+      pb.nextCast = pb.t + 7;
+      bcTelegraphs.push({ x: px + 16, y: py + 16, r: 78, at: pb.t + 0.9, t0: pb.t, boss: m });
+      arcBossCastFx(mcx, mcy, '190,150,255', true);
+      addFloat(mcx, mcy - 48, 'TRẬN VĂN PHÁ!', '216,180,255');
+    }
+  }
+  function drawBcTelegraphs() {
+    bcTelegraphs.forEach(function (tg) {
+      var pb = tg.boss && tg.boss.partyBoss;
+      var p = pb ? Math.max(0, Math.min(1, (pb.t - tg.t0) / 0.9)) : 0;
+      ctx.save();
+      ctx.fillStyle = 'rgba(150,80,220,' + (0.13 + 0.07 * Math.sin(tNow / 90)).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(216,180,255,0.85)'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(tg.x, tg.y, Math.max(2, tg.r * p), 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(240,200,255,0.95)'; ctx.lineWidth = 2;
+      ctx.setLineDash([9, 7]); ctx.lineDashOffset = -tNow / 40;
+      ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
     });
   }
   function bcSpawnMonsters() {
@@ -12988,6 +13394,8 @@
     // ARCIV A.2: hai tầng của cụm kiếm Kiếm Trủng (tầng sâu qua bcSauGateOpen).
     if (action === 'bc_floor_kiemtrung_sau') { grindCloseDlg(); return bcEnterWithIntro('bc_kiemtrung_sau'); }
     if (action === 'bc_floor_kiemtrung') { grindCloseDlg(); return bcEnterWithIntro('bc_kiemtrung'); }
+    if (action === 'bc_floor_tran_tam') { grindCloseDlg(); return bcEnterWithIntro('bc_tran_tam'); }
+    if (action === 'bc_floor_tran_tam_sau') { grindCloseDlg(); return bcEnterWithIntro('bc_tran_tam_sau'); }
     if (action === 'bc_floor_later') { grindCloseDlg(); return toast('Ngươi để cụm kiếm đó lại, quay lại sau.', 3600); }
     if (action === 'bc_vach_pha') {
       var rv = L.castWord(state, 'pha');
@@ -13129,6 +13537,7 @@
     var oldMap = state.map;
     endEncounterCleanup();
     bcSession = null; bcColorSort = null;
+    partyBotsLive = []; bcTelegraphs = [];
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps(oldMap);
     state.hp = Math.round(state.hpMax * 0.25);
     defeatGraceT = 3;
@@ -13173,6 +13582,24 @@
           ctx.beginPath(); ctx.arc(cx, cy, rr - 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, bcSession.tranT / 20)); ctx.stroke();
         }
       }
+    }
+    // Điểm trận Phong Ấn Hai Điểm của boss tổ đội: chỉ sáng khi boss
+    // đang ở pha 'hold'; điểm đã có người giữ đổi màu xác nhận xanh.
+    if (state.map === 'bc_tran_tam_sau' && enc && enc.mon && enc.mon.partyBoss && enc.mon.partyBoss.phase === 'hold') {
+      var holdersNow = enc.mon.partyBoss.holders || {};
+      PARTY_HOLD_PADS.forEach(function (pad) {
+        var pcxp = pad.x * TILE + 16, pcyp = pad.y * TILE + 16, held = !!holdersNow[pad.key];
+        var pulse = 0.6 + 0.3 * Math.sin(tNow / 260);
+        var colP = held ? '140,255,170' : '216,180,255';
+        var gradP = ctx.createLinearGradient(0, pcyp - 74, 0, pcyp);
+        gradP.addColorStop(0, 'rgba(' + colP + ',0)');
+        gradP.addColorStop(1, 'rgba(' + colP + ',' + (0.30 * pulse).toFixed(3) + ')');
+        ctx.fillStyle = gradP; ctx.fillRect(pcxp - 10, pcyp - 74, 20, 74);
+        ctx.strokeStyle = 'rgba(' + colP + ',' + pulse.toFixed(3) + ')'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(pcxp, pcyp, 1.6 * TILE, 1.6 * TILE * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(' + colP + ',' + (0.16 + 0.10 * pulse).toFixed(3) + ')';
+        ctx.beginPath(); ctx.ellipse(pcxp, pcyp, 1.6 * TILE, 1.6 * TILE * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+      });
     }
     // Điểm hái trên bản đồ hiện tại: sẵn thì sáng, hết lượt thì mờ.
     L.RESOURCE_NODES.forEach(function (nd) {

@@ -1532,6 +1532,113 @@
     { id: 'kiem_gay_sau_b', type: 'kiem_cum', x: 6, y: 22, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
     { id: 'xuong_kiemtrung_sau', type: 'bones', x: 14, y: 18, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu' }
   ];
+  /* Di Tích Trận Tâm — Tầng Ngoài bc_tran_tam 44x32 (đợt bí cảnh boss
+     tổ đội, hậu cung IV): lưới NGUYÊN VĂN phỏng theo hàng của
+     BC_KIEMTRUNG_SAU_GRID rồi chỉnh hình phòng cho khác (phòng boss bắc
+     x 14..29, y 2..9 sàn hoa văn P rộng x 17..26; spawn (21,29); hai hốc
+     đợt quái giữa tầng quanh y 14 — đợt 1 tây (6,14)/(8,14), đợt 2 đông
+     (37,13)/(38,14)/(36,15); cổng ra hàng 31 x 20..23 về điểm đáp kề
+     cổng ngoài ở Thanh Vân Tông). Boss Hộ Tâm Thạch Tướng tại (22,5). */
+  var BC_TRAN_TAM_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSSSSSSSSSSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSSSSSXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSPPPPPPPPPPSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXSSSSSSSSSSSSSSSSXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXSSSSSSXXXXXXXXXXSPPPPSXXXXXXXXXXSSSSSSXXX',
+    'XXXSPPPPPSSSSSSSSSSSPPPPSSSSSSSSSSSPPPPPSXXX',
+    'XXXSPPPPPSSSSSSSSSSSSSSSSSSSSSSSSSSPPPPPSXXX',
+    'XXXSPPPPPSSSSSSSSSSSSSSSSSSSSSSSSSSPPPPPSXXX',
+    'XXXSPPPPSSSSSXXXXXXXXXXXXXXXXXXXXXXSPPPPSXXX',
+    'XXXSSSSSSSPPSSSSSSXXXXXXXXXXXXXXXXXSSSSSSXXX',
+    'XXXXXXXXXSPPSSSSSSXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXSSSSSSSSSXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX',
+    'XXXXXSSSSSSSXXXXXXXXSSSSXXXSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXSSSSSSSSSSSSSSSSSSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXSSSSSSPPPPPPPSSSSSSXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXSSSSSSSPPPPPPSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXSSPPPPPPSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXSSSSSSSSSSXXXXXXXXXXXXXXXXX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX'
+  ];
+  var BC_TRAN_TAM_PROPS = [
+    { id: 'bia_tran_tam_a', type: 'stele_small', x: 15, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Tàn Trận' },
+    { id: 'bia_tran_tam_b', type: 'stele_small', x: 34, y: 13, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Tàn Trận' },
+    { id: 'kiem_gay_tran_a', type: 'kiem_cum', x: 31, y: 4, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'kiem_gay_tran_b', type: 'kiem_cum', x: 18, y: 27, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'xuong_tran_tam', type: 'bones', x: 10, y: 21, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu' },
+    { id: 'den_tran_tam_a', type: 'lantern_low', x: 3, y: 13, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' },
+    { id: 'den_tran_tam_b', type: 'lantern_low', x: 40, y: 13, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' }
+  ];
+  /* Di Tích Trận Tâm — Tâm Trận bc_tran_tam_sau 40x30: MỘT đại sảnh mở;
+     spawn (19,26) phía nam; bệ boss hoa văn P phía bắc x 14..25, y 3..8
+     (boss Trận Tâm Ma Ảnh tại (19,6)); HAI ĐIỂM TRẬN (điểm giữ) là hai
+     mảng P 3x3 tại (5,14) tây và (34,14) đông, mỗi điểm có bia phong ấn
+     ở tâm; cổng ra hàng 29 x 17..20 về tầng ngoài. Không đợt quái. */
+  var BC_TRAN_TAM_SAU_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSPPPPPPPPPPPPSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSPPPSSSSSSSSSSSSSSSSSSSSSSSSSSPPPSSSX',
+    'XSSSPPPSSSSSSSSSSSSSSSSSSSSSSSSSSPPPSSSX',
+    'XSSSPPPSSSSSSSSSSSSSSSSSSSSSSSSSSPPPSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXX'
+  ];
+  var BC_TRAN_TAM_SAU_PROPS = [
+    { id: 'diem_tran_tay', type: 'stele_small', x: 5, y: 14, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Phong Ấn Điểm Trận Tây', interact: false },
+    { id: 'diem_tran_dong', type: 'stele_small', x: 34, y: 14, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Phong Ấn Điểm Trận Đông', interact: false },
+    { id: 'den_tam_tran_a', type: 'lantern_low', x: 2, y: 2, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' },
+    { id: 'den_tam_tran_b', type: 'lantern_low', x: 37, y: 2, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' },
+    { id: 'den_tam_tran_c', type: 'lantern_low', x: 2, y: 27, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' },
+    { id: 'den_tam_tran_d', type: 'lantern_low', x: 37, y: 27, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Thấp' },
+    { id: 'kiem_gay_tam_a', type: 'kiem_cum', x: 12, y: 4, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'kiem_gay_tam_b', type: 'kiem_cum', x: 26, y: 4, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Gãy Tàn Tích' },
+    { id: 'xuong_tam_tran', type: 'bones', x: 30, y: 24, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu' }
+  ];
+  /* Sóng + vị trí boss của hai tầng Trận Tâm cho engine chép vào
+     BC_WAVES / BC_BOSS_POS của game.js (mẫu BC_KIEMTRUNG_SAU_*). Đợt
+     quái tầng ngoài là Kiếm Ý Tàn Hồn tầng sâu (kháng cộng hưởng 50%)
+     như thiết kế; tâm trận KHÔNG có đợt quái — chỉ boss tổ đội. */
+  var BC_TRAN_TAM_WAVES = [['tan_hon_kiem_y_sau', 2], ['tan_hon_kiem_y_sau', 3]];
+  var BC_TRAN_TAM_WAVE_POS = [[{ x: 6, y: 14 }, { x: 8, y: 14 }], [{ x: 37, y: 13 }, { x: 38, y: 14 }, { x: 36, y: 15 }]];
+  var BC_TRAN_TAM_BOSS_POS = { x: 22, y: 5 };
+  var BC_TRAN_TAM_SAU_BOSS_POS = { x: 19, y: 6 };
+  var BC_TRAN_TAM_SAU_PADS = { A: { x: 5, y: 14 }, B: { x: 34, y: 14 } };
   function buildHoiphongGrid() {
     var rows = blankRows(52, 38, 'S');
     rectC(rows, 1, 28, 50, 28, 'X');           // vách tiền thất / hành lang cơ quan
@@ -1718,6 +1825,22 @@
         { x: 20, y: 31, w: 4, h: 1, to: 'bc_kiemtrung', toX: 23, toY: 29, label: 'Về Kiếm Trủng (tầng trên)' }
       ]
     },
+    bc_tran_tam: {
+      name: 'Di Tích Trận Tâm — Tầng Ngoài', w: 44, h: 32, grid: BC_TRAN_TAM_GRID, props: BC_TRAN_TAM_PROPS, npcs: [],
+      meditate: null, spawn: { x: 21, y: 29 },
+      signs: [{ x: 21, y: 30, text: 'Di Tích Trận Tâm — Tầng Ngoài' }],
+      portals: [
+        { x: 20, y: 31, w: 4, h: 1, to: 'thanh_van_tong', toX: 100, toY: 17, label: 'Ra Sau Núi Thanh Vân Tông' }
+      ]
+    },
+    bc_tran_tam_sau: {
+      name: 'Di Tích Trận Tâm — Tâm Trận', w: 40, h: 30, grid: BC_TRAN_TAM_SAU_GRID, props: BC_TRAN_TAM_SAU_PROPS, npcs: [],
+      meditate: null, spawn: { x: 19, y: 26 },
+      signs: [{ x: 19, y: 28, text: 'Di Tích Trận Tâm — Tâm Trận' }],
+      portals: [
+        { x: 17, y: 29, w: 4, h: 1, to: 'bc_tran_tam', toX: 21, toY: 29, label: 'Về Tầng Ngoài Trận Tâm' }
+      ]
+    },
     bc_hoiphong_mo: {
       name: 'Hồi Phong Cổ Mộ', w: 52, h: 38, grid: BC_HOIPHONG_GRID, props: BC_HOIPHONG_PROPS, npcs: [],
       meditate: null, spawn: { x: 25, y: 33 },
@@ -1741,6 +1864,16 @@
   MAPS.duong_mon.props.push({ id: 'bc_gate_thuyliem', type: 'bc_gate', x: 20, y: 34, w: 2, h: 2, fx: 2, fy: 1, name: 'Cổng Thủy Liêm Động', interact: true });
   MAPS.thap_noi.props.push({ id: 'cua_tan_tich', type: 'cua_tan_tich', x: 3, y: 26, w: 2, h: 2, fx: 2, fy: 1, name: 'Cửa Tàn Tích Dưới Tháp', interact: true });
   MAPS.thanh_van_tong.props.push({ id: 'bc_gate_kiemtrung', type: 'kiem_cum', x: 97, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Chắn Động', interact: true });
+  /* Di Tích Trận Tâm (đợt bí cảnh boss tổ đội): cổng cụm kiếm phong ấn
+     2x2 tại (99,15) — ngay phía đông cụm kiếm Kiếm Trủng trên cùng dải
+     đường đá sau núi — và bia tập kết ghép tổ 1x1 tại (98,17) kề phía
+     tây-nam cổng (cách cổng <= 4 ô). Cả hai ô đều trống (không trùng
+     prop/NPC hiện hữu, không chặn điểm tuần tra (101,15) hay cụm Linh
+     Chi (100,13)) và tới được bằng BFS từ điểm vào tông (61,88); điểm
+     đáp khi ra khỏi tầng ngoài là ô đứng trước cổng (100,17). Tọa độ
+     khóa tại docs/party-boss-coords.json. */
+  MAPS.thanh_van_tong.props.push({ id: 'bc_gate_tran_tam', type: 'kiem_cum', x: 99, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Phong Ấn Trận Tâm', interact: true });
+  MAPS.thanh_van_tong.props.push({ id: 'tap_ket_tran_tam', type: 'stele_small', x: 98, y: 17, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Tập Kết Trận Tâm', interact: true });
   MAPS.hb_valley.props.push({ id: 'bc_gate_hoiphong', type: 'bc_gate', x: 54, y: 16, w: 2, h: 2, fx: 2, fy: 1, name: 'Cửa Hồi Phong Cổ Mộ', interact: true });
   /* Đợt cảnh vật map boss (lệnh Bui 03:56 ngày 2026-11-04 "Map boss thêm
      cảnh vật để sinh động hơn"): trang trí theo bản sắc từng không gian
@@ -2088,6 +2221,7 @@
       grind: defaultGrind(),     // trạng thái hệ cày: hồ trần ngày, khóa chống trùng, sổ trả thưởng
       sideQuests: defaultSideQuests(), // Mục H: chuỗi phụ quanh Trúc Cơ — { claimed, selected, socialMet } dữ kiện thuần, online-ready
       secretRealms: defaultSecretRealms(), // trạng thái bí cảnh: kho lượt ngày chung + từng bí cảnh
+      party: defaultParty(),           // Lớp tổ đội (đợt boss tổ đội): { bots: [...] } dữ kiện thuần, online-ready
       spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
       announceLog: [],           // Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.1): tối đa 20 dòng gần nhất
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
@@ -2814,6 +2948,7 @@
     else state.dayCount = Math.floor(state.dayCount);
     ensureGrind(state);
     ensureSecretRealms(state);
+    ensureParty(state);
     ensureSideQuests(state);
     ensureTechniques(state);
     ensureNguHanh(state);
@@ -3324,6 +3459,14 @@
        Yêu Đan cấp 3 x1 chắc chắn (qua grantReward với boss:true thì
        sàn hệ số x0,5 như các boss hiện hành). */
     'profile:bc_kiemtrung_sau_boss': { lt: 24, tuviPct: 20, merit: 9, items: { phuc_linh_dan: 1 } },
+    /* Di Tích Trận Tâm (đợt bí cảnh boss tổ đội, dải Kim Đan): boss
+       giữa tầng ngoài đúng hồ sơ tầng sâu Kiếm Trủng (24/20%/9 + Phục
+       Linh Đan); boss cuối tâm trận đúng khung boss dã ngoại Kim Đan
+       (32/30%/10, không vật phẩm trong hồ sơ lặp — Yêu Đan cấp 3 x1 +
+       Phục Linh Đan x1 nằm ở thưởng LẦN ĐẦU ngoài hồ sơ, như mọi bí
+       cảnh). Đợt quái 5% tu vi như mọi bí cảnh. */
+    'profile:bc_tran_tam_boss': { lt: 24, tuviPct: 20, merit: 9, items: { phuc_linh_dan: 1 } },
+    'profile:bc_tran_tam_sau_boss': { lt: 32, tuviPct: 30, merit: 10, items: {} },
     'profile:boss_hb_ho_tran': { lt: 32, tuviPct: 30, merit: 10, items: { yeu_dan_3: 1 } },
     /* Đài thách đấu (trần mềm, điểm nhỏ): chỉ tu vi — đệ tử đấu giao
        lưu không rơi tài nguyên; hạng tinh anh thêm chút công trạng. */
@@ -3337,7 +3480,9 @@
     'profile:bc:bc_tapsau:wave': { tuviPct: 5 },
     'profile:bc:bc_kiemtrung:wave': { tuviPct: 5 },
     'profile:bc:bc_hoiphong_mo:wave': { tuviPct: 5 },
-    'profile:bc:bc_kiemtrung_sau:wave': { tuviPct: 5 }
+    'profile:bc:bc_kiemtrung_sau:wave': { tuviPct: 5 },
+    'profile:bc:bc_tran_tam:wave': { tuviPct: 5 },
+    'profile:bc:bc_tran_tam_sau:wave': { tuviPct: 5 }
   };
   /* grantReward(state, spec, opts) — spec: id hồ sơ trong REWARD_PROFILES
      hoặc đối tượng hồ sơ phẳng { lt?, tuvi?, tuviPct?, merit?, items? }.
@@ -3623,7 +3768,7 @@
       source: 'Mảnh từ boss Kiếm Ý Tàn Hồn (bc_kiemtrung), ghép tại tàng kinh', requires: ['tu_dien_kich'],
       fragments: 3, fragmentSource: 'boss:bc_kiemtrung', effect: 'Hồ quang gộp trong hệ số' }),
     thai_bach_kim_kiem: nguHanhDef({ hidden: false, name: 'Thái Bạch Kim Kiếm', element: 'kim', band: 'kim_dan', rarity: 'hiem', profile: 'don',
-      source: 'Mảnh từ boss Hộ Trận Kiếm Linh (cung IV, chu kỳ 5 ngày), ghép tại tàng kinh', requires: ['diet_son_dia_chan'],
+      source: 'Mảnh từ boss Hộ Trận Kiếm Linh (cung IV, chu kỳ 5 ngày) hoặc boss Trận Tâm Ma Ảnh (Di Tích Trận Tâm — Tâm Trận, bc_tran_tam_sau, boss tổ đội), ghép tại tàng kinh', requires: ['diet_son_dia_chan'],
       fragments: 5, fragmentSource: 'boss:ho_tran_kiem_linh', effect: 'Tia quạt ở T3 (đã gộp trong hệ số)' }),
     bon_loi_thiem_kich: nguHanhDef({ hidden: false, name: 'Bôn Lôi Thiểm Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
       source: 'Kỳ ngộ bậc hiếm khi đi đường/săn ở đường mòn', requires: ['tu_dien_kich'],
@@ -3982,6 +4127,13 @@
         { id: 'quat_kiem_tran', name: 'Quạt Kiếm Trận', swords: 7, telegraphSec: 0.6 },
         { id: 'van_chu_ky', name: 'Vận Chu Kỳ', dinhAmWindow: true, note: 'cửa sổ Định Âm như Trận Nhãn — cùng một họ kiếm linh' }
       ] },
+    /* Di Tích Trận Tâm (đợt bí cảnh boss tổ đội): boss giữa tầng ngoài
+       đánh đơn như boss bí cảnh thường (thang boss Kim Đan 2400/23 như
+       Hộ Trận Kiếm Linh); boss cuối tâm trận là BOSS TỔ ĐỘI đầu tiên
+       (partyBoss: true — cổng tổ đội partyMin 2 ở SECRET_REALM_DEFS,
+       cơ chế Phong Ấn Hai Điểm cần hai người giữ hai điểm trận). */
+    ho_tam_thach_tuong: { name: 'Hộ Tâm Thạch Tướng', rank: 'boss', hp: 2400, atk: 23, atkInterval: 1.35, speed: 40, cry: 320 },
+    tran_tam_ma_anh: { name: 'Trận Tâm Ma Ảnh', rank: 'boss', hp: 5200, atk: 27, atkInterval: 1.3, speed: 46, cry: 300, partyBoss: true },
     /* Tinh anh Kim Đan ở đường mòn (bảng spawn mới — hình dùng chung
        họ Sơn Lang, tông nhiễu sóng do engine vẽ phân biệt). */
     lang_nhiem_song: { name: 'Sơn Lang Nhiễm Sóng', rank: 'elite', hp: 1500, atk: 22, atkInterval: 1.3, speed: 50, cry: 420 }
@@ -4000,7 +4152,9 @@
     zone_bc_tapsau: { map: 'bc_tapsau', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 2 },
     zone_bc_kiemtrung: { map: 'bc_kiemtrung', x0: 1, y0: 1, x1: 46, y1: 32, yeuDanLevel: 2 },
     zone_bc_hoiphong_mo: { map: 'bc_hoiphong_mo', x0: 1, y0: 1, x1: 50, y1: 36, yeuDanLevel: 2 },
-    zone_bc_kiemtrung_sau: { map: 'bc_kiemtrung_sau', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 }
+    zone_bc_kiemtrung_sau: { map: 'bc_kiemtrung_sau', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 },
+    zone_bc_tran_tam: { map: 'bc_tran_tam', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 },
+    zone_bc_tran_tam_sau: { map: 'bc_tran_tam_sau', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 3 }
   };
   // Ổ (lair) của từng vùng: điểm sinh xác định, xa điểm cốt truyện/đường
   // chính — quái chỉ đi lại quanh ổ trong vùng của mình.
@@ -4335,7 +4489,15 @@
        >= 300) cho riêng bí cảnh này. TUYỆT ĐỐI không điều kiện tầng
        công pháp (luật cứng). Boss: Trận Nhãn Kiếm Linh; lính giữ cửa
        kháng cộng hưởng 50% như tầng trên. */
-    bc_kiemtrung_sau: { name: 'Kiếm Trủng — Tầng Sâu', band: 'kimdan', unlockQuest: 'q16_linh_ngo', repeatQuest: 'q17_done', map: 'bc_kiemtrung_sau', boss: 'tran_nhan_kiem_linh', bossProfileId: 'profile:bc_kiemtrung_sau_boss', waveProfileId: 'profile:bc:bc_kiemtrung_sau:wave', yeuDanLevel: 3 }
+    bc_kiemtrung_sau: { name: 'Kiếm Trủng — Tầng Sâu', band: 'kimdan', unlockQuest: 'q16_linh_ngo', repeatQuest: 'q17_done', map: 'bc_kiemtrung_sau', boss: 'tran_nhan_kiem_linh', bossProfileId: 'profile:bc_kiemtrung_sau_boss', waveProfileId: 'profile:bc:bc_kiemtrung_sau:wave', yeuDanLevel: 3 },
+    /* Di Tích Trận Tâm (đợt bí cảnh boss tổ đội — docs/party-boss-
+       dungeon-design.md): hai tầng hậu cung IV, mở tại q24_done. Tâm
+       trận là BOSS TỔ ĐỘI: partyMin 2 + partyRoles ['dps','tank'] cho
+       partyMatchmake lấp bot; điều kiện mở THẬT của tâm trận còn thêm
+       firstClear tầng ngoài — xem bcTranTamSauOpen (cổng vào ở làn
+       game.js phải gọi hàm đó, không chỉ secretRealmUnlocked). */
+    bc_tran_tam: { name: 'Di Tích Trận Tâm — Tầng Ngoài', band: 'kimdan', unlockQuest: 'q24_done', map: 'bc_tran_tam', boss: 'ho_tam_thach_tuong', bossProfileId: 'profile:bc_tran_tam_boss', waveProfileId: 'profile:bc:bc_tran_tam:wave', yeuDanLevel: 3 },
+    bc_tran_tam_sau: { name: 'Di Tích Trận Tâm — Tâm Trận', band: 'kimdan', unlockQuest: 'q24_done', map: 'bc_tran_tam_sau', boss: 'tran_tam_ma_anh', bossProfileId: 'profile:bc_tran_tam_sau_boss', waveProfileId: 'profile:bc:bc_tran_tam_sau:wave', yeuDanLevel: 3, partyMin: 2, partyRoles: ['dps', 'tank'] }
   };
   function defaultSecretRealms() {
     return { pool: { day: 0, used: 0 }, realms: {} };
@@ -4412,6 +4574,154 @@
   /* Thứ tự chín mảnh sắc cửa phế thước (lấy từ SCENE_MEASURE chương 3:
      thước leo đỏ → cam → vàng → lục → lam → chàm → tím → đen rồi vượt
      cửu phẩm thành Vô Sắc). Làn kiểm thử đối chiếu tĩnh hằng số này. */
+  /* Điều kiện mở THẬT của Tâm Trận: đã mở khóa theo mốc truyện
+     (q24_done) VÀ đã thông quan lần đầu tầng ngoài. Cổng vào ở làn
+     game.js phải dùng hàm này cho tầng sâu (secretRealmUnlocked một
+     mình là chưa đủ). */
+  function bcTranTamSauOpen(state) {
+    if (!secretRealmUnlocked(state, 'bc_tran_tam_sau')) return false;
+    var sr = ensureSecretRealms(state);
+    return !!(sr.realms.bc_tran_tam && sr.realms.bc_tran_tam.firstClear);
+  }
+
+  /* ================= LỚP TỔ ĐỘI + BOT GHÉP TỔ (đợt boss tổ đội) =================
+     state.party là DỮ KIỆN THUẦN trong save — điểm nối online duy nhất
+     của hệ tổ đội (docs/party-boss-dungeon-design.md mục 2.1). Ba
+     nguồn lấp vị trí theo thứ tự: 'online' (người chơi thật — khi nền
+     online mở, thành viên người thật ghi vào ĐÚNG danh sách này; chưa
+     xây ở bản này), 'bot' (bot AI ghép tổ của bản offline), 'npc'
+     (NPC truyện — CHỈ cho cảnh hộ tống kịch bản, KHÔNG lấp tổ boss).
+     Người chơi là đội trưởng: thành viên ngầm định, không ghi record
+     riêng trong save; partyMembers() luôn trả người chơi đầu tiên.
+     Bot tồn tại trong state.party.bots cho tới khi người chơi giải
+     tán tại bia tập kết hoặc rời bí cảnh ra bản đồ ngoài
+     (partyClearBots). Sinh bot TẤT ĐỊNH theo hạt giống (ngày game x
+     7919 + seq của hệ cày + số bot đã có) qua mulberry32 (grindRng) —
+     cùng điều kiện thì cùng tổ, kiểm chứng được, nạp lại không quay
+     ra tổ khác. */
+  var PARTY_MAX = 3;
+  var PARTY_ROLE_LABEL = { dps: 'Sát thương', tank: 'Chịu đòn', support: 'Hỗ trợ' };
+  var PARTY_BOT_HO = ['Trần', 'Lý', 'Vương', 'Lưu', 'Dương', 'Hoàng', 'Triệu', 'Ngô', 'Chu', 'Từ', 'Tôn', 'Hồ', 'Lâm', 'Quách'];
+  var PARTY_BOT_TEN = ['Minh Kiếm', 'Thanh Phong', 'Ngọc Lâu', 'Tử Hiên', 'Văn Đức', 'Hạo Nhiên', 'Tuyết Nhi', 'Linh San', 'Trường Không', 'Huyền Vũ', 'Phi Vân', 'Đông Hải', 'Tịnh Tâm', 'Quang Minh', 'Yến Thanh', 'Bạch Thạch'];
+  var PARTY_BOT_SECTS = ['Thanh Vân Tông', 'Thiên Cơ Các', 'Lạc Hà Phái', 'Bích Thủy Môn', 'Phong Lôi Các'];
+  /* Công thức chỉ số bot theo dải người chơi (thiết kế mục 2.2):
+     máu theo bội số máu tối đa của người chơi, lực mỗi đòn theo bội
+     số swordPower, nhịp đòn theo vai; support thêm hồi máu cho đồng
+     đội thấp máu nhất (healPct % máu tối đa của mục tiêu mỗi
+     healCdMs). Hình đại diện theo vai dùng sheet sẵn có. */
+  var PARTY_ROLE_DEFS = {
+    dps: { hpMul: 0.9, atkMul: 0.75, atkIntervalMs: 1100, sprite: 'player_nam' },
+    tank: { hpMul: 1.7, atkMul: 0.45, atkIntervalMs: 1300, sprite: 'villager_m' },
+    support: { hpMul: 1.0, atkMul: 0.5, atkIntervalMs: 1200, sprite: 'player_nu', healPct: 6, healCdMs: 6000 }
+  };
+  function defaultParty() { return { bots: [] }; }
+  function ensureParty(state) {
+    if (!state || typeof state !== 'object') return defaultParty();
+    if (!state.party || typeof state.party !== 'object') state.party = defaultParty();
+    if (!Array.isArray(state.party.bots)) state.party.bots = [];
+    state.party.bots = state.party.bots.filter(function (b) { return !!b && typeof b === 'object'; });
+    return state.party;
+  }
+  /* Danh sách thành viên HIỆU LỰC: người chơi (đội trưởng) + bot ghép
+     tổ. Lớp 'online': khi nền online mở, thành viên người thật
+     (source: 'online') sẽ được nối vào đây sau người chơi và trước
+     bot — partySize/partyGateCheck đọc qua hàm này nên không phải
+     sửa khi lớp online tới. */
+  function partyMembers(state) {
+    var party = ensureParty(state);
+    var out = [{ source: 'player', id: 'player', name: (state && state.name) || 'Giang Phàm', role: 'leader' }];
+    party.bots.forEach(function (b) { out.push(b); });
+    return out;
+  }
+  function partySize(state) { return partyMembers(state).length; }
+  function partyPlayerMaxHp(state) {
+    if (state && typeof state.maxHp === 'number' && state.maxHp > 0) return state.maxHp;
+    if (state && typeof state.hpMax === 'number' && state.hpMax > 0) return state.hpMax;
+    return 100;
+  }
+  /* Ghép tổ bằng AI: lấp các vị trí trống tới PARTY_MAX bằng bot sinh
+     tự động. Vai trò theo partyRoles của bí cảnh đích (mặc định
+     ['dps','tank'] khi bí cảnh không khai). Gọi lại khi tổ đã đủ thì
+     không sinh thêm (idempotent). */
+  function partyMatchmake(state, realmId) {
+    if (!state || typeof state !== 'object') return { ok: false, reason: 'invalid_state', added: [], size: 0 };
+    var party = ensureParty(state);
+    var def = realmId ? SECRET_REALM_DEFS[realmId] : null;
+    var roles = (def && Array.isArray(def.partyRoles) && def.partyRoles.length) ? def.partyRoles : ['dps', 'tank'];
+    var existing = party.bots.length;
+    var need = PARTY_MAX - 1 - existing;
+    if (need <= 0) return { ok: true, added: [], size: partySize(state) };
+    var g = ensureGrind(state);
+    var seed = (typeof state.dayCount === 'number' ? state.dayCount : 0) * 7919 + g.seq + existing;
+    var rng = grindRng(seed);
+    var baseHp = partyPlayerMaxHp(state);
+    var power = swordPower(state);
+    var usedNames = {};
+    party.bots.forEach(function (b) { if (b && b.name) usedNames[b.name] = true; });
+    var added = [];
+    for (var i = 0; i < need; i++) {
+      var role = roles[(existing + i) % roles.length];
+      var rd = PARTY_ROLE_DEFS[role] || PARTY_ROLE_DEFS.dps;
+      var name = null;
+      for (var t = 0; t < 24 && !name; t++) {
+        var cand = PARTY_BOT_HO[Math.floor(rng() * PARTY_BOT_HO.length)] + ' ' + PARTY_BOT_TEN[Math.floor(rng() * PARTY_BOT_TEN.length)];
+        if (!usedNames[cand]) name = cand;
+      }
+      if (!name) name = PARTY_BOT_HO[0] + ' ' + PARTY_BOT_TEN[(existing + i) % PARTY_BOT_TEN.length];
+      usedNames[name] = true;
+      var hp = Math.max(1, Math.round(rd.hpMul * baseHp));
+      var bot = {
+        source: 'bot',
+        id: 'bot_' + seed + '_' + (existing + i),
+        name: name,
+        sect: PARTY_BOT_SECTS[Math.floor(rng() * PARTY_BOT_SECTS.length)],
+        role: role,
+        roleLabel: PARTY_ROLE_LABEL[role] || role,
+        sprite: rd.sprite,
+        hp: hp, hpMax: hp, maxHp: hp,
+        atk: Math.max(1, Math.round(rd.atkMul * power)),
+        atkIntervalMs: rd.atkIntervalMs,
+        atkInterval: rd.atkIntervalMs / 1000
+      };
+      if (typeof rd.healPct === 'number') bot.healPct = rd.healPct;
+      if (typeof rd.healCdMs === 'number') bot.healCdMs = rd.healCdMs;
+      party.bots.push(bot);
+      added.push(bot);
+    }
+    return { ok: true, added: added, size: partySize(state) };
+  }
+  /* Giải tán bot ghép tổ (tại bia tập kết hoặc khi rời bí cảnh ra bản
+     đồ ngoài): tổ trở về chỉ còn người chơi. */
+  function partyClearBots(state) {
+    var party = ensureParty(state);
+    party.bots = [];
+    return { ok: true, size: partySize(state) };
+  }
+  /* Cổng tổ đội: bí cảnh khai partyMin thì tổ (gồm người chơi) phải
+     đủ partyMin thành viên mới vào được. Bí cảnh không khai partyMin
+     thì luôn qua. Làn game.js kiểm cổng này TRƯỚC bcConsumeEntry để
+     chặn solo không tốn lượt kho chung. */
+  function partyGateCheck(state, realmId) {
+    var def = SECRET_REALM_DEFS[realmId];
+    if (!def) return { ok: false, reason: 'unknown_realm', have: partySize(state), need: 0 };
+    if (!def.partyMin) return { ok: true, size: partySize(state) };
+    var have = partySize(state);
+    if (have >= def.partyMin) return { ok: true, size: have, need: def.partyMin };
+    return { ok: false, reason: 'party_required', have: have, need: def.partyMin };
+  }
+  /* Phong Ấn Hai Điểm (cơ chế boss tổ đội): tiến độ giữ chỉ chạy khi
+     CẢ HAI điểm trận đều có người giữ ĐỒNG THỜI và hai người giữ là
+     hai nhân vật KHÁC NHAU. holders = { padA: <id người giữ điểm tây
+     hoặc null>, padB: <id người giữ điểm đông hoặc null> } (cũng nhận
+     dạng mảng [idA, idB]). Hàm thuần — một người không bao giờ tự giữ
+     được cả hai điểm. */
+  function partyHoldSatisfied(holders) {
+    if (!holders) return false;
+    var a = Array.isArray(holders) ? holders[0] : holders.padA;
+    var b = Array.isArray(holders) ? holders[1] : holders.padB;
+    return a != null && b != null && a !== b;
+  }
+
   var PHE_THUOC_COLOR_ORDER = ['Đỏ', 'Cam', 'Vàng', 'Lục', 'Lam', 'Chàm', 'Tím', 'Đen', 'Vô Sắc'];
 
   /* ================= NHIỆM VỤ PHỤ QUANH TRÚC CƠ (Mục H, đợt vá 2026-11-02) =================
@@ -4463,7 +4773,12 @@
       name: 'Đồng môn ở quảng trường',
       desc: 'Tới quảng trường Thanh Vân Tông chào hỏi một đồng môn (Hoa Hướng Thần hoặc đệ tử ở quảng trường), rồi nhận và trả một Việc Tông Môn luân phiên ở Quản Sự Tạp Dịch. — nhịp gặp gỡ xã hội ở điểm tụ họp tông môn, đúng hình dáng việc chung khi mở online.',
       system: 'việc tông môn (board_sect_daily) + gặp gỡ quảng trường tông', reward: { lt: 3, merit: 5 },
-      guide: { map: 'thanh_van_tong', x: 62, y: 56 } }
+      guide: { map: 'thanh_van_tong', x: 62, y: 56 } },
+    { id: 'sq_post_tran_tam', phase: 'post', unlockQuest: 'q24_done',
+      name: 'Di Tích Trận Tâm',
+      desc: 'Cổng cụm kiếm phong ấn ở sau núi Thanh Vân Tông dẫn xuống Di Tích Trận Tâm: dọn sạch tầng ngoài trước (boss Hộ Tâm Thạch Tướng), rồi xuống tâm trận — nơi Trận Tâm Ma Ảnh chỉ mở cho TỔ ĐỘI. Tới bia tập kết ngay cạnh cổng ghép bot AI cho đủ tổ đội rồi mới xuống tâm trận được.',
+      system: 'bí cảnh bc_tran_tam + bc_tran_tam_sau (boss tổ đội)', reward: { tuviPct: 5, merit: 5 },
+      guide: { map: 'thanh_van_tong', x: 99, y: 17 } }
   ];
   function sideQuestDef(id) {
     for (var i = 0; i < SIDE_QUEST_DEFS.length; i++) if (SIDE_QUEST_DEFS[i].id === id) return SIDE_QUEST_DEFS[i];
@@ -4526,6 +4841,10 @@
       var steps = (sq.socialMet ? 1 : 0) + ns;
       return { cur: steps, target: 2, text: 'Gặp đồng môn: ' + (sq.socialMet ? 1 : 0) + '/1 · Đã trả việc tông: ' + ns + '/1', done: steps >= 2 };
     }
+    if (def.id === 'sq_post_tran_tam') {
+      var ntt = sideRealmFirstClear(state, 'bc_tran_tam_sau') ? 1 : 0;
+      return { cur: ntt, target: 1, text: 'Đã qua ải tâm trận (boss tổ đội): ' + ntt + '/1', done: ntt >= 1 };
+    }
     return { cur: 0, target: 1, text: '', done: false };
   }
   /* Trạng thái: locked | available | ready | claimed | skipped */
@@ -4562,6 +4881,10 @@
     }
     if (def.id === 'sq_post_bicanh_tc') {
       if (!sideRealmFirstClear(state, 'bc_tapsau') && !sideRealmFirstClear(state, 'bc_kiemtrung')) return { map: 'thap_noi', x: 3, y: 28 };
+      return def.guide;
+    }
+    if (def.id === 'sq_post_tran_tam') {
+      if (!sideRealmFirstClear(state, 'bc_tran_tam_sau')) return { map: 'thanh_van_tong', x: 99, y: 17 };
       return def.guide;
     }
     if (def.id === 'sq_post_dong_mon') {
@@ -4820,6 +5143,7 @@
     'dai_thach_dau:tinh_anh': ['thanh_loan_pha_hu'],
     'boss:bc_kiemtrung_sau': ['tuyet_hoa_cu_kiem'],
     'boss:ho_tran_kiem_linh': ['thai_bach_kim_kiem'],
+    'boss:bc_tran_tam_sau': ['thai_bach_kim_kiem'],
     'boss:bc_kiemtrung': ['han_bang_bao_lien', 'loi_quang_than_kiem'],
     'boss:bc_thuyliem': ['thuong_hai_cuong_dao', 'thanh_hoa_lien_tran']
   };
@@ -4924,6 +5248,11 @@
     RESOURCE_NODES: RESOURCE_NODES, nodeDef: nodeDef, nodeStatus: nodeStatus,
     SECRET_REALM_DEFS: SECRET_REALM_DEFS, defaultSecretRealms: defaultSecretRealms, ensureSecretRealms: ensureSecretRealms,
     secretRealmUnlocked: secretRealmUnlocked, bcPoolLeft: bcPoolLeft, bcConsumeEntry: bcConsumeEntry, bcRecordClear: bcRecordClear,
+    bcTranTamSauOpen: bcTranTamSauOpen,
+    PARTY_MAX: PARTY_MAX, PARTY_ROLE_LABEL: PARTY_ROLE_LABEL, PARTY_ROLE_DEFS: PARTY_ROLE_DEFS,
+    PARTY_BOT_HO: PARTY_BOT_HO, PARTY_BOT_TEN: PARTY_BOT_TEN, PARTY_BOT_SECTS: PARTY_BOT_SECTS,
+    defaultParty: defaultParty, ensureParty: ensureParty, partyMembers: partyMembers, partySize: partySize,
+    partyMatchmake: partyMatchmake, partyClearBots: partyClearBots, partyGateCheck: partyGateCheck, partyHoldSatisfied: partyHoldSatisfied,
     SIDE_QUEST_DEFS: SIDE_QUEST_DEFS, sideQuestDef: sideQuestDef, defaultSideQuests: defaultSideQuests, ensureSideQuests: ensureSideQuests,
     sideQuestProgress: sideQuestProgress, sideQuestStatus: sideQuestStatus, sideQuestList: sideQuestList,
     sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
@@ -4937,6 +5266,10 @@
     ARC_IV_CH15_LOCK_FLAG: ARC_IV_CH15_LOCK_FLAG, arcIvCh15ResonanceLocked: arcIvCh15ResonanceLocked,
     BC_SAU_GATE: BC_SAU_GATE, bcSauGateOpen: bcSauGateOpen,
     BC_KIEMTRUNG_SAU_GRID: BC_KIEMTRUNG_SAU_GRID, BC_KIEMTRUNG_SAU_WAVES: BC_KIEMTRUNG_SAU_WAVES,
+    BC_TRAN_TAM_GRID: BC_TRAN_TAM_GRID, BC_TRAN_TAM_PROPS: BC_TRAN_TAM_PROPS,
+    BC_TRAN_TAM_WAVES: BC_TRAN_TAM_WAVES, BC_TRAN_TAM_WAVE_POS: BC_TRAN_TAM_WAVE_POS, BC_TRAN_TAM_BOSS_POS: BC_TRAN_TAM_BOSS_POS,
+    BC_TRAN_TAM_SAU_GRID: BC_TRAN_TAM_SAU_GRID, BC_TRAN_TAM_SAU_PROPS: BC_TRAN_TAM_SAU_PROPS,
+    BC_TRAN_TAM_SAU_BOSS_POS: BC_TRAN_TAM_SAU_BOSS_POS, BC_TRAN_TAM_SAU_PADS: BC_TRAN_TAM_SAU_PADS,
     BC_KIEMTRUNG_SAU_BOSS_POS: BC_KIEMTRUNG_SAU_BOSS_POS, BC_KIEMTRUNG_SAU_EYES: BC_KIEMTRUNG_SAU_EYES,
     learnHuyenTinhKiemPho: learnHuyenTinhKiemPho, availableSwordMoves: availableSwordMoves, bestSwordMoveFor: bestSwordMoveFor,
     bcSauFirstClearRewards: bcSauFirstClearRewards, arcIvResolvePendingSets: arcIvResolvePendingSets,

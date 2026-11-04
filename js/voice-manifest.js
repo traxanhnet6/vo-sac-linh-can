@@ -2896,6 +2896,21 @@ window.VSLC_VOICE = {
    "k": "say",
    "s": "oan_hon"
   },
+  "6f00efa6b2c3": {
+   "f": "v6f00efa6b2c3.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "92c24e938b03": {
+   "f": "v92c24e938b03.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "0692d645b823": {
+   "f": "v0692d645b823.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
   "ac7d05d0710f": {
    "f": "vac7d05d0710f.mp3",
    "k": "narrate",
@@ -6773,6 +6788,21 @@ window.VSLC_VOICE = {
   },
   "ad7987df174c": {
    "f": "vad7987df174c.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "efa986ecc65b": {
+   "f": "vefa986ecc65b.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "6b865e4d2d24": {
+   "f": "v6b865e4d2d24.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "a51eb761e78f": {
+   "f": "va51eb761e78f.mp3",
    "k": "narrate",
    "s": "narrate"
   },

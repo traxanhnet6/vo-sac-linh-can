@@ -1587,6 +1587,16 @@
     { who: 'oan_hon', text: 'Người trẻ, cảm ơn ngươi đã đọc bức thư chưa gửi và đáp đúng âm của ta. Một người chết trận, chỉ cần có thế là đủ để buông kiếm xuống.' },
     { who: 'oan_hon', text: 'Ta yên nghỉ đây… Gió trong mộ từ nay sẽ nhẹ hơn. Đi đi, và sống thay cả phần của những kẻ đã nằm xuống…' }
   ];
+  /* Cảnh mở đầu lần đầu vào Tầng Ngoài Di Tích Trận Tâm (đợt bí cảnh
+     boss tổ đội): lời dẫn + MỘT dòng chữ viết của Giang Phàm (chữ viết
+     không tiếng như luật nhân vật). Tâm trận (tầng sâu) không có cảnh
+     mở đầu — tiền lệ tầng sâu Kiếm Trủng. */
+  var SCENE_BC_TRANTAM_INTRO = [
+    { who: 'narrate', text: 'Sau núi Thanh Vân Tông, dưới cụm kiếm phong ấn mà ít đệ tử dám tới gần, là miệng hang của Di Tích Trận Tâm — lõi trận ba động năm xưa chìm xuống đất sâu khi trận sụp.' },
+    { who: 'narrate', text: 'Trận đã phá, khe đã bịt, nhưng tâm trận chưa tắt. Trưởng lão nói: thứ còn chạy dưới này không còn là trận của người nữa — nó tự chạy, tự giữ, và tự ghét kẻ sống bước vào.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Tâm chưa tắt thì họa chưa dứt. Vào dọn cho sạch."' },
+    { who: 'narrate', text: 'Ngươi siết chặt chuôi kiếm, bước xuống hành lang đá lạnh. Sau lưng, trận văn trên vách lần lượt sáng lên như mắt mở.' }
+  ];
   var SCENE_C10_SOUL_A = [
     { who: 'narrate', text: 'Tàn Tích tầng sâu sau một thời gian im ắng lại mở cửa với ngươi. Lần này ngươi tới không phải để khám phá — mà để luyện hồn, công khai, như một Hồn Sư đã tự mình nói ra thân phận.' },
     { who: 'narrate', text: 'Phế thước vẫn đứng đó, vạch sáng thứ mười lặng lẽ hiện lên khi ngươi tới gần. Tàn ảnh không mặt nghiêng đầu, như nhận ra người quen.' },
@@ -2286,6 +2296,7 @@
     SCENE_BC_TAPSAU_INVITE: SCENE_BC_TAPSAU_INVITE, SCENE_BC_TAPSAU_INTRO: SCENE_BC_TAPSAU_INTRO,
     SCENE_BC_KIEMTRUNG_INTRO: SCENE_BC_KIEMTRUNG_INTRO, SCENE_BC_HOIPHONG_INTRO: SCENE_BC_HOIPHONG_INTRO,
     SCENE_BC_HOIPHONG_THU: SCENE_BC_HOIPHONG_THU, SCENE_BC_HOIPHONG_TRANTOI: SCENE_BC_HOIPHONG_TRANTOI,
+    SCENE_BC_TRANTAM_INTRO: SCENE_BC_TRANTAM_INTRO,
     SCENE_C10_SOUL_A: SCENE_C10_SOUL_A, SCENE_C10_SOUL_B: SCENE_C10_SOUL_B,
     SCENE_CH13_TRO_LAI: SCENE_CH13_TRO_LAI, SCENE_CH13_DE_NGHI: SCENE_CH13_DE_NGHI,
     SCENE_CH13_DAI_THACH: SCENE_CH13_DAI_THACH, SCENE_CH13_DAI_THACH_2: SCENE_CH13_DAI_THACH_2,
