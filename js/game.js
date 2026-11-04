@@ -7370,15 +7370,44 @@
   }
   function musicBoss(on) { if (window.VSLC_MUSIC && VSLC_MUSIC.setBoss) VSLC_MUSIC.setBoss(on); }
 
+  /* ----- Họ chuyển động của quái (đợt làm mượt cử động 2026-11-04) -----
+     Phân họ theo loài để khóa nhịp bước (stridePx), tốc độ rẽ hướng và
+     lớp cử động thân vẽ bổ trợ trong drawMonster. Băm ổ (monHash01) cho
+     lệch pha XÁC ĐỊNH theo loài + tọa độ ổ: cùng một ổ luôn cho cùng
+     một pha nên kiểm thử không chao đảo, mà mỗi cá thể vẫn lệch nhịp
+     riêng — thay cho Math.random thuần lúc sinh. */
+  function monHash01(txt) {
+    var h = 2166136261;
+    for (var i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ((h >>> 0) % 100000) / 100000;
+  }
+  var MON_FAMILY = { doc_vu_xa: 'snake', dong_xa: 'snake', thuy_xa_tinh: 'snake',
+    son_lang: 'quad', lang_vuong: 'quad', thiet_giap_tru: 'quad', son_chu: 'quad', lang_nhiem_song: 'quad',
+    phong_ung: 'fly', thach_tuong: 'stone', thach_tuong_thu_ve: 'stone',
+    oan_binh: 'ghost', oan_hon_chien_truong: 'ghost', tan_anh_vo_cuc: 'ghost',
+    kiem_linh: 'sword', kiem_y_tan_hon: 'sword', tran_nhan_kiem_linh: 'sword', ho_tran_kiem_linh: 'sword', tan_hon_kiem_y_sau: 'sword' };
+  var MON_STRIDE = { snake: 11, quad: 13, fly: 9, stone: 17, ghost: 12, sword: 12 }; // px tích lũy cho MỘT khung đi
+  var MON_TURN = { snake: 8, quad: 7, fly: 9, stone: 6, ghost: 8.5, sword: 8.5 };   // rad/s: họ nặng rẽ chậm, họ nhẹ rẽ nhanh
+  function monFamilyOf(sp) { return MON_FAMILY[sp] || ''; }
+  function monStridePx(m) { var s = MON_STRIDE[monFamilyOf(m.species)] || 13; if (m.rank === 'boss') s *= 1.25; return s; } // boss lớn sải dài hơn 1,25 lần
+  function monTurnRate(m) { return MON_TURN[monFamilyOf(m.species)] || 7.5; }
+
   /* ----- Sinh quái theo bản đồ ----- */
   function makeMonster(species, zoneId, tx, ty, bossId) {
     var def = L.MONSTER_DEFS[species], bd = bossId ? L.BOSS_DEFS[bossId] : null;
+    // Lệch pha + nhịp quay mặt lúc chờ: băm theo loài + ổ (xác định, xem khối trên).
+    var ph0 = monHash01(species + '@' + zoneId + '@' + tx + ',' + ty) * Math.PI * 2;
     return { species: species, def: def, bossId: bossId || null, name: bd ? bd.name : def.name, rank: def.rank,
       zoneId: zoneId, lairX: tx, lairY: ty, x: tx * TILE, y: ty * TILE, face: 1, mode: 'wander',
       hp: def.hp, hpMax: def.hp, atk: def.atk, atkInterval: def.atkInterval, speed: def.speed,
       wt: 1 + Math.random() * 2, tx: tx * TILE, ty: ty * TILE, movingNow: false,
       aggroT: 0, atkT: 0.6, atkAnimT: 0, flashT: 0, cryT: 0, kbx: 0, kby: 0, kbT: 0, shakeT: 0, resVibT: 0, resShatter: false,
-      holdT: 0, sealT: 0, deathT: 0, state: 'alive', respawnT: 0, slideT: bossId ? 0.5 : 0, hitN: 0 };
+      holdT: 0, sealT: 0, deathT: 0, state: 'alive', respawnT: 0, slideT: bossId ? 0.5 : 0, hitN: 0,
+      // Trường chuyển động mượt (đợt 2026-11-04): vận tốc lái mềm vx/vy,
+      // quãng đường tích lũy gait khóa pha khung đi, nhịp lên đòn windT,
+      // nhịp dằn thân tượng đá và nhịp quay mặt lúc chờ của thú bốn chân.
+      vx: 0, vy: 0, gait: 0, phase0: ph0, windT: 0, stoneSinkT: 0, stoneStepIdx: 0, orbitN: 0,
+      idleTurnT: 2.5 + monHash01(species + ':idle:' + tx + ',' + ty) * 4, idleTurnN: 0 };
   }
   function monsterHasArt(species) {
     // Cổng mỹ thuật là điều kiện sinh: loài nào bị loại ở khâu sản xuất
@@ -7442,15 +7471,98 @@
     } else if (zoneAtTile(state.map, tx, ty) !== m.zoneId) return false;
     return L.isWalkable(tx, ty, npcsLive);
   }
+  /* ----- Tách đàn (đợt làm mượt cử động 2026-11-04) -----
+     Sau mỗi bước: hai quái SỐNG chồng lấn (tâm cách < 26px) bị đẩy nhẹ
+     ra hai phía theo trục nối tâm, mỗi phía một nửa phần chồng, và chỉ
+     khi vị trí mới qua được monFootFree của chính con bị đẩy. Không đẩy
+     quái đang trong trận (enc.mon), không đẩy người chơi (người chơi
+     không nằm trong mons). Đẩy tách đàn KHÔNG tính vào gait — đó là xê
+     dịch né nhau, không phải bước đi. */
+  function monSeparate(m, battle) {
+    if (enc && enc.mon === m) return;
+    for (var i = 0; i < mons.length; i++) {
+      var o = mons[i];
+      if (o === m || o.state !== 'alive') continue;
+      if (enc && enc.mon === o) continue;
+      var dx = (m.x + 16) - (o.x + 16), dy = (m.y + 16) - (o.y + 16);
+      var d = Math.hypot(dx, dy);
+      if (d >= 26) continue;
+      if (d < 0.01) { var pa = m.phase0 || 0; dx = Math.cos(pa); dy = Math.sin(pa); d = 1; } // trùng tâm hẳn: tách theo pha riêng của cá thể
+      var push = (26 - d) / 2, ux = dx / d, uy = dy / d;
+      var mx = m.x + ux * push, my = m.y + uy * push;
+      if (monFootFree(m, mx, my, battle)) { m.x = mx; m.y = my; }
+      var ox = o.x - ux * push, oy = o.y - uy * push;
+      if (monFootFree(o, ox, oy, battle)) { o.x = ox; o.y = oy; }
+    }
+  }
+  /* ----- Bước đi LÁI MỀM (đợt làm mượt cử động 2026-11-04) -----
+     Viết lại ruột monStep, giữ nguyên chữ ký và ngữ nghĩa trả về "đã
+     tới đích". Quái mang vận tốc vx/vy: hướng mong muốn RẼ DẦN với tốc
+     độ rẽ hữu hạn theo họ (MON_TURN), tốc độ TĂNG DẦN từ 0 (gia tốc
+     ~3,2 lần tốc độ tối đa mỗi giây) và GIẢM DẦN khi vào bán kính hãm
+     26px quanh đích; tốc độ chạy ổn định vẫn đúng speed truyền vào
+     (nơi gọi truyền def.speed làm trần — không đổi số gốc nào). Va
+     chạm: thử vector đầy đủ trước, kẹt thì trượt dọc tường theo từng
+     trục như trước, mọi đường đều qua monFootFree (cổng vùng/dây xích
+     giữ nguyên). Quãng đường THẬT đi được cộng vào m.gait — pha khung
+     đi khóa theo gait chứ không theo đồng hồ chung nữa. */
   function monStep(m, gx, gy, speed, dt, battle) {
+    if (typeof m.vx !== 'number') { m.vx = 0; m.vy = 0; m.gait = 0; }
     var cx = m.x + 16, cy = m.y + 16;
     var dx = gx - cx, dy = gy - cy, d = Math.hypot(dx, dy);
-    if (d < 2) return true;
-    var step = Math.min(d, speed * dt);
-    var sx = dx / d * step, sy = dy / d * step;
-    if (sx && monFootFree(m, m.x + sx, m.y, battle)) { m.x += sx; m.face = sx > 0 ? 1 : -1; }
-    if (sy && monFootFree(m, m.x, m.y + sy, battle)) m.y += sy;
-    return false;
+    if (d < 2 || dt <= 0) {
+      // Đã tới đích (hoặc khung hình đứng): hãm vận tốc về 0 cho bước sau không trượt.
+      m.vx = 0; m.vy = 0;
+      return d < 2;
+    }
+    // Tốc độ mong muốn: đầy speed ở xa, hãm tuyến tính trong bán kính 26px.
+    var want = speed * Math.min(1, d / 26);
+    var desA = Math.atan2(dy, dx);
+    var curSp = Math.hypot(m.vx, m.vy);
+    var curA = curSp > 0.5 ? Math.atan2(m.vy, m.vx) : desA;
+    // Rẽ dần: chênh góc gói về [-π, π] rồi kẹp theo tốc độ rẽ của họ.
+    var diff = desA - curA;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    var maxTurn = monTurnRate(m) * dt;
+    var newA = curA + Math.max(-maxTurn, Math.min(maxTurn, diff));
+    // Tăng/giảm tốc: tăng ~0,31s tới tốc độ tối đa; hãm nhanh hơn một chút.
+    var newSp;
+    if (want > curSp) newSp = Math.min(want, curSp + speed * 3.2 * dt);
+    else newSp = Math.max(want, curSp - speed * 4.5 * dt);
+    if (newSp * dt > d) newSp = d / dt; // không vọt qua đích trong khung này
+    m.vx = Math.cos(newA) * newSp; m.vy = Math.sin(newA) * newSp;
+    var sx = m.vx * dt, sy = m.vy * dt;
+    var prevX = m.x, prevY = m.y;
+    if (monFootFree(m, m.x + sx, m.y + sy, battle)) { m.x += sx; m.y += sy; }
+    else {
+      // Trượt dọc tường theo từng trục như bản gốc. Vận tốc trục kẹt
+      // được GIỮ NGUYÊN, không tắt: bước đầu của ramp tăng tốc còn nhỏ
+      // hơn độ dài cần để điểm chân qua biên ô (ổ sói (20,20) bị prop
+      // chặn, chỉ thoát được khi một bước đủ dài đẩy điểm chân sang ô
+      // kề) — tắt vận tốc ở đây làm quái kẹt vĩnh viễn trong ổ. Giữ
+      // vận tốc thì bước thử lớn dần theo ramp và qua được biên ô,
+      // đúng như bước hằng số của bản gốc.
+      if (sx && monFootFree(m, m.x + sx, m.y, battle)) m.x += sx;
+      if (sy && monFootFree(m, m.x, m.y + sy, battle)) m.y += sy;
+    }
+    var movedX = m.x - prevX, movedY = m.y - prevY;
+    if (movedX) m.face = movedX > 0 ? 1 : -1;
+    var walked = Math.hypot(movedX, movedY);
+    if (walked > 0) {
+      m.gait += walked;
+      // Tượng đá: mỗi bước đủ một stride thì dằn thân xuống 90ms + một
+      // hạt bụi dưới chân (spawnParts tự giữ trần hạt và cổng fxOn).
+      if (monFamilyOf(m.species) === 'stone') {
+        var sIdx = Math.floor(m.gait / monStridePx(m));
+        if (sIdx !== m.stoneStepIdx) {
+          m.stoneStepIdx = sIdx; m.stoneSinkT = 0.09;
+          spawnParts(m.x + 16, m.y + 30, 1, '150,145,135', 10, false);
+        }
+      }
+    }
+    monSeparate(m, battle);
+    return Math.hypot(gx - (m.x + 16), gy - (m.y + 16)) < 2;
   }
   function updateMonster(m, dt) {
     if (m.flashT > 0) m.flashT = Math.max(0, m.flashT - dt);
@@ -7459,6 +7571,11 @@
     if (m.shakeT > 0) m.shakeT = Math.max(0, m.shakeT - dt);
     if (m.kbT > 0) { m.kbT = Math.max(0, m.kbT - dt); if (m.kbT <= 0) { m.kbx = 0; m.kby = 0; } }
     if (m.slideT > 0) m.slideT = Math.max(0, m.slideT - dt);
+    // Nhịp lên đòn windT đếm ngược CÙNG nhịp với atkT ở updateEncounter
+    // (đặt bằng atkT khi vào cửa sổ lên đòn, trừ cùng dt ở đây — hàm này
+    // chạy cho mọi quái trước updateEncounter trong huntUpdate).
+    if (m.windT > 0) m.windT = Math.max(0, m.windT - dt);
+    if (m.stoneSinkT > 0) m.stoneSinkT = Math.max(0, m.stoneSinkT - dt); // nhịp dằn thân của tượng đá
     if (m.state === 'dying') { m.deathT += dt; if (m.deathT > 1.1) m.state = 'gone'; return; }
     if (m.state === 'gone') {
       if (!m.bossId && !m.bcRealm) { m.respawnT -= dt; if (m.respawnT <= 0 && !enc) { var fresh = makeMonster(m.species, m.zoneId, m.lairX, m.lairY, null); for (var k in fresh) m[k] = fresh[k]; } } // quái bí cảnh không hồi sinh trong phiên
@@ -7487,7 +7604,21 @@
       m.wt -= dt;
       if (m.wt <= 0) {
         m.wt = 2 + Math.random() * 3;
-        for (var tries = 0; tries < 6; tries++) {
+        var picked = false;
+        /* Họ bay LƯỢN VÒNG khi chờ (đợt làm mượt cử động 2026-11-04):
+           đích wander của họ bay nằm trên vòng tròn bán kính 3 ô quanh
+           ổ, góc tiến ~2,4 rad mỗi lần chọn — lái mềm nối các điểm cung
+           thành đường lượn quanh ổ. Vẫn qua đúng cổng vùng + ô đi được
+           như chọn ngẫu nhiên; điểm cung không hợp lệ thì rơi về chọn
+           ngẫu nhiên như cũ. Chỉ đổi CÁCH CHỌN ĐÍCH của họ bay, không
+           đổi vùng sống, dây xích hay tốc độ wander. */
+        if (monFamilyOf(m.species) === 'fly') {
+          m.orbitN = (m.orbitN || 0) + 1;
+          var oa = (m.phase0 || 0) + m.orbitN * 2.4;
+          var owx = m.lairX + Math.round(Math.cos(oa) * 3), owy = m.lairY + Math.round(Math.sin(oa) * 3);
+          if (zoneAtTile(state.map, owx, owy) === m.zoneId && L.isWalkable(owx, owy, npcsLive)) { m.tx = owx * TILE; m.ty = owy * TILE; picked = true; }
+        }
+        if (!picked) for (var tries = 0; tries < 6; tries++) {
           var wx = m.lairX + Math.round((Math.random() * 2 - 1) * 4);
           var wy = m.lairY + Math.round((Math.random() * 2 - 1) * 4);
           if (zoneAtTile(state.map, wx, wy) === m.zoneId && L.isWalkable(wx, wy, npcsLive)) { m.tx = wx * TILE; m.ty = wy * TILE; break; }
@@ -7498,6 +7629,18 @@
     // Tinh anh: hạt vàng thưa quanh chân (qua trần hạt chung sẵn có).
     if (m.rank === 'elite' && fxOn() && Math.random() < dt * 2) spawnParts(m.x + 16 + (Math.random() - 0.5) * 30, m.y + 28, 1, '255,215,110', 7, true);
     m.movingNow = (m.x !== prevX || m.y !== prevY);
+    /* Nhịp chờ sống (đợt làm mượt cử động 2026-11-04): thú bốn chân
+       đứng wander lâu thỉnh thoảng QUAY MẶT — thuần trình diễn qua
+       m.face, nhịp đếm xác định theo băm ổ + số lần đã quay, KHÔNG
+       chạm hành vi wander/chase/aggro hay đích đi chút nào. */
+    if (monFamilyOf(m.species) === 'quad' && m.mode === 'wander' && !m.movingNow) {
+      m.idleTurnT -= dt;
+      if (m.idleTurnT <= 0) {
+        m.face = m.face < 0 ? 1 : -1;
+        m.idleTurnN = (m.idleTurnN || 0) + 1;
+        m.idleTurnT = 2.5 + monHash01(m.species + ':idle' + m.idleTurnN + ':' + m.lairX + ',' + m.lairY) * 4;
+      }
+    }
   }
   function huntUpdate(dt, dtW) {
     if (!state) return;
@@ -7603,9 +7746,19 @@
     if (m.partyBoss) { updatePartyBoss(m, dt); if (!enc) return; }
     if (dist > 40 && !(m.partyBoss && m.partyBoss.phase !== 'fight')) monStep(m, pcx, pcy, m.speed, dt, true);
     else if (!frozen) {
+      // Đứng áp sát đánh: tắt vận tốc lái để nhịp áp sát không trượt dư sang nhịp đứng.
+      m.vx = 0; m.vy = 0;
       m.atkT -= dt;
+      /* Đánh BA NHỊP (đợt làm mượt cử động 2026-11-04): khi atkT vào
+         cửa sổ 0,30s cuối và quái chưa ở nhịp lên đòn, đặt windT = atkT
+         để monSrc hiện khung LÊN ĐÒN (hàng 2 cột 0) — windT đếm ngược
+         cùng atkT ở updateMonster. Thời điểm sát thương KHÔNG dời:
+         monsterStrike vẫn chạy đúng khoảnh khắc atkT chạm 0 như cũ,
+         và lớp tụ lực boss-fx đọc atkT không hề bị chạm. */
+      if (m.atkT <= 0.30 && m.atkT > 0 && !(m.windT > 0)) m.windT = m.atkT;
       if (m.atkT <= 0) {
         m.atkT = m.atkInterval;
+        m.windT = 0; // hết nhịp lên đòn đúng lúc đòn rơi
         m.atkAnimT = 0.35;
         monsterStrike(m);
         if (!enc) return; // người chơi đã gục trong đòn này
@@ -10122,14 +10275,28 @@
   function monSrc(m) {
     var img = ASSETS.mons[m.species];
     var cw = img.naturalWidth / 6, ch = img.naturalHeight / 4, row = 0, col = 0;
-    if (m.state === 'dying') { row = 3; col = m.deathT < 0.3 ? 1 : (m.deathT < 0.65 ? 2 : 3); }
+    // Chết: ba khung chia ĐỀU trên 1,1s (0 / 0,37 / 0,74), khung cuối giữ tới hết mờ dần.
+    if (m.state === 'dying') { row = 3; col = m.deathT < 0.37 ? 1 : (m.deathT < 0.74 ? 2 : 3); }
     else if (m.flashT > 0) { row = 3; col = 0; } // khung trúng đòn (khi không có bản trắng)
-    else if (m.atkAnimT > 0) { row = 2; col = Math.min(2, Math.floor((0.35 - m.atkAnimT) / 0.35 * 3)); }
+    // Đánh ba nhịp — nhịp 1 LÊN ĐÒN: windT còn trên 0,06 thì giữ hàng 2 cột 0.
+    else if ((m.windT || 0) > 0.06) { row = 2; col = 0; }
+    // Đánh ba nhịp — nhịp 2 LAO/VUNG (atkAnimT 0,35→0,24, cột 1, khung
+    // trúng) rồi nhịp 3 THU VỀ (0,24→0, cột 2). atkAnimT vẫn do
+    // updateEncounter đặt 0,35 đúng khoảnh khắc monsterStrike như cũ.
+    else if (m.atkAnimT > 0) { row = 2; col = m.atkAnimT > 0.24 ? 1 : 2; }
     // ARCIV ch.16 (F.6 đã khai): boss Trận Nhãn bị Định Âm đóng băng
     // (holdT hoặc chu kỳ frozen) thì KHÓA khung đứng yên cột 0 của sheet.
     else if (m.species === 'tran_nhan_kiem_linh' && (m.holdT > 0 || (typeof arcCycle !== 'undefined' && arcCycle && arcCycle.frozen))) { row = 0; col = 0; }
-    else if (m.movingNow) { row = 1; col = Math.floor(tNow / 140) % 4; }
-    else { row = 0; col = Math.floor(tNow / 600) % 2; }
+    // Đi: pha KHÓA THEO QUÃNG ĐƯỜNG — cột = floor(gait / stridePx) % 4,
+    // stride theo họ (boss lớn ×1,25). Đứng yên thì gait đứng yên, khung không trượt.
+    else if (m.movingNow) { row = 1; col = Math.floor((m.gait || 0) / monStridePx(m)) % 4; }
+    // Họ bay khi chờ: VỖ CÁNH LIÊN TỤC — dùng hàng bay (hàng 1, bốn
+    // khung cánh thật của sheet) chạy theo thời gian ~170ms/khung lệch
+    // phase0, thay hai khung đậu yên của hàng 0. Chỉ áp khi không ở
+    // các trạng thái phía trên (chết/trúng đòn/lên đòn/vung đòn/đang đi).
+    else if (monFamilyOf(m.species) === 'fly') { row = 1; col = Math.floor(tNow / 170 + (m.phase0 || 0)) % 4; }
+    // Đứng: hai khung thở lệch theo phase0 của cá thể — không còn đồng loạt theo đồng hồ chung.
+    else { row = 0; col = Math.floor(tNow / 600 + (m.phase0 || 0)) % 2; }
     return { x: col * cw, y: row * ch, w: cw, h: ch };
   }
   function drawMonster(mn, labels) {
@@ -10145,7 +10312,20 @@
       ctx.fillStyle = 'rgba(255,205,84,' + (0.16 + 0.05 * Math.sin(tNow / 300)) + ')';
       ctx.beginPath(); ctx.ellipse(feetX, feetY - 2, size * 0.42, size * 0.15, 0, 0, Math.PI * 2); ctx.fill();
     }
-    contactShadow(feetX, feetY - 2, size * 0.72);
+    /* ----- Thân theo họ (đợt làm mượt cử động 2026-11-04) -----
+       Lớp cử động thân dưới đây là BỔ TRỢ VẼ BẰNG CODE (lệch dải,
+       nhún/nghiêng/bob/alpha quanh khung sheet sẵn có), KHÔNG phải
+       khung hình mới và không đổi khung nào monSrc đã chọn. Mọi biên
+       độ khóa theo gait/phase0 của cá thể và tắt hẳn khi fxOn tắt. */
+    var fam = monFamilyOf(mn.species), famFx = fxOn(), ph0 = mn.phase0 || 0;
+    var hoverBob = 0; // độ lơ lửng của họ bay/hồn/kiếm linh (px, dương = nhấc lên)
+    if (famFx && mn.state === 'alive') {
+      if (fam === 'fly') hoverBob = Math.sin(tNow * 0.0022 + ph0) * 3;        // Phong Ưng: lơ lửng kể cả khi đứng
+      else if (fam === 'ghost') hoverBob = Math.sin(tNow * 0.0014 + ph0) * 3.5; // hồn ma: lướt nhấp nhô
+      else if (fam === 'sword') hoverBob = Math.sin(tNow * 0.0014 + ph0) * 2;   // kiếm linh: lơ lửng cứng hơn, bob nhỏ hơn
+    }
+    // Bóng tiếp xúc của họ bay co giãn nhẹ theo bob (bay cao thì bóng nhỏ lại).
+    contactShadow(feetX, feetY - 2, size * 0.72 * (fam === 'fly' && famFx ? 1 - hoverBob * 0.02 : 1));
     var mim = ASSETS.mons[mn.species];
     if (imgReady(mim)) {
       var ms = monSrc(mn);
@@ -10178,10 +10358,54 @@
         ctx.restore();
       } else {
         ctx.save();
-        ctx.translate(feetX, feetY + exh);
+        ctx.translate(feetX, feetY + exh - hoverBob);
+        var alphaMul = 1;
+        if (famFx && mn.state === 'alive') {
+          // Nghiêng thân theo vận tốc ngang, tính trong khung thế giới
+          // TRƯỚC khi lật mặt: bay bank ±0,06 rad, hồn lướt ±0,04, kiếm linh ±0,05.
+          if (mn.movingNow && fam === 'fly') ctx.rotate(Math.max(-0.06, Math.min(0.06, (mn.vx || 0) * 0.001)));
+          else if (mn.movingNow && fam === 'ghost') ctx.rotate(Math.max(-0.04, Math.min(0.04, (mn.vx || 0) * 0.0008)));
+          else if (mn.movingNow && fam === 'sword') ctx.rotate(Math.max(-0.05, Math.min(0.05, (mn.vx || 0) * 0.001)));
+          if (fam === 'ghost') alphaMul = 0.96 + 0.04 * Math.sin(tNow * 0.0014 + ph0); // hồn ma: alpha dao động 0,92–1,0
+        }
         if (mn.face < 0) ctx.scale(-1, 1);
         if (mn.state === 'dying') ctx.globalAlpha = Math.max(0.3, 1 - mn.deathT / 1.1 * 0.55);
-        ctx.drawImage(white || mim, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
+        else if (alphaMul !== 1) ctx.globalAlpha = alphaMul;
+        var srcImg = white || mim;
+        if (famFx && fam === 'snake' && mn.state !== 'dying') {
+          // Rắn/thủy xà: UỐN SÓNG — thân vẽ làm 3 dải ngang, mỗi dải
+          // lệch x theo sin(gait*0,11 + dải*1,1), biên độ đầu ít đuôi
+          // nhiều (0 / 2,2 / 4,4px khi bò); đứng yên biên độ co còn 1/3
+          // và pha chạy theo thời gian chậm lệch phase0.
+          var sPhase = mn.movingNow ? (mn.gait || 0) * 0.11 : tNow * 0.0011 + ph0;
+          // Biên độ TỈ LỆ TỐC ĐỘ THẬT: bò lừ đừ (wander) ~0,35, đuổi
+          // mồi hết tốc 1,0; đứng yên co còn 1/3 chạy pha thời gian.
+          var sSpd = Math.hypot(mn.vx || 0, mn.vy || 0) / Math.max(1, mn.speed || 60);
+          var sAmp = mn.movingNow ? (0.35 + 0.65 * Math.min(1, sSpd)) : 1 / 3, sAmps = [0, 2.2, 4.4];
+          for (var sb = 0; sb < 3; sb++) {
+            var sOff = Math.sin(sPhase + sb * 1.1) * sAmps[sb] * sAmp;
+            ctx.drawImage(srcImg, ms.x, ms.y + ms.h * sb / 3, ms.w, ms.h / 3 + 0.5,
+              -size / 2 + sOff, -size + size * sb / 3, size, size / 3 + 0.5);
+          }
+        } else if (famFx && fam === 'quad' && mn.state === 'alive') {
+          // Thú bốn chân: đi thì NHÚN thân theo nhịp bốn thì (2 chu kỳ
+          // mỗi stride) + nghiêng nhẹ ±0,02 rad cùng pha; đứng thì THỞ
+          // scaleY 1±0,008 chu kỳ ~2,4s lệch phase0.
+          if (mn.movingNow) {
+            var qPh = Math.sin((mn.gait || 0) / monStridePx(mn) * Math.PI * 4);
+            ctx.translate(0, qPh * 1.6); ctx.rotate(qPh * 0.02);
+          } else ctx.scale(1, 1 + Math.sin(tNow * (Math.PI * 2 / 2400) + ph0) * 0.008);
+          ctx.drawImage(srcImg, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
+        } else if (famFx && fam === 'stone' && mn.state === 'alive') {
+          // Tượng đá: KHÔNG bob — mỗi bước đủ stride thì DẰN thân xuống
+          // 1,5px trong 90ms (stoneSinkT đặt ở monStep, bụi ở đó nốt);
+          // đứng yên bất động như đá, chỉ "thở" 0,3% gần như không thấy.
+          if ((mn.stoneSinkT || 0) > 0) ctx.translate(0, 1.5 * (mn.stoneSinkT / 0.09));
+          else if (!mn.movingNow) ctx.scale(1, 1 + Math.sin(tNow * 0.0009 + ph0) * 0.003);
+          ctx.drawImage(srcImg, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
+        } else {
+          ctx.drawImage(srcImg, ms.x, ms.y, ms.w, ms.h, -size / 2, -size, size, size);
+        }
         ctx.restore();
         ctx.globalAlpha = 1;
       }
@@ -13854,7 +14078,9 @@
       return mons.map(function (m) {
         return { species: m.species, rank: m.rank, bossId: m.bossId, state: m.state, hp: m.hp, hpMax: m.hpMax,
                  x: Math.round(m.x), y: Math.round(m.y), tileX: Math.floor((m.x + 16) / TILE), tileY: Math.floor((m.y + 16) / TILE),
-                 zoneId: m.zoneId, holdT: m.holdT, sealT: m.sealT };
+                 zoneId: m.zoneId, holdT: m.holdT, sealT: m.sealT,
+                 // Trường chuyển động mượt (đợt 2026-11-04, chỉ đọc thêm): pha cá thể, quãng đường tích lũy, vận tốc lái, nhịp lên đòn.
+                 gait: Math.round((m.gait || 0) * 10) / 10, phase0: m.phase0, vx: Math.round(m.vx || 0), vy: Math.round(m.vy || 0), windT: m.windT || 0, movingNow: !!m.movingNow };
       });
     },
     encounter: function () {
