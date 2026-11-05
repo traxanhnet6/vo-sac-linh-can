@@ -190,6 +190,37 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
   background: linear-gradient(180deg, #6d5433, #4c3a20); border: 1px solid #a8893a; border-radius: 6px;
   color: #ffe9a8; font-family: inherit; font-size: 12.5px; letter-spacing: 1px; }
 #quest-nav-btn:hover { background: linear-gradient(180deg, #7d623c, #584326); }
+/* Nút mở Sổ Chỉ Dẫn trong khung nhiệm vụ: cùng khuôn nút Tự tìm đường. */
+#btn-guide { margin-top: 8px; width: 100%; min-height: 34px; cursor: pointer;
+  background: linear-gradient(180deg, #6d5433, #4c3a20); border: 1px solid #a8893a; border-radius: 6px;
+  color: #ffe9a8; font-family: inherit; font-size: 12.5px; letter-spacing: 1px; }
+#btn-guide:hover { background: linear-gradient(180deg, #7d623c, #584326); }
+/* Panel Sổ Chỉ Dẫn: cùng tông gỗ/vàng với panel túi/cài đặt; thân cuộn
+   dọc đọc trên điện thoại, chữ thân 14px cho dễ đọc. */
+#guide-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 8; width: min(520px, 94vw); max-height: 86dvh; display: flex; flex-direction: column;
+  background: rgba(43, 31, 19, 0.96); border: 1px solid #a8893a; border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.35); color: #f0e8d2; }
+#guide-panel.hidden { display: none; }
+#guide-toc { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 2px; }
+.guide-toc-btn { flex: 1 1 auto; min-height: 40px; padding: 6px 10px; cursor: pointer;
+  background: rgba(24, 17, 10, 0.6); border: 1px solid #77683c; border-radius: 8px;
+  color: #e8dfc0; font-family: inherit; font-size: 13px; }
+.guide-toc-btn.active { background: linear-gradient(180deg, #7d623c, #584326); color: #ffe9a8; border-color: #a8893a; }
+#guide-body { overflow-y: auto; padding: 2px 14px 14px; flex: 1 1 auto; min-height: 0; }
+.guide-line { font-size: 14px; line-height: 1.6; color: #e8dfc0; margin: 5px 0; }
+.guide-lock { font-size: 14.5px; line-height: 1.6; color: #ffe9a8; margin: 12px 0; }
+.guide-checks { margin: 6px 0 8px; border: 1px solid #77683c; border-radius: 8px;
+  background: rgba(24, 17, 10, 0.55); padding: 6px 10px; }
+.guide-check { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 32px; font-size: 13.5px; color: #e8dfc0; }
+.guide-check .guide-check-val { flex: none; color: #e8a87a; }
+.guide-check.ok .guide-check-val { color: #9fd8a8; }
+.guide-check-note { font-size: 12.5px; color: #b9ac8d; line-height: 1.5; margin: 0 0 5px; }
+@media (max-width: 640px) {
+  #guide-panel { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); }
+}
+
 #hud-quest-name, #hud-quest-desc { cursor: pointer; }
 #quest-toggle { position: absolute; top: 2px; right: 2px; min-width: 36px; min-height: 36px; width: 36px; height: 36px;
   cursor: pointer; background: transparent; border: none; color: #e3b83c; font-size: 18px; line-height: 1;

@@ -14208,6 +14208,95 @@
   function closeBag() { var p = $('bag-panel'); if (p) p.classList.add('hidden'); }
   onTap($('btn-bag'), openBag);
   onTap($('bag-close'), closeBag);
+
+  /* ---------- Sổ Chỉ Dẫn cho game thủ (lệnh của Bui 07:25 ngày
+     2026-11-05) ----------
+     Nút mở nằm trong khung nhiệm vụ (bề mặt menu sẵn có — không đụng
+     cụm 9 nút chiến đấu, không chồng vùng chơi). Nội dung lấy trọn từ
+     L.guideChapters(state) — dữ kiện thật dựng trong logic.js; lớp này
+     chỉ dựng DOM. Mở/đóng sổ KHÔNG đổi trạng thái nhân vật và KHÔNG
+     gọi lưu: đóng sổ là quay lại đúng phiên chơi trước khi mở. */
+  var guideChapterId = 'trucco';
+  function renderGuide() {
+    if (!state) return;
+    var chapters = L.guideChapters(state);
+    var toc = $('guide-toc'), body = $('guide-body');
+    if (!toc || !body) return;
+    toc.innerHTML = ''; body.innerHTML = '';
+    var cur = null;
+    chapters.forEach(function (c) { if (c.id === guideChapterId) cur = c; });
+    if (!cur) { cur = chapters[0]; guideChapterId = cur.id; }
+    chapters.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'guide-toc-btn' + (c.id === cur.id ? ' active' : '');
+      b.textContent = c.title + (c.locked ? ' (khóa)' : '');
+      b.setAttribute('data-guide-chapter', c.id);
+      b.addEventListener('click', function () { guideChapterId = c.id; sfxUi(); renderGuide(); });
+      toc.appendChild(b);
+    });
+    if (cur.locked) {
+      var lock = document.createElement('p');
+      lock.className = 'guide-lock';
+      lock.textContent = cur.lockText;
+      body.appendChild(lock);
+      return;
+    }
+    cur.sections.forEach(function (sec) {
+      var h = document.createElement('div');
+      h.className = 'set-sec'; h.textContent = sec.h;
+      body.appendChild(h);
+      sec.lines.forEach(function (ln) {
+        var p = document.createElement('p');
+        p.className = 'guide-line'; p.textContent = ln;
+        body.appendChild(p);
+      });
+      if (sec.checklist) {
+        var box = document.createElement('div');
+        box.className = 'guide-checks';
+        sec.checklist.forEach(function (pt) {
+          var row = document.createElement('div');
+          row.className = 'guide-check' + (pt.ok ? ' ok' : '');
+          row.setAttribute('data-guide-check', pt.id);
+          var nm = document.createElement('span');
+          nm.className = 'guide-check-name'; nm.textContent = pt.name;
+          var val = document.createElement('span');
+          val.className = 'guide-check-val';
+          val.textContent = pt.cur + '/' + pt.need + (pt.ok ? ' — Đủ' : ' — Chưa đủ');
+          row.appendChild(nm); row.appendChild(val);
+          box.appendChild(row);
+          if (pt.note) {
+            var nt = document.createElement('div');
+            nt.className = 'guide-check-note'; nt.textContent = pt.note;
+            box.appendChild(nt);
+          }
+        });
+        body.appendChild(box);
+      }
+    });
+  }
+  function openGuide() {
+    if (!state) return;
+    sfxUi();
+    renderGuide();
+    var p = $('guide-panel'); if (p) p.classList.remove('hidden');
+  }
+  function closeGuide() { var p = $('guide-panel'); if (p) p.classList.add('hidden'); }
+  onTap($('btn-guide'), openGuide);
+  onTap($('guide-close'), closeGuide);
+  /* Tay nắm kiểm chứng Sổ Chỉ Dẫn: mở/đóng/chọn chương qua đúng đường
+     panel dùng + đọc nội dung logic dựng, cho harness DOM lái thật.
+     Tên cầu là VSLC_HANDBOOK — VSLC_GUIDE đã thuộc hệ dẫn đường nhiệm
+     vụ (mũi tên chỉ mục tiêu), tuyệt đối không ghi đè. */
+  window.VSLC_HANDBOOK = {
+    open: openGuide, close: closeGuide,
+    isOpen: function () { var p = $('guide-panel'); return !!p && !p.classList.contains('hidden'); },
+    chapter: function () { return guideChapterId; },
+    select: function (id) { guideChapterId = id; renderGuide(); },
+    chapters: function () { return state ? L.guideChapters(state) : []; },
+    checklist: function () { return state ? L.trucCoChecklist(state) : null; }
+  };
+
   // Tổng kết phiên săn: chạm vào bảng là đóng (cơ chế ẩn chủ động duy
   // nhất ngoài mốc 30 giây tuyệt đối — xem maybeShowHuntSummary).
   var hsEl = $('hunt-summary');

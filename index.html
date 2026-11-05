@@ -107,6 +107,9 @@
       <button id="quest-nav-btn" type="button">Tự tìm đường</button>
       <div class="quest-label" style="margin-top:8px">Nhiệm vụ phụ — quanh Trúc Cơ</div>
       <div id="hud-side-list"></div>
+      <!-- Sổ Chỉ Dẫn cho game thủ: nút mở đặt trong khung nhiệm vụ (bề
+           mặt menu sẵn có); nội dung dựng từ dữ kiện thật trong logic. -->
+      <button id="btn-guide" type="button">Sổ Chỉ Dẫn</button>
     </div>
     <button id="quest-tab" type="button" class="hidden">! Nhiệm vụ</button>
 
@@ -289,6 +292,17 @@
         <span id="bag-story-note">Ngăn riêng cốt truyện: kinh thư và kiếm quyết không chiếm sức chứa.</span>
         <button id="bag-upgrade" class="btn wood" type="button">Nâng cấp túi</button>
       </div>
+    </div>
+
+    <!-- Panel Sổ Chỉ Dẫn (lệnh của Bui 07:25 ngày 2026-11-05): panel
+         chữ thuần giao diện, nội dung dựng từ L.guideChapters. -->
+    <div id="guide-panel" class="hidden">
+      <div class="inv-head">
+        <span>Sổ Chỉ Dẫn</span>
+        <button id="guide-close" class="inv-x" type="button" aria-label="Đóng sổ chỉ dẫn">✕</button>
+      </div>
+      <div id="guide-toc"></div>
+      <div id="guide-body"></div>
     </div>
 
     <!-- Panel Bảng Cày (làn C, đợt bí cảnh + hệ cày): cùng tông panel túi,

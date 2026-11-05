@@ -4772,12 +4772,16 @@
     if (!SECRET_REALM_DEFS[realmId]) return false;
     return ensureSecretRealms(state).realms[realmId].unlocked === true;
   }
+  /* Kho lượt chung: tối đa BC_POOL_MAX lượt/ngày game trên tất cả bí
+     cảnh (hằng đặt tên để Sổ Chỉ Dẫn và mọi lớp hiển thị đọc cùng một số
+     với bcPoolLeft — trước đây số 2 chép tay ngay trong hàm). */
+  var BC_POOL_MAX = 2;
   /* Lượt còn lại trong kho chung ngày hôm nay (lượt lần đầu không tính,
      nên kho chỉ vơi khi đã có lượt lặp trong ngày). */
   function bcPoolLeft(state) {
     var sr = ensureSecretRealms(state);
-    if (sr.pool.day !== state.dayCount) return 2;
-    return Math.max(0, 2 - sr.pool.used);
+    if (sr.pool.day !== state.dayCount) return BC_POOL_MAX;
+    return Math.max(0, BC_POOL_MAX - sr.pool.used);
   }
   /* Ghi một lượt vào: kiểm khóa mở, trừ kho (trừ lượt lần đầu tiên của
      từng bí cảnh). Gọi NGAY khi người chơi vào bí cảnh — thoát ngay
@@ -5201,6 +5205,156 @@
   }
 
 
+  /* ================= SỔ CHỈ DẪN CHO GAME THỦ (lệnh của Bui 07:25 ngày
+     2026-11-05: "Tạo chỉ dẫn cho game thủ") =================
+     Nội dung sổ là CHỮ GIAO DIỆN thuần (không lồng tiếng, không nằm
+     trong story.js) và được DỰNG TỪ DỮ KIỆN THẬT của các hệ thống:
+     công thức Trúc Cơ Đan đọc từ TRUC_CO_FORMULA (cùng các con số mà
+     pillMissing của lớp game và tiến độ sq_pre_nguyen_lieu đang kiểm),
+     trần tu vi đọc từ REALMS, danh sách bí cảnh đọc từ
+     SECRET_REALM_DEFS + QUESTS, món ăn/công thức đọc từ ITEM_DEFS +
+     FOOD_RECIPES, tỉ lệ tu vi đọc từ REWARD_PROFILES. Cân bằng đổi ở
+     các bảng gốc thì sổ tự đổi theo — tuyệt đối không chép tay con số
+     rời rạc ở đây. Hàm thuần trên state, lớp game chỉ lo hiển thị. */
+  var TRUC_CO_FORMULA = { linh_chi: 1, yeu_dan_1: 1, thanh_tam_thao: 3, linhThach: 30 };
+  var GUIDE_TRUC_CO_UNLOCK_QUEST = 'q7_done';
+  function guideTrucCoOpen(state) { return !!state && questReached(state, GUIDE_TRUC_CO_UNLOCK_QUEST); }
+  /* Danh sách kiểm sống cho chương Trúc Cơ: bốn thành phần công thức +
+     tu vi, đọc thẳng từ túi (bagCount), ví (linhBalance) và cảnh giới
+     hiện tại. Mỗi phần: { id, name, cur, need, ok, note? }. */
+  function trucCoChecklist(state) {
+    if (!state) return null;
+    var f = TRUC_CO_FORMULA;
+    function itemPart(id) {
+      return { id: id, name: ITEM_DEFS[id].name, cur: Math.min(f[id], bagCount(state, id)), need: f[id], ok: bagCount(state, id) >= f[id] };
+    }
+    var parts = [itemPart('linh_chi'), itemPart('yeu_dan_1'), itemPart('thanh_tam_thao'),
+      { id: 'linh_thach', name: 'Linh Thạch', cur: Math.min(f.linhThach, linhBalance(state)), need: f.linhThach, ok: linhBalance(state) >= f.linhThach }];
+    var lk = REALMS[1], lastStage = lk.stages.length - 1, tuviNeed = lk.tuviNext;
+    var atTop = state.realm === 1 && state.stage >= lastStage;
+    var tuviOk = state.realm > 1 || (atTop && (state.tuvi || 0) >= tuviNeed);
+    var tuviNote;
+    if (state.realm > 1) tuviNote = 'Đã ở ' + realmName(state.realm, state.stage) + ' — mốc này đã qua.';
+    else if (atTop) tuviNote = 'Đang ở ' + realmName(1, lastStage) + ': tích tu vi tới đầy trần là đủ.';
+    else tuviNote = 'Đang ở ' + realmName(state.realm, state.stage) + ': cần lên ' + realmName(1, lastStage) + ' rồi tích đầy tu vi.';
+    parts.push({ id: 'tuvi', name: 'Tu vi đầy trần ' + lk.name + ' ' + lk.stages[lastStage],
+      cur: state.realm > 1 ? tuviNeed : (atTop ? Math.min(tuviNeed, Math.floor(state.tuvi || 0)) : 0),
+      need: tuviNeed, ok: tuviOk, note: tuviNote });
+    return { parts: parts, done: parts.every(function (p) { return p.ok; }), formula: f };
+  }
+  function guideQuestName(id) { var d = questById(id); return d ? d.name : id; }
+  function guideSideStatusLabel(st) {
+    return { locked: 'chưa mở', available: 'đang làm', ready: 'sẵn sàng nhận thưởng', claimed: 'đã nhận thưởng', skipped: 'đã qua mốc Trúc Cơ' }[st] || st;
+  }
+  function guideTrucCoChapter(state) {
+    var open = guideTrucCoOpen(state);
+    var ch = { id: 'trucco', title: 'Đường tới Trúc Cơ', locked: !open,
+      lockText: 'Hoàn thành chương 7 để mở chỉ dẫn Trúc Cơ.', sections: [] };
+    if (!open || !state) return ch;
+    var f = TRUC_CO_FORMULA, lk = REALMS[1];
+    var chiNode = null;
+    for (var ni = 0; ni < RESOURCE_NODES.length; ni++) {
+      if (RESOURCE_NODES[ni].itemId === 'linh_chi' && RESOURCE_NODES[ni].mapId === 'thanh_van_tong') chiNode = RESOURCE_NODES[ni];
+    }
+    ch.sections.push({ h: 'Điều kiện tiên quyết', lines: [
+      'Hoàn thành chương 7 — nhập Thanh Vân Tông và đứng vững trong tông; chỉ dẫn này mở ngay khi mạch truyện chạm mốc trước nhiệm vụ "' + guideQuestName('q8_chuan_bi') + '".',
+      'Tu vi đầy trần ' + lk.name + ' ' + lk.stages[lk.stages.length - 1] + ' (' + lk.tuviNext + ' điểm). Thiếu tu vi thì cứ theo hai nhiệm vụ phụ chỉ đường ở dưới mà cày bí cảnh và săn quái.'
+    ] });
+    ch.sections.push({ h: 'Công thức Trúc Cơ Đan', lines: [
+      'Trưởng lão tông luyện Trúc Cơ Đan theo đúng công thức: ' + ITEM_DEFS.linh_chi.name + ' ×' + f.linh_chi + ', ' + ITEM_DEFS.yeu_dan_1.name + ' ×' + f.yeu_dan_1 + ', ' + ITEM_DEFS.thanh_tam_thao.name + ' ×' + f.thanh_tam_thao + ' và ' + f.linhThach + ' Linh Thạch. Danh sách kiểm dưới đây đọc thẳng từ túi, ví và tu vi hiện tại của ngươi:'
+    ], checklist: trucCoChecklist(state).parts });
+    ch.sections.push({ h: 'Trình tự đột phá', lines: [
+      '1. "' + guideQuestName('q8_chuan_bi') + '" — tới Thanh Vân Đại Điện gặp trưởng lão tông, nhận công thức Trúc Cơ Đan.',
+      '2. Gom đủ bốn thành phần trong danh sách kiểm rồi quay lại gặp trưởng lão: trưởng lão trừ đúng nguyên liệu và ' + f.linhThach + ' Linh Thạch, luyện thành Trúc Cơ Đan trao cho ngươi — kèm một viên Hộ Thể Đan duy nhất để chắn một đạo lôi giữa kiếp.',
+      '3. "' + guideQuestName('q8_ho_phap') + '" — lên Đài Trúc Cơ ở phía bắc tông bắt đầu vận công. Trên đài có ba đạo lôi giáng xuống, đạo sau nặng hơn đạo trước; trong lúc đột phá, tuyệt đối không được cất tiếng.',
+      '4. "' + guideQuestName('q8_truc_co') + '" — nuốt Trúc Cơ Đan và đột phá ngay tại Đài Trúc Cơ. Đột phá hụt KHÔNG mất đan: viên đan được hoàn lại nguyên vẹn, và đan có thể luyện lại theo đúng công thức cũ hoặc bằng 60 điểm cống hiến tông môn.',
+      '5. "' + guideQuestName('q8_thu_tieng') + '" — đột phá xong, về Thanh Vân Đại Điện gặp trưởng lão tông. Từ đây ngươi đứng ở ' + realmName(2, 0) + '.'
+    ] });
+    ch.sections.push({ h: 'Nguồn từng nguyên liệu', lines: [
+      ITEM_DEFS.linh_chi.name + ': cụm Linh Chi ở sau núi phía đông bắc Thanh Vân Tông — hái một cây mang về' + (chiNode ? ' (điểm hái làm mới sau ' + chiNode.respawnDays + ' ngày game)' : '') + '.',
+      ITEM_DEFS.yeu_dan_1.name + ': toán phục kích của Huyết Bạc Cung chờ sẵn ở sau núi trong chuyến hái Linh Chi — hạ chúng là viên đan rơi vào túi ngươi. Cách khác: qua ải lần đầu ' + SECRET_REALM_DEFS.bc_thuyliem.name + ', phần thưởng lần đầu có sẵn một viên ' + ITEM_DEFS.yeu_dan_1.name + '.',
+      ITEM_DEFS.thanh_tam_thao.name + ': vườn dược sau núi nằm ngay cạnh cụm Linh Chi, ở phía đông bãi hái — hái đủ ba cây. Các điểm thu thập trên đường mòn và trong thung lũng Hồi Phong cũng có loại thảo này.',
+      'Linh Thạch: làm việc tông môn (gặp quản sự tạp dịch ở khu đông nam tông), nhận phiếu treo thưởng săn quái và phiếu thu thập ở các bảng nhiệm vụ, thưởng qua ải bí cảnh và boss dã ngoại.'
+    ] });
+    var sqLines = ['Mở khung nhiệm vụ bên trái, trong mục nhiệm vụ phụ chọn một nhiệm vụ rồi bấm "Chọn dẫn đường" — mũi tên trên màn hình và dấu "!" tại mục tiêu sẽ bám theo bước hiện tại của nhiệm vụ đó.'];
+    [['sq_pre_bicanh', 'Đường cày tu vi chính trước Trúc Cơ: qua ải lần đầu hai bí cảnh dải Luyện Khí.'],
+     ['sq_pre_nguyen_lieu', 'Danh sách kiểm bốn thành phần của công thức — chỉ kiểm đủ, không tiêu nguyên liệu.']].forEach(function (pair) {
+      var def = sideQuestDef(pair[0]);
+      if (def) sqLines.push('"' + def.name + '" — ' + pair[1] + ' (Trạng thái của ngươi: ' + guideSideStatusLabel(sideQuestStatus(state, def)) + '.)');
+    });
+    ch.sections.push({ h: 'Hai nhiệm vụ phụ chỉ đường', lines: sqLines });
+    var postNames = [];
+    ['sq_post_truy_na', 'sq_post_bicanh_tc', 'sq_post_thu_thap', 'sq_post_dong_mon'].forEach(function (id) {
+      var d = sideQuestDef(id); if (d) postNames.push('"' + d.name + '"');
+    });
+    ch.sections.push({ h: 'Sau khi Trúc Cơ', lines: [
+      'Qua mốc ' + realmName(2, 0) + ', phân đoạn nhiệm vụ phụ hậu Trúc Cơ mở ra trong cùng mục nhiệm vụ phụ: ' + postNames.join(', ') + ' — điểm khởi hành của giai đoạn cày cấp dài lâu: phiếu săn, bí cảnh dải Trúc Cơ, thu thập và việc đồng môn.'
+    ] });
+    return ch;
+  }
+  function guideFoodChapter(state) {
+    var buyLines = ['Vọng Tiên Tửu Điếm ở Hứa Gia Trấn và sạp chợ ở Cô Châu Thành đều bán đồ ăn mang theo. Mua bằng Linh Thạch — ví Linh Thạch chỉ mở khi đã bắt đầu tu tiên (đột phá ' + realmName(1, 0) + '); lần đầu ghé quán trọ, chủ quán còn tặng sẵn một phần ăn cho người mới lên đường.'];
+    foodIds().forEach(function (id) {
+      var d = foodDef(id);
+      if (d && typeof d.priceLt === 'number') buyLines.push(d.name + ' — hồi ' + d.hp + ' máu + ' + d.ta + ' Tĩnh Âm — giá ' + d.priceLt + ' Linh Thạch.');
+    });
+    var cookLines = ['Hai bếp dùng được: bếp của quán trọ ở trấn và bếp ở trạm nghỉ giữa đường mòn. Có nguyên liệu là nấu được ngay tại bếp:'];
+    for (var rid in FOOD_RECIPES) {
+      var rec = FOOD_RECIPES[rid], rd = foodDef(rid);
+      if (!rd) continue;
+      var needs = [];
+      for (var ing in rec.needs) needs.push(ITEM_DEFS[ing].name + ' ×' + rec.needs[ing]);
+      cookLines.push(rd.name + ' — hồi ' + rd.hp + ' máu + ' + rd.ta + ' Tĩnh Âm — cần ' + needs.join(' + ') + (rec.needLinh ? ' (món dải Luyện Khí: phải đã nhập đạo mới nấu được)' : '') + '.');
+    }
+    return { id: 'food', title: 'Ăn uống hồi sức', locked: false, lockText: '', sections: [
+      { h: 'Mua sẵn', lines: buyLines },
+      { h: 'Tự kiếm nguyên liệu', lines: [
+        'Nấm Rừng: hai bãi nấm — một bãi sau trấn, một bãi ven đường mòn phía tây trạm nghỉ. Mỗi bãi cho một cây mỗi ngày game, sang ngày game mới lại mọc.',
+        'Thịt Thú Rừng: hạ quái thú dã ngoại (sói, lợn rừng...) thì có tỉ lệ rơi thịt mang về nấu.'
+      ] },
+      { h: 'Nấu tại bếp', lines: cookLines },
+      { h: 'Ăn và nhịp chờ', lines: [
+        'Bấm nút Đồ Ăn (phím R) ở cụm nút dưới phải để ăn nhanh: trò chơi tự chọn món hợp nhất với phần máu và Tĩnh Âm đang thiếu — thiếu ít thì dùng món yếu trước, giữ món mạnh cho lúc nguy cấp.',
+        'Đang đầy cả máu lẫn Tĩnh Âm thì không ăn được, và món ăn không bị trừ.',
+        'Trong trận, mỗi lần ăn xong phải chờ ' + FOOD_CD_SEC + ' giây mới ăn tiếp được; ngoài trận thì ăn tự do, không phải chờ.'
+      ] }
+    ] };
+  }
+  function guideBiCanhChapter(state) {
+    var bandName = function (band) {
+      for (var i = 0; i < REALMS.length; i++) if (REALMS[i].id === band) return REALMS[i].name;
+      return band;
+    };
+    var bcLines = [];
+    for (var id in SECRET_REALM_DEFS) {
+      var def = SECRET_REALM_DEFS[id];
+      var line = def.name + ' — dải ' + bandName(def.band) + '; boss rơi Yêu Đan cấp ' + def.yeuDanLevel + '; mở khi hoàn thành nhiệm vụ "' + guideQuestName(def.unlockQuest) + '"';
+      if (id === 'bc_kiemtrung_sau') line += '; riêng bí cảnh này còn cần đạt ' + realmName(3, 0);
+      if (id === 'bc_tran_tam_sau') line += '; cần qua ải lần đầu tầng ngoài trước và vào theo tổ đội từ ' + (def.partyMin || 2) + ' người — thiếu người, hệ thống sẽ lấp đồng đội máy';
+      if (state && secretRealmUnlocked(state, id)) line += ' — ngươi ĐÃ mở';
+      bcLines.push(line + '.');
+    }
+    var wavePct = (REWARD_PROFILES['profile:bc:bc_thuyliem:wave'] || {}).tuviPct;
+    return { id: 'bicanh', title: 'Bí cảnh và cày cấp', locked: false, lockText: '', sections: [
+      { h: 'Các bí cảnh đang có', lines: bcLines },
+      { h: 'Lượt vào và thưởng trong bí cảnh', lines: [
+        'Mọi bí cảnh dùng CHUNG một kho lượt: mỗi ngày game có ' + BC_POOL_MAX + ' lượt vào, tính gộp cho tất cả bí cảnh. Lượt qua ải LẦN ĐẦU TIÊN của từng bí cảnh không trừ vào kho; đã vào rồi thoát ngay vẫn tính là đã dùng lượt.' + (state ? ' Lượt còn lại hôm nay của ngươi: ' + bcPoolLeft(state) + '/' + BC_POOL_MAX + '.' : ''),
+        'Trong bí cảnh, mỗi đợt quái trả ' + wavePct + '% tu vi của trần tầng hiện tại; boss cuối có thưởng riêng (Linh Thạch, tu vi, điểm cống hiến, đan dược), và phần thưởng qua ải lần đầu nằm ngoài trần cày của ngày.'
+      ] },
+      { h: 'Cày cấp ngoài bí cảnh', lines: [
+        'Hạ quái thường dã ngoại được +' + REWARD_PROFILES['profile:kill:normal'].tuviPct + '% tu vi trần tầng cho mỗi mạng, quái tinh anh được +' + REWARD_PROFILES['profile:kill:elite'].tuviPct + '%. Boss dã ngoại có hồ sơ thưởng riêng và hồi sinh theo chu kỳ vài ngày.',
+        'Mọi nguồn tu vi do cày đều chảy qua một trần mềm mỗi ngày: cày càng nhiều trong một ngày, phần vượt trần cho càng ít — sang ngày game mới, trần lại đầy.',
+        'Phiếu treo thưởng săn quái, phiếu thu thập và việc tông môn ở các bảng nhiệm vụ là nguồn Linh Thạch, tu vi và điểm cống hiến ổn định mỗi ngày.'
+      ] }
+    ] };
+  }
+  /* Toàn bộ sổ: [{ id, title, locked, lockText, sections: [{ h, lines,
+     checklist? }] }] — lớp game dựng mục lục + thân chương từ đây. */
+  function guideChapters(state) {
+    return [guideTrucCoChapter(state), guideFoodChapter(state), guideBiCanhChapter(state)];
+  }
+
+
   /* ================= CUNG IV — KHỐI DỮ LIỆU + HÀM (chương 13–16) =================
      Toàn bộ điểm neo dữ liệu của đợt 1 cung IV nằm ở đây + các đăng ký
      rải trong tệp (QUESTS, MAPS.bc_kiemtrung_sau, SECRET_REALM_DEFS,
@@ -5522,6 +5676,7 @@
     grindInstanceId: grindInstanceId, GRIND_ACTIVE_MAX: GRIND_ACTIVE_MAX, countHeldGrind: countHeldGrind, acceptBoardInstance: acceptBoardInstance,
     RESOURCE_NODES: RESOURCE_NODES, nodeDef: nodeDef, nodeStatus: nodeStatus,
     SECRET_REALM_DEFS: SECRET_REALM_DEFS, defaultSecretRealms: defaultSecretRealms, ensureSecretRealms: ensureSecretRealms,
+    BC_POOL_MAX: BC_POOL_MAX,
     secretRealmUnlocked: secretRealmUnlocked, bcPoolLeft: bcPoolLeft, bcConsumeEntry: bcConsumeEntry, bcRecordClear: bcRecordClear,
     bcTranTamSauOpen: bcTranTamSauOpen,
     PARTY_MAX: PARTY_MAX, PARTY_ROLE_LABEL: PARTY_ROLE_LABEL, PARTY_ROLE_DEFS: PARTY_ROLE_DEFS,
@@ -5531,6 +5686,8 @@
     SIDE_QUEST_DEFS: SIDE_QUEST_DEFS, sideQuestDef: sideQuestDef, defaultSideQuests: defaultSideQuests, ensureSideQuests: ensureSideQuests,
     sideQuestProgress: sideQuestProgress, sideQuestStatus: sideQuestStatus, sideQuestList: sideQuestList,
     sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
+    TRUC_CO_FORMULA: TRUC_CO_FORMULA, GUIDE_TRUC_CO_UNLOCK_QUEST: GUIDE_TRUC_CO_UNLOCK_QUEST,
+    guideTrucCoOpen: guideTrucCoOpen, trucCoChecklist: trucCoChecklist, guideChapters: guideChapters,
     FOOD_CD_SEC: FOOD_CD_SEC, FOOD_RECIPES: FOOD_RECIPES, foodDef: foodDef, foodIds: foodIds, foodCount: foodCount, bestFoodId: bestFoodId, eatFood: eatFood, buyFood: buyFood, cookFood: cookFood, gatherFoodPatch: gatherFoodPatch,
     SILVER_START: SILVER_START, silverBalance: silverBalance, buyFoodSilver: buyFoodSilver, tasteFood: tasteFood,
     sideGrindClaimedCount: sideGrindClaimedCount,
