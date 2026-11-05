@@ -14309,7 +14309,15 @@
     var info = $('bag-info'), grid = $('bag-grid'), up = $('bag-upgrade');
     if (!info || !grid || !state) return;
     var bag = L.bagOf(state);
-    info.textContent = 'Tầng ' + bag.tier + ' — đã dùng ' + L.bagUsed(state) + '/' + L.bagCap(state) + ' ô chứa.';
+    var tdef = L.BAG_TIERS[bag.tier];
+    // Đầu panel: icon vẽ thật + tên vật chứa hiện tại (túi/nhẫn trữ vật
+    // theo tầng) — đợt trữ vật 2026-11-06. Tiêu đề panel cũng mang tên
+    // vật chứa để người chơi thấy rõ mình đang dùng túi hay nhẫn.
+    var title = $('bag-title');
+    if (title && tdef) title.textContent = tdef.name;
+    info.innerHTML = (tdef ? '<img class="bag-head-icon" src="' + tdef.icon + '" alt="">' : '') +
+      '<span class="bag-container-name">' + (tdef ? tdef.name : 'Túi Trữ Vật') + '</span>' +
+      '<span> — đã dùng ' + L.bagUsed(state) + '/' + L.bagCap(state) + ' ô chứa.</span>';
     grid.innerHTML = '';
     var ids = Object.keys(L.ITEM_DEFS).filter(function (id) { return !L.ITEM_DEFS[id].storySlot && L.bagCount(state, id) > 0; });
     if (!ids.length) {
@@ -14357,7 +14365,7 @@
     if (up) {
       var next = L.BAG_TIERS[bag.tier + 1];
       up.classList.toggle('hidden', !next);
-      if (next) up.textContent = 'Nâng cấp túi lên tầng ' + next.tier + ' (' + next.cap + ' ô) — ' + next.price + ' Linh Thạch';
+      if (next) up.textContent = 'Đổi sang ' + next.name + ' (' + next.cap + ' ô) — ' + next.price + ' Linh Thạch';
     }
   }
   function openBag() {
@@ -14465,13 +14473,20 @@
   onTap($('bag-upgrade'), function () {
     if (!state) return;
     var bag = L.bagOf(state);
+    var prev = L.BAG_TIERS[bag.tier];
     var next = L.BAG_TIERS[bag.tier + 1];
     if (!next) return;
     var r = L.spendLinhThach(state, next.price);
     if (!r.ok) { toast(r.reason); return; }
     state.bag.tier = next.tier;
     sfxQuest();
-    toast('Đã nâng cấp Túi Trữ Vật lên tầng ' + next.tier + ' (' + next.cap + ' ô chứa).');
+    // Mốc túi -> nhẫn (tầng 2 lên 3): thông báo nêu rõ đã đổi sang nhẫn
+    // trữ vật đeo tay; các mốc còn lại báo tên vật chứa mới.
+    if (prev && prev.kind === 'tui' && next.kind === 'nhan') {
+      toast('Đã đổi sang ' + next.name + ' — từ nay đeo nhẫn trữ vật trên tay (' + next.cap + ' ô chứa).');
+    } else {
+      toast('Đã đổi sang ' + next.name + ' (' + next.cap + ' ô chứa).');
+    }
     renderBag(); refreshHUD(); saveNow();
   });
 

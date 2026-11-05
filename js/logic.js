@@ -2562,11 +2562,19 @@
   // — tầng 1 (túi thường) = 90; các tầng trên tăng dần từ mốc 90 (số parent đề xuất theo
   // lệnh, chỉ nằm ở hằng này). Sức chứa chỉ TĂNG so với bản cũ (10/20/35/55) nên tệp lưu
   // cũ không mất vật phẩm; tầng của người chơi giữ nguyên.
+  // Đợt TÚI + NHẪN TRỮ VẬT (lệnh Bui 03:57 ngày 2026-11-06 "thêm chức năng túi
+  // trữ vật + nhẫn trữ vật giống trong phim tu tiên"): mỗi tầng mang TÊN vật
+  // chứa + loại (tui/nhan) + icon vẽ thật (assets/items/); 4 tầng cũ giữ
+  // nguyên từng con số sức chứa/giá, thêm 2 tầng nhẫn cao cấp [ĐỀ XUẤT —
+  // docs/storage-items-report.md]: Thượng Phẩm 400 ô / 1500 Linh Thạch,
+  // Cực Phẩm 700 ô / 4000 Linh Thạch.
   var BAG_TIERS = [null,
-    { tier: 1, cap: 90, price: 0 },
-    { tier: 2, cap: 130, price: 120 },
-    { tier: 3, cap: 180, price: 300 },
-    { tier: 4, cap: 240, price: 650 }
+    { tier: 1, cap: 90, price: 0, name: 'Túi Trữ Vật Hạ Phẩm', kind: 'tui', icon: 'assets/items/tui_ha.png' },
+    { tier: 2, cap: 130, price: 120, name: 'Túi Trữ Vật Trung Phẩm', kind: 'tui', icon: 'assets/items/tui_trung.png' },
+    { tier: 3, cap: 180, price: 300, name: 'Nhẫn Trữ Vật Hạ Phẩm', kind: 'nhan', icon: 'assets/items/nhan_ha.png' },
+    { tier: 4, cap: 240, price: 650, name: 'Nhẫn Trữ Vật Trung Phẩm', kind: 'nhan', icon: 'assets/items/nhan_trung.png' },
+    { tier: 5, cap: 400, price: 1500, name: 'Nhẫn Trữ Vật Thượng Phẩm', kind: 'nhan', icon: 'assets/items/nhan_thuong.png' },
+    { tier: 6, cap: 700, price: 4000, name: 'Nhẫn Trữ Vật Cực Phẩm', kind: 'nhan', icon: 'assets/items/nhan_cuc.png' }
   ];
   function bagOf(state) {
     if (!state.bag || typeof state.bag !== 'object') state.bag = { tier: 1, items: {} };

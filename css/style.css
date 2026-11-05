@@ -475,6 +475,8 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
   box-shadow: 0 10px 40px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.35); color: #f0e8d2; }
 #bag-panel.hidden { display: none; }
 .bag-info { padding: 8px 14px 0; font-size: 13px; color: #ffe9a8; }
+.bag-info .bag-head-icon { width: 44px; height: 44px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
+.bag-info .bag-container-name { color: #ffd94e; font-weight: bold; }
 .bag-grid { display: grid; grid-template-columns: repeat(auto-fill, 64px); gap: 8px;
   padding: 12px 14px; overflow-y: auto; }
 .bag-cell { width: 64px; min-height: 64px; border: 1px solid #77683c; border-radius: 8px;
