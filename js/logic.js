@@ -2557,12 +2557,16 @@
     that_tinh_kiem_quyet: { name: 'Thất Tinh Kiếm Quyết', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Quyết', unlockKey: 'that_tinh' },
     huyen_tinh_kiem_pho_sach: { name: 'Huyền Tinh Kiếm Phổ', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Phổ', unlockKey: 'huyen_tinh_kiem_pho' }
   };
-  // Sức chứa theo tầng — giá nâng cấp là số [ĐỀ XUẤT] chờ parent duyệt (docs/part2-design.md).
+  // Sức chứa theo tầng — giá nâng cấp là số [ĐỀ XUẤT] cũ (docs/part2-design.md), GIỮ NGUYÊN.
+  // Sức chứa: lệnh Bui 00:01 ngày 2026-11-06 "Túi trữ vật nâng cấp túi thường đựng 90 món"
+  // — tầng 1 (túi thường) = 90; các tầng trên tăng dần từ mốc 90 (số parent đề xuất theo
+  // lệnh, chỉ nằm ở hằng này). Sức chứa chỉ TĂNG so với bản cũ (10/20/35/55) nên tệp lưu
+  // cũ không mất vật phẩm; tầng của người chơi giữ nguyên.
   var BAG_TIERS = [null,
-    { tier: 1, cap: 10, price: 0 },
-    { tier: 2, cap: 20, price: 120 },
-    { tier: 3, cap: 35, price: 300 },
-    { tier: 4, cap: 55, price: 650 }
+    { tier: 1, cap: 90, price: 0 },
+    { tier: 2, cap: 130, price: 120 },
+    { tier: 3, cap: 180, price: 300 },
+    { tier: 4, cap: 240, price: 650 }
   ];
   function bagOf(state) {
     if (!state.bag || typeof state.bag !== 'object') state.bag = { tier: 1, items: {} };
