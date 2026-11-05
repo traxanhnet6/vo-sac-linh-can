@@ -2935,6 +2935,15 @@
         }
       }
       refreshHUD(); saveNow();
+    } else if (action === 'merit_buy_treasure_1' || action === 'merit_buy_treasure_2' || action === 'merit_buy_treasure_3') {
+      // Đổi pháp bảo bằng điểm cống hiến (đợt pháp bảo 2026-11-06):
+      // toàn bộ kiểm ví/chọn món/trừ điểm nằm ở L.treasureMeritExchange
+      // (trừ đúng một lần, lỗi thì không trừ) — cùng khuôn merit_buy_phu.
+      var pbGradeX = parseInt(action.charAt(action.length - 1), 10);
+      var rxPb = L.treasureMeritExchange(state, pbGradeX);
+      if (rxPb.ok) { sfxQuest(); toast('Đã ghi ' + rxPb.price + ' điểm cống hiến, quản sự đổi cho ngươi ' + L.ITEM_DEFS[rxPb.item].name + '. Điểm cống hiến còn: ' + L.fmtNum(state.sectMerit) + '.', 4200); }
+      else toast(rxPb.reason, 4600);
+      refreshHUD(); saveNow();
     } else if (action === 'ch4_evidence') {
       state.quest = 'q4_dieu_tra';
       say([{ who: 'narrate', text: 'Ngươi không cãi một câu. Ngươi quay lưng đi về phía kho Hứa gia ở rìa đông sân phủ — sự thật nằm ở đó, không nằm ở miệng người. (Đường im lặng: hãy kiểm tra kho và tìm nhân chứng.)' }], function () { refreshHUD(); saveNow(); });
@@ -4320,6 +4329,12 @@
       if (state.flags.bagUnlocked) {
         sectOpts.push({ label: 'Đổi 30 điểm cống hiến lấy một lá Tị Lôi Phù', action: 'merit_buy_phu' });
         if (!L.bagHas(state, 'dan_loi_phap')) sectOpts.push({ label: 'Đổi 150 điểm cống hiến lấy Dẫn Lôi Pháp', action: 'merit_buy_phap' });
+        // Đổi pháp bảo đeo được (đợt pháp bảo 2026-11-06): quản sự giữ
+        // thêm sổ đổi pháp bảo — giá theo phẩm, món rút ngẫu nhiên
+        // trong phẩm; Cực phẩm không đổi, chỉ rơi từ boss tổ đội.
+        sectOpts.push({ label: 'Đổi 60 điểm cống hiến lấy một pháp bảo Hạ phẩm', action: 'merit_buy_treasure_1' });
+        sectOpts.push({ label: 'Đổi 150 điểm cống hiến lấy một pháp bảo Trung phẩm', action: 'merit_buy_treasure_2' });
+        sectOpts.push({ label: 'Đổi 400 điểm cống hiến lấy một pháp bảo Thượng phẩm', action: 'merit_buy_treasure_3' });
       }
       sectOpts.push({ label: 'Trò chuyện', action: 'grind_idle' });
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: sectOpts }]);
@@ -4686,6 +4701,7 @@
     // liễu trùm chương trước khi chiêu của hắn kịp thành hình.
     if (b.phase === 'tele' || b.phase === 'lunge') power = Math.max(1, Math.round(power * 0.35));
     b.hp = Math.max(0, b.hp - power);
+    if (state) L.recordPlayValue(state, 'maxHit', power); // kỷ lục đòn mạnh nhất (đợt mở rộng bảng nhân vật): làn đấu Hoa Hướng Thần
     b.flashT = 0.18;
     if (opts && opts.kind === 'word') b.resVibT = 0.2;
     var bc = hhtBossCenter();
@@ -4843,7 +4859,7 @@
     }
     if (f.phase === 'intro') { f.t += dt; if (f.t >= 0.8) { f.phase = 'fight'; f.t = 0; } return; }
     // Giữ thế hồi Tĩnh Mặc như mọi trận thật (đứng yên giữa trận).
-    if (!moving) state.silence = L.silenceGain('meditate', dt, state.silence);
+    if (!moving) state.silence = L.silenceGain('meditate', dt, state.silence, state);
     var pcx = px + 16, pcy = py + 16, bcx = b.x + 16, bcy = b.y + 16;
     var dist = Math.hypot(bcx - pcx, bcy - pcy);
     var pct = b.hp / b.hpMax;
@@ -5215,6 +5231,7 @@
     var b = f.boss;
     if (b.phase === 'tele') power = Math.max(1, Math.round(power * 0.35)); // đang báo chiêu: kiếm thế hộ thân gạt bớt (như HHT)
     b.hp = Math.max(0, b.hp - power);
+    if (state) L.recordPlayValue(state, 'maxHit', power); // kỷ lục đòn mạnh nhất (đợt mở rộng bảng nhân vật): làn đài thách đấu
     b.flashT = 0.18;
     if (opts && opts.kind === 'word') b.resVibT = 0.2;
     var bc = daiCenter();
@@ -5365,7 +5382,7 @@
     if (f.phase === 'done') { f.t += dt; if (f.t >= 1.4) { if (f.result === 'win') daiFinishWin(); else daiFinishLose(); } return; }
     if (f.phase === 'between') return;
     if (f.phase === 'intro') { f.t += dt; if (f.t >= 0.8) { f.phase = 'fight'; f.t = 0; } return; }
-    if (!moving) state.silence = L.silenceGain('meditate', dt, state.silence);
+    if (!moving) state.silence = L.silenceGain('meditate', dt, state.silence, state);
     var pcx = px + 16, pcy = py + 16, bcx = b.x + 16, bcy = b.y + 16;
     var dist = Math.hypot(bcx - pcx, bcy - pcy);
     var pct = b.hp / b.hpMax;
@@ -5803,6 +5820,7 @@
       // mắt của các trận cũ không bao giờ có trường này).
       if (e.frozenT > 0) dmg = Math.round(dmg * 1.5);
       e.hp -= dmg;
+      if (state) L.recordPlayValue(state, 'maxHit', dmg); // kỷ lục đòn mạnh nhất (đợt mở rộng bảng nhân vật): làn trận kịch bản — nhánh mắt trận
       addDmgFloat(e.x, e.y - 26, '-' + dmg, '200,208,220', { size: 17, targetKey: 'arceye' });
       spawnParts(e.x, e.y, 4, '148,163,184', 22, false);
       sfxHitBlade();
@@ -5848,6 +5866,7 @@
       return;
     }
     fig.hp = Math.max(0, fig.hp - dmg);
+    if (state) L.recordPlayValue(state, 'maxHit', dmg); // kỷ lục đòn mạnh nhất (đợt mở rộng bảng nhân vật): làn trận kịch bản — nhánh hình nhân (nhánh kẹp noKill ở trên không tới đây vì số áp thật khác số hiện)
     fig.flashT = 0.18;
     if (opts.kind === 'word') fig.resVibT = 0.2;
     addDmgFloat(fig.x + 16, fig.y - 26, '-' + dmg, (opts.kind === 'word') ? '255,190,120' : '190,235,200', { size: 19, targetKey: 'arcfig' });
@@ -6581,6 +6600,13 @@
       if (fr && fr.set06 && fr.set06.ok) parts.push('lĩnh ngộ Thanh Long Xuất Thế');
       else if (fr && fr.set06 && !fr.set06.ok) parts.push('Thanh Long Xuất Thế còn chờ đủ chuỗi hệ');
       toast('Lần đầu hạ Trận Nhãn Kiếm Linh! Nhận: ' + parts.join(' · ') + '.', 5600);
+      // Pháp bảo rơi lần đầu (đợt pháp bảo 2026-11-06): tầng sâu Kiếm
+      // Trủng là dải Kim Đan — Thượng phẩm, hạt giống theo ngày + cõi.
+      var pbSauFirst = L.rollTreasureDrop('pb:bc_kiemtrung_sau:first:d' + state.dayCount, 3);
+      if (pbSauFirst) {
+        spawnDrop(pbSauFirst, 1, m.x + 16, m.y + 16);
+        toast('Pháp bảo rơi: ' + L.ITEM_DEFS[pbSauFirst].name + ' — hãy nhặt lấy!', 5200);
+      }
       if (state.quest === 'q16_linh_ngo') {
         state.quest = 'q16_benh_vuc';
         toast('Kiếm ý tầng sâu đã lặng. Về đại điện gặp trưởng lão để khép việc lĩnh ngộ — và nhận khoản chuẩn bị đột phá.', 4600);
@@ -6606,6 +6632,13 @@
     if (r.granted.tuvi > 0) spawnOrbs(9, m.x + 16, m.y + 16, r.granted.tuvi);
     var sid = (enc && enc.sessionId) || key;
     if (L.yeuDanDropFor(sid, 0.25)) spawnDrop('yeu_dan_' + def.yeuDanLevel, 1, m.x + 16, m.y + 16);
+    // Pháp bảo rơi lượt lặp tầng sâu (đợt pháp bảo 2026-11-06): dải
+    // Kim Đan — Thượng phẩm, hạt giống theo khóa claim của lượt.
+    var pbSau = L.rollTreasureDrop(key + ':boss', 3);
+    if (pbSau) {
+      spawnDrop(pbSau, 1, m.x + 16, m.y + 16);
+      toast('Pháp bảo rơi: ' + L.ITEM_DEFS[pbSau].name + ' — hãy nhặt lấy!', 5200);
+    }
     toast('Hạ ' + m.name + '! ' + grindGrantedText(r) + '.', 5200);
     arcIvBcBossFragment('bc_kiemtrung_sau'); // ô 17 ở lượt lặp (A.2)
     refreshHUD(); saveNow();
@@ -7041,7 +7074,7 @@
     rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
     state.flags.hbDone = true;
     state.flags.ch9BreakReady = false;
-    if (!state.flags.ch9Reward) { state.flags.ch9Reward = true; state.linhThach += 30; setTimeout(function () { toast('Thưởng của tông cho chuyến đi thung lũng: +30 Linh Thạch.', 4200); }, 600); }
+    if (!state.flags.ch9Reward) { state.flags.ch9Reward = true; L.addLinhThach(state, 30); setTimeout(function () { toast('Thưởng của tông cho chuyến đi thung lũng: +30 Linh Thạch.', 4200); }, 600); } // cộng qua addLinhThach — điểm cộng ví trung tâm (đợt mở rộng bảng nhân vật)
     say([{ who: 'narrate', text: 'Dưới gốc anh đào cổ thụ, chu thiên cuối cùng khép lại. Hoa rụng xuống vai ngươi từng cánh — Trúc Cơ Trung Kỳ. Từ thung lũng này nhìn về phía Cô Châu Thành, có một tòa lầu đang chờ ngươi tới.' }], function () {
       state.quest = 'q10_loi_moi'; refreshHUD(); saveNow();
       toast('Hoàn thành chương 9: Tin dữ từ Thung Lũng Hồi Phong. Đột phá thành công: ' + r.label + '!', 4800);
@@ -7202,7 +7235,7 @@
       L.recordSpeech(state, 11, 'chan-giu-duoc-hoi-phong-dot-' + wave, 'hoi-phong');
       line = { who: 'narrate', text: 'Một đòn Chấn Âm nổ giữa bãi bắc — con thú ôm đầu gầm lên đau đớn, bước chân rối loạn.' };
     } else if (action === 'kd_hold') {
-      state.silence = L.silenceGain('meditate', 2, state.silence);
+      state.silence = L.silenceGain('meditate', 2, state.silence, state);
       line = { who: 'narrate', text: 'Ngươi lùi về sau vòng đá, giữ thế và dồn Tĩnh Âm. Con thú gầm gừ vòng quanh, chưa dám lao vào lần nữa.' };
     }
     if (!line) return;
@@ -7975,7 +8008,7 @@
     // (đường hồi Tĩnh Mặc duy nhất trong trận — muốn dùng lời phải giữ
     // thế, đúng cái giá của Ngôn Linh).
     encStance = !moving;
-    if (encStance) state.silence = L.silenceGain('meditate', dt, state.silence);
+    if (encStance) state.silence = L.silenceGain('meditate', dt, state.silence, state);
     // Boss tổ đội lúc PHONG ẤN/CHOÁNG thì neo chết tại bệ (không đuổi
     // theo được): trận KHÔNG tan theo khoảng cách ở hai nhịp này, vì
     // cơ chế giữ hai điểm bắt cả tổ phải tản ra hai đầu phòng — hai
@@ -8137,6 +8170,12 @@
   }
   function hurtPlayer(dmg) {
     if (!state || dmg <= 0 || !enc) return;
+    // Pháp bảo Hộ thể (Huyền Quang Kính): giảm sát thương chiến đấu
+    // phải chịu — qua phễu hurtPlayer duy nhất của làn chạm trán/bí
+    // cảnh, trần cứng 20% nằm ở L.treasureDmgCut. Độ kiếp KHÔNG qua
+    // hàm này (đường lôi riêng, giảm lôi riêng) nên hai hệ không gộp.
+    var pbCut = L.treasureDmgCut(state);
+    if (pbCut > 0) dmg = Math.max(1, Math.round(dmg * (1 - pbCut)));
     var before = state.hp;
     state.hp = Math.max(0, state.hp - dmg);
     addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
@@ -10133,6 +10172,7 @@
       presentSwordHit(m.x + 16, m.y + 20, sang, opts.move || 'tram', crit, opts.hitIdx || 0);
     }
     m.hp = Math.max(0, m.hp - dmg);
+    if (state) L.recordPlayValue(state, 'maxHit', dmg); // kỷ lục đòn mạnh nhất (đợt mở rộng bảng nhân vật): applyHitToMonster là phễu áp sát thương trung tâm của làn chạm trán
     // Phản ứng của quái (GF-02): nhấp nháy trắng theo hạng, đẩy lùi thuần
     // trình bày (không đổi ô logic), boss không bị đẩy mà rung thân.
     m.flashT = crit ? (m.rank === 'normal' ? 0.11 : 0.14) : (m.rank === 'normal' ? 0.07 : 0.11);
@@ -10191,6 +10231,18 @@
       }
     }
     m.state = 'dying'; m.deathT = 0; m.holdT = 0; m.sealT = 0;
+    // Bộ đếm thống kê chơi (đợt bảng nhân vật 2026-11-06): đếm tại đây —
+    // SAU hai cửa túi-đầy ở trên nên boss gượng dậy chưa tính là đã hạ.
+    // Mọi đường hạ quái (chạm trán, bí cảnh, boss dã ngoại) đều qua hàm này.
+    if (state) {
+      L.recordPlayStat(state, 'kills');
+      if (m.rank === 'elite') L.recordPlayStat(state, 'elites');
+      if (m.rank === 'boss' || m.bossId || m.bcBoss) L.recordPlayStat(state, 'bosses');
+      // Sổ hành trình (đợt mở rộng bảng nhân vật): cùng điểm, cùng điều
+      // kiện với bộ đếm boss ở trên — boss gượng dậy vì túi đầy chưa
+      // tới được đây nên không ghi nhầm.
+      if (m.rank === 'boss' || m.bossId || m.bcBoss) L.journalAdd(state, 'boss', 'Hạ boss ' + (m.name || m.species));
+    }
     if (killOpts && killOpts.kind === 'word' && killOpts.skill === 'pha') {
       m.resShatter = true; // vỡ vụn cộng hưởng thay khung mờ dần (bước 2 mục 4) — drawMonster vẽ mảnh thay thân
       spawnResParts(m.x + 16, m.y + 16, 11, 3, 'pha'); // 8–12 mảnh hạt sóng cộng hưởng đi kèm
@@ -10284,6 +10336,14 @@
     if (r.granted.merit > 0) parts.push('+' + fmtAmt(r.granted.merit) + ' cống hiến');
     for (var id2 in r.granted.items) parts.push((L.ITEM_DEFS[id2] ? L.ITEM_DEFS[id2].name : id2) + ' ×' + r.granted.items[id2]);
     toast('Hạ ' + bd.name + '! ' + parts.join(' · '), 5200);
+    // Pháp bảo rơi từ boss dã ngoại (đợt pháp bảo 2026-11-06): phẩm
+    // theo dải cảnh giới của boss (minOrdinal), rút theo khóa claim
+    // chu kỳ — cùng khóa luôn cùng kết quả; rơi xuống đất như bí tịch.
+    var pbWild = L.rollTreasureDrop(L.bossClaimKey(m.bossId, st.cycleId), L.treasureGradeForOrdinal(bd.minOrdinal || 0));
+    if (pbWild) {
+      spawnDrop(pbWild, 1, m.x + 16, m.y + 16);
+      toast('Pháp bảo rơi từ ' + bd.name + ': ' + L.ITEM_DEFS[pbWild].name + ' — hãy nhặt lấy!', 5200);
+    }
     // ARCIV A.3: Hộ Trận Kiếm Linh — mảnh ô 26 + trưởng lão dạy ô 19
     // (số lần thắng boss Kim Đan đọc từ sổ claim trong logic).
     if (m.bossId === 'boss_hb_ho_tran_kiem_linh') arcIvBossFragmentToast('boss:ho_tran_kiem_linh');
@@ -11272,6 +11332,8 @@
   }
   function tribSucceed() {
     var t = trib; trib = null; hideTribPanel();
+    if (state) L.recordPlayStat(state, 'tribulations'); // bộ đếm thống kê (đợt bảng nhân vật 2026-11-06): đúng điểm độ kiếp thành công duy nhất
+    if (state) L.journalAdd(state, 'tribulation', 'Độ kiếp thành công — bước vào ' + L.realmName(t.targetRealm, 0)); // sổ hành trình (đợt mở rộng bảng nhân vật): cùng điểm thành công duy nhất
     var fired = false;
     var fireAnnounce = function () {
       if (fired) return; fired = true;
@@ -11840,6 +11902,8 @@
     if (!state) return;
     requestAnimationFrame(loop);
     var dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000 || 0.016)); lastTs = ts; tNow = ts; frameDt = dt;
+    L.accruePlayTime(state, dt); // bộ đếm thời gian chơi (đợt bảng nhân vật 2026-11-06): tích theo đúng nhịp khung, trần 0,05 giây/khung như dt
+    L.journalSyncQuest(state); // sổ hành trình (đợt mở rộng bảng nhân vật): phát hiện chuyển mốc nhiệm vụ chính q*_done — điểm chuyển nhiệm vụ rải khắp nơi nên đồng bộ theo thay đổi tại vòng lặp là đường trung tâm duy nhất
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
     if (flashA > 0) flashA = Math.max(0, flashA - dt * 0.7);
     if (pillarT > 0) pillarT = Math.max(0, pillarT - dt);
@@ -12177,10 +12241,10 @@
           lastStepPhaseSfx = stepPhase;
         }
         walkFrame = stepPhase % 2;
-        state.silence = L.silenceGain('walk', dt, state.silence);
+        state.silence = L.silenceGain('walk', dt, state.silence, state);
       } else {
         walkFrame = 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; walkBobY = 0; lastStepPhaseSfx = 0;
-        state.silence = L.silenceGain('idle', dt, state.silence);
+        state.silence = L.silenceGain('idle', dt, state.silence, state);
       }
       // thổ nạp tại điểm linh khí của bản đồ hiện tại (phím T giữ, hoặc chốt từ thanh kỹ năng)
       var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
@@ -13927,6 +13991,14 @@
       if (fw.tech) parts.push('+' + fw.tech.pts + ' điểm lĩnh ngộ ' + (L.TECHNIQUE_DEFS[fw.tech.id] ? L.TECHNIQUE_DEFS[fw.tech.id].name : fw.tech.id));
       for (id in fw.items) parts.push((L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : id) + ' ×' + fw.items[id]);
       toast('Lần đầu qua ải ' + def.name + '! ' + parts.join(' · '), 5600);
+      // Pháp bảo rơi lần đầu qua ải (đợt pháp bảo 2026-11-06): phẩm
+      // theo dải bí cảnh; riêng tâm trận Trận Tâm là boss cuối tổ đội
+      // nên rơi Cực phẩm. Hạt giống = khóa phiên bí cảnh.
+      var pbFirst = L.rollTreasureDrop((bcSession ? bcSession.key : ('gr:bc:' + realmId + ':d' + state.dayCount)) + ':boss', realmId === 'bc_tran_tam_sau' ? 4 : L.treasureGradeForBand(def.band));
+      if (pbFirst) {
+        spawnDrop(pbFirst, 1, m.x + 16, m.y + 16);
+        toast('Pháp bảo rơi: ' + L.ITEM_DEFS[pbFirst].name + ' — hãy nhặt lấy!', 5200);
+      }
       arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh ô 15/20 (Kiếm Trủng) / ô 14 + SP-01 (Thủy Liêm)
       refreshHUD(); saveNow();
       return 'claimed';
@@ -13948,6 +14020,14 @@
     if (r.granted.tuvi > 0) spawnOrbs(9, m.x + 16, m.y + 16, r.granted.tuvi);
     var sid = (enc && enc.sessionId) || bcSession.key;
     if (L.yeuDanDropFor(sid, 0.25)) spawnDrop('yeu_dan_' + def.yeuDanLevel, 1, m.x + 16, m.y + 16);
+    // Pháp bảo rơi từ boss bí cảnh (đợt pháp bảo 2026-11-06): phẩm
+    // theo dải bí cảnh, tâm trận Trận Tâm rơi Cực phẩm; hạt giống là
+    // khóa claim của lượt hạ (cùng khóa với hồ sơ thưởng).
+    var pbBc = L.rollTreasureDrop(bcSession.key + ':boss', realmId === 'bc_tran_tam_sau' ? 4 : L.treasureGradeForBand(def.band));
+    if (pbBc) {
+      spawnDrop(pbBc, 1, m.x + 16, m.y + 16);
+      toast('Pháp bảo rơi: ' + L.ITEM_DEFS[pbBc].name + ' — hãy nhặt lấy!', 5200);
+    }
     toast('Hạ ' + m.name + '! ' + grindGrantedText(r) + '.', 5200);
     arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh bí pháp theo nguồn boss bí cảnh
     refreshHUD(); saveNow();
@@ -14464,6 +14544,444 @@
     select: function (id) { guideChapterId = id; renderGuide(); },
     chapters: function () { return state ? L.guideChapters(state) : []; },
     checklist: function () { return state ? L.trucCoChecklist(state) : null; }
+  };
+  /* ---------- Bảng Nhân Vật đầy đủ (lệnh của Bui 00:47 ngày
+     2026-11-06) ----------
+     Chạm khung nhân vật góc trên trái (ô tên) để mở; các thẻ dựng từ
+     L.charPanelData(state) — dữ kiện thật trong logic.js, lớp này chỉ
+     dựng DOM. Đóng bằng nút ×, phím Esc hoặc chạm ra ngoài bảng.
+     ĐỢT MỞ RỘNG (Bui duyệt cả hai nhóm + bố cục người giấy): thêm bốn
+     thẻ Ngoại hình, Quan hệ, Bí cảnh và boss, Hành trình; mục Pháp
+     khí độ kiếp + Thọ nguyên phòng thủ trong Tu luyện; mục Kỷ lục
+     trong Tông môn; và thẻ TRANG BỊ kiểu người giấy làm thẻ mở đầu
+     (mặc định khi mở bảng) — mười một thẻ tổng cộng.
+     Nút Nâng cấp túi trong thẻ Túi gọi ĐÚNG cùng các bước của nút
+     bag-upgrade của panel túi (spendLinhThach -> đổi tầng -> lưu),
+     không đường tắt riêng: một lần bấm chỉ trừ tiền một lần.
+     Nút Cài đặt ở chân bảng mở đúng panel cài đặt hiện hành qua
+     VSLC_SETTINGS.openPanel. Đổi tên qua L.renameCharacter (kiểm hợp
+     lệ như màn tạo nhân vật); chống trùng toàn hệ thống thuộc giai
+     đoạn online, ghi chú ngay trong thẻ Tên. */
+  var charTabId = 'trangbi';
+  var charEquipCompare = false;
+  var charTreasurePick = null; // ô pháp bảo đang mở khung chọn đeo (đợt pháp bảo 2026-11-06)
+  var CHAR_TABS = [
+    { id: 'trangbi', title: 'Trang bị' },
+    { id: 'tuluyen', title: 'Tu luyện' },
+    { id: 'chiso', title: 'Chỉ số' },
+    { id: 'congphap', title: 'Công pháp' },
+    { id: 'tui', title: 'Túi & trang bị' },
+    { id: 'ten', title: 'Tên & danh hiệu' },
+    { id: 'tongmon', title: 'Tông môn & TK' },
+    { id: 'ngoa ihinh', title: 'Ngoại hình' },
+    { id: 'quanhe', title: 'Quan hệ' },
+    { id: 'bicanh', title: 'Bí cảnh & boss' },
+    { id: 'hanhtrinh', title: 'Hành trình' }
+  ];
+  function charRow(body, k, v, cls) {
+    var row = document.createElement('div'); row.className = 'char-row';
+    var a = document.createElement('span'); a.className = 'char-k'; a.textContent = k;
+    var b = document.createElement('span'); b.className = 'char-v' + (cls ? ' ' + cls : ''); b.textContent = v;
+    row.appendChild(a); row.appendChild(b); body.appendChild(row); return row;
+  }
+  function charSec(body, h) {
+    var el = document.createElement('div'); el.className = 'set-sec'; el.textContent = h; body.appendChild(el); return el;
+  }
+  function charNote(body, text) {
+    var p = document.createElement('p'); p.className = 'char-note'; p.textContent = text; body.appendChild(p); return p;
+  }
+  function charBar(body, pct, color) {
+    var bar = document.createElement('div'); bar.className = 'char-bar';
+    var fill = document.createElement('div');
+    fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    fill.style.background = color;
+    bar.appendChild(fill); body.appendChild(bar); return bar;
+  }
+  function fmtPlayDuration(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    if (h > 0) return h + ' giờ ' + m + ' phút';
+    if (m > 0) return m + ' phút ' + s + ' giây';
+    return s + ' giây';
+  }
+  function renderCharPanel() {
+    if (!state) return;
+    var d = L.charPanelData(state);
+    if (!d) return;
+    var tabs = $('char-tabs'), body = $('char-body');
+    if (!tabs || !body) return;
+    tabs.innerHTML = ''; body.innerHTML = '';
+    CHAR_TABS.forEach(function (t) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'char-tab-btn' + (t.id === charTabId ? ' active' : '');
+      b.textContent = t.title;
+      b.setAttribute('data-char-tab', t.id);
+      b.addEventListener('click', function () { charTabId = t.id; sfxUi(); renderCharPanel(); });
+      tabs.appendChild(b);
+    });
+    if (charTabId === 'trangbi') {
+      var eq = d.equip;
+      var pw = document.createElement('div');
+      pw.className = 'char-power';
+      var pwL = document.createElement('div'); pwL.className = 'char-power-label'; pwL.textContent = 'Tổng lực chiến';
+      var pwV = document.createElement('div'); pwV.className = 'char-power-value'; pwV.textContent = String(d.combatPower);
+      pw.appendChild(pwL); pw.appendChild(pwV); body.appendChild(pw);
+      function charSlot(label, title, sub, opts) {
+        opts = opts || {};
+        var sl = document.createElement('div');
+        sl.className = 'char-slot' + (opts.empty ? ' empty' : '') + (opts.onClick ? ' clickable' : '');
+        if (opts.domId) sl.id = opts.domId;
+        var lb = document.createElement('div'); lb.className = 'char-slot-label'; lb.textContent = label;
+        var nm = document.createElement('div'); nm.className = 'char-slot-name'; nm.textContent = title;
+        sl.appendChild(lb);
+        if (opts.icon) {
+          var ic = document.createElement('img');
+          ic.className = 'char-slot-icon'; ic.src = opts.icon; ic.alt = '';
+          sl.appendChild(ic);
+        }
+        sl.appendChild(nm);
+        if (sub) { var sb = document.createElement('div'); sb.className = 'char-slot-sub'; sb.textContent = sub; sl.appendChild(sb); }
+        if (opts.onClick) sl.addEventListener('click', opts.onClick);
+        return sl;
+      }
+      var doll = document.createElement('div'); doll.className = 'char-doll';
+      var colL = document.createElement('div'); colL.className = 'char-doll-col';
+      colL.appendChild(charSlot('Kiếm', eq.sword.equipped ? eq.sword.equipped.name : 'Chưa có vũ khí',
+        eq.sword.equipped ? ('Kiếm +' + eq.sword.equipped.sword + ' · Hưởng +' + eq.sword.equipped.word + ' — bấm để so sánh vũ khí trong túi') : '',
+        { domId: 'char-slot-sword', onClick: function () { charEquipCompare = !charEquipCompare; renderCharPanel(); } }));
+      colL.appendChild(charSlot('Ngự kiếm', eq.fly.learned ? 'Đã học ngự kiếm' : 'Chưa học',
+        eq.fly.learned ? (eq.fly.stage != null ? ('Giai đoạn ' + eq.fly.stage + ' — kiếm bay bên cạnh khi di chuyển') : 'Kiếm bay bên cạnh khi di chuyển') : 'Học tại Thanh Vân Tông sau Trúc Cơ',
+        { empty: !eq.fly.learned }));
+      var colR = document.createElement('div'); colR.className = 'char-doll-col';
+      colR.appendChild(charSlot('Vật chứa', eq.storage.name ? eq.storage.name : ('Túi trữ vật — tầng ' + eq.storage.tier),
+        eq.storage.unlocked ? ('Sức chứa ' + eq.storage.cap + ' món') : 'Chưa mở — mở ở chương 3', {}));
+      // Ba ô pháp bảo (đợt pháp bảo 2026-11-06): bấm ô mở khung chọn
+      // đeo từ túi / tháo về túi — toàn bộ luật ở L.equipTreasure /
+      // L.unequipTreasure, lớp này chỉ lái giao diện.
+      function treasureSlotEl(tr) {
+        return charSlot(tr.label, tr.item ? tr.item.name : 'Trống',
+          tr.item ? (tr.item.fxText + ' — bấm để đổi hoặc tháo') : 'Chưa có pháp bảo — bấm để xem trong túi',
+          { empty: !tr.item, domId: 'char-slot-treasure-' + tr.key, icon: tr.item ? tr.item.icon : null,
+            onClick: function () { charTreasurePick = (charTreasurePick === tr.key) ? null : tr.key; renderCharPanel(); } });
+      }
+      var trCong = eq.treasures.slots[0];
+      colR.appendChild(treasureSlotEl(trCong));
+      var center = document.createElement('div'); center.className = 'char-doll-center';
+      // Hào quang theo phẩm cao nhất đang đeo (chỉ trong bảng).
+      if (eq.aura && eq.aura.key && eq.aura.key !== 'none') {
+        var au = document.createElement('div');
+        au.className = 'char-aura char-aura-' + eq.aura.key;
+        au.setAttribute('data-aura', eq.aura.key);
+        au.style.background = 'radial-gradient(circle, rgba(' + eq.aura.color + ',0.6) 0%, rgba(' + eq.aura.color + ',0.3) 52%, rgba(' + eq.aura.color + ',0) 78%)';
+        center.appendChild(au);
+      }
+      var fig = document.createElement('div'); fig.className = 'char-fig';
+      var FIG_SCALE = 1.25;
+      fig.style.width = (eq.figure.cellW * FIG_SCALE) + 'px';
+      fig.style.height = (eq.figure.cellH * FIG_SCALE) + 'px';
+      fig.style.backgroundImage = 'url(' + eq.figure.sheet + ')';
+      fig.style.backgroundSize = (eq.figure.sheetW * FIG_SCALE) + 'px ' + (eq.figure.sheetH * FIG_SCALE) + 'px';
+      fig.style.backgroundPosition = '0px 0px';
+      center.appendChild(fig);
+      if (eq.fly.learned) {
+        var fs = document.createElement('div'); fs.className = 'char-flysword';
+        fs.textContent = (eq.sword.equipped && eq.sword.equipped.glyph) || 'Kiếm';
+        center.appendChild(fs);
+      }
+      var cap = document.createElement('div'); cap.className = 'char-doll-caption';
+      cap.textContent = d.name + ' — ' + d.realmLabel + (eq.figure.silver ? ' · Tóc bạc' : '');
+      center.appendChild(cap);
+      doll.appendChild(colL); doll.appendChild(center); doll.appendChild(colR);
+      body.appendChild(doll);
+      var rowB = document.createElement('div'); rowB.className = 'char-doll-row';
+      [1, 2].forEach(function (ix) {
+        rowB.appendChild(treasureSlotEl(eq.treasures.slots[ix]));
+      });
+      body.appendChild(rowB);
+      var src = document.createElement('div'); src.className = 'char-note';
+      src.textContent = 'Pháp bảo rơi từ boss và bí cảnh, hoặc đổi bằng điểm cống hiến tông môn.';
+      body.appendChild(src);
+      var pin = document.createElement('div'); pin.className = 'char-tribpin';
+      pin.textContent = 'Ghim pháp khí độ kiếp — Hộ Thể Đan: ' + d.tribItems.hoTheDan + ' viên · Tị Lôi Phù: ' + d.tribItems.tiLoiPhu + ' lá';
+      body.appendChild(pin);
+      if (charTreasurePick) {
+        var pickSlot = null;
+        eq.treasures.slots.forEach(function (tr) { if (tr.key === charTreasurePick) pickSlot = tr; });
+        if (pickSlot) {
+          charSec(body, 'Đeo pháp bảo — ' + pickSlot.label);
+          if (pickSlot.item) {
+            charRow(body, 'Đang đeo', pickSlot.item.name + ' (' + pickSlot.item.fxText + ')');
+            var unWrap = document.createElement('div'); unWrap.className = 'char-actions';
+            var unBtn = document.createElement('button');
+            unBtn.type = 'button'; unBtn.className = 'btn wood'; unBtn.id = 'char-treasure-unequip';
+            unBtn.textContent = 'Tháo ' + pickSlot.item.name + ' về túi';
+            unBtn.addEventListener('click', function () {
+              var ru = L.unequipTreasure(state, pickSlot.key);
+              toast(ru.ok ? ('Đã tháo ' + L.ITEM_DEFS[ru.item].name + ' về Túi Trữ Vật.') : ru.reason, 3600);
+              if (ru.ok) { sfxUi(); saveNow(); }
+              renderCharPanel();
+            });
+            unWrap.appendChild(unBtn); body.appendChild(unWrap);
+          }
+          var cands = (eq.treasureBag && eq.treasureBag[pickSlot.key]) || [];
+          if (!cands.length) charNote(body, 'Trong túi chưa có pháp bảo thuộc ô này. Pháp bảo rơi từ boss và bí cảnh, hoặc đổi bằng điểm cống hiến ở quản sự tông môn.');
+          cands.forEach(function (c) {
+            var cw = document.createElement('div'); cw.className = 'char-actions';
+            var cb = document.createElement('button');
+            cb.type = 'button'; cb.className = 'btn wood char-treasure-btn';
+            cb.setAttribute('data-treasure-id', c.id);
+            cb.textContent = 'Đeo ' + c.name + ' — ' + c.fxText;
+            cb.addEventListener('click', function () {
+              var re = L.equipTreasure(state, c.id);
+              toast(re.ok ? ('Đã đeo ' + L.ITEM_DEFS[re.equipped].name + ' (' + L.treasureFxText(L.TREASURE_DEFS[re.equipped]) + ').') : re.reason, 3600);
+              if (re.ok) { sfxQuest(); saveNow(); }
+              renderCharPanel();
+            });
+            cw.appendChild(cb); body.appendChild(cw);
+          });
+        }
+      }
+      if (charEquipCompare) {
+        charSec(body, 'So sánh vũ khí trong túi');
+        if (!eq.sword.inBag.length) charNote(body, 'Túi chưa có vũ khí nào.');
+        eq.sword.inBag.forEach(function (w) {
+          charRow(body, w.name + (w.equipped ? ' (đang đeo)' : ''), 'Kiếm +' + w.sword + ' · Hưởng +' + w.word);
+        });
+        charNote(body, 'Luật trang bị của game không đổi: cây kiếm mạnh nhất trong túi tự là cây đang đeo.');
+      }
+    } else if (charTabId === 'tuluyen') {
+      charRow(body, 'Nhân vật', d.name);
+      charRow(body, 'Cảnh giới', d.realmLabel);
+      charRow(body, 'Linh căn', d.linhCan);
+      charSec(body, 'Tu vi');
+      charRow(body, 'Tu vi hiện tại', d.tuviNeed ? (L.fmtNum(d.tuviCur) + ' / ' + L.fmtNum(d.tuviNeed)) : (L.fmtNum(d.tuviCur) + ' (không còn trần tầng)'));
+      if (d.tuviNeed) charBar(body, d.tuviCur / d.tuviNeed * 100, 'linear-gradient(90deg,#4e7fa0,#7fb2d9)');
+      charRow(body, 'Máu', L.fmtNum(d.hpCur) + ' / ' + L.fmtNum(d.hpMax));
+      charBar(body, d.hpMax > 0 ? d.hpCur / d.hpMax * 100 : 0, 'linear-gradient(90deg,#a03a30,#e0704e)');
+      charRow(body, 'Tĩnh Âm', d.silenceCur + ' / ' + d.silenceMax);
+      charBar(body, d.silenceCur / d.silenceMax * 100, 'linear-gradient(90deg,#c9a227,#f3d94e)');
+      charSec(body, 'Đột phá cấp tiếp theo');
+      var bt = d.breakthrough;
+      if (!bt || bt.kind === 'none' || !bt.targetLabel) {
+        charNote(body, 'Hiện chưa có mốc đột phá tiếp theo trong lộ trình đã mở.');
+      } else {
+        charRow(body, 'Đích tới', bt.targetLabel);
+        d.conditions.forEach(function (c) {
+          var v = (typeof c.cur === 'number' && typeof c.need === 'number') ? (L.fmtNum(c.cur) + '/' + L.fmtNum(c.need) + ' — ') : '';
+          charRow(body, c.label, v + (c.ok ? 'Đủ' : 'Chưa đủ'), c.ok ? 'good' : 'bad');
+          if (c.hint && !c.ok) charNote(body, c.hint);
+        });
+        if (bt.tribulation) charNote(body, 'Đích là đại cảnh giới: phải qua thiên kiếp ' + bt.tribulation.bolts + ' đạo lôi tại đài độ kiếp.' + (bt.tribulation.open ? '' : ' Nội dung độ kiếp của mốc này chưa mở.'));
+        if (d.trucCo) {
+          charSec(body, 'Danh sách kiểm Trúc Cơ Đan (như Sổ Chỉ Dẫn)');
+          d.trucCo.parts.forEach(function (p) {
+            charRow(body, p.name, L.fmtNum(p.cur) + '/' + L.fmtNum(p.need) + ' — ' + (p.ok ? 'Đủ' : 'Chưa đủ'), p.ok ? 'good' : 'bad');
+          });
+        }
+      }
+      charSec(body, 'Pháp khí độ kiếp');
+      charRow(body, 'Hộ Thể Đan (chắn ' + Math.round(L.TRIB_DAN_CUT * 100) + '% một đạo lôi)', L.fmtNum(d.tribItems.hoTheDan) + ' viên');
+      charRow(body, 'Tị Lôi Phù (chắn ' + Math.round(L.TRIB_PHU_CUT * 100) + '% một đạo lôi)', L.fmtNum(d.tribItems.tiLoiPhu) + ' lá');
+      charNote(body, 'Số đếm thẳng từ túi hiện tại — lo đủ hai món này trước khi lên đài độ kiếp.');
+      if (d.lifespan) {
+        charSec(body, 'Thọ nguyên');
+        charRow(body, 'Thọ nguyên còn lại', L.fmtNum(d.lifespan.value) + ' năm');
+      }
+    } else if (charTabId === 'chiso') {
+      charRow(body, 'Sức mạnh kiếm (công)', L.fmtNum(d.stats.swordPower));
+      charRow(body, 'Cộng kiếm từ vũ khí đang đeo', '+' + d.stats.weaponSword);
+      charRow(body, 'Cộng hưởng từ vũ khí đang đeo', '+' + d.stats.weaponWord);
+      charRow(body, 'Máu tối đa', L.fmtNum(d.hpMax));
+      charRow(body, 'Tĩnh Âm tối đa', String(d.silenceMax));
+      var critRow = charRow(body, 'Tỉ lệ chí mạng', Math.round(CRIT_CHANCE * 100) + '%');
+      critRow.setAttribute('data-char-crit', String(CRIT_CHANCE));
+      charRow(body, 'Sát thương chí mạng', '×' + CRIT_MULT);
+      charRow(body, 'Tốc độ thổ nạp', d.stats.meditateRate + ' tu vi/giây');
+      charRow(body, 'Hồi Tĩnh Âm khi thổ nạp', d.stats.silenceRate + ' điểm/giây');
+      charNote(body, 'Game không có một chỉ số thủ riêng: sát thương phải nhận được giảm qua hộ pháp, đan và phù trong độ kiếp cùng các bộ phòng ngự đã học — không có con số thủ cố định để hiện.');
+    } else if (charTabId === 'congphap') {
+      charSec(body, 'Công pháp đã học');
+      if (!d.techniques.length) charNote(body, 'Chưa học công pháp nào. Thất Tinh Kiếm Quyết và Thanh Phong Chân Kinh sẽ tới theo mạch truyện chương 3.');
+      d.techniques.forEach(function (t) {
+        charRow(body, t.name + (t.active ? ' (đang vận hành)' : ''), 'Tầng ' + t.tier);
+        charNote(body, 'Điểm tu luyện: ' + L.fmtNum(t.xp) + (t.nextXp ? ' / ' + L.fmtNum(t.nextXp) + ' để lên tầng ' + (t.tier + 1) : ' — đã tới tầng cao nhất của khung hiện tại') + '.');
+      });
+      if (d.swordMoves.length) {
+        charSec(body, 'Chiêu kiếm dùng được');
+        d.swordMoves.forEach(function (mv) {
+          charRow(body, mv.name, '×' + String(Math.round(mv.mult * 100)) + '%' + (mv.hits > 1 ? ' × ' + mv.hits + ' đòn' : ''));
+        });
+      }
+      charSec(body, 'Vạn Âm Cộng Hưởng');
+      d.wordSkills.forEach(function (w) {
+        charRow(body, w.word, w.unlocked ? ('Uy lực ' + w.power + ' ở Tĩnh Âm hiện tại · tốn ' + w.cost + ' Tĩnh Âm') : 'Chưa mở', w.unlocked ? '' : 'bad');
+      });
+      charRow(body, 'Sổ Dư Âm', d.ledgerCount + ' sự kiện đã ghi');
+      charRow(body, 'Số lần đã cất tiếng', String(d.timesSpoken));
+      if (d.soulRank > 0) charRow(body, 'Hồn Sư (thân phận giấu kín)', 'Phẩm ' + d.soulRank);
+      if (d.flyLearned) charRow(body, 'Ngự kiếm', 'Đã học — bay 198 điểm ảnh/giây');
+    } else if (charTabId === 'tui') {
+      charSec(body, 'Túi Trữ Vật');
+      if (!d.bag.unlocked) {
+        charNote(body, 'Túi Trữ Vật chưa mở — túi mở theo mạch truyện ở chương 3. Trước mốc đó, kiếm khởi đầu vẫn đeo trên người.');
+      } else {
+        charRow(body, 'Sức chứa', d.bag.used + ' / ' + d.bag.cap + ' món (tầng ' + d.bag.tier + ')');
+        if (d.bag.container) charRow(body, 'Vật chứa', d.bag.container);
+        charBar(body, d.bag.cap > 0 ? d.bag.used / d.bag.cap * 100 : 0, 'linear-gradient(90deg,#7d623c,#c9a227)');
+        if (d.bag.next) {
+          var wrap = document.createElement('div'); wrap.className = 'char-actions';
+          var up = document.createElement('button');
+          up.type = 'button'; up.className = 'btn wood'; up.id = 'char-bag-upgrade';
+          up.textContent = 'Nâng cấp túi lên tầng ' + d.bag.next.tier + ' (' + d.bag.next.cap + ' ô) — ' + d.bag.next.price + ' Linh Thạch';
+          up.addEventListener('click', charBagUpgrade);
+          wrap.appendChild(up); body.appendChild(wrap);
+        } else charNote(body, 'Túi đã ở tầng cao nhất.');
+      }
+      charSec(body, 'Trang bị');
+      charRow(body, 'Vũ khí đang đeo', d.weapon ? d.weapon.name : 'Không có');
+      if (d.weapon) charNote(body, 'Chỉ số cộng thêm: +' + d.weapon.sword + ' sức mạnh kiếm, +' + d.weapon.word + ' uy lực cộng hưởng. Vũ khí mạnh nhất trong số đang sở hữu là cây đang đeo — vũ khí tốt hơn thay thế, không cộng dồn.');
+      charSec(body, 'Tiền tệ');
+      charRow(body, 'Linh Thạch', d.linhThach.open ? L.fmtNum(d.linhThach.balance) : 'Chưa mở — phàm nhân chưa dùng được, ví mở khi bắt đầu tu tiên');
+      charRow(body, 'Bạc (tiền phàm tục)', L.fmtNum(d.bag.silver) + ' lượng');
+    } else if (charTabId === 'ten') {
+      charSec(body, 'Tên nhân vật');
+      charRow(body, 'Tên hiện tại', d.name);
+      var rw = document.createElement('div'); rw.className = 'char-rename';
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.id = 'char-rename-input'; inp.maxLength = L.CHAR_NAME_MAX;
+      inp.value = d.name; inp.setAttribute('aria-label', 'Tên nhân vật mới');
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'btn wood'; btn.id = 'char-rename-btn'; btn.textContent = 'Đổi tên';
+      rw.appendChild(inp); rw.appendChild(btn); body.appendChild(rw);
+      var msg = document.createElement('div'); msg.className = 'char-msg'; msg.id = 'char-rename-msg';
+      body.appendChild(msg);
+      btn.addEventListener('click', function () {
+        if (!state) return;
+        var r = L.renameCharacter(state, inp.value);
+        if (!r.ok) { msg.textContent = r.reason; msg.classList.add('error'); return; }
+        msg.classList.remove('error');
+        msg.textContent = 'Đã đổi tên thành ' + r.name + '.';
+        var hn = $('hud-name'); if (hn) hn.textContent = r.name; // khung nhân vật góc trái: tên do startGame ghi, refreshHUD không chạm — cập nhật thẳng tại đây
+        sfxQuest(); refreshHUD(); saveNow(); renderCharPanel();
+      });
+      charNote(body, 'Tên mới hiện trong mọi lời thoại, nhãn người nói và tuyên cáo Thiên Đạo khi độ kiếp. Kiểm hợp lệ như màn tạo nhân vật: tối đa ' + L.CHAR_NAME_MAX + ' ký tự, không để trống. Chống trùng tên toàn hệ thống cần danh bạ phía máy chủ — thuộc giai đoạn online, bản chơi đơn này chưa áp.');
+      charSec(body, 'Danh hiệu');
+      charNote(body, 'Game hiện chưa có hệ danh hiệu cho người chơi (danh hiệu đang có chỉ là danh xưng của NPC và boss hiện trên đầu chúng). Mục này để trống có chủ đích — không hiện dữ kiện không có thật.');
+    } else if (charTabId === 'tongmon') {
+      charSec(body, 'Tông môn');
+      charRow(body, 'Tông môn', d.sect.joined ? d.sect.name : 'Chưa nhập tông môn');
+      charRow(body, 'Điểm cống hiến', L.fmtNum(d.sect.merit));
+      charNote(body, 'Game chưa có trường chức vụ riêng cho người chơi; sau khi nhập Thanh Vân Tông (xong chương 7), thân phận trong tông được thể hiện qua mạch truyện và điểm cống hiến.');
+      charSec(body, 'Thống kê chơi');
+      charRow(body, 'Quái đã hạ', L.fmtNum(d.play.kills));
+      charRow(body, 'Trong đó quái tinh anh', L.fmtNum(d.play.elites));
+      charRow(body, 'Boss đã hạ', L.fmtNum(d.play.bosses));
+      charRow(body, 'Lần độ kiếp thành công', L.fmtNum(d.play.tribulations));
+      charRow(body, 'Ngày game đã qua', L.fmtNum(d.play.dayCount));
+      charRow(body, 'Thời gian chơi', fmtPlayDuration(d.play.playSec));
+      charNote(body, 'Bộ đếm thống kê bắt đầu tính từ bản cập nhật bảng nhân vật này — phần chơi trước đó không truy hồi được nên khởi đầu bằng 0.');
+      charSec(body, 'Kỷ lục');
+      charRow(body, 'Đòn đánh mạnh nhất từng tung', L.fmtNum(d.records.maxHit) + ' sát thương');
+      charRow(body, 'Tổng Linh Thạch kiếm được', L.fmtNum(d.records.ltEarned));
+      charRow(body, 'Tổng yêu đan thu được', L.fmtNum(d.records.yeuDan) + ' viên');
+      charNote(body, 'Ba kỷ lục này đếm từ bản mở rộng bảng nhân vật: đòn mạnh nhất ghi tại các điểm áp sát thương của người chơi, Linh Thạch tại điểm cộng ví trung tâm, yêu đan tại điểm nhận vật phẩm trung tâm — không truy hồi phần chơi trước.');
+    } else if (charTabId === 'ngoa ihinh') {
+      var ap = d.appearance;
+      var pw = document.createElement('div'); pw.className = 'char-portrait-wrap';
+      var pimg = document.createElement('img');
+      pimg.className = 'char-portrait'; pimg.src = ap.portrait; pimg.alt = 'Chân dung ' + d.name;
+      pw.appendChild(pimg); body.appendChild(pw);
+      charRow(body, 'Tên', d.name);
+      charRow(body, 'Giới tính', ap.genderLabel);
+      charRow(body, 'Tóc', ap.hairLabel);
+      charRow(body, 'Vũ khí đang đeo', ap.weapon ? ap.weapon.name : 'Không có');
+      if (ap.weapon) charNote(body, 'Cộng thêm: +' + ap.weapon.sword + ' sức mạnh kiếm, +' + ap.weapon.word + ' uy lực cộng hưởng.');
+      charRow(body, 'Ngự kiếm', ap.fly.learned ? 'Đã học — có thể bay trên kiếm' : 'Chưa học');
+      if (ap.fly.stage != null && ap.fly.stage > 0) charRow(body, 'Giai đoạn ngự kiếm', String(ap.fly.stage));
+    } else if (charTabId === 'quanhe') {
+      charSec(body, 'Hảo cảm');
+      if (!d.relationships.recorded || !d.relationships.list.length) {
+        charNote(body, 'Chưa ghi nhận hảo cảm với nhân vật nào. Hảo cảm được ghi khi ngươi tặng quà cho mọi người (thanh module hiện ra lúc chạm vào họ) — có dữ kiện là thẻ này tự liệt kê.');
+      } else {
+        d.relationships.list.forEach(function (r) {
+          charRow(body, r.name, L.fmtNum(r.points) + ' điểm — ' + r.band);
+        });
+        charNote(body, 'Mốc danh xưng: 0–19 điểm Xa lạ · 20–49 Thân quen · 50–99 Thân thiết · từ 100 Tri kỷ.');
+      }
+    } else if (charTabId === 'bicanh') {
+      charSec(body, 'Bí cảnh');
+      charRow(body, 'Lượt vào còn lại hôm nay', d.realms.poolLeft + ' / ' + d.realms.poolMax + ' lượt');
+      charNote(body, 'Kho lượt chung cho mọi bí cảnh; lượt vào lần đầu của từng bí cảnh không tính vào kho.');
+      d.realms.list.forEach(function (r) {
+        var rv = !r.unlocked ? 'Chưa mở khóa' : (r.firstClear ? 'Đã thông quan ' + L.fmtNum(r.totalClears) + ' lần' : 'Đã mở — chưa thông quan');
+        charRow(body, r.name + ' (' + r.band + ')', rv, r.unlocked ? '' : 'bad');
+        if (r.extraLocked) charNote(body, r.extraLocked + '.');
+      });
+      charSec(body, 'Boss dã ngoại');
+      d.wildBosses.forEach(function (b) {
+        var bv = b.state === 'alive' ? 'Đang sống — có thể săn' : (b.state === 'claimed' ? 'Đã hạ chu kỳ này — còn ' + b.daysLeft + ' ngày tới chu kỳ mới' : 'Chưa mở');
+        charRow(body, b.name, bv, b.state === 'alive' ? 'good' : '');
+        if (b.title) charNote(body, b.title + ' · hồi sinh theo chu kỳ ' + b.cycleDays + ' ngày.');
+      });
+    } else if (charTabId === 'hanhtrinh') {
+      charSec(body, 'Sổ hành trình');
+      if (!d.journal.entries.length) {
+        charNote(body, 'Sổ hành trình bắt đầu ghi từ bản cập nhật này — từ nay mỗi mốc lớn (đột phá cảnh giới, độ kiếp thành công, hạ boss, hoàn thành chương truyện chính) sẽ được ghi vào đây kèm mốc thời gian chơi.');
+      } else {
+        d.journal.entries.slice().reverse().forEach(function (e) {
+          charRow(body, fmtPlayDuration(e.at), e.text);
+        });
+        charNote(body, 'Sổ giữ tối đa ' + L.JOURNAL_MAX + ' mốc gần nhất, mốc mới nhất ở trên cùng; giờ ghi là thời gian chơi tích lũy lúc sự kiện xảy ra.');
+      }
+    }
+  }
+  /* Nâng cấp túi từ thẻ Túi: lặp đúng các bước của nút bag-upgrade
+     trong panel túi (trừ Linh Thạch qua spendLinhThach -> đổi tầng ->
+     thông báo -> lưu) để một lần bấm chỉ trừ tiền đúng một lần. */
+  function charBagUpgrade() {
+    if (!state) return;
+    var bag = L.bagOf(state);
+    var next = L.BAG_TIERS[bag.tier + 1];
+    if (!next) return;
+    var r = L.spendLinhThach(state, next.price);
+    if (!r.ok) { toast(r.reason); return; }
+    state.bag.tier = next.tier;
+    sfxQuest();
+    toast('Đã nâng cấp Túi Trữ Vật lên tầng ' + next.tier + ' (' + next.cap + ' ô chứa).');
+    refreshHUD(); saveNow(); renderCharPanel();
+  }
+  function openCharPanel() {
+    if (!state) return;
+    sfxUi();
+    renderCharPanel();
+    var p = $('char-panel'); if (p) p.classList.remove('hidden');
+  }
+  function closeCharPanel() { var p = $('char-panel'); if (p) p.classList.add('hidden'); }
+  onTap($('char-frame'), function () { if (state) openCharPanel(); });
+  onTap($('char-close'), closeCharPanel);
+  onTap($('char-settings-btn'), function () {
+    closeCharPanel();
+    if (window.VSLC_SETTINGS && window.VSLC_SETTINGS.openPanel) window.VSLC_SETTINGS.openPanel();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeCharPanel();
+  });
+  document.addEventListener('pointerdown', function (e) {
+    var p = $('char-panel');
+    if (!p || p.classList.contains('hidden')) return;
+    var cf = $('char-frame');
+    if (e.target && (p.contains(e.target) || (cf && cf.contains(e.target)))) return;
+    closeCharPanel();
+  }, true);
+  /* Tay nắm kiểm chứng Bảng Nhân Vật: mở/đóng/chọn thẻ qua đúng đường
+     panel dùng + đọc dữ kiện logic dựng, cho harness DOM lái thật. */
+  window.VSLC_CHARPANEL = {
+    open: openCharPanel, close: closeCharPanel,
+    isOpen: function () { var p = $('char-panel'); return !!p && !p.classList.contains('hidden'); },
+    tab: function () { return charTabId; },
+    select: function (id) { charTabId = id; renderCharPanel(); },
+    data: function () { return state ? L.charPanelData(state) : null; }
   };
 
   // Tổng kết phiên săn: chạm vào bảng là đóng (cơ chế ẩn chủ động duy

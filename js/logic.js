@@ -42,8 +42,12 @@
     { id: 'dinh', word: 'ĐỊNH', cost: 60, basePower: 20, unlock: 'kimdan' },
     { id: 'phong', word: 'PHONG', cost: 80, basePower: 34, unlock: 'kimdan' }
   ];
-  function silenceGain(mode, seconds, cur) {
+  function silenceGain(mode, seconds, cur, state) {
     var rate = SILENCE_RATES[mode] || 0;
+    // Pháp bảo Phụ trợ Trữ Âm Bình: +% tốc độ hồi Tĩnh Âm — chỉ áp khi
+    // nơi gọi truyền state (tham số tùy chọn; gọi 3 đối số như cũ thì
+    // hành vi không đổi từng ly).
+    if (state) rate = rate * (1 + treasureSilPct(state) / 100);
     return Math.min(SILENCE_MAX, Math.max(0, cur + rate * seconds));
   }
   // Uy lực một đòn cộng hưởng: gốc của chiêu + toàn bộ Tĩnh Âm lắng được quy đổi.
@@ -58,6 +62,7 @@
     if (state.silence < skill.cost) return { ok: false, reason: 'Tĩnh Âm chưa đủ — hãy lắng nghe thêm.' };
     var power = wordPower(skill, state.silence);
     power += weaponBonus(state).word; // vũ khí đang đeo kiếm ngân trợ hưởng (Thanh Phong Kiếm +10, Thiết Kiếm Hứa Gia +3)
+    power = Math.round(power * (1 + treasureDmgPct(state) / 100)); // pháp bảo Công phần trăm (Phong Lôi Hoàn) — cùng phễu chiêu như castSword
     state.silence = Math.max(0, state.silence - skill.cost);
     state.timesSpoken = (state.timesSpoken || 0) + 1;
     return { ok: true, power: power, skill: skill };
@@ -2294,6 +2299,8 @@
       sideQuests: defaultSideQuests(), // Mục H: chuỗi phụ quanh Trúc Cơ — { claimed, selected, socialMet } dữ kiện thuần, online-ready
       secretRealms: defaultSecretRealms(), // trạng thái bí cảnh: kho lượt ngày chung + từng bí cảnh
       party: defaultParty(),           // Lớp tổ đội (đợt boss tổ đội): { bots: [...] } dữ kiện thuần, online-ready
+      stats: defaultPlayStats(),     // Bộ đếm thống kê chơi (đợt bảng nhân vật 2026-11-06): quái/boss đã hạ, lần độ kiếp, giây chơi — tính từ phiên bản này
+      journal: defaultJournal(),     // Sổ hành trình (đợt mở rộng bảng nhân vật): mốc đột phá/độ kiếp/hạ boss/hoàn thành chương — ghi từ phiên bản này
       spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
       announceLog: [],           // Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.1): tối đa 20 dòng gần nhất
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
@@ -2303,6 +2310,7 @@
       items: { dan: 0 },         // GƯƠNG đọc của túi: số Hồi Khí Đan (syncBagMirrors ghi)
       gear: ['kiem_hua_gia'],    // GƯƠNG đọc của túi: pháp khí đang có (syncBagMirrors ghi) — tân thủ đeo sẵn Thiết Kiếm Hứa Gia
       bag: { tier: 1, items: { kiem_hua_gia: 1 } }, // Túi Trữ Vật — nguồn sự thật của vật phẩm (mở khóa ở chương 3); kiếm khởi đầu ghi ở đây nhưng đeo trên người (worn) nên không chiếm ô
+      treasures: { cong: null, ho_the: null, phu_tro: null }, // Pháp bảo đang đeo theo ô (đợt pháp bảo 2026-11-06): id vật phẩm hoặc null
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
 
@@ -2317,6 +2325,11 @@
   function meditateRate(state) {
     var r = 10 + techniqueMethodBonus(state);
     if (state.gear && state.gear.indexOf('ngoc_tu_linh') >= 0) r += 5;
+    // Pháp bảo Phụ trợ Tụ Linh Châu: +% tu vi thổ nạp, CỘNG DỒN trên
+    // tổng phẳng (gồm cả +5 của Tụ Linh Ngọc cũ — hai món khác nhau,
+    // không thay thế nhau; xem khối pháp bảo). Nhân TRƯỚC bước giảm
+    // một nửa của trọng thương để luật thương thế vẫn áp trên tất cả.
+    r = r * (1 + treasureMedPct(state) / 100);
     // Trọng thương sau một lần độ kiếp hỏng (docs/realm-prep/ mục 6.1):
     // tốc độ thổ nạp giảm một nửa cho tới khi thương thế khép lại.
     if (state.flags && state.flags.trongThuong) r = Math.max(1, Math.floor(r / 2));
@@ -2337,7 +2350,7 @@
     if (state.unlocked.indexOf('voice') < 0) return state;
     var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
     if (cap) state.tuvi = Math.min(cap, state.tuvi + meditateRate(state) * seconds);
-    state.silence = silenceGain('meditate', seconds, state.silence);
+    state.silence = silenceGain('meditate', seconds, state.silence, state);
     // Ba trục độc lập (luật ranh giới của đợt công pháp): thổ nạp đồng
     // thời nuôi điểm tu luyện của tâm pháp đang vận hành, +2 điểm/giây —
     // điểm chỉ sinh từ hành động lặp, đầy trục này không chặn hai trục kia.
@@ -2374,6 +2387,7 @@
   function swordPower(state) {
     var base = 18 + (state.stage || 0) * 3 + (state.realm || 0) * 10;
     base += weaponBonus(state).sword;
+    base += treasureSwordFlat(state); // pháp bảo Công cộng thẳng (Trấn Sơn Ấn) — cùng phễu nên Tổng lực chiến + thẻ Chỉ số tự phản ánh
     return base;
   }
   /* Chiêu kiếm theo tầng kiếm quyết (docs/congphap-prep mục 4/14.3):
@@ -2411,7 +2425,9 @@
     } else if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) {
       return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
     }
-    return { ok: true, power: Math.round(swordPower(state) * move.mult), hits: move.hits, move: move.id, moveName: move.name, techId: move.techId || 'that_tinh', fxId: move.fxId || null };
+    // Pháp bảo Công phần trăm (Phong Lôi Hoàn): nhân vào uy lực chiêu
+    // tại phễu castSword — mọi đường ra chiêu kiếm đều qua đây.
+    return { ok: true, power: Math.round(swordPower(state) * move.mult * (1 + treasureDmgPct(state) / 100)), hits: move.hits, move: move.id, moveName: move.name, techId: move.techId || 'that_tinh', fxId: move.fxId || null };
   }
   /* ---------------- Hồn Sư — trục thứ hai, giấu kín (chương 5) ----------------
      Giang Phàm là Hồn Sư nhị phẩm nhưng giấu kín thân phận (theo truyện).
@@ -2576,6 +2592,201 @@
     { tier: 5, cap: 400, price: 1500, name: 'Nhẫn Trữ Vật Thượng Phẩm', kind: 'nhan', icon: 'assets/items/nhan_thuong.png' },
     { tier: 6, cap: 700, price: 4000, name: 'Nhẫn Trữ Vật Cực Phẩm', kind: 'nhan', icon: 'assets/items/nhan_cuc.png' }
   ];
+  /* ================= PHÁP BẢO ĐEO ĐƯỢC (lệnh của Bui 04:01 ngày
+     2026-11-06 "làm cả hệ pháp bảo luôn"; docs/phap-bao-report.md) =====
+     Ba ô đeo (Công / Hộ thể / Phụ trợ) × 6 món gốc × 4 phẩm cấp = 24
+     định nghĩa. Mọi con số hiệu lực + tỉ lệ rơi + giá đổi cống hiến là
+     [ĐỀ XUẤT] tập trung ở bảng TREASURE_BASES / TREASURE_DROP_CHANCE /
+     TREASURE_MERIT_PRICES dưới đây để Bui chỉnh một chỗ.
+     TRẦN CỨNG: tổng giảm thương từ pháp bảo KHÔNG bao giờ vượt 20%
+     (TREASURE_DMG_CUT_CAP — khung Bui duyệt 2026-11-04) và trần này
+     TÁCH BẠCH với giảm lôi của hệ độ kiếp (TRIB_REDUCTION_CAP cùng các
+     mức cắt của Hộ Thể Đan / Tị Lôi Phù / Dẫn Lôi Pháp): hai hệ không
+     cộng trần, không qua cùng một phễu — pháp bảo chỉ nối vào phễu sát
+     thương chiến đấu (hurtPlayer ở lớp game), độ kiếp giữ đường riêng.
+     LƯU Ý TRÙNG TÊN (rà soát parent): ITEM_DEFS đã có "Tụ Linh Ngọc"
+     (ngoc_tu_linh) — pháp khí truyện cho +5 tốc độ thổ nạp qua gương
+     gear trong meditateRate. Món phụ trợ thổ nạp của hệ này tên là
+     "Tụ Linh CHÂU" để phân biệt rõ; hai hiệu lực CỘNG DỒN (ngọc cũ là
+     vật phẩm truyện có sẵn, không hệ nào vô hiệu hóa nó). */
+  var TREASURE_GRADES = [
+    { grade: 1, key: 'ha', label: 'Hạ phẩm', trim: 'đồng', trimColor: '#b0793f' },
+    { grade: 2, key: 'trung', label: 'Trung phẩm', trim: 'bạc', trimColor: '#cfd4d9' },
+    { grade: 3, key: 'thuong', label: 'Thượng phẩm', trim: 'vàng', trimColor: '#f2c14e' },
+    { grade: 4, key: 'cuc', label: 'Cực phẩm', trim: 'ngọc', trimColor: '#63d6a4' }
+  ];
+  var TREASURE_BASES = [
+    { base: 'tran_son_an', name: 'Trấn Sơn Ấn', slot: 'cong', glyph: 'Ấn', fxKind: 'swordFlat', fxValues: [4, 8, 13, 20] },
+    { base: 'phong_loi_hoan', name: 'Phong Lôi Hoàn', slot: 'cong', glyph: 'Hoàn', fxKind: 'dmgPct', fxValues: [3, 6, 10, 15] },
+    { base: 'huyen_quang_kinh', name: 'Huyền Quang Kính', slot: 'ho_the', glyph: 'Kính', fxKind: 'dmgCut', fxValues: [4, 8, 12, 16] },
+    { base: 'kim_cuong_chau', name: 'Kim Cương Châu', slot: 'ho_the', glyph: 'Châu', fxKind: 'hpFlat', fxValues: [30, 70, 120, 200] },
+    { base: 'tu_linh_chau', name: 'Tụ Linh Châu', slot: 'phu_tro', glyph: 'Châu', fxKind: 'medPct', fxValues: [5, 10, 16, 24] },
+    { base: 'tru_am_binh', name: 'Trữ Âm Bình', slot: 'phu_tro', glyph: 'Bình', fxKind: 'silPct', fxValues: [10, 20, 30, 45] }
+  ];
+  var TREASURE_DMG_CUT_CAP = 0.20; // trần cứng giảm thương pháp bảo (khung duyệt 2026-11-04)
+  var TREASURE_DROP_CHANCE = 0.12; // [ĐỀ XUẤT] tỉ lệ rơi pháp bảo mỗi lần hạ boss
+  var TREASURE_MERIT_PRICES = { 1: 60, 2: 150, 3: 400 }; // [ĐỀ XUẤT] điểm cống hiến theo phẩm; Cực phẩm không bán
+  var TREASURE_DEFS = {};
+  TREASURE_BASES.forEach(function (b) {
+    TREASURE_GRADES.forEach(function (g) {
+      var id = 'pb_' + b.base + '_' + g.grade;
+      TREASURE_DEFS[id] = { id: id, base: b.base, name: b.name, slot: b.slot, grade: g.grade,
+        gradeKey: g.key, gradeLabel: g.label, fxKind: b.fxKind, fxValue: b.fxValues[g.grade - 1],
+        icon: 'assets/icons/' + id + '.png' };
+    });
+  });
+  // Pháp bảo là vật phẩm túi loại riêng 'phap_bao' (không xếp chồng):
+  // hợp nhất vào ITEM_DEFS ngay tại tải mô-đun để mọi đường túi/panel
+  // đọc cùng một bảng như mọi vật phẩm khác.
+  Object.keys(TREASURE_DEFS).forEach(function (id) {
+    var td = TREASURE_DEFS[id], bd = null;
+    for (var i = 0; i < TREASURE_BASES.length; i++) if (TREASURE_BASES[i].base === td.base) bd = TREASURE_BASES[i];
+    ITEM_DEFS[id] = { name: td.name + ' · ' + td.gradeLabel, type: 'phap_bao', stack: false,
+      glyph: bd ? bd.glyph : 'Bảo', icon: td.icon, treasure: { slot: td.slot, grade: td.grade } };
+  });
+  function treasureFxText(td) {
+    if (!td) return '';
+    switch (td.fxKind) {
+      case 'swordFlat': return 'Sức kiếm +' + td.fxValue;
+      case 'dmgPct': return 'Sát thương chiêu +' + td.fxValue + '%';
+      case 'dmgCut': return 'Giảm sát thương phải chịu ' + td.fxValue + '%';
+      case 'hpFlat': return 'Máu tối đa +' + td.fxValue;
+      case 'medPct': return 'Tu vi thổ nạp +' + td.fxValue + '%';
+      case 'silPct': return 'Hồi Tĩnh Âm +' + td.fxValue + '%';
+    }
+    return '';
+  }
+  function defaultTreasures() { return { cong: null, ho_the: null, phu_tro: null }; }
+  /* Chuẩn hóa state.treasures: đúng ba khóa ô; mỗi giá trị phải là id
+     pháp bảo có thật VÀ thuộc đúng ô của nó (một món không thể nằm hai
+     ô — khóa theo def.slot nên kiểm này tự loại trùng). Save cũ thiếu
+     trường thì dựng ba ô trống. */
+  function ensureTreasures(state) {
+    if (!state || typeof state !== 'object') return defaultTreasures();
+    var t = (state.treasures && typeof state.treasures === 'object' && !Array.isArray(state.treasures)) ? state.treasures : null;
+    if (!t) { state.treasures = defaultTreasures(); return state.treasures; }
+    ['cong', 'ho_the', 'phu_tro'].forEach(function (slot) {
+      var v = t[slot];
+      if (typeof v !== 'string' || !TREASURE_DEFS[v] || TREASURE_DEFS[v].slot !== slot) t[slot] = null;
+    });
+    return state.treasures;
+  }
+  // Đọc phòng thủ (KHÔNG sửa state): định nghĩa pháp bảo đang đeo ở ô.
+  function treasureEquippedDef(state, slot) {
+    if (!state || !state.treasures || typeof state.treasures !== 'object') return null;
+    var id = state.treasures[slot];
+    if (typeof id !== 'string') return null;
+    var td = TREASURE_DEFS[id];
+    return (td && td.slot === slot) ? td : null;
+  }
+  function treasureFxOf(state, slot, fxKind) {
+    var td = treasureEquippedDef(state, slot);
+    return (td && td.fxKind === fxKind) ? td.fxValue : 0;
+  }
+  function treasureSwordFlat(state) { return treasureFxOf(state, 'cong', 'swordFlat'); }
+  function treasureDmgPct(state) { return treasureFxOf(state, 'cong', 'dmgPct'); }
+  // Giảm thương pháp bảo: qua trần cứng 20% tại ĐÂY (phễu duy nhất mọi
+  // nơi đọc) — kể cả khi sau này một ô đeo được nhiều món, tổng vẫn bị
+  // kẹp. Trần này không liên quan giảm lôi độ kiếp (hệ riêng).
+  function treasureDmgCut(state) {
+    var pct = treasureFxOf(state, 'ho_the', 'dmgCut');
+    return Math.min(TREASURE_DMG_CUT_CAP, Math.max(0, pct) / 100);
+  }
+  function treasureHpFlat(state) { return treasureFxOf(state, 'ho_the', 'hpFlat'); }
+  function treasureMedPct(state) { return treasureFxOf(state, 'phu_tro', 'medPct'); }
+  function treasureSilPct(state) { return treasureFxOf(state, 'phu_tro', 'silPct'); }
+  // Máu tối đa là TRƯỜNG state.hpMax (+20 mỗi đột phá) — đeo/tháo món
+  // cộng máu phải cộng/trừ thẳng vào trường theo đúng delta, kẹp sàn
+  // 20 và kẹp máu hiện tại không vượt trần mới.
+  function treasureAdjustMaxHp(state, delta) {
+    if (!state || !delta) return;
+    state.hpMax = Math.max(20, (typeof state.hpMax === 'number' && state.hpMax > 0 ? state.hpMax : 100) + delta);
+    if (typeof state.maxHp === 'number' && state.maxHp > 0) state.maxHp = Math.max(20, state.maxHp + delta);
+    var cap = partyPlayerMaxHp(state);
+    if (typeof state.hp === 'number' && state.hp > cap) state.hp = cap;
+  }
+  /* Đeo: chuyển 1 món từ túi vào ô của nó (giải phóng 1 ô túi). Ô đang
+     có món khác thì món cũ quay về túi (chỗ vừa trống do món mới rời
+     túi nên luôn chứa được — vẫn kiểm bagAdd và khôi phục nếu lỗi). */
+  function equipTreasure(state, itemId) {
+    var td = TREASURE_DEFS[itemId];
+    if (!td) return { ok: false, reason: 'Đó không phải pháp bảo đeo được.' };
+    if (bagCount(state, itemId) < 1) return { ok: false, reason: 'Trong túi không có ' + ITEM_DEFS[itemId].name + '.' };
+    var t = ensureTreasures(state);
+    var old = t[td.slot];
+    if (old === itemId) return { ok: false, reason: 'Đang đeo ' + ITEM_DEFS[itemId].name + ' rồi.' };
+    var rm = bagRemove(state, itemId, 1);
+    if (!rm.ok) return rm;
+    if (old) {
+      var ra = bagAdd(state, old, 1);
+      if (!ra.ok) { // khôi phục nguyên trạng: món mới về túi, ô giữ món cũ
+        bagOf(state).items[itemId] = bagCount(state, itemId) + 1; syncBagMirrors(state);
+        return { ok: false, reason: ra.reason };
+      }
+    }
+    var hpDelta = (td.fxKind === 'hpFlat' ? td.fxValue : 0) - (old && TREASURE_DEFS[old].fxKind === 'hpFlat' ? TREASURE_DEFS[old].fxValue : 0);
+    t[td.slot] = itemId;
+    treasureAdjustMaxHp(state, hpDelta);
+    return { ok: true, slot: td.slot, equipped: itemId, returned: old || null };
+  }
+  /* Tháo: trả món về túi — túi đầy thì chặn kèm lý do (không mất món). */
+  function unequipTreasure(state, slot) {
+    var t = ensureTreasures(state);
+    var id = t[slot];
+    if (!id) return { ok: false, reason: 'Ô này đang trống.' };
+    var chk = bagCanAdd(state, id, 1);
+    if (!chk.ok) return { ok: false, reason: 'Không tháo được: ' + chk.reason };
+    var ra = bagAdd(state, id, 1);
+    if (!ra.ok) return { ok: false, reason: ra.reason };
+    t[slot] = null;
+    var td = TREASURE_DEFS[id];
+    if (td && td.fxKind === 'hpFlat') treasureAdjustMaxHp(state, -td.fxValue);
+    return { ok: true, slot: slot, item: id };
+  }
+  function treasurePool(grade) {
+    var out = [];
+    Object.keys(TREASURE_DEFS).forEach(function (id) { if (TREASURE_DEFS[id].grade === grade) out.push(id); });
+    out.sort();
+    return out;
+  }
+  function treasureGradeForBand(band) { return band === 'kimdan' ? 3 : (band === 'trucco' ? 2 : 1); }
+  function treasureGradeForOrdinal(ordinal) { return ordinal >= 300 ? 3 : (ordinal >= 200 ? 2 : 1); }
+  /* Rút rơi pháp bảo theo hạt giống phiên (như rút yêu đan: cùng khóa
+     hạt giống luôn cho cùng kết quả — kiểm thử gieo được, nạp lại giữa
+     phiên không quay lại kết quả khác). seedKey là khóa claim của lần
+     hạ boss (boss dã ngoại: khóa chu kỳ; bí cảnh: khóa phiên). */
+  function rollTreasureDrop(seedKey, grade) {
+    if (rollSessionValue(seedKey, ':pbdrop') >= TREASURE_DROP_CHANCE) return null;
+    var pool = treasurePool(grade);
+    if (!pool.length) return null;
+    var rng = grindRng(grindHash32(String(seedKey) + ':pbitem'));
+    return pool[Math.floor(rng() * pool.length) % pool.length];
+  }
+  /* Đổi điểm cống hiến lấy pháp bảo tại quản sự tông: giá theo phẩm
+     (TREASURE_MERIT_PRICES), Cực phẩm KHÔNG đổi. Món rút ngẫu nhiên
+     trong phẩm bằng hạt giống ngày + số thứ tự cày (mỗi lần đổi một
+     kết quả khác nhau, vẫn truy vết được). Trừ điểm ĐÚNG MỘT LẦN và
+     chỉ khi món chắc chắn vào túi — lỗi thì hoàn điểm. */
+  function treasureMeritExchange(state, grade) {
+    var price = TREASURE_MERIT_PRICES[grade];
+    if (!price) return { ok: false, reason: 'Pháp bảo Cực phẩm không đổi bằng điểm cống hiến — chỉ rơi từ boss cuối bí cảnh tổ đội.' };
+    var have = (typeof state.sectMerit === 'number' && isFinite(state.sectMerit)) ? Math.floor(state.sectMerit) : 0;
+    if (have < price) return { ok: false, reason: 'Chưa đủ điểm cống hiến (đang có ' + fmtNum(have) + ', cần ' + price + '). Hãy làm việc tông môn để tích thêm.' };
+    var pool = treasurePool(grade);
+    if (!pool.length) return { ok: false, reason: 'Không có pháp bảo ở phẩm này.' };
+    var g = ensureGrind(state); g.seq += 1;
+    var start = Math.floor(grindRng(grindHash32('pbx:d' + state.dayCount + ':n' + g.seq))() * pool.length);
+    var cand = null;
+    for (var i = 0; i < pool.length; i++) {
+      var c = pool[(start + i) % pool.length];
+      if (bagCanAdd(state, c, 1).ok) { cand = c; break; }
+    }
+    if (!cand) return { ok: false, reason: 'Túi không chứa thêm được pháp bảo phẩm này (túi đầy, hoặc các món phẩm này đều đã có trong túi).' };
+    state.sectMerit = have - price;
+    var ra = bagAdd(state, cand, 1);
+    if (!ra.ok) { state.sectMerit = have; return { ok: false, reason: ra.reason }; }
+    return { ok: true, item: cand, price: price, meritLeft: state.sectMerit };
+  }
   function bagOf(state) {
     if (!state.bag || typeof state.bag !== 'object') state.bag = { tier: 1, items: {} };
     if (!state.bag.items || typeof state.bag.items !== 'object') state.bag.items = {};
@@ -2610,6 +2821,10 @@
     if (!chk.ok) return chk;
     var b = bagOf(state);
     b.items[id] = bagCount(state, id) + (n || 1);
+    // Kỷ lục tổng yêu đan thu được (đợt mở rộng bảng nhân vật): bagAdd
+    // là điểm nhận vật phẩm TRUNG TÂM duy nhất — mọi đường rơi/nhận/
+    // thưởng đều qua đây nên đếm tại đây là không漏.
+    if (/^yeu_dan_\d+$/.test(id)) addPlayStat(state, 'yeuDan', n || 1);
     syncBagMirrors(state);
     return { ok: true, count: b.items[id] };
   }
@@ -2685,6 +2900,10 @@
     // Đạt Luyện Khí tầng 1 = bắt đầu tu tiên chính thức: mở ví Linh Thạch —
     // tiền tệ của giới tu tiên (phàm nhân chỉ dùng lượng bạc trong lời thoại).
     if (state.realm === 1 && state.stage === 0) state.linhUnlocked = true;
+    // Sổ hành trình (đợt mở rộng bảng nhân vật): tryBreakthrough là
+    // điểm đột phá TRUNG TÂM duy nhất — cả đột phá thường lẫn đột phá
+    // đại cảnh giới sau thiên kiếp đều chốt qua hàm này.
+    journalAdd(state, 'breakthrough', 'Đột phá lên ' + realmName(state.realm, state.stage));
     return { ok: true, label: realmName(state.realm, state.stage) };
   }
 
@@ -3014,6 +3233,10 @@
     if (!(n > 0)) return { ok: false, reason: 'Số Linh Thạch cộng vào phải lớn hơn 0.' };
     if (!walletOpen(state)) return { ok: false, reason: 'Chưa bắt đầu tu tiên — Linh Thạch là tiền của giới tu tiên, phàm nhân chưa dùng được.' };
     state.linhThach = linhBalance(state) + n;
+    // Kỷ lục tổng Linh Thạch kiếm được (đợt mở rộng bảng nhân vật):
+    // addLinhThach là điểm cộng ví TRUNG TÂM duy nhất — grantReward và
+    // mọi đường thưởng đều chốt qua đây nên đếm tại đây là không漏.
+    addPlayStat(state, 'ltEarned', n);
     return { ok: true, balance: state.linhThach };
   }
   function spendLinhThach(state, n) {
@@ -3099,6 +3322,13 @@
     if (typeof state.flags.foodPatchDayDuongMon !== 'number') state.flags.foodPatchDayDuongMon = -1;
     if (typeof state.sectMerit !== 'number' || !isFinite(state.sectMerit) || state.sectMerit < 0) state.sectMerit = 0;
     else state.sectMerit = Math.floor(state.sectMerit);
+    // Đợt bảng nhân vật (2026-11-06): bộ đếm thống kê — save cũ thiếu thì dựng 0 (bắt đầu tính từ phiên bản này).
+    ensurePlayStats(state);
+    // Đợt mở rộng bảng nhân vật: sổ hành trình — save cũ thiếu thì dựng sổ rỗng (ghi từ phiên bản này).
+    ensureJournal(state);
+    // Đợt pháp bảo (2026-11-06): ba ô đeo — save cũ thiếu thì dựng trống; id lạ/sai ô bị dọn về null.
+    ensureTreasures(state);
+    if (typeof state.stats._playFrac !== 'number' || !isFinite(state.stats._playFrac)) state.stats._playFrac = 0;
     if (typeof state.flags.sectSeen !== 'boolean') state.flags.sectSeen = false;
     if (typeof state.flags.choreGo !== 'boolean') state.flags.choreGo = false;
     if (typeof state.flags.choreNuoc !== 'boolean') state.flags.choreNuoc = false;
@@ -3285,7 +3515,10 @@
     // nhận trùng; trường ltGiftJustGranted chỉ là tín hiệu để lớp giao diện
     // hiện thông báo một lần ngay sau khi nạp.
     if (state.flags.dummyBroken && !state.flags.ltGift && walletOpen(state)) {
-      state.linhThach = linhBalance(state) + LINH_GIFT_AMOUNT;
+      // Cộng qua addLinhThach — điểm cộng ví trung tâm duy nhất (đợt
+      // mở rộng bảng nhân vật hợp nhất đường vòng cộng thẳng này về
+      // cùng một cửa để kỷ lục tổng Linh Thạch kiếm được không漏).
+      addLinhThach(state, LINH_GIFT_AMOUNT);
       state.flags.ltGift = true;
       state.ltGiftJustGranted = true;
     }
@@ -5366,6 +5599,454 @@
     return [guideTrucCoChapter(state), guideFoodChapter(state), guideBiCanhChapter(state)];
   }
 
+  /* ================= BẢNG NHÂN VẬT ĐẦY ĐỦ (lệnh của Bui 00:47 ngày
+     2026-11-06: chạm ô tên góc trái mở bảng nhân vật dạng thẻ) =========
+     Mọi con số trong bảng ĐỌC THẲNG từ các hàm/bảng thật của game
+     (swordPower, weaponBonus, breakthroughInfo, trucCoChecklist,
+     TECHNIQUE_DEFS, BAG_TIERS, ví...) — lớp này chỉ TỔNG HỢP dữ kiện
+     thuần trên state, lớp game lo dựng thẻ. Chữ trong bảng là chữ giao
+     diện: không lồng tiếng, không nằm trong story.js.
+     Hai việc có ghi dữ kiện mới ở đợt này, đều khai rõ:
+     (1) ĐỔI TÊN: validateCharName phản chiếu đúng kiểm hợp lệ của
+     luồng tạo nhân vật (ô nhập tên ở màn tạo: maxlength 16 + cắt
+     khoảng trắng hai đầu; tên trống ở màn tạo thì rơi về tên mặc định
+     'Giang Phàm'). Đổi tên thì tên trống BỊ TỪ CHỐI thay vì rơi về mặc
+     định — giữ tên cũ an toàn hơn. Chống trùng tên TOÀN HỆ THỐNG là
+     việc của giai đoạn online (chơi đơn trên máy này không có danh
+     bạ chung để đối chiếu) — KHÔNG tự chế ở đây.
+     (2) BỘ ĐẾM THỐNG KÊ state.stats: game trước đây không đếm số
+     quái/boss đã hạ, số lần độ kiếp và thời gian chơi. Bộ đếm nhẹ
+     cộng tại đúng các điểm sự kiện hiện hành ở lớp game (killMonster,
+     tribSucceed, vòng lặp chính) và BẮT ĐẦU TÍNH TỪ PHIÊN BẢN NÀY —
+     quá khứ chơi trước đó không truy hồi được nên mọi số khởi đầu 0. */
+  var CHAR_NAME_MAX = 16; // khớp maxlength="16" của ô nhập tên ở màn hình tạo nhân vật
+  function validateCharName(raw) {
+    var name = (typeof raw === 'string' ? raw : '').trim();
+    if (!name) return { ok: false, reason: 'Tên không được để trống.' };
+    if (name.length > CHAR_NAME_MAX) return { ok: false, reason: 'Tên tối đa ' + CHAR_NAME_MAX + ' ký tự.' };
+    return { ok: true, name: name };
+  }
+  function renameCharacter(state, raw) {
+    if (!state) return { ok: false, reason: 'Chưa có nhân vật.' };
+    var v = validateCharName(raw);
+    if (!v.ok) return v;
+    state.name = v.name;
+    return { ok: true, name: v.name };
+  }
+  function defaultPlayStats() { return { kills: 0, elites: 0, bosses: 0, tribulations: 0, playSec: 0, maxHit: 0, ltEarned: 0, yeuDan: 0 }; }
+  function ensurePlayStats(state) {
+    if (!state || typeof state !== 'object') return defaultPlayStats();
+    if (!state.stats || typeof state.stats !== 'object') state.stats = defaultPlayStats();
+    var d = defaultPlayStats();
+    for (var k in d) {
+      var v = state.stats[k];
+      if (typeof v !== 'number' || !isFinite(v) || v < 0) state.stats[k] = d[k];
+    }
+    state.stats.playSec = Math.floor(state.stats.playSec);
+    return state.stats;
+  }
+  /* Cộng một sự kiện thống kê: key thuộc {kills, elites, bosses,
+     tribulations}; key lạ bị bỏ qua (không tự chế trường mới). */
+  function recordPlayStat(state, key) {
+    if (!state) return null;
+    var st = ensurePlayStats(state);
+    if (key !== 'kills' && key !== 'elites' && key !== 'bosses' && key !== 'tribulations') return st;
+    st[key] += 1;
+    return st;
+  }
+  /* Cộng dồn một khoản thống kê theo LƯỢNG (kỷ lục của đợt mở rộng
+     bảng nhân vật): 'ltEarned' = tổng Linh Thạch kiếm được — móc nằm
+     trong addLinhThach, điểm cộng ví TRUNG TÂM duy nhất; 'yeuDan' =
+     tổng yêu đan thu được — móc nằm trong bagAdd, điểm nhận vật phẩm
+     TRUNG TÂM duy nhất, chỉ tính các id yeu_dan_*. Khóa lạ bị bỏ qua
+     như recordPlayStat; khoản <= 0 không tính. */
+  function addPlayStat(state, key, n) {
+    if (!state) return null;
+    var st = ensurePlayStats(state);
+    if (key !== 'ltEarned' && key !== 'yeuDan') return st;
+    var v = Math.floor(Number(n) || 0);
+    if (v > 0) st[key] += v;
+    return st;
+  }
+  /* Ghi một GIÁ TRỊ kỷ lục (không cộng dồn): 'maxHit' = đòn đánh mạnh
+     nhất từng tung — chỉ nâng khi số mới lớn hơn số đã ghi. Điểm móc ở
+     lớp game là các hàm áp sát thương của người chơi (applyHitToMonster
+     và các làn đấu boss kịch bản). */
+  function recordPlayValue(state, key, value) {
+    if (!state) return null;
+    var st = ensurePlayStats(state);
+    if (key !== 'maxHit') return st;
+    var v = Math.floor(Number(value) || 0);
+    if (v > st.maxHit) st.maxHit = v;
+    return st;
+  }
+  /* Tích lũy thời gian chơi (giây thật của phiên, lớp game gọi theo
+     nhịp vòng lặp); lưu phần nguyên giây vào save. */
+  function accruePlayTime(state, seconds) {
+    if (!state) return 0;
+    var st = ensurePlayStats(state);
+    var dt = Number(seconds);
+    if (!isFinite(dt) || dt <= 0) return st.playSec;
+    st._playFrac = (typeof st._playFrac === 'number' && isFinite(st._playFrac) ? st._playFrac : 0) + dt;
+    var whole = Math.floor(st._playFrac);
+    if (whole > 0) { st.playSec += whole; st._playFrac -= whole; }
+    return st.playSec;
+  }
+  /* ================= SỔ HÀNH TRÌNH (đợt mở rộng bảng nhân vật) =====
+     state.journal = { entries: [{ at, type, text }], questSeen } — sổ
+     mốc lớn, ghi tại đúng các điểm sự kiện THẬT: 'breakthrough' ghi
+     ngay trong tryBreakthrough (mọi đường đột phá đều qua hàm đó);
+     'tribulation' và 'boss' móc ở lớp game tại tribSucceed và
+     killMonster (cùng chỗ bộ đếm thống kê); 'quest' do
+     journalSyncQuest phát hiện khi state.quest chuyển sang mốc
+     q*_done (vòng lặp chính gọi mỗi khung — điểm chuyển nhiệm vụ rải
+     hơn một trăm chỗ gán trong game.js nên phát hiện theo thay đổi là
+     đường trung tâm duy nhất không漏). 'at' = giây chơi tích lũy của
+     stats.playSec, cùng đồng hồ với thẻ thống kê. Giữ tối đa
+     JOURNAL_MAX entry gần nhất. Save cũ: sổ rỗng; lần đồng bộ đầu
+     tiên chỉ ghi mốc nhiệm vụ hiện tại làm nền (questSeen) mà KHÔNG
+     truy hồi sự kiện quá khứ — thẻ Hành trình ghi rõ điều này. */
+  var JOURNAL_MAX = 200;
+  function defaultJournal() { return { entries: [], questSeen: '' }; }
+  function ensureJournal(state) {
+    if (!state || typeof state !== 'object') return defaultJournal();
+    var j = state.journal;
+    if (!j || typeof j !== 'object' || !Array.isArray(j.entries) || typeof j.questSeen !== 'string') {
+      var kept = [];
+      if (j && typeof j === 'object' && Array.isArray(j.entries)) {
+        j.entries.forEach(function (e) {
+          if (e && typeof e === 'object' && typeof e.text === 'string' && typeof e.at === 'number' && isFinite(e.at) && e.at >= 0)
+            kept.push({ at: Math.floor(e.at), type: typeof e.type === 'string' ? e.type : '', text: e.text });
+        });
+      }
+      state.journal = { entries: kept.slice(-JOURNAL_MAX), questSeen: (j && typeof j.questSeen === 'string') ? j.questSeen : '' };
+      return state.journal;
+    }
+    if (j.entries.length > JOURNAL_MAX) j.entries = j.entries.slice(-JOURNAL_MAX);
+    return j;
+  }
+  function journalAdd(state, type, text) {
+    if (!state || typeof text !== 'string' || !text) return null;
+    var j = ensureJournal(state);
+    var e = { at: ensurePlayStats(state).playSec, type: String(type || ''), text: text };
+    j.entries.push(e);
+    if (j.entries.length > JOURNAL_MAX) j.entries = j.entries.slice(-JOURNAL_MAX);
+    return e;
+  }
+  function journalSyncQuest(state) {
+    if (!state) return null;
+    var j = ensureJournal(state);
+    var cur = typeof state.quest === 'string' ? state.quest : '';
+    if (!j.questSeen) { j.questSeen = cur; return null; }
+    if (cur === j.questSeen) return null;
+    j.questSeen = cur;
+    var m = /^q(\d*)_done$/.exec(cur);
+    if (!m) return null;
+    var n = m[1] === '' ? 1 : parseInt(m[1], 10);
+    return journalAdd(state, 'quest', 'Hoàn thành chương ' + n + ' của mạch truyện chính');
+  }
+
+  /* ================= HẢO CẢM — ĐỌC CHO THẺ QUAN HỆ =================
+     Dữ kiện hảo cảm sống ở state.affinity { npcId: điểm } do đợt
+     thanh module chạm nhân vật ghi khi tặng quà. Cây này có TRƯỚC đợt
+     đó nên trường thường CHƯA tồn tại — mọi đường đọc phòng thủ:
+     không có trường thì thẻ Quan hệ hiện trạng thái trống đúng sự
+     thật; khi đợt thanh module gộp vào, dữ kiện tự chảy qua đây
+     không cần sửa thêm. Danh xưng 4 mốc theo brief đã duyệt. */
+  var AFFINITY_BANDS = [
+    { min: 100, name: 'Tri kỷ' },
+    { min: 50, name: 'Thân thiết' },
+    { min: 20, name: 'Thân quen' },
+    { min: 0, name: 'Xa lạ' }
+  ];
+  function affinityBand(points) {
+    var p = Math.max(0, Math.floor(Number(points) || 0));
+    for (var i = 0; i < AFFINITY_BANDS.length; i++) if (p >= AFFINITY_BANDS[i].min) return AFFINITY_BANDS[i].name;
+    return 'Xa lạ';
+  }
+  var _npcNameIndex = null;
+  function npcNameIndex() {
+    if (_npcNameIndex) return _npcNameIndex;
+    var idx = {};
+    NPCS.forEach(function (n) { if (n && n.id && n.name && !idx[n.id]) idx[n.id] = n.name; });
+    for (var mid in MAPS) {
+      var list = MAPS[mid] && MAPS[mid].npcs;
+      if (!Array.isArray(list)) continue;
+      list.forEach(function (n) { if (n && n.id && n.name && !idx[n.id]) idx[n.id] = n.name; });
+    }
+    _npcNameIndex = idx;
+    return idx;
+  }
+  /* Thọ nguyên: cây này có trước cung V (hệ payThoNguyen chưa gộp) —
+     đọc phòng thủ đúng hai hình dạng trường có thể có sau khi gộp;
+     chưa có thì trả null để thẻ Tu luyện ẨN mục, không hiện số 0 giả. */
+  function charLifespanOf(state) {
+    var v = null;
+    if (typeof state.thoNguyen === 'number' && isFinite(state.thoNguyen) && state.thoNguyen >= 0) v = state.thoNguyen;
+    else if (state.flags && typeof state.flags.thoNguyen === 'number' && isFinite(state.flags.thoNguyen) && state.flags.thoNguyen >= 0) v = state.flags.thoNguyen;
+    return v == null ? null : { value: Math.floor(v) };
+  }
+  function charRelationshipsOf(state) {
+    var aff = (state.affinity && typeof state.affinity === 'object' && !Array.isArray(state.affinity)) ? state.affinity : null;
+    if (!aff) return { recorded: false, list: [] };
+    var idx = npcNameIndex();
+    var list = [];
+    Object.keys(aff).forEach(function (id) {
+      var p = aff[id];
+      if (typeof p !== 'number' || !isFinite(p) || p < 0) return;
+      list.push({ id: id, name: idx[id] || id, points: Math.floor(p), band: affinityBand(p) });
+    });
+    list.sort(function (a, b) { return (b.points - a.points) || (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)); });
+    return { recorded: true, list: list };
+  }
+  var BC_BAND_LABELS = { luyenkhi: 'Dải Luyện Khí', trucco: 'Dải Trúc Cơ', kimdan: 'Dải Kim Đan' };
+  function charRealmsOf(state) {
+    var sr = ensureSecretRealms(state);
+    var list = [];
+    Object.keys(SECRET_REALM_DEFS).forEach(function (id) {
+      var def = SECRET_REALM_DEFS[id], e = sr.realms[id] || {};
+      var unlocked = e.unlocked === true;
+      var extra = null;
+      if (id === 'bc_tran_tam_sau' && unlocked && !bcTranTamSauOpen(state)) extra = 'Cần thông quan Tầng Ngoài trước';
+      else if (def.repeatQuest && unlocked && e.firstClear && !questReached(state, def.repeatQuest)) extra = 'Lượt lặp mở sau mốc truyện ' + def.repeatQuest;
+      list.push({ id: id, name: def.name, band: BC_BAND_LABELS[def.band] || def.band, unlocked: unlocked,
+        firstClear: e.firstClear === true, totalClears: e.totalClears || 0, extraLocked: extra });
+    });
+    return { poolLeft: bcPoolLeft(state), poolMax: BC_POOL_MAX, list: list };
+  }
+  function charWildBossesOf(state) {
+    return Object.keys(BOSS_DEFS).map(function (id) {
+      var def = BOSS_DEFS[id], bs = bossStatus(state, id);
+      return { id: id, name: def.name, title: def.title || '', cycleDays: def.cycleDays, state: bs.state, daysLeft: bs.daysLeft };
+    });
+  }
+  /* Ngoại hình: chân dung lớn là ảnh chân dung sẵn có của game
+     (assets/portraits/player_nam|player_nu.png — cùng tệp hộp thoại
+     dùng). Tóc bạc: cờ chương 35 thuộc cung V chưa có trên cây này —
+     đọc phòng thủ state.flags.silverHair / state.silverHair; chưa có
+     cờ nào thì hiện 'Tóc đen' đúng sự thật. Ngự kiếm đọc flyStage
+     phòng thủ kèm cờ flyLearned như flyUnlocked của lớp game. */
+  function charAppearanceOf(state, wb) {
+    var gender = state.gender === 'nu' ? 'nu' : 'nam';
+    var flyStage = (state.flags && typeof state.flags.flyStage === 'number' && isFinite(state.flags.flyStage)) ? Math.floor(state.flags.flyStage) : null;
+    var silver = !!((state.flags && state.flags.silverHair === true) || state.silverHair === true);
+    return {
+      portrait: 'assets/portraits/player_' + gender + '.png',
+      genderLabel: gender === 'nu' ? 'Nữ' : 'Nam',
+      hairLabel: silver ? 'Tóc bạc' : 'Tóc đen',
+      weapon: wb && wb.id ? { id: wb.id, name: ITEM_DEFS[wb.id].name, sword: wb.sword, word: wb.word } : null,
+      fly: { learned: !!(state.flags && (state.flags.flyLearned || (state.flags.flyStage | 0) >= 2)), stage: flyStage }
+    };
+  }
+
+  /* ================= THẺ TRANG BỊ — NGƯỜI GIẤY (mở rộng đợt 2) =====
+     TỔNG LỰC CHIẾN: số HIỂN THỊ thuần, công thức khai báo cố định:
+       lực chiến = sức mạnh kiếm × 10 + máu tối đa + Tĩnh Âm tối đa
+                   + thứ bậc cảnh giới (realmOrdinal)
+     Mọi thành phần đọc từ hàm thật (swordPower, partyPlayerMaxHp,
+     SILENCE_MAX, realmOrdinal). Số này KHÔNG tham gia bất kỳ công
+     thức chơi nào — chỉ để người chơi nhìn một con số tổng quan. */
+  function combatPowerOf(state) {
+    if (!state) return 0;
+    return swordPower(state) * 10 + partyPlayerMaxHp(state) + SILENCE_MAX + realmOrdinal(state);
+  }
+  /* Ba ô pháp bảo (Công / Hộ thể / Phụ trợ): hệ pháp bảo là đợt riêng
+     làm SAU trên chính cây này — trên cây hiện tại state.treasures
+     CHƯA tồn tại. Đọc phòng thủ đa hình (khóa vai trò theo vài tên có
+     thể có, giá trị dạng id chuỗi hoặc { id }/{ itemId }/{ name }) để
+     khi đợt pháp bảo chốt hình dạng thì dữ kiện chảy vào; chưa có dữ
+     kiện thì cả ba ô item = null và lớp hiển thị hiện trạng thái trống
+     đúng sự thật. TUYỆT ĐỐI không bịa vật phẩm. */
+  var TREASURE_SLOTS = [
+    { key: 'cong', label: 'Pháp bảo Công', keys: ['cong', 'attack', 'offense', 'tan_cong'] },
+    { key: 'ho_the', label: 'Pháp bảo Hộ thể', keys: ['ho_the', 'hoThe', 'defense', 'phong_thu'] },
+    { key: 'phu_tro', label: 'Pháp bảo Phụ trợ', keys: ['phu_tro', 'phuTro', 'support', 'ho_tro'] }
+  ];
+  function charTreasuresOf(state) {
+    var t = (state.treasures && typeof state.treasures === 'object' && !Array.isArray(state.treasures)) ? state.treasures : null;
+    var slots = TREASURE_SLOTS.map(function (sd) {
+      var item = null;
+      if (t) {
+        for (var i = 0; i < sd.keys.length; i++) {
+          var v = t[sd.keys[i]];
+          if (v == null) continue;
+          var id = typeof v === 'string' ? v : (typeof v === 'object' ? (v.id || v.itemId || null) : null);
+          if (id && TREASURE_DEFS[id]) { var td2 = TREASURE_DEFS[id]; item = { id: id, name: ITEM_DEFS[id].name, grade: td2.grade, gradeLabel: td2.gradeLabel, fxText: treasureFxText(td2), icon: td2.icon }; }
+          else if (id && ITEM_DEFS[id]) item = { id: id, name: ITEM_DEFS[id].name };
+          else if (id) item = { id: id, name: id };
+          else if (typeof v === 'object' && typeof v.name === 'string') item = { id: null, name: v.name };
+          if (item) break;
+        }
+      }
+      return { key: sd.key, label: sd.label, item: item };
+    });
+    return { recorded: !!t, slots: slots };
+  }
+  /* Khối dữ kiện thẻ Trang bị: hình toàn thân lấy khung ĐỨNG MẶT
+     TRƯỚC (hàng dir8 = 0, cột 0 = khung đứng) của sheet nhân vật thật
+     theo giới tính — cùng tệp assets/chars mà khâu vẽ dùng, ô 96×120,
+     khổ sheet 2400×960 như charSrc của lớp game. Ô vật chứa đọc
+     phòng thủ trường tên tầng trong BAG_TIERS (đợt túi/nhẫn trữ vật
+     chưa có trên cây này): có trường name thì trả, chưa có thì null
+     để lớp hiển thị ghi "Túi trữ vật — tầng N" đúng sự thật. */
+  function charEquipOf(state, wb, bag) {
+    var gender = state.gender === 'nu' ? 'nu' : 'nam';
+    var inBag = [];
+    var items = (bag && bag.items) || {};
+    Object.keys(items).forEach(function (id) {
+      var def = ITEM_DEFS[id];
+      if (!def || !(items[id] > 0)) return;
+      if (typeof def.swordBonus !== 'number' && typeof def.wordBonus !== 'number') return;
+      inBag.push({ id: id, name: def.name, sword: def.swordBonus || 0, word: def.wordBonus || 0, equipped: wb.id === id });
+    });
+    inBag.sort(function (a, b) { return ((b.sword + b.word) - (a.sword + a.word)) || (a.name < b.name ? -1 : 1); });
+    var tierDef = BAG_TIERS[bag.tier] || BAG_TIERS[1] || {};
+    return {
+      figure: { sheet: 'assets/chars/player_' + gender + '.png', cellW: 96, cellH: 120, sheetW: 2400, sheetH: 960,
+        silver: !!((state.flags && state.flags.silverHair === true) || state.silverHair === true) },
+      sword: { equipped: wb.id ? { id: wb.id, name: ITEM_DEFS[wb.id].name, sword: wb.sword, word: wb.word, glyph: ITEM_DEFS[wb.id].glyph || '' } : null, inBag: inBag },
+      fly: { learned: !!(state.flags && (state.flags.flyLearned || (state.flags.flyStage | 0) >= 2)),
+        stage: (state.flags && typeof state.flags.flyStage === 'number' && isFinite(state.flags.flyStage)) ? Math.floor(state.flags.flyStage) : null },
+      storage: { tier: bag.tier, cap: bagCap(state), unlocked: !!(state.flags && state.flags.bagUnlocked),
+        name: (typeof tierDef.name === 'string' && tierDef.name) ? tierDef.name : null },
+      treasures: charTreasuresOf(state),
+      treasureBag: charTreasureBagOf(state),
+      aura: charAuraOf(state)
+    };
+  }
+  /* Pháp bảo đang nằm trong TÚI, nhóm theo ô — danh sách ứng viên cho
+     khung chọn đeo của thẻ Trang bị (chỉ món còn trong túi; món đang
+     đeo không nằm ở đây). */
+  function charTreasureBagOf(state) {
+    var bag = bagOf(state), out = { cong: [], ho_the: [], phu_tro: [] };
+    Object.keys(bag.items).forEach(function (id) {
+      var td = TREASURE_DEFS[id];
+      if (!td || !(bag.items[id] > 0)) return;
+      out[td.slot].push({ id: id, name: ITEM_DEFS[id].name, grade: td.grade, gradeLabel: td.gradeLabel,
+        fxText: treasureFxText(td), icon: td.icon, count: bag.items[id] });
+    });
+    ['cong', 'ho_the', 'phu_tro'].forEach(function (slot) {
+      out[slot].sort(function (a, b) { return (b.grade - a.grade) || (a.name < b.name ? -1 : 1); });
+    });
+    return out;
+  }
+  /* Hào quang sau hình nhân vật ở thẻ Trang bị: phẩm CAO NHẤT đang đeo
+     quyết định — Hạ phẩm không quầng, Trung bạc, Thượng vàng, Cực ngọc.
+     Chỉ là dữ kiện hiển thị của bảng, không vẽ vào thế giới. */
+  var TREASURE_AURA = { bac: '190,205,225', vang: '245,205,90', ngoc: '110,230,175' };
+  function charAuraOf(state) {
+    var best = 0;
+    ['cong', 'ho_the', 'phu_tro'].forEach(function (slot) {
+      var td = treasureEquippedDef(state, slot);
+      if (td && td.grade > best) best = td.grade;
+    });
+    if (best >= 4) return { grade: best, key: 'ngoc', color: TREASURE_AURA.ngoc };
+    if (best === 3) return { grade: best, key: 'vang', color: TREASURE_AURA.vang };
+    if (best === 2) return { grade: best, key: 'bac', color: TREASURE_AURA.bac };
+    return { grade: best, key: 'none', color: null };
+  }
+
+  /* Dữ kiện trọn bảng nhân vật từ state — nguồn sự thật duy nhất cho
+     lớp hiển thị. Trường nào game không có dữ kiện thật thì trả null/
+     rỗng để lớp hiển thị BỎ mục đó thay vì bịa (thọ nguyên và danh
+     hiệu người chơi: cây này không theo dõi — xem báo cáo đợt). */
+  function charPanelData(state) {
+    if (!state) return null;
+    var r = REALMS[state.realm] || REALMS[0];
+    var info = breakthroughInfo(state);
+    var wb = weaponBonus(state);
+    var st = ensurePlayStats(state);
+    var bag = bagOf(state);
+    var nextTier = BAG_TIERS[bag.tier + 1] || null;
+    // Điều kiện đột phá cấp tiếp theo: dòng tu vi + các điều kiện phụ
+    // của breakthroughInfo; khi đích là Trúc Cơ thì kèm danh sách kiểm
+    // công thức đan của Sổ Chỉ Dẫn (cùng nguồn trucCoChecklist).
+    var conditions = [];
+    if (info && info.kind !== 'none' && info.tuviNeed) {
+      conditions.push({ id: 'tuvi', label: 'Tu vi đầy trần ' + r.name + (state.realm === 0 ? '' : ' ' + r.stages[Math.min(state.stage, r.stages.length - 1)]),
+        cur: info.tuviCur, need: info.tuviNeed, ok: info.tuviOk });
+    }
+    if (info) info.conditions.forEach(function (c) {
+      conditions.push({ id: c.id, label: c.label, ok: !!c.ok, hint: c.hint || '' });
+    });
+    var trucCo = null;
+    if (state.realm === 1 && state.stage >= REALMS[1].stages.length - 1) trucCo = trucCoChecklist(state);
+    // Công pháp đã học: đọc state.techniques + TECHNIQUE_DEFS thật.
+    var techs = [];
+    if (state.techniques && typeof state.techniques === 'object') {
+      Object.keys(state.techniques).forEach(function (id) {
+        var def = TECHNIQUE_DEFS[id], t = state.techniques[id];
+        if (!def || !t) return;
+        var nextXp = null;
+        if (def.tiers && def.tiers[t.tier + 1]) nextXp = def.tiers[t.tier + 1].xp;
+        techs.push({ id: id, name: def.name, kind: def.kind || '', tier: t.tier,
+          xp: (typeof t.xp === 'number' ? t.xp : 0), nextXp: nextXp,
+          active: state.activeMethod === id });
+      });
+    }
+    techs.sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+    var moves = availableSwordMoves(state).map(function (mv) {
+      return { id: mv.id, name: mv.name, mult: mv.mult, hits: mv.hits };
+    });
+    var words = WORD_SKILLS.map(function (w) {
+      return { id: w.id, word: w.word, cost: w.cost, basePower: w.basePower,
+        power: wordPower(w, Math.max(0, Math.min(SILENCE_MAX, state.silence || 0))),
+        unlocked: !!(state.unlocked && state.unlocked.indexOf(w.unlock) >= 0) };
+    });
+    return {
+      name: state.name || 'Giang Phàm',
+      gender: state.gender === 'nu' ? 'nu' : 'nam',
+      realmLabel: realmName(state.realm, state.stage),
+      realm: state.realm, stage: state.stage,
+      tuviCur: Math.floor(state.tuvi || 0), tuviNeed: r.tuviNext || null,
+      hpCur: Math.max(0, Math.floor(state.hp || 0)), hpMax: partyPlayerMaxHp(state),
+      silenceCur: Math.floor(Math.max(0, Math.min(SILENCE_MAX, state.silence || 0))), silenceMax: SILENCE_MAX,
+      linhCan: (state.flags && state.flags.measured) ? 'Vô Cực Linh Căn' : 'Chưa trắc linh căn',
+      breakthrough: info ? { kind: info.kind, targetLabel: info.targetLabel, tuviOk: info.tuviOk,
+        tribulation: info.tribulation ? { bolts: info.tribulation.bolts.length, open: !!info.tribulationOpen } : null } : null,
+      conditions: conditions, trucCo: trucCo,
+      stats: {
+        swordPower: swordPower(state),
+        weaponSword: wb.sword, weaponWord: wb.word,
+        meditateRate: meditateRate(state),
+        silenceRate: SILENCE_RATES.meditate
+      },
+      weapon: wb.id ? { id: wb.id, name: ITEM_DEFS[wb.id].name, sword: wb.sword, word: wb.word } : null,
+      techniques: techs, swordMoves: moves,
+      activeMethod: state.activeMethod || null,
+      wordSkills: words,
+      ledgerCount: Array.isArray(state.spokeLedger) ? state.spokeLedger.length : 0,
+      timesSpoken: state.timesSpoken || 0,
+      soulRank: (typeof state.soulRank === 'number' && state.soulRank > 0) ? state.soulRank : 0,
+      flyLearned: !!(state.flags && (state.flags.flyLearned || (state.flags.flyStage | 0) >= 2)),
+      bag: { unlocked: !!(state.flags && state.flags.bagUnlocked), tier: bag.tier,
+        used: bagUsed(state), cap: bagCap(state),
+        /* NỐI KHI GỘP vào cây chính (2026-11-06): tên vật chứa đọc từ
+           trường name của BAG_TIERS (đợt Túi Trữ Vật + Nhẫn Trữ Vật đã
+           live a2cd62e trên cây chính) và số dư ví Bạc phàm tục qua
+           silverBalance (đợt foodfix đã live) — hai dòng thẻ Túi mà đợt
+           bảng nhân vật phải bỏ trên cây guide vì chưa có dữ kiện. */
+        container: (BAG_TIERS[bag.tier] || {}).name || null,
+        silver: silverBalance(state),
+        next: nextTier ? { tier: nextTier.tier, cap: nextTier.cap, price: nextTier.price, name: nextTier.name || null } : null },
+      linhThach: { open: walletOpen(state), balance: linhBalance(state) },
+      sect: { joined: questReached(state, 'q7_done'), name: 'Thanh Vân Tông', merit: Math.floor(state.sectMerit || 0) },
+      play: { kills: st.kills, elites: st.elites, bosses: st.bosses, tribulations: st.tribulations, playSec: st.playSec, dayCount: state.dayCount || 0 },
+      /* Đợt mở rộng bảng nhân vật: kỷ lục + các thẻ/mục mới — mọi số
+         đọc thẳng từ cùng các hàm/dữ kiện thật như trên. */
+      records: { maxHit: st.maxHit, ltEarned: st.ltEarned, yeuDan: st.yeuDan },
+      tribItems: { hoTheDan: bagCount(state, 'ho_the_dan'), tiLoiPhu: bagCount(state, 'ti_loi_phu') },
+      lifespan: charLifespanOf(state),
+      relationships: charRelationshipsOf(state),
+      realms: charRealmsOf(state),
+      wildBosses: charWildBossesOf(state),
+      appearance: charAppearanceOf(state, wb),
+      journal: { entries: ensureJournal(state).entries.slice() },
+      combatPower: combatPowerOf(state),
+      equip: charEquipOf(state, wb, bag)
+    };
+  }
+
 
   /* ================= CUNG IV — KHỐI DỮ LIỆU + HÀM (chương 13–16) =================
      Toàn bộ điểm neo dữ liệu của đợt 1 cung IV nằm ở đây + các đăng ký
@@ -5700,6 +6381,22 @@
     sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
     TRUC_CO_FORMULA: TRUC_CO_FORMULA, GUIDE_TRUC_CO_UNLOCK_QUEST: GUIDE_TRUC_CO_UNLOCK_QUEST,
     guideTrucCoOpen: guideTrucCoOpen, trucCoChecklist: trucCoChecklist, guideChapters: guideChapters,
+    CHAR_NAME_MAX: CHAR_NAME_MAX, validateCharName: validateCharName, renameCharacter: renameCharacter,
+    defaultPlayStats: defaultPlayStats, ensurePlayStats: ensurePlayStats, recordPlayStat: recordPlayStat,
+    addPlayStat: addPlayStat, recordPlayValue: recordPlayValue,
+    JOURNAL_MAX: JOURNAL_MAX, defaultJournal: defaultJournal, ensureJournal: ensureJournal,
+    journalAdd: journalAdd, journalSyncQuest: journalSyncQuest,
+    AFFINITY_BANDS: AFFINITY_BANDS, affinityBand: affinityBand,
+    combatPowerOf: combatPowerOf, TREASURE_SLOTS: TREASURE_SLOTS,
+    TREASURE_DEFS: TREASURE_DEFS, TREASURE_GRADES: TREASURE_GRADES, TREASURE_BASES: TREASURE_BASES,
+    TREASURE_DMG_CUT_CAP: TREASURE_DMG_CUT_CAP, TREASURE_DROP_CHANCE: TREASURE_DROP_CHANCE, TREASURE_MERIT_PRICES: TREASURE_MERIT_PRICES,
+    defaultTreasures: defaultTreasures, ensureTreasures: ensureTreasures, treasureEquippedDef: treasureEquippedDef,
+    treasureFxText: treasureFxText, treasureSwordFlat: treasureSwordFlat, treasureDmgPct: treasureDmgPct,
+    treasureDmgCut: treasureDmgCut, treasureHpFlat: treasureHpFlat, treasureMedPct: treasureMedPct, treasureSilPct: treasureSilPct,
+    equipTreasure: equipTreasure, unequipTreasure: unequipTreasure,
+    treasurePool: treasurePool, treasureGradeForBand: treasureGradeForBand, treasureGradeForOrdinal: treasureGradeForOrdinal,
+    rollTreasureDrop: rollTreasureDrop, treasureMeritExchange: treasureMeritExchange,
+    accruePlayTime: accruePlayTime, charPanelData: charPanelData,
     FOOD_CD_SEC: FOOD_CD_SEC, FOOD_RECIPES: FOOD_RECIPES, foodDef: foodDef, foodIds: foodIds, foodCount: foodCount, bestFoodId: bestFoodId, eatFood: eatFood, buyFood: buyFood, cookFood: cookFood, gatherFoodPatch: gatherFoodPatch,
     SILVER_START: SILVER_START, silverBalance: silverBalance, buyFoodSilver: buyFoodSilver, tasteFood: tasteFood,
     sideGrindClaimedCount: sideGrindClaimedCount,

@@ -305,6 +305,22 @@
       <div id="guide-body"></div>
     </div>
 
+    <!-- Panel Bảng Nhân Vật (lệnh của Bui 00:47 ngày 2026-11-06): mở bằng
+         cách chạm vào khung nhân vật góc trên trái. Sáu thẻ; nội dung dựng
+         từ L.charPanelData(state) — dữ kiện thật trong logic.js; lớp game
+         chỉ dựng DOM. Chữ trong bảng là chữ giao diện, không lồng tiếng. -->
+    <div id="char-panel" class="hidden" role="dialog" aria-label="Bảng nhân vật">
+      <div class="set-head">
+        <span class="set-title">Bảng Nhân Vật</span>
+        <button id="char-close" class="btn wood" type="button" aria-label="Đóng bảng nhân vật">×</button>
+      </div>
+      <div id="char-tabs"></div>
+      <div id="char-body"></div>
+      <div class="char-foot">
+        <button id="char-settings-btn" class="btn wood" type="button">Cài đặt</button>
+      </div>
+    </div>
+
     <!-- Panel Bảng Cày (làn C, đợt bí cảnh + hệ cày): cùng tông panel túi,
          style inline theo #bag-panel vì css/style.css ngoài phạm vi làn này.
          Nội dung do mã game dựng động (renderGrindBoard). -->
