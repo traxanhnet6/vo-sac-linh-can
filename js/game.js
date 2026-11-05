@@ -880,6 +880,7 @@
   ASSETS.bgByMap.bc_kiemtrung = loadImg('assets/bg-bc_kiemtrung.png');
   ASSETS.bgByMap.bc_hoiphong_mo = loadImg('assets/bg-bc_hoiphong_mo.png');
   ASSETS.bgByMap.dai_dau_kiem = loadImg('assets/bg-dai_dau_kiem.png'); // Đài Đấu Kiếm (Mục F 2026-11-02): nền đá liền mạch sinh từ lưới thật, kiểm chứng bằng verify-bgs
+  ASSETS.bgByMap.thang_long_dai = loadImg('assets/bg-thang_long_dai.png'); // Đài Thăng Long (đợt tách bản đồ riêng 2026-11-05): đỉnh núi một chỏm + đài đấu kiếm, sinh bằng tools/paint-thang-long.py, kiểm chứng bằng verify-bgs
   CHAR_LOOKS.forEach(function (id) { ASSETS.chars[id] = loadImg('assets/chars/' + id + '.png'); });
   /* Cung IV đợt 1: sheet tấn công (gốc + biến thể kiếm chỉ) và sheet pháp
      quyết của người chơi — nạp cùng đợt, vẽ qua playerAnim (mục ARCIV_FX). */
@@ -1639,10 +1640,15 @@
     // BIỂN MÂY tông môn (gói phụ 12): các hõm giữa các đỉnh của Thanh Vân
     // Tông phủ mây trôi chậm — vẽ ngay trên nền, dưới mọi thực thể; neo
     // tại các vùng vực 'X' mới sơn nên mây nằm đúng hõm, không phủ thềm.
-    if (state.map === 'thanh_van_tong' && fxOn()) {
+    // Đợt tách Đài Thăng Long (2026-11-05): đỉnh Thăng Long dùng cùng lớp
+    // mây với bảng neo riêng TL_CLOUD_SEA — mây quấn quanh vách của MỘT
+    // đỉnh duy nhất ở tầng thấp, hoàn thiện phần mây trôi từng ghi nợ ở
+    // thềm Thăng Long cũ.
+    var cloudList = state.map === 'thanh_van_tong' ? CLOUD_SEA : (state.map === 'thang_long_dai' ? TL_CLOUD_SEA : null);
+    if (cloudList && fxOn()) {
       ctx.save();
-      for (var ci = 0; ci < CLOUD_SEA.length; ci++) {
-        var ca = CLOUD_SEA[ci];
+      for (var ci = 0; ci < cloudList.length; ci++) {
+        var ca = cloudList[ci];
         var cxx = ca[0] * TILE + 16 + Math.sin(tNow / 9000 + ci * 1.7) * 14;
         var cyy = ca[1] * TILE + 16 + Math.cos(tNow / 11000 + ci * 2.3) * 6;
         // Lớp đệm mây rộng và mờ dưới các cụm chính (đợt làm giàu
@@ -8073,6 +8079,11 @@
   // sau núi, vành bắc và sườn nam.
   var CLOUD_SEA = [[36, 20], [40, 26], [8, 58], [14, 66], [61, 48], [97, 40], [90, 48],
                    [100, 26], [112, 10], [20, 2], [64, 1], [30, 84], [84, 84]];
+  // Neo biển mây của đỉnh Thăng Long (đợt tách bản đồ riêng 2026-11-05):
+  // mọi neo đều nằm trên ô vách vực 'X' quanh khối đỉnh duy nhất — sườn
+  // tây, sườn đông, chân nam dưới thềm vào và vành bắc sau chỏm — mây
+  // trôi ở tầng thấp bao quanh đỉnh, không phủ mặt đài hay trục thang.
+  var TL_CLOUD_SEA = [[1, 12], [2, 26], [46, 14], [45, 27], [6, 33], [40, 33], [16, 33], [24, 0], [8, 0]];
   function spawnPillar(x, y, opts) {
     opts = opts || {};
     pillars.push({ x: x, y: y, t: 0, dur: opts.dur || 0.9, h: opts.h || 120, top: opts.top || null, big: !!opts.big });
@@ -14407,7 +14418,7 @@
   /* Cầu kiểm chứng hiệu ứng kỹ năng (gói phụ 10, chỉ đọc). */
   window.VSLC_FX = {
     pillars: function () { return pillars.length; },
-    cloudSea: function () { return (state && state.map === 'thanh_van_tong') ? CLOUD_SEA.length : 0; },
+    cloudSea: function () { if (!state) return 0; if (state.map === 'thang_long_dai') return TL_CLOUD_SEA.length; return state.map === 'thanh_van_tong' ? CLOUD_SEA.length : 0; },
     streaks: function () { return streaks.length; },
     parts: function () { return parts.length; },
     kind: function (k) { return parts.filter(function (pp) { return pp.kind === k; }).length; },

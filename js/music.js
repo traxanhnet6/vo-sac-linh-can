@@ -123,7 +123,7 @@
      vào MAPS của js/logic.js; cho tới lúc đó test-music.js sẽ đỏ ở các
      khẳng định đối chiếu MAPS (MAP_IDS khớp tuyệt đối + cờ stream khớp
      ô nước) — đó là điểm chờ làn A, không phải lỗi module này. */
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem'];
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem', 'thang_long_dai'];
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -302,6 +302,16 @@
       chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
       motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
     },
+    thang_long_dai: { /* Đài Thăng Long trên đỉnh núi (đợt tách bản đồ
+      riêng 2026-11-05) — biến thể HÙNG VĨ của thanh_van_tong: giữ đệm
+      rộng 5 nốt + mô-típ đi lên của tông, nhưng CHẬM và THƯA hơn hẳn
+      (86 -> 72 bpm, 0,40 -> 0,30) cho không khí đỉnh cao chạm mây,
+      trang nghiêm trước trận thử kiếm. */
+      root: 60, scale: SCALE_MAJ_PENT, bpm: 72, density: 0.30,
+      padWave: 'triangle', motifWave: 'triangle',
+      chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
+      motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
+    },
     bc_hoiphong_mo: { /* Hồi Phong Cổ Mộ — biến thể TRẦM của hb_valley:
       gốc hạ 4 nửa cung (57 -> 53), vòng hợp âm thung lũng hạ theo,
       chậm hơn (76 -> 62 bpm), nhịp nền thưa hơn (0,26 -> 0,18), mô-típ
@@ -345,7 +355,8 @@
     bc_tapsau: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: true, howl: false },
     bc_kiemtrung: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
     bc_hoiphong_mo: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true },
-    dai_dau_kiem: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false } // đài trên cao của tông: chỉ lớp gió như tông môn, không suối (đài không có ô nước)
+    dai_dau_kiem: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false }, // đài trên cao của tông: chỉ lớp gió như tông môn, không suối (đài không có ô nước)
+    thang_long_dai: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false } // đỉnh núi chạm mây: chỉ lớp gió cao sơn như đài đấu kiếm, không suối (đỉnh không có ô nước)
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {

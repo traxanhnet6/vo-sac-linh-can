@@ -1152,7 +1152,6 @@
       { id: 'coc_tong_1', type: 'dummy', x: 33, y: 55, w: 1, h: 2, fx: 1, fy: 1, name: 'Cọc gỗ luyện công' },
       { id: 'coc_tong_2', type: 'dummy', x: 38, y: 55, w: 1, h: 2, fx: 1, fy: 1, name: 'Cọc gỗ luyện công' },
       { id: 'coc_tong_3', type: 'dummy', x: 43, y: 55, w: 1, h: 2, fx: 1, fy: 1, name: 'Cọc gỗ luyện công' },
-      { id: 'thang_long_dai', type: 'stele', x: 14, y: 7, w: 2, h: 2, fx: 2, fy: 1, name: 'Đài Thăng Long', interact: true },
       { id: 'dai_truc_co', type: 'stele', x: 60, y: 4, w: 2, h: 2, fx: 2, fy: 1, name: 'Đài Trúc Cơ', interact: true },
       { id: 'den_dai_tc_a', type: 'lantern', x: 53, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
       { id: 'den_dai_tc_b', type: 'lantern', x: 69, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
@@ -1699,6 +1698,56 @@
     { id: 'lu_huong_dai_b', type: 'lu_huong', x: 24, y: 4, w: 1, h: 1, fx: 1, fy: 1, name: 'Lư Hương Đầu Đài' }
   ];
 
+  /* ---- Đài Thăng Long 48x34 (đợt tách đài thành BẢN ĐỒ RIÊNG
+     2026-11-05, lệnh Bui 07:24 + bổ sung 07:29) ----
+     BỐ CỤC MỘT ĐỈNH DUY NHẤT: toàn bộ Thăng Long nằm trên đúng một chỏm
+     núi — ĐÀI ĐẤU KIẾM (nền hoa văn P) ngự trên chỏm đỉnh ở nửa bắc,
+     MỘT trục thang đá men theo sườn nam của chính đỉnh đó đi xuống
+     thềm vào ở mép nam (điểm rơi cổng), hai vai cỏ là thềm phụ của
+     cùng một khối núi chứ không phải đỉnh khác; ngoài khối đỉnh là
+     vách vực X bao quanh (biển mây và dãy núi phụ chỉ là lớp nền vẽ
+     ở tầng thấp trong tranh nền). Vào đài bằng CỔNG ĐI BỘ hai chiều
+     từ thềm thang tây bắc Thanh Vân Tông (khác Đài Đấu Kiếm vào bằng
+     luồng tỉ thí). Hình học của đài giữ ĐÚNG khung đài cũ trong tông
+     để luật trận ở game.js không đổi một chữ: bia đài tại (14,7) như
+     cũ, nhà hình chiếu (20,10), biên rời đài x 4..30 / y 3..17 ôm
+     trọn mặt đài và thềm quanh. Hình chiếu và cảnh truyện là thực thể
+     trình diễn của game.js nên npcs rỗng là có chủ đích. */
+  function buildThangLongGrid() {
+    var g = blankGrid(48, 34);
+    rectCh(g, 0, 0, 47, 33, 'X');           // toàn khối là vách vực — khắc dần thềm đỉnh vào
+    rectCh(g, 5, 2, 42, 17, 'S');           // thềm chỏm đỉnh (sân bắc + hai vai thềm quanh đài)
+    rectCh(g, 8, 5, 29, 16, 'P');           // ĐÀI ĐẤU KIẾM trên chỏm đỉnh
+    rectCh(g, 19, 18, 28, 27, 'S');         // TRỤC THANG ĐÁ men sườn nam của đỉnh
+    rectCh(g, 15, 21, 32, 22, 'P');         // chiếu nghỉ hoa văn giữa thang (cùng trục thang)
+    rectCh(g, 6, 20, 14, 25, '.');          // vai cỏ tây của đỉnh (thềm phụ cùng khối núi)
+    rectCh(g, 33, 20, 41, 25, '.');         // vai cỏ đông của đỉnh
+    rectCh(g, 12, 26, 14, 27, 'S');         // lối vai tây vòng xuống thềm vào
+    rectCh(g, 33, 26, 35, 27, 'S');         // lối vai đông vòng xuống thềm vào
+    rectCh(g, 12, 28, 35, 32, 'S');         // thềm vào ở chân thang (điểm rơi cổng)
+    rectCh(g, 21, 33, 26, 33, 'S');         // dải cổng về ở mép nam
+    return gridStrings(g);
+  }
+  var THANGLONG_GRID = buildThangLongGrid();
+  var THANGLONG_PROPS = [
+    { id: 'thang_long_dai', type: 'stele', x: 14, y: 7, w: 2, h: 2, fx: 2, fy: 1, name: 'Đài Thăng Long', interact: true },
+    { id: 'kiem_bia_dinh', type: 'stele', x: 24, y: 2, w: 2, h: 2, fx: 2, fy: 1, name: 'Kiếm Bia Đỉnh Thăng Long' },
+    { id: 'co_dinh_a', type: 'cot_co', x: 9, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'co_dinh_b', type: 'cot_co', x: 38, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'kiem_cum_dinh_a', type: 'kiem_cum', x: 19, y: 2, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Đầu Đài' },
+    { id: 'kiem_cum_dinh_b', type: 'kiem_cum', x: 30, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Ven Đài' },
+    { id: 'den_dinh_a', type: 'lantern', x: 6, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_dinh_b', type: 'lantern', x: 41, y: 3, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_thang_a', type: 'lantern', x: 18, y: 18, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_thang_b', type: 'lantern', x: 29, y: 18, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_them_a', type: 'lantern', x: 13, y: 29, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'den_them_b', type: 'lantern', x: 34, y: 29, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'thong_vai_tay', type: 'pine', x: 7, y: 21, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Vai Núi' },
+    { id: 'thong_vai_tay_b', type: 'pine', x: 12, y: 23, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Vai Núi' },
+    { id: 'dao_vai_dong', type: 'sakura_big', x: 37, y: 20, w: 2, h: 3, fx: 2, fy: 1, name: 'Anh Đào Vai Núi' },
+    { id: 'thong_vai_dong', type: 'pine', x: 34, y: 23, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Vai Núi' }
+  ];
+
   var MAPS = {
     tran: {
       name: 'Hứa Gia Trấn', w: MAP_W, h: MAP_H, grid: MAP_GRID, props: PROPS, npcs: NPCS,
@@ -1763,6 +1812,14 @@
         { x: 18, y: 29, w: 4, h: 1, to: 'thanh_van_tong', toX: 62, toY: 57, label: 'Về Quảng Trường Tông' }
       ]
     },
+    thang_long_dai: {
+      name: 'Đài Thăng Long', w: 48, h: 34, grid: THANGLONG_GRID, props: THANGLONG_PROPS, npcs: [],
+      meditate: null, spawn: { x: 23, y: 31 },
+      signs: [{ x: 23, y: 30, text: 'Thăng Long Đài' }],
+      portals: [
+        { x: 21, y: 33, w: 6, h: 1, to: 'thanh_van_tong', toX: 15, toY: 7, label: 'Xuống Thềm Thăng Long Tông' }
+      ]
+    },
     thanh_van_tong: {
       name: 'Thanh Vân Tông', w: 124, h: 92, grid: SECT_GRID, props: SECT_PROPS, npcs: SECT_NPCS,
       meditate: { x: 31, y: 61 },
@@ -1772,7 +1829,12 @@
       signs: [{ x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }],
       portals: [
         { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' },
-        { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' }
+        { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' },
+        /* Đợt tách Đài Thăng Long thành bản đồ riêng (2026-11-05): dải
+           cổng ở mép bắc của thềm đài cũ (hàng 5, ngay dưới vành vực)
+           — bước lên là lên thẳng thềm vào của đỉnh Thăng Long; thềm
+           đài cũ từ nay là thềm thang cổng, bia đài đã dời lên đỉnh. */
+        { x: 14, y: 5, w: 4, h: 1, to: 'thang_long_dai', toX: 23, toY: 31, label: 'Lên Đài Thăng Long' }
       ]
     },
     hb_valley: {
@@ -2097,7 +2159,7 @@
     /* Chương 7 — Vào Thanh Vân Tông với thân phận vô linh căn */
     { id: 'q7_nhap_tong', name: 'Vào tông với thân phận vô linh căn', desc: 'Tới gặp trưởng lão tông ở Thanh Vân Đại Điện, trình thư mời nhập môn.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
     { id: 'q7_tap_dich', name: 'Việc tạp dịch', desc: 'Làm ba việc ở khu tạp dịch đông nam: bổ củi, gánh nước, chuyển bao dược, xong về gặp quản sự tạp dịch.', hint: { map: 'thanh_van_tong', x: 97, y: 69 } },
-    { id: 'q7_thang_long', name: 'Thăng Long Đạo', desc: 'Lên đài Thăng Long ở tây bắc tông, thắng hình chiếu bằng đúng ba chiêu kiếm, không dùng cộng hưởng.', hint: { map: 'thanh_van_tong', x: 15, y: 9 } },
+    { id: 'q7_thang_long', name: 'Thăng Long Đạo', desc: 'Từ thềm thang của tông môn, lên Đài Thăng Long trên đỉnh núi, thắng hình chiếu bằng đúng ba chiêu kiếm, không dùng cộng hưởng.', hint: { map: 'thang_long_dai', x: 15, y: 9 } },
     { id: 'q7_hoa_huong_than', name: 'Hoa Hướng Thần', desc: 'Gặp đại đệ tử Hoa Hướng Thần ở quảng trường tông.', hint: { map: 'thanh_van_tong', x: 62, y: 56 } },
     { id: 'q7_done', name: 'Chương 8: Chuẩn bị Trúc Cơ', desc: 'Vị thế trong tông đã đổi. Kỳ Trúc Cơ của tông đang tới gần.', hint: null },
     /* Chương 8 — Trúc Cơ: lời nói đầu tiên ở tầm cao mới */
