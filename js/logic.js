@@ -2427,15 +2427,15 @@
        máu) nên đồ ăn rẻ hơn hẳn và hồi máu là chính. Nguồn: mua ở quán
        trọ trấn + chợ Cô Châu (priceLt), nấu từ nguyên liệu hái/săn
        (FOOD_RECIPES ở khối đồ ăn). */
-    com_nam: { name: 'Cơm Nắm Lá Sen', type: 'do_an', stack: true, glyph: 'Cơm', hp: 30, ta: 10, priceLt: 3, priceBac: 5 },
-    banh_hap: { name: 'Bánh Hấp Nhân Thịt', type: 'do_an', stack: true, glyph: 'Bánh', hp: 45, ta: 15, priceLt: 5, priceBac: 8 },
-    canh_nam_thao: { name: 'Canh Nấm Thảo Dược', type: 'do_an', stack: true, glyph: 'Canh', hp: 35, ta: 25 },
-    thit_nuong: { name: 'Thịt Thú Nướng Que', type: 'do_an', stack: true, glyph: 'Thịt', hp: 60, ta: 10 },
-    canh_bo_khi: { name: 'Canh Bổ Khí', type: 'do_an', stack: true, glyph: 'Bổ', hp: 90, ta: 40 },
+    com_nam: { name: 'Cơm Nắm Lá Sen', type: 'do_an', stack: true, glyph: 'Cơm', icon: 'assets/items/com_nam.png', hp: 30, ta: 10, priceLt: 3, priceBac: 5 },
+    banh_hap: { name: 'Bánh Hấp Nhân Thịt', type: 'do_an', stack: true, glyph: 'Bánh', icon: 'assets/items/banh_hap.png', hp: 45, ta: 15, priceLt: 5, priceBac: 8 },
+    canh_nam_thao: { name: 'Canh Nấm Thảo Dược', type: 'do_an', stack: true, glyph: 'Canh', icon: 'assets/items/canh_nam_thao.png', hp: 35, ta: 25 },
+    thit_nuong: { name: 'Thịt Thú Nướng Que', type: 'do_an', stack: true, glyph: 'Thịt', icon: 'assets/items/thit_nuong.png', hp: 60, ta: 10 },
+    canh_bo_khi: { name: 'Canh Bổ Khí', type: 'do_an', stack: true, glyph: 'Bổ', icon: 'assets/items/canh_bo_khi.png', hp: 90, ta: 40 },
     /* Nguyên liệu nấu ăn: nấm hái ở bãi nấm (mọc lại theo ngày game),
        thịt rơi từ quái thú dã ngoại lúc hạ (làn game.js phát rơi). */
-    nam_rung: { name: 'Nấm Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Nấm' },
-    thit_thu: { name: 'Thịt Thú Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Thú' },
+    nam_rung: { name: 'Nấm Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Nấm', icon: 'assets/items/nam_rung.png' },
+    thit_thu: { name: 'Thịt Thú Rừng', type: 'nguyen_lieu', stack: true, glyph: 'Thú', icon: 'assets/items/thit_thu.png' },
     /* Nguyên liệu thu thập của hệ cày (docs/grind-prep/systems-data.md
        mục 4.3): cùng khuôn nguyen_lieu + stack:true như linh_chi. */
     xich_tam_hoa: { name: 'Xích Tâm Hoa', type: 'nguyen_lieu', stack: true, glyph: 'Hoa' },

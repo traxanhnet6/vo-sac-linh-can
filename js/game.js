@@ -10772,8 +10772,16 @@
     ctx.beginPath(); ctx.arc(dr.x, dr.y + by, 11, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = rare ? '#ffd94e' : '#77683c'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(dr.x, dr.y + by, 11, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#ffe9a8'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(def.glyph, dr.x, dr.y + by + 3);
+    var gim = itemIconImage(dr.itemId);
+    if (gim) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(dr.x, dr.y + by, 10.5, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(gim, dr.x - 10, dr.y + by - 10, 20, 20);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#ffe9a8'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(def.glyph, dr.x, dr.y + by + 3);
+    }
     if (dr.full) {
       ctx.font = 'bold 9px sans-serif';
       ctx.fillStyle = 'rgba(20,16,8,0.9)'; ctx.fillText('Túi đầy', dr.x + 1, dr.y - 16 + 1);
@@ -10796,8 +10804,16 @@
     ctx.beginPath(); ctx.arc(fx, fy, 10, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#ffd94e'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(fx, fy, 10, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#ffe9a8'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(def.glyph, fx, fy + 3);
+    var fim = itemIconImage(dr.itemId);
+    if (fim) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(fx, fy, 9.5, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(fim, fx - 9, fy - 9, 18, 18);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#ffe9a8'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(def.glyph, fx, fy + 3);
+    }
   }
 
   /* Hộ pháp trong im lặng (chương 8): ba đợt quấy phá quanh đài trong lúc
@@ -14100,6 +14116,23 @@
   };
 
   /* ---------- Túi Trữ Vật (mở khóa ở chương 3) ---------- */
+  /* Icon vật phẩm vẽ thật (đợt icon đồ ăn 2026-11-05): vật phẩm có
+     trường icon trong ITEM_DEFS thì mọi bề mặt đang vẽ glyph ưu tiên vẽ
+     ảnh icon; vật phẩm chưa có icon giữ glyph như cũ. Ảnh canvas nạp
+     lười theo id, chưa nạp xong thì tạm vẽ glyph, xong tự thay. */
+  function itemGlyphHtml(def) {
+    return def.icon
+      ? '<img class="bag-icon" src="' + def.icon + '" alt="">'
+      : '<span class="bag-glyph">' + def.glyph + '</span>';
+  }
+  var ITEM_ICON_IMGS = {};
+  function itemIconImage(id) {
+    var def = L.ITEM_DEFS[id];
+    if (!def || !def.icon) return null;
+    var im = ITEM_ICON_IMGS[id];
+    if (!im) { im = new Image(); im.src = def.icon; ITEM_ICON_IMGS[id] = im; }
+    return (im.complete && im.naturalWidth > 0) ? im : null;
+  }
   function renderBag() {
     var info = $('bag-info'), grid = $('bag-grid'), up = $('bag-upgrade');
     if (!info || !grid || !state) return;
@@ -14117,7 +14150,7 @@
       var def = L.ITEM_DEFS[id];
       var cell = document.createElement('div');
       cell.className = 'bag-cell';
-      cell.innerHTML = '<span class="bag-glyph">' + def.glyph + '</span><span class="bag-name">' + def.name + '</span>' +
+      cell.innerHTML = itemGlyphHtml(def) + '<span class="bag-name">' + def.name + '</span>' +
         (def.stack ? '<span class="bag-count">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">' + (def.worn ? 'Đang đeo' : 'Pháp khí') + '</span>');
       // Vật phẩm dùng được ngay trong túi (làn chạm trán): bí tịch thì
       // Đọc để lấy điểm tu luyện; yêu đan thì Đổi thành tu vi qua cửa cày.
@@ -14143,7 +14176,7 @@
         var sdef = L.ITEM_DEFS[id];
         var scell = document.createElement('div');
         scell.className = 'bag-cell story';
-        scell.innerHTML = '<span class="bag-glyph">' + sdef.glyph + '</span><span class="bag-name">' + sdef.name + '</span>' +
+        scell.innerHTML = itemGlyphHtml(sdef) + '<span class="bag-name">' + sdef.name + '</span>' +
           '<span class="bag-count">Cốt truyện</span>';
         storyGrid.appendChild(scell);
       });

@@ -450,6 +450,7 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
   background: rgba(24, 17, 10, 0.6); display: flex; flex-direction: column; align-items: center;
   justify-content: center; gap: 2px; padding: 4px 2px; text-align: center; }
 .bag-cell .bag-glyph { font-size: 15px; color: #ffd94e; letter-spacing: 1px; }
+.bag-cell .bag-icon { width: 36px; height: 36px; object-fit: contain; }
 .bag-cell .bag-name { font-size: 10px; line-height: 1.25; color: #f0e8d2; }
 .bag-cell .bag-count { font-size: 11px; color: #9fd8a8; }
 .bag-cell.empty { opacity: 0.35; }
