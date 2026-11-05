@@ -170,7 +170,15 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
   /* Màn hẹp: cụm vòng cung thu còn 88% quanh góc dưới phải (thay luật cũ
      phóng nút .sk lên 48px của thanh ngang — luật đó thành tiền đề chết
      khi đổi sang vòng cung, xem Mục G đợt vá 2026-11-02). */
-  #skillbar { transform: scale(0.88); transform-origin: bottom right; }
+  /* Đợt NÚT TO (bigbtn, lệnh Bui "nút đánh và dùng skill to ra 1 tý nữa"):
+     cụm đã phóng +15% ngay trong CSS gốc (hộp 248x248, ĐÁNH 90px) nên ở
+     màn hẹp giữ nguyên tỉ lệ 1,0 — kích thước thật trên điện thoại = đúng
+     kích thước CSS mới (ĐÁNH 90px). Khai báo trung thực: dòng scale(0,88)
+     cũ ở đây thực ra CHƯA BAO GIỜ có hiệu lực, vì quy tắc gốc #skillbar
+     phía dưới tệp có "transform: none" cùng độ ưu tiên và đứng sau nên
+     luôn thắng (đã kiểm bằng git blame tới commit gốc của cụm vòng cung);
+     điện thoại trước đợt này vẫn hiện kích thước tự nhiên 78/46/40px. */
+  #skillbar { transform: scale(1); transform-origin: bottom right; }
   /* Màn hẹp: hàng Lưu/Thoát ở giữa-trên sẽ đè khung nhân vật (QA đợt 60×45 bắt được
      trên mô phỏng 390px) — dạt xuống góc dưới-trái, đối diện thanh kỹ năng. */
   #func-row { top: auto; bottom: 10px; left: 10px; transform: none; }
@@ -207,9 +215,17 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
    74px chứa 3 nút phụ 42px ở 100/135/170 độ. Thứ tự dọc cung giữ đúng
    thứ tự trái->phải của thanh cũ: PHÁ, CHẤN, Kiếm, ĐỊNH, PHONG (ngoài),
    Thổ nạp, Đột phá, Tương tác (trong). Giữa và giữa-dưới màn hình vẫn
-   trống sạch: cụm chỉ chiếm góc dưới phải, tâm màn hình không bị che. */
+   trống sạch: cụm chỉ chiếm góc dưới phải, tâm màn hình không bị che.
+   Đợt NÚT TO (bigbtn, lệnh Bui "nút đánh và dùng skill to ra 1 tý nữa"):
+   toàn cụm phóng +15% theo tỉ lệ quanh tâm ĐÁNH — hộp 248x248, ĐÁNH
+   90px tại (199,199) (tâm vẫn cách góc dưới-phải màn hình đúng 59px như
+   bản 212/78 cũ), cung ngoài R136 nút 53px tại các góc 84/104/125/148/
+   171 độ, cung trong R85 nút 46px (cả bốn nút phụ gồm Đồ Ăn) tại các
+   góc 76/111/144/171 độ; vị trí từng nút làm tròn tới px, đo lại cho
+   thấy mọi cặp kề nhau vẫn dư khoảng cách tâm >= tổng bán kính (sát
+   nhất Phá Âm–Chấn Âm +0,5px, cùng tính chất bản cũ +0,4px). */
 #skillbar { position: absolute; left: auto; right: 10px; bottom: 10px; transform: none; z-index: 4;
-  width: 212px; height: 212px; pointer-events: none; }
+  width: 248px; height: 248px; pointer-events: none; }
 /* Đế icon tiên hiệp (bổ sung 2026-11-03, lệnh Bui 06:04 "Có nền icon cho
    các phím"): mỗi nút là một ĐẾ có tạo hình thống nhất một bộ — mặt đế
    gradient hướng tâm xanh mực/ngọc sẫm, vành ngoài kim loại vàng đồng 2px
@@ -220,7 +236,7 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
    nạ thì vòng khắc bỏ qua êm, đế vẫn nguyên). Biểu tượng riêng từng nút
    là SVG nét nội tuyến trong span.sk-ico (màu nét theo họ màu của đòn),
    tên kỹ năng nằm dưới biểu tượng; phím giữ góc trên-trái như cũ. */
-.sk { position: absolute; width: 46px; height: 46px; padding: 0; cursor: pointer; pointer-events: auto;
+.sk { position: absolute; width: 53px; height: 53px; padding: 0; cursor: pointer; pointer-events: auto;
   transform: translate(-50%, -50%); overflow: hidden;
   background: radial-gradient(circle at 50% 38%, #1e302c 0%, #16211f 54%, #0d1316 100%);
   border: 2px solid #c9a227; border-radius: 50%;
@@ -238,8 +254,8 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .sk-key { position: absolute; top: 2px; left: 5px; z-index: 2; font-size: 10px; color: #e3b83c; font-weight: bold; }
 .sk-ico { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center;
   line-height: 0; margin-top: 2px; }
-.sk-ico svg { width: 17px; height: 17px; display: block; }
-.sk-name { position: relative; z-index: 1; font-size: 10px; font-weight: bold; text-align: center;
+.sk-ico svg { width: 20px; height: 20px; display: block; }
+.sk-name { position: relative; z-index: 1; font-size: 11px; font-weight: bold; text-align: center;
   line-height: 1.05; padding: 0 2px; margin-top: 1px; }
 /* Màu nét biểu tượng theo họ màu của từng đòn trong game. */
 #sk-pha .sk-ico { color: #ff9a5c; }
@@ -270,40 +286,43 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .sk.locked::before { opacity: 0.12; }
 .sk.active { border-color: #f3d94e; box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 2px rgba(18, 12, 3, 0.65),
   0 0 16px rgba(243, 217, 78, 0.75), inset 0 0 12px rgba(127, 232, 224, 0.28), inset 0 0 8px rgba(243, 217, 78, 0.35); }
-/* Tâm cung: nút ĐÁNH lớn 78px, tâm tại (163,163) trong hộp cụm — đế lớn
-   và nổi nhất cụm: vành kép dày hơn (3px + vành tối 3px), quầng sáng
-   mạnh hơn hẳn các đế thường. */
-#sk-attack { left: 163px; top: 163px; width: 78px; height: 78px;
+/* Tâm cung: nút ĐÁNH lớn 90px (đợt NÚT TO phóng từ 78px), tâm tại
+   (199,199) trong hộp cụm 248 — đế lớn và nổi nhất cụm: vành kép dày
+   hơn (3px + vành tối 3px), quầng sáng mạnh hơn hẳn các đế thường. */
+#sk-attack { left: 199px; top: 199px; width: 90px; height: 90px;
   background: radial-gradient(circle at 46% 36%, #27443e 0%, #182824 52%, #0a0f11 100%);
   border: 3px solid #c9a227;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 0 3px rgba(18, 12, 3, 0.7),
     0 0 18px rgba(127, 232, 224, 0.22), inset 0 0 15px rgba(127, 232, 224, 0.24),
     inset 0 2px 3px rgba(255, 240, 190, 0.22); }
 #sk-attack::before { inset: 5px; opacity: 0.75; }
-#sk-attack .sk-ico svg { width: 30px; height: 30px; }
+#sk-attack .sk-ico svg { width: 35px; height: 35px; }
 #sk-attack .sk-ico { margin-top: 6px; }
-#sk-attack .sk-name { font-size: 15px; letter-spacing: 1px; }
+#sk-attack .sk-name { font-size: 17px; letter-spacing: 1px; }
 #sk-attack .sk-key { top: 8px; left: 11px; }
 #sk-attack:active { border-color: #f3d94e; box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 0 3px rgba(18, 12, 3, 0.7),
   0 0 20px rgba(243, 217, 78, 0.6), inset 0 0 15px rgba(127, 232, 224, 0.3); }
-/* Cung ngoài (bán kính 118px từ tâm ĐÁNH) — nút chiến đấu 46px. */
-#sk-pha   { left: 171px; top: 45px; }
-#sk-chan  { left: 125px; top: 51px; }
-#sk-sword { left: 84px;  top: 75px; }
-#sk-dinh  { left: 56px;  top: 113px; }
-#sk-phong { left: 45px;  top: 159px; }
+/* Cung ngoài (bán kính ~136px từ tâm ĐÁNH, đợt NÚT TO nới từ 118px) —
+   nút chiến đấu 53px (phóng từ 46px). */
+#sk-pha   { left: 208px; top: 63px; }
+#sk-chan  { left: 155px; top: 70px; }
+#sk-sword { left: 108px; top: 98px; }
+#sk-dinh  { left: 76px;  top: 141px; }
+#sk-phong { left: 63px;  top: 194px; }
 /* Cung trong — nút phụ. Đợt đồ ăn 2026-11-04: thêm nút Đồ Ăn (sk-food)
    thành nút phụ thứ tư; bốn nút thu còn 40px và dãn đều trên cung
    r~74–84 quanh tâm ĐÁNH (202,202) sao cho không nút nào chạm nút
    chiến đấu ở cung ngoài (đã đo khoảng cách tâm-tâm đều lớn hơn tổng
    bán kính hai nút; nút ĐÁNH và năm nút chiêu giữ nguyên vị trí/kích
-   thước). */
-#sk-med      { left: 178px; top: 91px;  width: 40px; height: 40px; }
-#sk-break    { left: 136px; top: 94px;  width: 40px; height: 40px; }
-#sk-interact { left: 103px; top: 120px; width: 40px; height: 40px; }
-#sk-food     { left: 89px;  top: 159px; width: 40px; height: 40px; }
-#sk-med .sk-name, #sk-break .sk-name, #sk-interact .sk-name, #sk-food .sk-name { font-size: 9px; }
-#sk-med .sk-ico svg, #sk-break .sk-ico svg, #sk-interact .sk-ico svg, #sk-food .sk-ico svg { width: 15px; height: 15px; }
+   thước). Đợt NÚT TO: bốn nút phụ phóng 40px -> 46px và dãn ra cung
+   R85 quanh tâm ĐÁNH mới (199,199), vẫn không chạm cung ngoài lẫn nút
+   ĐÁNH (đã đo lại toàn bộ cặp kề nhau). */
+#sk-med      { left: 216px; top: 116px; width: 46px; height: 46px; }
+#sk-break    { left: 168px; top: 120px; width: 46px; height: 46px; }
+#sk-interact { left: 130px; top: 150px; width: 46px; height: 46px; }
+#sk-food     { left: 114px; top: 194px; width: 46px; height: 46px; }
+#sk-med .sk-name, #sk-break .sk-name, #sk-interact .sk-name, #sk-food .sk-name { font-size: 10px; }
+#sk-med .sk-ico svg, #sk-break .sk-ico svg, #sk-interact .sk-ico svg, #sk-food .sk-ico svg { width: 17px; height: 17px; }
 
 /* Hộp thoại mỏng hơn, sát đáy */
 #dialogue { position: absolute; left: 2%; right: 2%; bottom: 8px; z-index: 5; max-height: 32dvh; overflow-y: auto;
