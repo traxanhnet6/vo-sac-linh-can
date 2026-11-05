@@ -2235,6 +2235,7 @@
       spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
       announceLog: [],           // Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.1): tối đa 20 dòng gần nhất
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
+      silver: SILVER_START,      // ví BẠC phàm tục (đợt sửa lỗi nhiệm vụ nấu ăn 2026-11-05): tiền mang theo người, chỉ mua được đồ ăn phàm tục rẻ
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
       sectMerit: 0,              // điểm cống hiến tông môn — trục tích lũy thứ ba, tách khỏi Linh Thạch (chương 7)
       items: { dan: 0 },         // GƯƠNG đọc của túi: số Hồi Khí Đan (syncBagMirrors ghi)
@@ -2426,8 +2427,8 @@
        máu) nên đồ ăn rẻ hơn hẳn và hồi máu là chính. Nguồn: mua ở quán
        trọ trấn + chợ Cô Châu (priceLt), nấu từ nguyên liệu hái/săn
        (FOOD_RECIPES ở khối đồ ăn). */
-    com_nam: { name: 'Cơm Nắm Lá Sen', type: 'do_an', stack: true, glyph: 'Cơm', hp: 30, ta: 10, priceLt: 3 },
-    banh_hap: { name: 'Bánh Hấp Nhân Thịt', type: 'do_an', stack: true, glyph: 'Bánh', hp: 45, ta: 15, priceLt: 5 },
+    com_nam: { name: 'Cơm Nắm Lá Sen', type: 'do_an', stack: true, glyph: 'Cơm', hp: 30, ta: 10, priceLt: 3, priceBac: 5 },
+    banh_hap: { name: 'Bánh Hấp Nhân Thịt', type: 'do_an', stack: true, glyph: 'Bánh', hp: 45, ta: 15, priceLt: 5, priceBac: 8 },
     canh_nam_thao: { name: 'Canh Nấm Thảo Dược', type: 'do_an', stack: true, glyph: 'Canh', hp: 35, ta: 25 },
     thit_nuong: { name: 'Thịt Thú Nướng Que', type: 'do_an', stack: true, glyph: 'Thịt', hp: 60, ta: 10 },
     canh_bo_khi: { name: 'Canh Bổ Khí', type: 'do_an', stack: true, glyph: 'Bổ', hp: 90, ta: 40 },
@@ -2967,6 +2968,11 @@
   function normalizeSave(state) {
     if (!state || typeof state !== 'object') return state;
     state.linhThach = linhBalance(state);
+    // Ví bạc phàm tục (đợt sửa lỗi nhiệm vụ nấu ăn 2026-11-05): save cũ
+    // chưa có trường này -> mang theo vốn khởi đầu SILVER_START một lần
+    // (vốn liếng của nhân vật, không phải thưởng nhiệm vụ).
+    if (typeof state.silver !== 'number' || !isFinite(state.silver) || state.silver < 0) state.silver = SILVER_START;
+    else state.silver = Math.floor(state.silver);
     state.dayMinutes = normalizeDayMinutes(state.dayMinutes); // save cũ chưa có đồng hồ -> 08:00 mặc định, không lỗi
     // Hệ cày + lớp công pháp (làn chạm trán): save cũ không có các trường
     // này -> dựng mặc định an toàn, suy công pháp đã học từ unlocked như
@@ -3943,9 +3949,13 @@
      hái nấm, rơi thịt thú và nút dùng nhanh. Hai luật cứng: (1) đồ ăn
      KHÔNG phải điều kiện của bất kỳ cổng truyện/đột phá nào — save
      sạch không có đồ ăn vẫn qua mọi cổng như cũ (khẳng định §66);
-     (2) không bịa tiền tệ: mua bằng Linh Thạch qua spendLinhThach như
-     mọi mua bán khác, nguyên liệu lấy từ hái/săn có thật trong game. */
+     (2) tiền tệ có nguồn: mua bằng Linh Thạch qua spendLinhThach như mọi
+     mua bán tu tiên khác; riêng hai món phàm tục rẻ (Cơm Nắm, Bánh Hấp)
+     còn mua được bằng BẠC — tiền phàm tục của nguyên tác — qua
+     buyFoodSilver ở giai đoạn ví Linh Thạch còn khóa (đợt sửa lỗi nhiệm
+     vụ nấu ăn 2026-11-05; bạc không mua được vật phẩm tu tiên nào). */
   var FOOD_CD_SEC = 6; // nhịp chờ ăn liên tục TRONG TRẬN (giây) — lớp game áp theo đồng hồ phiên; ngoài trận ăn tự do, không chờ
+  var SILVER_START = 15; // [SỐ MỚI 2026-11-05] lượng bạc mang theo người lúc bắt đầu — đủ mua 3 phần Cơm Nắm, hoặc Cơm Nắm + Bánh Hấp còn dư 2 lượng
   function foodDef(id) { var d = ITEM_DEFS[id]; return (d && d.type === 'do_an') ? d : null; }
   function foodIds() { return Object.keys(ITEM_DEFS).filter(function (id) { return ITEM_DEFS[id].type === 'do_an'; }); }
   function foodCount(state) { return foodIds().reduce(function (n, id) { return n + bagCount(state, id); }, 0); }
@@ -3990,6 +4000,46 @@
     if (!ra.ok) return { ok: false, reason: 'bag_full', text: ra.reason };
     if (state.flags && !state.flags.foodBought) state.flags.foodBought = true; // bước MUA của nhiệm vụ hướng dẫn đồ ăn
     return { ok: true, def: def, price: def.priceLt, count: ra.count };
+  }
+  /* Mua đồ ăn phàm tục bằng BẠC (đợt sửa lỗi nhiệm vụ nấu ăn 2026-11-05):
+     tái hiện trên cây thật cho thấy bước MUA của nhiệm vụ hướng dẫn chỉ
+     có đường Linh Thạch — ví khóa thì bị chặn hẳn, hết Linh Thạch thì
+     không còn đường nào. Bạc là tiền phàm tục của nguyên tác: chỉ hai
+     món rẻ có priceBac (Cơm Nắm 5 lượng, Bánh Hấp 8 lượng — [SỐ MỚI])
+     mua được bằng bạc ở quán trọ/sạp chợ; món không có priceBac và MỌI
+     vật phẩm tu tiên đều bị từ chối ở đây. Hàm này không đụng vào ví
+     Linh Thạch: giai đoạn phàm nhân ví vẫn khóa nguyên như luật. */
+  function silverBalance(state) { return Math.max(0, Math.floor((state && state.silver) || 0)); }
+  function buyFoodSilver(state, id) {
+    var def = foodDef(id);
+    if (!def || typeof def.priceBac !== 'number') return { ok: false, reason: 'not_silver_food', id: id, text: 'Món này không bán bằng bạc — bạc là tiền phàm tục, chỉ mua được Cơm Nắm và Bánh Hấp ở quán trọ/sạp chợ.' };
+    var chk = bagCanAdd(state, id, 1);
+    if (!chk.ok) return { ok: false, reason: 'bag_full', text: chk.reason };
+    if (silverBalance(state) < def.priceBac) return { ok: false, reason: 'no_silver', id: id, price: def.priceBac, text: 'Không đủ bạc (đang có ' + silverBalance(state) + ' lượng, cần ' + def.priceBac + ' lượng).' };
+    state.silver = silverBalance(state) - def.priceBac;
+    var ra = bagAdd(state, id, 1);
+    if (!ra.ok) { state.silver += def.priceBac; return { ok: false, reason: 'bag_full', text: ra.reason }; }
+    if (state.flags && !state.flags.foodBought) state.flags.foodBought = true; // bước MUA của nhiệm vụ hướng dẫn đồ ăn — đường bạc tính như đường Linh Thạch
+    return { ok: true, def: def, price: def.priceBac, balance: state.silver, count: ra.count };
+  }
+  /* Ăn thử cho bước ĂN của nhiệm vụ hướng dẫn (đợt sửa lỗi 2026-11-05):
+     tái hiện cho thấy người chơi mới làm đúng hướng dẫn thường đang ĐẦY
+     máu lẫn Tĩnh Âm — eatFood chặn 'full', món không bị trừ, cờ
+     foodEaten không bao giờ được set, nhiệm vụ kẹt 3/4 vĩnh viễn và
+     không bao giờ hiện nút Nhận thưởng (đúng lỗi Bui báo). Hàm này là
+     đường ăn thử có ngữ cảnh nhiệm vụ: bị chặn CHỈ vì 'full' thì vẫn
+     trừ món, hồi 0, set cờ foodEaten và khai rõ taste:true. Chưa đầy
+     thì ăn thật qua eatFood như thường. Luật chặn ăn khi đầy của
+     eatFood cho chơi thường KHÔNG đổi — game.js chỉ gọi hàm này khi
+     bước ăn của sq_food_tutorial còn đang dở. */
+  function tasteFood(state, id) {
+    var r = eatFood(state, id);
+    if (r.ok) return r;
+    if (r.reason !== 'full') return r;
+    var rm = bagRemove(state, id, 1);
+    if (!rm.ok) return { ok: false, reason: 'no_item', id: id };
+    if (state.flags) state.flags.foodEaten = true;
+    return { ok: true, taste: true, def: foodDef(id), hpGain: 0, taGain: 0, left: bagCount(state, id) };
   }
   /* Công thức nấu: needs = nguyên liệu trừ lúc nấu; needLinh = món
      dải Luyện Khí (ví Linh Thạch còn khóa ở giai đoạn phàm nhân thì
@@ -4876,9 +4926,12 @@
      nguồn nằm trong báo cáo đợt (mucH) và trong desc từng nhiệm vụ. */
   var SIDE_QUEST_DEFS = [
     /* Nhiệm vụ PHỤ HƯỚNG DẪN ĐỒ ĂN (lệnh của Bui 06:15 ngày 2026-11-04):
-       mở ngay sau đột phá Luyện Khí tầng 1 (mốc q_dummy, ví Linh Thạch
-       đã mở để bước MUA chạy được) và TRƯỚC giai đoạn săn đầu tiên
-       quanh q2_cong_thanh. Người giao: Hứa U Nhàn — nàng dặn dò trong
+       mở ngay sau đột phá Luyện Khí tầng 1 (mốc q_dummy) và TRƯỚC giai
+       đoạn săn đầu tiên quanh q2_cong_thanh. (Đợt sửa lỗi 2026-11-05:
+       bước MUA không còn phụ thuộc duy nhất vào ví Linh Thạch — hai món
+       rẻ mua được bằng BẠC phàm tục qua buyFoodSilver kể cả khi ví khóa
+       hoặc đã tiêu hết lộ phí; bước ĂN có đường ăn thử tasteFood khi bị
+       chặn chỉ vì đầy sức.) Người giao: Hứa U Nhàn — nàng dặn dò trong
        desc, nhận/trả qua bảng nhiệm vụ phụ như mọi nhiệm vụ Mục H.
        Bốn bước đi trọn vòng đời đồ ăn bằng đúng hệ thống của đợt đồ
        ăn: MUA ở quán trọ trấn -> HÁI nấm ở bãi ven đường mòn -> NẤU ở
@@ -4887,7 +4940,7 @@
        trọn cốt truyện (khẳng định §66). */
     { id: 'sq_food_tutorial', phase: 'pre', unlockQuest: 'q_dummy',
       name: 'Bữa Ăn Đường Xa',
-      desc: 'Hứa U Nhàn dặn: lên đường xa phải tự lo được bữa ăn hồi sức. Làm quen bốn việc: (1) MUA một món ăn ở Vọng Tiên Tửu Điếm tại Hứa Gia Trấn (sạp chợ Cô Châu Thành cũng có bán). (2) HÁI một cây Nấm Rừng ở bãi nấm ven đường mòn xuyên rừng, phía tây trạm nghỉ (bãi nấm mọc lại mỗi ngày; bãi sau trấn cũng có). (3) NẤU một món từ nguyên liệu ở bếp trạm nghỉ giữa đường hoặc bếp quán trọ trấn. (4) ĂN thử một món và xem máu cùng Tĩnh Âm hồi lại. Chọn "Chọn dẫn đường" để mũi tên chỉ tới từng bước. Sau này cứ theo đúng những nơi ấy mà tự làm lại: quán trọ và chợ bán sẵn, bãi nấm và thú rừng cho nguyên liệu, hai bếp để nấu.',
+      desc: 'Hứa U Nhàn dặn: lên đường xa phải tự lo được bữa ăn hồi sức. Món đầu tiên hãy mua CƠM NẮM LÁ SEN — hồi 30 máu + 10 Tĩnh Âm: mua ở Vọng Tiên Tửu Điếm tại Hứa Gia Trấn hoặc sạp chợ Cô Châu Thành; còn là phàm nhân thì trả 5 lượng BẠC, đã đột phá tu tiên thì trả 3 Linh Thạch (Bánh Hấp Nhân Thịt hồi 45 máu + 15 Tĩnh Âm: 8 lượng bạc hoặc 5 Linh Thạch). (1) MUA một món ăn ở một trong hai nơi ấy. (2) HÁI một cây Nấm Rừng ở bãi nấm ven đường mòn xuyên rừng, phía tây trạm nghỉ (bãi nấm mọc lại mỗi ngày; bãi sau trấn cũng có). (3) NẤU một món từ nguyên liệu ở bếp trạm nghỉ giữa đường hoặc bếp quán trọ trấn — Canh Nấm Thảo Dược hồi 35 máu + 25 Tĩnh Âm, Thịt Thú Nướng Que hồi 60 máu + 10 Tĩnh Âm. (4) ĂN thử một món bằng nút Đồ Ăn (phím R) và xem máu cùng Tĩnh Âm hồi lại theo số ghi trên món; đang đầy cả máu lẫn Tĩnh Âm vẫn ăn thử được để xong bước này. Chọn "Chọn dẫn đường" để mũi tên chỉ tới từng bước. Sau này cứ theo đúng những nơi ấy mà tự làm lại: quán trọ và chợ bán sẵn, bãi nấm và thú rừng cho nguyên liệu, hai bếp để nấu.',
       system: 'đồ ăn (mua/nấu/ăn)', reward: { items: { com_nam: 2, banh_hap: 1 } },
       guide: { map: 'tran', x: 47, y: 22 } },
     { id: 'sq_pre_bicanh', phase: 'pre', unlockQuest: 'q8_chuan_bi',
@@ -4959,7 +5012,7 @@
       var ff = state.flags || {};
       var f1 = ff.foodBought ? 1 : 0, f2 = ff.foodGathered ? 1 : 0, f3 = ff.foodCooked ? 1 : 0, f4 = ff.foodEaten ? 1 : 0;
       var fcur = f1 + f2 + f3 + f4;
-      return { cur: fcur, target: 4, text: 'Mua món ' + f1 + '/1 · Hái nấm ' + f2 + '/1 · Nấu món ' + f3 + '/1 · Ăn thử ' + f4 + '/1', done: fcur >= 4 };
+      return { cur: fcur, target: 4, text: 'Mua Cơm Nắm (30 máu + 10 Tĩnh Âm; 5 lượng bạc / 3 Linh Thạch) ' + f1 + '/1 · Hái nấm ' + f2 + '/1 · Nấu món ' + f3 + '/1 · Ăn thử ' + f4 + '/1', done: fcur >= 4 };
     }
     if (def.id === 'sq_pre_bicanh') {
       var c1 = (sideRealmFirstClear(state, 'bc_thuyliem') ? 1 : 0) + (sideRealmFirstClear(state, 'bc_tapha') ? 1 : 0);
@@ -5417,6 +5470,7 @@
     sideQuestProgress: sideQuestProgress, sideQuestStatus: sideQuestStatus, sideQuestList: sideQuestList,
     sideQuestGuideHint: sideQuestGuideHint, sideMarkSocial: sideMarkSocial, claimSideQuest: claimSideQuest, selectSideQuest: selectSideQuest,
     FOOD_CD_SEC: FOOD_CD_SEC, FOOD_RECIPES: FOOD_RECIPES, foodDef: foodDef, foodIds: foodIds, foodCount: foodCount, bestFoodId: bestFoodId, eatFood: eatFood, buyFood: buyFood, cookFood: cookFood, gatherFoodPatch: gatherFoodPatch,
+    SILVER_START: SILVER_START, silverBalance: silverBalance, buyFoodSilver: buyFoodSilver, tasteFood: tasteFood,
     sideGrindClaimedCount: sideGrindClaimedCount,
     PHE_THUOC_COLOR_ORDER: PHE_THUOC_COLOR_ORDER,
     isSessionHidden: isSessionHidden, hideSessionProp: hideSessionProp, showSessionProp: showSessionProp, clearSessionHiddenProps: clearSessionHiddenProps,

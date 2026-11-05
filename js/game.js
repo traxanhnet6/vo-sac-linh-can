@@ -2677,6 +2677,8 @@
     } else if (action === 'food_open_cook') { say(foodCookScene('bep'));
     } else if (action === 'food_buy_com_nam') { doFoodBuy('com_nam');
     } else if (action === 'food_buy_banh_hap') { doFoodBuy('banh_hap');
+    } else if (action === 'food_buy_com_nam_bac') { doFoodBuySilver('com_nam');
+    } else if (action === 'food_buy_banh_hap_bac') { doFoodBuySilver('banh_hap');
     } else if (action === 'food_cook_canh_nam_thao') { doFoodCook('canh_nam_thao');
     } else if (action === 'food_cook_thit_nuong') { doFoodCook('thit_nuong');
     } else if (action === 'food_cook_canh_bo_khi') { doFoodCook('canh_bo_khi');
@@ -4121,6 +4123,17 @@
     // thể bảng vật lý — báo điều phối viên, không tự bịa vật thể).
     var delNpc = grindDeliveryForNpc(npc.id);
     if (delNpc) return grindCompleteDelivery(npc, delNpc);
+    // Đợt sửa lỗi nhiệm vụ nấu ăn (2026-11-05): sạp chợ bán đồ ăn phàm
+    // tục NGAY từ giai đoạn hướng dẫn — bạc khi ví Linh Thạch còn khóa,
+    // Linh Thạch sau đột phá — không chờ mở khóa săn; bảng treo thưởng
+    // vẫn chỉ mở theo luật săn ở nhánh dưới.
+    if (npc.id === 'cho_a' && state.map === 'co_chau' && !huntUnlocked()) {
+      grindTalkNpcId = npc.id; grindTalkNpcName = npc.name;
+      return say([{ who: 'choice', text: 'Ngươi sẽ…', options: [
+        { label: 'Mua đồ ăn', action: 'food_open_buy' },
+        { label: 'Trò chuyện', action: 'grind_idle' }
+      ] }]);
+    }
     if (npc.id === 'cho_a' && state.map === 'co_chau' && huntUnlocked()) {
       grindTalkNpcId = npc.id; grindTalkNpcName = npc.name;
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: [
@@ -10286,11 +10299,23 @@
     return !!(enc || duel || tlFight || hhtFight || arcFig || (atkFigs && atkFigs.length));
   }
   function foodBuyScene() {
-    return [{ who: 'choice', text: 'Mua đồ ăn mang theo — ăn là hồi máu và Tĩnh Âm ngay:', options: [
-      { label: 'Cơm Nắm Lá Sen — 3 Linh Thạch (hồi 30 máu, 10 Tĩnh Âm)', action: 'food_buy_com_nam' },
-      { label: 'Bánh Hấp Nhân Thịt — 5 Linh Thạch (hồi 45 máu, 15 Tĩnh Âm)', action: 'food_buy_banh_hap' },
-      { label: 'Thôi, để khi khác', action: 'food_leave' }
-    ] }];
+    /* Hai món phàm tục rẻ luôn mua được bằng BẠC — tiền phàm tục của
+       nguyên tác — kể cả khi ví Linh Thạch còn khóa (giai đoạn phàm
+       nhân) hay đã mở mà Linh Thạch đã tiêu hết (đợt sửa lỗi nhiệm vụ
+       nấu ăn 2026-11-05). Ví mở thì thêm hai lựa chọn giá Linh Thạch
+       như trước; ví khóa thì TUYỆT ĐỐI không hiện giá Linh Thạch. */
+    var opts = [];
+    if (L.walletOpen(state)) {
+      opts.push({ label: 'Cơm Nắm Lá Sen — 3 Linh Thạch (hồi 30 máu, 10 Tĩnh Âm)', action: 'food_buy_com_nam' });
+      opts.push({ label: 'Bánh Hấp Nhân Thịt — 5 Linh Thạch (hồi 45 máu, 15 Tĩnh Âm)', action: 'food_buy_banh_hap' });
+    }
+    opts.push({ label: 'Cơm Nắm Lá Sen — 5 lượng bạc (hồi 30 máu, 10 Tĩnh Âm)', action: 'food_buy_com_nam_bac' });
+    opts.push({ label: 'Bánh Hấp Nhân Thịt — 8 lượng bạc (hồi 45 máu, 15 Tĩnh Âm)', action: 'food_buy_banh_hap_bac' });
+    opts.push({ label: 'Thôi, để khi khác', action: 'food_leave' });
+    var head = L.walletOpen(state)
+      ? 'Mua đồ ăn mang theo — ăn là hồi máu và Tĩnh Âm ngay (trả Linh Thạch hoặc bạc phàm tục, đang có ' + L.silverBalance(state) + ' lượng bạc):'
+      : 'Mua đồ ăn mang theo — ăn là hồi máu và Tĩnh Âm ngay. Ngươi chưa tu tiên nên quán nhận bạc phàm tục (đang có ' + L.silverBalance(state) + ' lượng bạc):';
+    return [{ who: 'choice', text: head, options: opts }];
   }
   function foodCookScene(where) {
     var head = where === 'tram'
@@ -10314,6 +10339,15 @@
     var r = L.buyFood(state, id);
     if (!r.ok) toast(r.text || 'Không mua được món này.', 4000);
     else { sfxUi(); toast('Đã mua ' + r.def.name + ' (−' + r.price + ' Linh Thạch, trong túi: ' + L.bagCount(state, id) + ' phần). Ăn bằng nút Đồ Ăn (phím R) hoặc mở túi.', 4200); }
+    refreshHUD(); saveNow();
+    say(foodBuyScene());
+  }
+  /* Mua bằng BẠC ở giai đoạn ví Linh Thạch còn khóa (đợt sửa lỗi nhiệm
+     vụ nấu ăn 2026-11-05): cùng khuôn với doFoodBuy, khác tiền tệ. */
+  function doFoodBuySilver(id) {
+    var r = L.buyFoodSilver(state, id);
+    if (!r.ok) toast(r.text || 'Không mua được món này.', 4200);
+    else { sfxUi(); toast('Đã mua ' + r.def.name + ' (−' + r.price + ' lượng bạc, còn ' + r.balance + ' lượng; trong túi: ' + L.bagCount(state, id) + ' phần). Ăn bằng nút Đồ Ăn (phím R).', 4400); }
     refreshHUD(); saveNow();
     say(foodBuyScene());
   }
@@ -10370,7 +10404,27 @@
     if (inC && tNow < foodCdUntil) { toast('Vừa ăn xong — chờ ' + Math.max(1, Math.ceil((foodCdUntil - tNow) / 1000)) + ' giây nữa mới ăn tiếp được.', 2600); return; }
     var r = L.eatFood(state, id);
     if (!r.ok) {
-      if (r.reason === 'full') toast('Máu và Tĩnh Âm đều đã đầy — ăn lúc này chỉ phí đồ ăn.', 3200);
+      if (r.reason === 'full') {
+        /* Ngữ cảnh nhiệm vụ hướng dẫn đồ ăn (đợt sửa lỗi 2026-11-05):
+           bước ĂN còn dở mà bị chặn CHỈ vì đầy cả máu lẫn Tĩnh Âm thì
+           cho ăn thử qua L.tasteFood (trừ món, hồi 0, hoàn thành bước)
+           — người mới làm đúng hướng dẫn thường đang đầy sức, trước
+           đây bước này kẹt vĩnh viễn và nhiệm vụ không bao giờ hiện
+           nút Nhận thưởng. Ngoài ngữ cảnh nhiệm vụ, giữ nguyên luật
+           chặn ăn khi đầy như cũ. */
+        var sqItem = L.sideQuestList(state).filter(function (it) { return it.def.id === 'sq_food_tutorial'; })[0];
+        var sqSt = sqItem ? sqItem.status : 'locked';
+        if (sqSt === 'available' && state.flags && !state.flags.foodEaten) {
+          var rt = L.tasteFood(state, id);
+          if (rt && rt.ok && rt.taste) {
+            presentEat(rt);
+            toast('Đang đầy sức nên ' + rt.def.name + ' không hồi thêm được gì — nhưng ngươi đã nếm thử xong: bước Ăn thử của nhiệm vụ "Bữa Ăn Đường Xa" đã hoàn thành.', 4800);
+            refreshHUD(); renderBag(); saveNow();
+            return;
+          }
+        }
+        toast('Máu và Tĩnh Âm đều đã đầy — ăn lúc này chỉ phí đồ ăn.', 3200);
+      }
       else if (r.reason === 'no_item') toast('Không còn ' + (L.ITEM_DEFS[id] ? L.ITEM_DEFS[id].name : 'món này') + ' trong túi.', 3200);
       return;
     }
@@ -11412,7 +11466,19 @@
   }
   function sideClaim(id) {
     var r = L.claimSideQuest(state, id);
-    if (!r.ok) { toast(r.reason === 'duplicate' ? 'Nhiệm vụ phụ này đã nhận thưởng rồi.' : 'Chưa nhận được thưởng nhiệm vụ phụ.', 3600); return; }
+    if (!r.ok) {
+      /* Nói ĐÚNG lý do và cách xử lý (đợt sửa lỗi nhiệm vụ nấu ăn
+         2026-11-05): trước đây mọi lỗi đều bị nuốt thành một câu chung
+         chung "Chưa nhận được thưởng nhiệm vụ phụ." — người chơi không
+         biết túi đầy là phải bỏ bớt đồ rồi nhận lại; tiến độ nhiệm vụ
+         vốn được giữ nguyên ở phía logic. */
+      if (r.reason === 'duplicate') toast('Nhiệm vụ phụ này đã nhận thưởng rồi.', 3600);
+      else if (r.reason === 'bag_full') toast('Túi đã đầy — không còn chỗ chứa phần thưởng. Hãy bỏ bớt đồ (hoặc ăn bớt đồ ăn) rồi bấm Nhận thưởng lại; tiến độ nhiệm vụ vẫn giữ nguyên.', 5600);
+      else if (r.reason === 'not_ready' && r.status === 'locked') toast('Nhiệm vụ này chưa mở — hãy đi tiếp mạch truyện chính.', 4200);
+      else if (r.reason === 'not_ready') toast('Chưa xong các bước của nhiệm vụ này — xem dòng tiến độ trong bảng nhiệm vụ phụ rồi làm nốt.', 4600);
+      else toast('Chưa nhận được thưởng nhiệm vụ phụ.', 3600);
+      return;
+    }
     sidePanelSig = '';
     sfxQuest();
     toast('Đã nhận thưởng nhiệm vụ phụ: ' + grindGrantedText(r) + '.', 4600);
@@ -11439,8 +11505,20 @@
     var linhRow = $('hud-linh');
     if (linhRow) {
       var wOpen = L.walletOpen(state);
-      linhRow.classList.toggle('hidden', !wOpen);
-      if (wOpen) $('hud-linh-val').textContent = L.fmtNum(state.linhThach || 0);
+      var linhLbl = linhRow.querySelector ? linhRow.querySelector('.linh-label') : null;
+      if (wOpen) {
+        linhRow.classList.remove('hidden');
+        if (linhLbl) linhLbl.textContent = 'Linh Thạch';
+        $('hud-linh-val').textContent = L.fmtNum(state.linhThach || 0);
+      } else {
+        /* Giai đoạn phàm nhân: ví Linh Thạch vẫn khóa và không hiển thị
+           (đúng luật khóa ví) — ô này chỉ hiện VÍ BẠC phàm tục (đợt sửa
+           lỗi nhiệm vụ nấu ăn 2026-11-05) để người chơi biết mình còn
+           bao nhiêu bạc mua đồ ăn ở quán trọ/sạp chợ. */
+        linhRow.classList.remove('hidden');
+        if (linhLbl) linhLbl.textContent = 'Bạc';
+        $('hud-linh-val').textContent = L.fmtNum(L.silverBalance(state)) + ' lượng';
+      }
     }
     // Vũ khí đang đeo (mục B đợt vá 2026-11-02): hiện ngay trong khung
     // nhân vật từ đầu game — đường hiển thị tối thiểu trước khi Túi Trữ
@@ -14251,6 +14329,9 @@
      không mở thêm đường lấy đồ ăn nào khác. */
   window.VSLC_FOOD = {
     buy: function (id) { return state ? L.buyFood(state, id) : null; },
+    buySilver: function (id) { return state ? L.buyFoodSilver(state, id) : null; },
+    silver: function () { return state ? L.silverBalance(state) : 0; },
+    taste: function (id) { return state ? L.tasteFood(state, id) : null; },
     cook: function (id) { return state ? L.cookFood(state, id) : null; },
     eat: function (id) { return state ? L.eatFood(state, id) : null; },
     gather: function (p) { return state ? L.gatherFoodPatch(state, p) : null; },
