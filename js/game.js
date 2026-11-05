@@ -385,18 +385,157 @@
   var VOICE = window.VSLC_VOICE || null, voiceAudio = null;
   function voiceKey(who, text) { return sha256(who + '|' + text).slice(0, 12); }
   function stopVoice() {
+    voiceSeq++; // hủy mọi chuỗi GHÉP ĐOẠN TÊN đang dang dở (đợt thay tên trong thoại)
+    if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     if (voiceAudio) { try { voiceAudio.pause(); } catch (e) {} voiceAudio = null; }
+  }
+
+  /* ---------- THAY TÊN TRONG LỜI THOẠI (đợt 2026-11-05, lệnh Bui:
+     "Câu thoại lồng tiếng thay Giang Phàm bằng tên khi người chơi đặt —
+     cả lời thoại") ----------
+     Tên nhân vật chính sống trong state.name (mặc định 'Giang Phàm').
+     Dữ kiện gốc (story.js / thoại nội tuyến) GIỮ NGUYÊN 'Giang Phàm' —
+     thay tên chỉ ở LỚP TRÌNH DIỄN: substDlgName() thay mọi xuất hiện
+     đúng chuỗi 'Giang Phàm' trong câu sắp hiện bằng tên người chơi.
+     Khi tên đang là mặc định, hàm trả nguyên văn từng byte (hành vi cũ
+     tuyệt đối, khóa giọng không đổi).
+     Lồng tiếng: câu có tiếng chứa tên được GHÉP ĐOẠN theo bản kê
+     js/voice-splice-manifest.js — các đoạn văn bản nướng sẵn bằng đúng
+     giọng diễn viên + tốc độ của câu (tools/build-voice-splice.js),
+     xen giữa là đoạn TÊN NGƯỜI CHƠI đọc bằng Web Speech API giọng
+     vi-VN tại runtime. Đây là cơ chế tạm thời đã được duyệt về kiến
+     trúc: khớp giọng diễn viên tuyệt đối cho đoạn tên sẽ do backend
+     online sinh bằng chính đường ống avocado sau này, bản kê ghép này
+     giữ nguyên để backend tái dùng. */
+  var SPLICE = window.VSLC_VOICE_SPLICE || null;
+  var HERO_DEFAULT_NAME = 'Giang Phàm';
+  var voiceSeq = 0; // số hiệu phiên phát: stopVoice tăng -> chuỗi ghép cũ tự hủy
+  function heroName() { return (state && state.name) || HERO_DEFAULT_NAME; }
+  function substDlgName(text) {
+    if (typeof text !== 'string') return text;
+    var nm = heroName();
+    if (!nm || nm === HERO_DEFAULT_NAME || text.indexOf(HERO_DEFAULT_NAME) < 0) return text;
+    return text.split(HERO_DEFAULT_NAME).join(nm);
+  }
+  function spliceEntryFor(key) { return (SPLICE && SPLICE.lines && SPLICE.lines[key]) || null; }
+  function nameSpliceOn(key) {
+    var nm = heroName();
+    return !!nm && nm !== HERO_DEFAULT_NAME && !!spliceEntryFor(key);
+  }
+  /* Dãy bước phát của một mục ghép: đoạn tệp (bỏ qua đoạn null) xen kẽ
+     đoạn tên giữa MỌI cặp đoạn liên tiếp — kể cả khi đoạn kề là null
+     (câu mở đầu/kết thúc bằng chính tên). */
+  function spliceStepsFor(key) {
+    var sp = spliceEntryFor(key);
+    if (!sp) return null;
+    var steps = [];
+    for (var i = 0; i < sp.parts.length; i++) {
+      if (sp.parts[i]) steps.push({ f: sp.parts[i] });
+      if (i < sp.parts.length - 1) steps.push({ name: true });
+    }
+    return steps;
+  }
+  /* Kế hoạch phát tiếng cho một câu — hàm quyết định DUY NHẤT mà
+     playVoiceFor dùng (cổng kiểm thử đối chiếu đúng hàm này):
+     {mode:'file'} tệp gốc nguyên vẹn | {mode:'fxfile'} tệp gốc qua lớp
+     vang Thiên Đạo | {mode:'splice'|'splicefx', steps} ghép đoạn tên. */
+  function voicePlanFor(line) {
+    if (!VOICE || !line || line.who === 'choice' || line.mode === 'write') return null;
+    var key = voiceKey(line.who, line.text);
+    var e = VOICE.lines[key];
+    if (!e) return null;
+    if (nameSpliceOn(key)) {
+      return { mode: e.s === 'thien_dao' ? 'splicefx' : 'splice', steps: spliceStepsFor(key), k: e.k, s: e.s, key: key };
+    }
+    if (e.s === 'thien_dao') return { mode: 'fxfile', f: e.f, k: e.k, s: e.s, key: key };
+    return { mode: 'file', f: e.f, k: e.k, s: e.s, key: key };
+  }
+  /* Đọc tên người chơi bằng Web Speech API (ưu tiên giọng vi-VN của
+     trình duyệt) — đoạn tên của cơ chế ghép. Không có Web Speech thì bỏ
+     qua đoạn tên, các đoạn nướng sẵn vẫn phát, không lỗi. Mốc dự phòng
+     2,6 giây cho trình duyệt không bắn onend. */
+  function speakHeroName(volume, rate, done) {
+    var ss = window.speechSynthesis;
+    if (!ss || typeof SpeechSynthesisUtterance === 'undefined') { done(); return; }
+    var finished = false;
+    function fin() { if (!finished) { finished = true; done(); } }
+    try {
+      var u = new SpeechSynthesisUtterance(heroName());
+      u.lang = 'vi-VN';
+      try {
+        var vs = ss.getVoices() || [];
+        for (var i = 0; i < vs.length; i++) {
+          if (vs[i].lang && vs[i].lang.toLowerCase().indexOf('vi') === 0) { u.voice = vs[i]; break; }
+        }
+      } catch (e) {}
+      u.volume = Math.max(0, Math.min(1, volume));
+      u.rate = Math.max(0.5, Math.min(1.5, rate || 1));
+      u.onend = fin; u.onerror = fin;
+      ss.speak(u);
+      setTimeout(fin, 2600);
+    } catch (e) { fin(); }
+  }
+  /* Phát một tệp đoạn của chuỗi ghép; useFx = chạy qua cùng chuỗi vang
+     vọng của playVoiceFileFx (chỉ dùng cho đoạn tuyên đọc Thiên Đạo). */
+  function playSegmentFile(file, volume, useFx, onEnded) {
+    var ended = false;
+    function fin() { if (!ended) { ended = true; onEnded(); } }
+    try {
+      var el = new Audio('assets/voice/' + file);
+      el.volume = volume;
+      voiceAudio = el;
+      if (useFx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) throw new Error('no audiocontext');
+        if (!voiceCtx) voiceCtx = new AC();
+        if (voiceCtx.state === 'suspended' && voiceCtx.resume) voiceCtx.resume();
+        var src = voiceCtx.createMediaElementSource(el);
+        var dry = voiceCtx.createGain(); dry.gain.value = 1;
+        var lp = voiceCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100;
+        var delay = voiceCtx.createDelay(1); delay.delayTime.value = 0.18;
+        var fb = voiceCtx.createGain(); fb.gain.value = 0.12;
+        var wet = voiceCtx.createGain(); wet.gain.value = 0.10;
+        src.connect(dry); dry.connect(voiceCtx.destination);
+        src.connect(lp); lp.connect(delay); delay.connect(fb); fb.connect(delay);
+        delay.connect(wet); wet.connect(voiceCtx.destination);
+      }
+      if (el.addEventListener) { el.addEventListener('ended', fin); el.addEventListener('error', fin); }
+      var pr = el.play(); if (pr && pr.catch) pr.catch(fin);
+    } catch (e) { fin(); }
+  }
+  /* Chạy chuỗi ghép đoạn trong CÙNG một lượt phát của câu: đoạn tệp /
+     tên người chơi nối liền nhau. Chuỗi mang số hiệu phiên: bất kỳ
+     stopVoice() nào (qua câu, đóng thoại) cũng tăng voiceSeq và chuỗi
+     cũ dừng hẳn, không phát chèn sang câu mới. Âm lượng theo đúng luật
+     của câu (voiceScale theo kind — tiếng lòng vẫn khẽ như bản gốc);
+     tốc độ đọc tên lấy theo tốc độ gốc của vai trong bản kê cast. */
+  function playSpliceSteps(plan, volume) {
+    var mySeq = voiceSeq;
+    var idx = 0;
+    var cast = (VOICE && VOICE.cast && VOICE.cast[plan.s]) || null;
+    var rate = cast ? cast.speed / 100 : 1;
+    function step() {
+      if (mySeq !== voiceSeq) return;
+      if (SET && SET.voiceAllowed && !SET.voiceAllowed()) return;
+      if (idx >= plan.steps.length) return;
+      var st = plan.steps[idx++];
+      if (st.name) speakHeroName(volume, rate, step);
+      else playSegmentFile(st.f, volume, plan.mode === 'splicefx', step);
+    }
+    step();
   }
   function playVoiceFor(line) {
     stopVoice();
     if (!VOICE || !line || line.who === 'choice' || line.mode === 'write') return;
     if (SET && SET.voiceAllowed && !SET.voiceAllowed()) return;
-    var e = VOICE.lines[voiceKey(line.who, line.text)];
-    if (!e) return; // câu chưa có tiếng: rơi về tiếng chữ chạy như cũ, không lỗi
-    if (e.s === 'thien_dao') { playVoiceFileFx(e.f, e.k); return; } // giọng Thiên Đạo: luôn qua lớp vang vọng
+    var plan = voicePlanFor(line);
+    if (!plan) return; // câu chưa có tiếng: rơi về tiếng chữ chạy như cũ, không lỗi
+    var vol = SET && SET.voiceScale ? SET.voiceScale(plan.k) : (plan.k === 'inner' ? 0.5 : 0.9);
+    if (plan.mode === 'splice' || plan.mode === 'splicefx') { playSpliceSteps(plan, vol); return; }
+    if (plan.mode === 'fxfile') { playVoiceFileFx(plan.f, plan.k); return; } // giọng Thiên Đạo: luôn qua lớp vang vọng
     try {
-      voiceAudio = new Audio('assets/voice/' + e.f);
-      voiceAudio.volume = SET && SET.voiceScale ? SET.voiceScale(e.k) : (e.k === 'inner' ? 0.5 : 0.9);
+      voiceAudio = new Audio('assets/voice/' + plan.f);
+      voiceAudio.volume = vol;
       var pr = voiceAudio.play();
       if (pr && pr.catch) pr.catch(function () {});
     } catch (err) { voiceAudio = null; }
@@ -449,8 +588,30 @@
     var id = realmTo === 2 ? 'truc_co' : (realmTo === 3 ? 'kim_dan' : 'fallback');
     var a = VOICE.announce[id];
     if (!a || !a.f) return;
+    /* Đợt thay tên trong thoại: tên khác mặc định và mốc tuyên đọc có
+       bản kê ghép -> phát GHÉP ĐOẠN qua lớp vang như bản gốc (đoạn tệp
+       đã nung vang theo công thức khóa, xem tools/build-voice-splice.js),
+       đoạn tên đọc bằng Web Speech. Tên mặc định: tệp gốc nguyên vẹn. */
+    var spKey = (SPLICE && SPLICE.announce && SPLICE.announce[id]) || null;
+    if (spKey && nameSpliceOn(spKey)) {
+      stopVoice();
+      if (SET && SET.voiceAllowed && !SET.voiceAllowed()) return;
+      var vol = SET && SET.voiceScale ? SET.voiceScale('narrate') : 0.9;
+      playSpliceSteps({ mode: 'splicefx', steps: spliceStepsFor(spKey), k: 'narrate', s: 'thien_dao', key: spKey }, vol);
+      return;
+    }
     playVoiceFileFx(a.f, 'narrate');
   }
+
+  /* Cầu kiểm chứng cho cổng kiểm thử (cùng tiền lệ window.VSLC_GUIDE):
+     phơi đúng các hàm thật của cơ chế thay tên để test đối chiếu hành vi
+     qua đường thật, không dò chuỗi. */
+  window.VSLC_NAME_SUB = {
+    subst: substDlgName,
+    plan: voicePlanFor,
+    say: function (lines) { say(lines); },
+    heroName: heroName
+  };
 
   /* ---------- Hiệu ứng hạt + cột sáng + chuyển cảnh (docs/effects-catalog.md) ---------- */
   var parts = [], MAX_PARTS = 90; // trần hạt đồng thời — giữ hiệu năng điện thoại
@@ -2568,7 +2729,7 @@
     var resEl = $('dlg-result');
     if (!resEl) return;
     if (line && line.result) {
-      $('dlg-result-name').textContent = line.result.name;
+      $('dlg-result-name').textContent = substDlgName(line.result.name);
       $('dlg-result-grade').textContent = line.result.grade;
       resEl.classList.remove('hidden', 'tone-gold', 'tone-dim');
       resEl.classList.add('tone-' + (line.result.tone || 'gold'));
@@ -2605,12 +2766,12 @@
     var nameEl = $('dlg-name'), textEl = $('dlg-text'), box = $('dialogue');
     box.classList.toggle('dlg-write', dlg.mode === 'write');
     box.classList.toggle('dlg-say', dlg.mode === 'say');
-    if (dlg.who === 'narrate') { nameEl.textContent = ''; textEl.textContent = dlg.text; }
-    else if (dlg.who === 'hero') { nameEl.textContent = state.name + (dlg.mode === 'write' ? ' (viết)' : ''); textEl.textContent = dlg.text; }
-    else if (dlg.who === 'choice') { nameEl.textContent = state.name; textEl.textContent = dlg.text; renderChoices(dlg); }
+    if (dlg.who === 'narrate') { nameEl.textContent = ''; textEl.textContent = substDlgName(dlg.text); }
+    else if (dlg.who === 'hero') { nameEl.textContent = state.name + (dlg.mode === 'write' ? ' (viết)' : ''); textEl.textContent = substDlgName(dlg.text); }
+    else if (dlg.who === 'choice') { nameEl.textContent = state.name; textEl.textContent = substDlgName(dlg.text); renderChoices(dlg); }
     else {
       var n = npcsLive.filter(function (x) { return x.id === dlg.who; })[0];
-      nameEl.textContent = n ? n.name : (SPEAKER_NAMES[dlg.who] || dlg.who); textEl.textContent = dlg.text;
+      nameEl.textContent = n ? n.name : (SPEAKER_NAMES[dlg.who] || dlg.who); textEl.textContent = substDlgName(dlg.text);
     }
     startDlgTyper(textEl);
   }
@@ -2642,7 +2803,7 @@
     var wrap = $('dlg-choices');
     line.options.forEach(function (opt, idx) {
       var b = document.createElement('button');
-      b.textContent = (idx + 1) + '. ' + opt.label;
+      b.textContent = (idx + 1) + '. ' + substDlgName(opt.label);
       b.addEventListener('click', function () { chooseOption(opt.action); });
       wrap.appendChild(b);
     });
@@ -9669,7 +9830,7 @@
     var el = $('tl-sub');
     if (el) {
       if (!text) el.classList.add('hidden');
-      else { el.textContent = text; el.classList.remove('hidden'); }
+      else { el.textContent = substDlgName(text); el.classList.remove('hidden'); }
     }
     tlSubT = text ? (dur || 2) : 0;
     if (text) playVoiceFor({ who: 'narrate', text: text });
