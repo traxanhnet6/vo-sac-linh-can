@@ -1079,6 +1079,12 @@
   ASSETS.bgByMap.thap_noi = loadImg('assets/bg-thap_noi.png');
   ASSETS.bgByMap.thanh_van_tong = loadImg('assets/bg-thanh_van_tong.png');
   ASSETS.bgByMap.hb_valley = loadImg('assets/bg-hb_valley.png');
+  ASSETS.bgByMap.thap_van_dai_son = loadImg('assets/bg-thap_van_dai_son.png'); // Thập Vạn Đại Sơn (đợt bản đồ 2026-11-05): nền núi liền mạch sinh từ lưới thật, kiểm chứng bằng verify-bgs
+  // Tái cấu trúc Thập Vạn Đại Sơn (2026-11-05): nền riêng cho bốn bản đồ con theo vành đai, cùng đường ống gen-bg-smooth (họ TVDS).
+  ASSETS.bgByMap.tvds_truc_co = loadImg('assets/bg-tvds_truc_co.png');
+  ASSETS.bgByMap.tvds_kim_dan = loadImg('assets/bg-tvds_kim_dan.png');
+  ASSETS.bgByMap.tvds_nguyen_anh = loadImg('assets/bg-tvds_nguyen_anh.png');
+  ASSETS.bgByMap.tvds_hoa_than = loadImg('assets/bg-tvds_hoa_than.png');
   ASSETS.bgByMap.thien_co_lau = loadImg('assets/bg-thien_co_lau.png');
   // Tranh nền 5 bản đồ bí cảnh (làn C đăng ký đúng tên tệp của làn B:
   // bg-bc_thuyliem/bg-bc_tapha đã có; bg-bc_tapsau/bg-bc_kiemtrung/
@@ -1135,6 +1141,16 @@
   // ARCIV A.2: loài dùng chung sheet loài gốc (chưa có sheet riêng — khai trong hợp đồng mục E)
   ASSETS.mons.tan_hon_kiem_y_sau = ASSETS.mons.kiem_y_tan_hon;
   ASSETS.mons.lang_nhiem_song = ASSETS.mons.son_lang;
+  // Thập Vạn Đại Sơn (2026-11-05): loài mới của các vành đai sâu dùng
+  // chung sheet của họ như hai tiền lệ trên — sheet riêng là nợ mỹ
+  // thuật đã khai trong báo cáo đợt bản đồ.
+  ASSETS.mons.lang_dau_dan = ASSETS.mons.son_lang;
+  ASSETS.mons.huyen_bang_lang = ASSETS.mons.son_lang;
+  ASSETS.mons.thach_tuong_co = ASSETS.mons.thach_tuong;
+  ASSETS.mons.kim_dieu = ASSETS.mons.phong_ung;
+  ASSETS.mons.van_tieu_kiem_linh = ASSETS.mons.kiem_linh;
+  ASSETS.mons.tran_son_quan = ASSETS.mons.thach_tuong_thu_ve;
+  ASSETS.mons.van_tieu_son_quan = ASSETS.mons.tran_nhan_kiem_linh;
   ASSETS.bgByMap.bc_kiemtrung_sau = loadImg('assets/bg-bc_kiemtrung_sau.png');
   ASSETS.bgByMap.bc_tran_tam = loadImg('assets/bg-bc_tran_tam.png');
   ASSETS.bgByMap.bc_tran_tam_sau = loadImg('assets/bg-bc_tran_tam_sau.png');
@@ -16336,6 +16352,7 @@
   function grindHarvest(nd) {
     if (!state.flags.bagUnlocked) return toast('Cần mở Túi Trữ Vật trước (chương 3) mới hái được dược liệu cày.', 3600);
     var st = L.nodeStatus(state, nd.nodeId);
+    if (!st.ready && st.guarded) return toast('Linh thảo quý còn ' + (L.BOSS_DEFS[nd.guardBoss] ? L.BOSS_DEFS[nd.guardBoss].name : 'boss') + ' canh giữ — hạ boss canh giữ trước đã.', 3600);
     if (!st.ready) return toast('Điểm hái này cần ' + st.daysLeft + ' ngày game nữa mới hồi.', 3600);
     var chk = L.bagCanAdd(state, nd.itemId, nd.yield);
     if (!chk.ok) return toast(chk.reason, 4200);
@@ -17088,7 +17105,9 @@
       if (nd.mapId !== state.map) return;
       var st = L.nodeStatus(state, nd.nodeId);
       var nx = nd.x * TILE + 16, ny = nd.y * TILE + 16;
-      ctx.fillStyle = st.ready ? 'rgba(140,235,170,0.9)' : 'rgba(140,235,170,0.25)';
+      // Điểm quý đang bị boss canh giữ nhuộm hổ phách thay vì xanh mờ
+      // (Thập Vạn Đại Sơn 2026-11-05) — nhìn là biết vì sao chưa hái được.
+      ctx.fillStyle = st.ready ? 'rgba(140,235,170,0.9)' : (st.guarded ? 'rgba(245,180,80,0.85)' : 'rgba(140,235,170,0.25)');
       ctx.beginPath();
       ctx.moveTo(nx, ny - 8); ctx.lineTo(nx + 8, ny); ctx.lineTo(nx, ny + 8); ctx.lineTo(nx - 8, ny);
       ctx.closePath(); ctx.fill();

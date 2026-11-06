@@ -123,7 +123,14 @@
      vào MAPS của js/logic.js; cho tới lúc đó test-music.js sẽ đỏ ở các
      khẳng định đối chiếu MAPS (MAP_IDS khớp tuyệt đối + cờ stream khớp
      ô nước) — đó là điểm chờ làn A, không phải lỗi module này. */
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem', 'thang_long_dai'];
+  /* Đợt gộp THẬP VẠN ĐẠI SƠN vào cây chính (2026-11-06): khu tách 5 bản
+     đồ con theo vành đai cảnh giới — MAP_IDS 15 -> 20, thêm ở CUỐI danh
+     sách thap_van_dai_son (vành Luyện Khí, giữ id + neo cổng tông môn)
+     và 4 bản đồ con tvds_truc_co / tvds_kim_dan / tvds_nguyen_anh /
+     tvds_hoa_than. Đăng ký lấy HỢP NHẤT từ cây đợt vào music.js hiện
+     tại của cây chính: giữ nguyên cơ chế nhạc nền tệp (FILE_MUSIC_URL)
+     và mọi đăng ký đã live; 5 TRACK + 5 AMBIENCE_DEFS của khu ở dưới. */
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem', 'thang_long_dai', 'thap_van_dai_son', 'tvds_truc_co', 'tvds_kim_dan', 'tvds_nguyen_anh', 'tvds_hoa_than'];
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -321,6 +328,41 @@
       padWave: 'triangle', motifWave: 'sine',
       chords: [[29, 41, 48], [27, 39, 46], [32, 44, 51], [25, 37, 44]],
       motif: [2, -1, -1, -1, -1, -1, 1, -1, 0, -1, -1, -1, -1, -1, -1, -1]
+    },
+    thap_van_dai_son: { /* Thập Vạn Đại Sơn (đợt bản đồ 2026-11-05) —
+      dãy núi hoang dã cấp cao: cùng họ ngũ cung thứ trầm của Hồi Phong
+      nhưng chậm và thưa hơn (76 -> 64 bpm, 0,26 -> 0,18) cho cảm giác
+      cao + rộng + lạnh; đệm 3 nốt trầm, mô-típ leo dốc thưa 4 nốt. */
+      root: 55, scale: SCALE_MIN_PENT, bpm: 64, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[31, 43, 50], [29, 41, 48], [34, 46, 53], [36, 48, 55]],
+      motif: [0, -1, -1, 2, -1, -1, 4, -1, -1, -1, 5, -1, -1, 4, -1, -1]
+    },
+    /* Tái cấu trúc 2026-11-05: bốn bản đồ con của khu dùng ĐÚNG track
+       của bản đồ mẹ ở trên (cùng dãy núi, một tiếng nói âm nhạc). */
+    tvds_truc_co: {
+      root: 55, scale: SCALE_MIN_PENT, bpm: 64, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[31, 43, 50], [29, 41, 48], [34, 46, 53], [36, 48, 55]],
+      motif: [0, -1, -1, 2, -1, -1, 4, -1, -1, -1, 5, -1, -1, 4, -1, -1]
+    },
+    tvds_kim_dan: {
+      root: 55, scale: SCALE_MIN_PENT, bpm: 64, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[31, 43, 50], [29, 41, 48], [34, 46, 53], [36, 48, 55]],
+      motif: [0, -1, -1, 2, -1, -1, 4, -1, -1, -1, 5, -1, -1, 4, -1, -1]
+    },
+    tvds_nguyen_anh: {
+      root: 55, scale: SCALE_MIN_PENT, bpm: 64, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[31, 43, 50], [29, 41, 48], [34, 46, 53], [36, 48, 55]],
+      motif: [0, -1, -1, 2, -1, -1, 4, -1, -1, -1, 5, -1, -1, 4, -1, -1]
+    },
+    tvds_hoa_than: {
+      root: 55, scale: SCALE_MIN_PENT, bpm: 64, density: 0.18,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[31, 43, 50], [29, 41, 48], [34, 46, 53], [36, 48, 55]],
+      motif: [0, -1, -1, 2, -1, -1, 4, -1, -1, -1, 5, -1, -1, 4, -1, -1]
     }
   };
   /* Lớp môi trường theo bản đồ — tra dữ kiện bản đồ trong js/logic.js:
@@ -356,7 +398,14 @@
     bc_kiemtrung: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: false, stone: false, howl: false },
     bc_hoiphong_mo: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true },
     dai_dau_kiem: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false }, // đài trên cao của tông: chỉ lớp gió như tông môn, không suối (đài không có ô nước)
-    thang_long_dai: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false } // đỉnh núi chạm mây: chỉ lớp gió cao sơn như đài đấu kiếm, không suối (đỉnh không có ô nước)
+    thang_long_dai: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: false }, // đỉnh núi chạm mây: chỉ lớp gió cao sơn như đài đấu kiếm, không suối (đỉnh không có ô nước)
+    thap_van_dai_son: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true }, // dãy núi hoang dã (đợt bản đồ 2026-11-05): chim + dế + suối Trường Khê thật trên lưới + gió núi + tiếng hú của bầy Sơn Lang
+    // Tái cấu trúc 2026-11-05: ba vành giữa giữ nguyên bộ lớp của bản đồ mẹ (đều có suối thật trên lưới);
+    // lõi Hóa Thần không ô nước, không chim/dế — chỉ gió núi + tiếng hú vọng từ xa.
+    tvds_truc_co: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
+    tvds_kim_dan: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
+    tvds_nguyen_anh: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
+    tvds_hoa_than: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true }
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {

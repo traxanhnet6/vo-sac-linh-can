@@ -1354,6 +1354,390 @@
     return allV.concat(accentV);
   })();
 
+  /* ---- Thập Vạn Đại Sơn 124x92 (đợt bản đồ 2026-11-05, lệnh Bui
+     "Tạo map Thập Vạn Đại Sơn"; thiết kế: docs/thap-van-dai-son-design.md) ----
+     Lưới MẸ 124x92: từ đợt tái cấu trúc 2026-11-05 (lệnh Bui 04:55)
+     lưới này chỉ còn là nguồn cắt 5 bản đồ con theo vành đai — xem
+     khối TVDS_*_GRID ngay dưới buildThapVanGrid; cổng vào khu mở ở
+     q7_done (Bui chốt 04:54 ngày 2026-11-05).
+     Trục nam -> bắc một tuyến: cổng nam (về sau núi Thanh Vân Tông) ->
+     bãi đáp + điểm nghỉ ở Thung Lũng Trường Khê -> điểm qua Suối
+     Trường Khê -> vành đai giữa (Rừng Thông Cổ, bãi săn đông, Vọng
+     Nguyệt Phong ở giữa) -> Hẻm Phong Môn (cổ họng độc đạo) -> Đài
+     Phong Vân (bãi boss: đợt này chỉ vị trí + cảnh vật + điểm neo
+     (61,20), KHÔNG đăng ký boss) -> Đèo Đoạn Vân -> sân đỉnh Vân Tiêu
+     Phong. Phía tây có Vực Vạn Trượng (hố sâu ổ tinh anh), phía đông
+     có Suối Ngọc Nữ, dãy Long Vĩ và đồng chân Ngọc Nữ Phong. Mười
+     đỉnh là khối đá 'X' có bia khắc tên ở chân; bản đồ không có NPC
+     (hoang dã thuần săn — NPC bắt buộc kèm thoại + lồng tiếng). */
+  var TVDS_W = 124, TVDS_H = 92;
+  // Khối elip xác định bằng hàm thuần; rìa khía bằng hàm băm (chỉ với
+  // khối đá 'X') để silhouettte núi hữu cơ, không tròn trịa máy móc.
+  function blobCh(g, cx, cy, rx, ry, ch) {
+    for (var y = cy - ry; y <= cy + ry; y++) for (var x = cx - rx; x <= cx + rx; x++) {
+      if (x < 1 || y < 1 || x >= TVDS_W - 1 || y >= TVDS_H - 1) continue;
+      var dx = (x - cx) / rx, dy = (y - cy) / ry, d = dx * dx + dy * dy;
+      if (d > 1) continue;
+      if (ch === 'X' && d > 0.72 && hashRoad(x * 7 + 3, y * 13 + 5) % 3 === 0) continue;
+      g[y][x] = ch;
+    }
+  }
+  function buildThapVanGrid() {
+    var g = blankGrid(TVDS_W, TVDS_H);
+    // Đồng hoa: cửa ngõ phía tây, chân Thanh Khê + chân Ngọc Nữ phía
+    // đông, bãi hoa nhỏ ở vành đai giữa.
+    rectCh(g, 10, 82, 50, 89, ',');
+    rectCh(g, 84, 70, 105, 76, ',');
+    rectCh(g, 106, 64, 120, 76, ',');
+    rectCh(g, 44, 52, 56, 57, ',');
+    // Mười đỉnh + hai vách Hẻm Phong Môn (khối đá không đi được).
+    blobCh(g, 61, 10, 13, 7, 'X');   // Vân Tiêu Phong — đỉnh chính
+    blobCh(g, 16, 12, 9, 6, 'X');    // Thiết Kiếm Phong
+    blobCh(g, 112, 7, 10, 5, 'X');   // Huyền Băng Phong
+    blobCh(g, 104, 22, 8, 5, 'X');   // Ngọc Nữ Phong
+    blobCh(g, 36, 14, 6, 4, 'X');    // Song Tử Phong — chỏm tây
+    blobCh(g, 45, 16, 5, 4, 'X');    // Song Tử Phong — chỏm đông
+    blobCh(g, 13, 36, 7, 6, 'X');    // Hổ Khiếu Phong
+    blobCh(g, 110, 40, 11, 4, 'X');  // Long Vĩ Phong
+    blobCh(g, 62, 40, 7, 5, 'X');    // Vọng Nguyệt Phong
+    blobCh(g, 97, 64, 8, 5, 'X');    // Thanh Khê Phong
+    blobCh(g, 17, 63, 8, 5, 'X');    // Bạch Hạc Phong
+    blobCh(g, 52, 29, 5, 6, 'X');    // vách tây Hẻm Phong Môn
+    blobCh(g, 71, 29, 5, 6, 'X');    // vách đông Hẻm Phong Môn
+    // Vực Vạn Trượng: tường đá vây hố sàn đá, cửa nam độc đạo.
+    rectCh(g, 28, 24, 46, 33, 'X');
+    rectCh(g, 31, 26, 43, 31, 'S');
+    rectCh(g, 35, 32, 38, 33, 'D');
+    // Sân đỉnh Vân Tiêu (đá + lõi hoa văn), Đèo Đoạn Vân (cầu thang
+    // đá), Đài Phong Vân (thềm đá + lõi hoa văn — bãi boss).
+    blobCh(g, 61, 8, 6, 3, 'S');
+    rectCh(g, 59, 7, 63, 9, 'P');
+    rectCh(g, 59, 12, 63, 17, 'S');
+    rectCh(g, 53, 18, 69, 23, 'S');
+    rectCh(g, 57, 19, 65, 22, 'P');
+    // Hẻm Phong Môn: sàn đá kẹp giữa hai vách (đè cả chân vách ở hàng
+    // 35 để miệng hẻm phía nam thông với đường nhánh).
+    rectCh(g, 58, 24, 65, 35, 'S');
+    // Thềm ngắm trăng ở chân nam Vọng Nguyệt Phong.
+    rectCh(g, 57, 44, 67, 46, 'S');
+    // Suối Trường Khê cắt ngang phía nam + bờ cát hai bên.
+    rectCh(g, 6, 79, 117, 80, 'W');
+    rectCh(g, 6, 78, 117, 78, 'w');
+    rectCh(g, 6, 81, 117, 81, 'w');
+    // Suối Ngọc Nữ: hồ nguồn dưới chân đỉnh + kênh lệch bậc tại y51.
+    rectCh(g, 106, 29, 110, 31, 'W');
+    rectCh(g, 107, 32, 109, 50, 'W');
+    rectCh(g, 110, 51, 112, 78, 'W');
+    rectCh(g, 106, 32, 106, 50, 'w');
+    rectCh(g, 110, 32, 110, 50, 'w');
+    rectCh(g, 109, 51, 109, 78, 'w');
+    rectCh(g, 113, 51, 113, 78, 'w');
+    // Đường mòn + điểm qua suối (vẽ sau suối để ford cắt mặt nước).
+    rectCh(g, 60, 82, 62, 90, 'D');   // bãi đáp -> cổng nam
+    rectCh(g, 59, 78, 62, 81, 'D');   // điểm qua chính Suối Trường Khê
+    rectCh(g, 60, 47, 62, 77, 'D');   // trục giữa: điểm qua -> đường ngang
+    rectCh(g, 30, 49, 105, 51, 'D');  // đường ngang vành đai giữa
+    rectCh(g, 106, 48, 111, 50, 'D'); // điểm qua Suối Ngọc Nữ
+    rectCh(g, 112, 49, 118, 51, 'D'); // đường chân Ngọc Nữ (đông suối)
+    rectCh(g, 52, 36, 54, 48, 'D');   // nhánh miệng hẻm (tây Vọng Nguyệt)
+    rectCh(g, 52, 34, 59, 35, 'D');   // cửa miệng Hẻm Phong Môn
+    rectCh(g, 28, 34, 30, 48, 'D');   // nhánh tây (đường ngang -> cửa vực)
+    rectCh(g, 28, 33, 38, 34, 'D');   // nối tới cửa nam Vực Vạn Trượng
+    rectCh(g, 44, 19, 52, 21, 'D');   // nhánh tây bắc: đài -> chân Song Tử
+    rectCh(g, 70, 19, 82, 21, 'D');   // nhánh đông bắc: đài -> bãi bắc
+    rectCh(g, 18, 83, 58, 84, 'D');   // đường bờ nam phía tây
+    rectCh(g, 64, 83, 116, 84, 'D');  // đường bờ nam phía đông
+    rectCh(g, 96, 78, 98, 81, 'D');   // điểm qua đông Suối Trường Khê
+    rectCh(g, 96, 70, 98, 77, 'D');   // nhánh chân Thanh Khê Phong
+    rectCh(g, 17, 69, 19, 82, 'D');   // nhánh chân Bạch Hạc Phong
+    rectCh(g, 60, 91, 63, 91, 'G');   // cổng nam (về Thanh Vân Tông)
+    return gridStrings(g);
+  }
+  var TVDS_GRID = buildThapVanGrid();
+  /* ---- TÁI CẤU TRÚC: KHU THẬP VẠN ĐẠI SƠN = 5 BẢN ĐỒ CON THEO VÀNH
+     (lệnh Bui 04:55 ngày 2026-11-05: "Trong thập vạn đại sơn có nhiều
+     map nhưng mỗi map có giới hạn cảnh giới"; điều kiện vào khu đổi
+     sang q7_done theo chốt của Bui 04:54 cùng ngày) ----
+     Mỗi bản đồ con CẮT từ chính lưới mẹ 124x92 ở trên (cùng một
+     buildThapVanGrid) nên mọi đỉnh/địa danh/ổ/điểm giữ đúng vị trí
+     tương quan trong vành của chúng; hàng biên tại đường cắt dựng
+     thành vách đá có ĐÈO tại đúng trục đường mòn/hẻm, cổng chuyển
+     vành đặt tại đèo: cổng LÊN vành mang minRealm (cứng — chặn trước
+     tại cổng, lockMsg nêu cảnh giới yêu cầu), cổng XUỐNG vành không
+     điều kiện. Chuỗi bản đồ con:
+       thap_van_dai_son  vành Luyện Khí (giữ id + neo cổng tông môn)
+       tvds_truc_co      vành Trúc Cơ
+       tvds_kim_dan      vành Kim Đan
+       tvds_nguyen_anh   vành Nguyên Anh (có Thung Lũng Vân Ẩn)
+       tvds_hoa_than     vành Hóa Thần (lõi: Đài Phong Vân + Vân Tiêu)
+     Ba đục/dời bắt buộc do đường cắt, khai rõ (báo cáo đợt mục 9):
+       (1) bản đồ Trúc Cơ: bờ đông Suối Ngọc Nữ (boss canh + điểm
+           quý) bị suối ngăn, điểm qua cũ nằm ở vành Kim Đan — đục
+           ĐIỂM QUA PHỤ tại hàng 10 cục bộ (x110..112);
+       (2) bản đồ Nguyên Anh: lõi Hóa Thần góc đông-bắc lấp đá (riêng
+           bồn Vân Ẩn khôi phục nguyên lưới mẹ + đường xuống từ đèo);
+           miệng nam Vực Vạn Trượng nằm phía vành Kim Đan nên vực mở
+           CỬA TÂY mới (28,26)-(28,27) cục bộ; sườn nam Đài Phong Vân
+           thành LỐI MÒN hàng 20 cục bộ (Đèo Đoạn Vân) nối cột tây —
+           hẻm — bãi đông; (3) điểm Linh Chi n_chi_tvds_03 ở (41,10)
+           lưới mẹ lọt vào cột tây vành Nguyên Anh — dời sang yên
+           Song Tử (47,10) lưới mẹ = (3,8) cục bộ bản đồ Hóa Thần,
+           giữ đúng vành của điểm. */
+  function tvdsSlice(ox, oy, w, h) {
+    var g = [], y, x, row;
+    for (y = 0; y < h; y++) {
+      row = [];
+      for (x = 0; x < w; x++) row.push(TVDS_GRID[oy + y].charAt(ox + x));
+      g.push(row);
+    }
+    return g;
+  }
+  // Dựng một hàng thành vách 'X', chừa các khoảng đèo [x0, x1] là 'G'.
+  function tvdsWallRow(g, y, gaps) {
+    var x;
+    for (x = 0; x < g[y].length; x++) g[y][x] = 'X';
+    (gaps || []).forEach(function (gp) {
+      for (var i = gp[0]; i <= gp[1]; i++) g[y][i] = 'G';
+    });
+  }
+  function tvdsWallCol(g, x) {
+    for (var y = 0; y < g.length; y++) g[y][x] = 'X';
+  }
+  var TVDS_LK_GRID = (function () {
+    var g = tvdsSlice(0, 74, 124, 18);
+    tvdsWallRow(g, 0, [[60, 62]]);          // vách bắc + đèo lên Trúc Cơ
+    return gridStrings(g);
+  })();
+  var TVDS_TC_GRID = (function () {
+    var g = tvdsSlice(0, 56, 124, 20);
+    tvdsWallRow(g, 0, [[60, 62]]);          // vách bắc + đèo lên Kim Đan
+    tvdsWallRow(g, 19, [[60, 62]]);         // vách nam + đèo xuống Luyện Khí
+    rectCh(g, 110, 10, 112, 10, 'D');       // điểm qua phụ Suối Ngọc Nữ
+    return gridStrings(g);
+  })();
+  var TVDS_KD_GRID = (function () {
+    var g = tvdsSlice(0, 32, 124, 26);
+    tvdsWallRow(g, 0, [[58, 65]]);          // vách bắc tại miệng hẻm Phong Môn
+    tvdsWallRow(g, 25, [[60, 62]]);         // vách nam + đèo xuống Trúc Cơ
+    return gridStrings(g);
+  })();
+  var TVDS_NA_GRID = (function () {
+    var g = tvdsSlice(0, 2, 124, 32), x, y;
+    rectCh(g, 44, 0, 123, 17, 'X');         // lõi Hóa Thần = đất của bản đồ riêng
+    for (y = 6; y <= 19; y++) for (x = 88; x <= 120; x++) g[y][x] = TVDS_GRID[y + 2].charAt(x); // bồn Vân Ẩn nguyên lưới mẹ
+    rectCh(g, 89, 11, 91, 17, 'D');         // đường xuống từ đèo Vân Ẩn
+    rectCh(g, 50, 18, 72, 21, 'X');         // mặt vách nam Đài Phong Vân
+    rectCh(g, 50, 20, 82, 20, 'D');         // lối mòn Đèo Đoạn Vân (sườn nam đài)
+    rectCh(g, 58, 21, 65, 21, 'D');         // bậc đá xuống miệng hẻm
+    rectCh(g, 28, 26, 30, 27, 'D');         // cửa tây Vực Vạn Trượng (xuyên vách dày 3 ô)
+    tvdsWallRow(g, 0, []);                  // vách bắc kín (trên nữa là lõi)
+    tvdsWallRow(g, 31, [[58, 65]]);         // vách nam + miệng hẻm xuống Kim Đan
+    return gridStrings(g);
+  })();
+  var TVDS_HT_GRID = (function () {
+    var g = tvdsSlice(44, 2, 80, 22);
+    g[10][5] = 'D';                         // đèo yên ngựa Song Tử (1 ô): nối túi tây chân đỉnh với sườn đài — đường cắt làm hai khối đá chỏm đông + Vân Tiêu chạm nhau niêm phong túi này, lưới mẹ đi vòng qua cột tây vành Nguyên Anh
+    tvdsWallCol(g, 0);                      // vách tây (chân Song Tử đông)
+    tvdsWallRow(g, 0, []);                  // vách bắc kín
+    tvdsWallRow(g, 21, [[13, 21]]);         // vách nam + thềm đài xuống Nguyên Anh
+    return gridStrings(g);
+  })();
+  /* Biển tại cổng vào mỗi bản đồ con (thay biển ranh giới vành đai
+     kiểu cũ trên một bản đồ — tái cấu trúc 2026-11-05): biển là vật
+     tĩnh, không thoại, không lồng tiếng như kỷ luật cũ. */
+  var TVDS_LK_SIGNS = [
+    { x: 57, y: 13, text: 'Thập Vạn Đại Sơn' },
+    { x: 63, y: 1, text: 'Đèo Lên Vành Trúc Cơ' }
+  ];
+  var TVDS_TC_SIGNS = [
+    { x: 63, y: 1, text: 'Đèo Lên Vành Kim Đan' }
+  ];
+  var TVDS_KD_SIGNS = [
+    { x: 63, y: 15, text: 'Vọng Nguyệt Phong' },
+    { x: 57, y: 1, text: 'Hẻm Phong Môn' }
+  ];
+  var TVDS_NA_SIGNS = [
+    { x: 30, y: 21, text: 'Vực Vạn Trượng' },
+    { x: 101, y: 29, text: 'Ngọc Nữ Phong' },
+    { x: 93, y: 11, text: 'Thung Lũng Vân Ẩn: Trấn Sơn Thạch Tượng canh giữ Huyền Băng Linh Chi' }
+  ];
+  var TVDS_HT_SIGNS = [
+    { x: 5, y: 13, text: 'Vân Tiêu Phong' },
+    { x: 12, y: 16, text: 'Đài Phong Vân' },
+    { x: 14, y: 20, text: 'Đài Phong Vân: đất Hóa Thần — Sơn Quân canh giữ Thiên Tâm Liên' }
+  ];
+  // Rải cây cho một bản đồ con: cùng họ cây + cùng hàm băm như bản đồ
+  // mẹ (scatterThapVanTrees), mật độ theo thảm hoa/rừng khai theo vùng
+  // CỤC BỘ của từng bản đồ con (inMeadow/inForest truyền vào).
+  function scatterTvdsSubTrees(grid, w, h, avoid, cfg) {
+    var props = [], types = ['tree', 'pine', 'tree2', 'pine2'];
+    for (var y = 2; y < h - 2; y++) for (var x = 2; x < w - 2; x++) {
+      var top = grid[y].charAt(x), foot = grid[y + 1].charAt(x);
+      if ((top !== '.' && top !== ',') || (foot !== '.' && foot !== ',')) continue;
+      if (avoid && (avoid(x, y) || avoid(x, y + 1))) continue;
+      var hh = hashRoad(x * 7 + 31, y * 3 + 17);
+      var inForest = cfg.forest && x >= cfg.forest[0] && x <= cfg.forest[2] && y >= cfg.forest[1] && y <= cfg.forest[3];
+      var mod = inForest ? 6 : (cfg.meadow(x, y) ? 61 : 17);
+      if (hh % mod !== 0) continue;
+      var ht = hashRoad(x * 13 + 7, y * 11 + 3) >>> 16;
+      props.push({ id: cfg.prefix + 'cay_t' + x + '_' + y, type: types[ht % 4], x: x, y: y, w: 1, h: 2, fx: 1, fy: 1 });
+    }
+    return props;
+  }
+  function buildTvdsSubProps(hand, grid, w, h, pts, rects, treeCfg, accentCfg, decorPrefix, accentPrefix) {
+    var trees = scatterTvdsSubTrees(grid, w, h, makeAvoid(pts, rects), treeCfg);
+    var avoidT = makeAvoid(pts, rects.concat(footRects(trees)));
+    var decor = scatterGroundDecor(grid, w, h, decorPrefix, 17, null, avoidT);
+    var all = hand.concat(trees).concat(decor);
+    var accent = scatterAccentTrees(grid, w, h, accentPrefix, null, avoidT, footTilesOf(all), accentCfg);
+    return all.concat(accent);
+  }
+  var TVDS_LK_PROPS = (function () {
+    var props = [
+      { id: 'cong_tvds', type: 'gate', x: 63, y: 14, w: 3, h: 2, fx: 3, fy: 1, name: 'Cổng Vào Thập Vạn Đại Sơn' },
+      { id: 'bia_tvds', type: 'stele', x: 66, y: 13, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Thập Vạn Đại Sơn' },
+      { id: 'den_cong_a', type: 'lantern', x: 59, y: 13, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'den_cong_b', type: 'lantern', x: 68, y: 12, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'san_nghi_tvds', type: 'stone_platform', x: 52, y: 11, w: 2, h: 1, fx: 2, fy: 1, name: 'Sân Đá Điểm Nghỉ' },
+      { id: 'ban_da_tvds', type: 'table_stone', x: 54, y: 11, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'ghe_da_tvds', type: 'bench_stone', x: 55, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'den_nghi_tvds', type: 'lantern2', x: 51, y: 11, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bien_chi_tvds', type: 'signpost', x: 65, y: 11, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'coc_ford_a', type: 'fence_post', x: 58, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'coc_ford_b', type: 'fence_post', x: 63, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'lau_tvds_a', type: 'reeds', x: 40, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'lau_tvds_b', type: 'reeds', x: 80, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'lau_tvds_c', type: 'reeds', x: 100, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_thao_tvds', type: 'grass_clump', x: 48, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_lau_tvds', type: 'reeds', x: 52, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_quy_lk_tvds', type: 'rock_m', x: 24, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'vong_quy_lk_tvds', type: 'flower_bush', x: 23, y: 9, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bia_ranh_tc_tvds', type: 'stele_small', x: 63, y: 1, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Cổng Vành Trúc Cơ' }
+    ];
+    var pts = [{ x: 61, y: 15, r: 3 }, { x: 53, y: 13, r: 2 }, { x: 61, y: 1, r: 3 },
+      { x: 30, y: 12, r: 3 }, { x: 92, y: 8, r: 3 }, { x: 25, y: 8, r: 3 }]
+      .concat(signPoints(TVDS_LK_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 57, y: 1, w: 8, h: 16, pad: 1 },
+      { x: 16, y: 7, w: 102, h: 5, pad: 1 },
+      { x: 94, y: 3, w: 6, h: 5, pad: 1 }
+    ]);
+    return buildTvdsSubProps(props, TVDS_LK_GRID, 124, 18, pts, rects,
+      { prefix: 'lk_', meadow: function (x, y) { return y >= 6 || (x >= 84 && y <= 2); }, forest: null },
+      { bigMod: 380, sakuraMod: 700, sakuraMax: 3, midMod: 120, smallMod: 85 }, 'phu_lk', 'cayv_lk');
+  })();
+  var TVDS_TC_PROPS = (function () {
+    var props = [
+      { id: 'bia_thanh_khe', type: 'stele', x: 92, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Thanh Khê Phong' },
+      { id: 'bia_bach_hac', type: 'stele', x: 27, y: 8, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Bạch Hạc Phong' },
+      { id: 'da_tvds_d', type: 'rock_m', x: 44, y: 4, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_tvds_e', type: 'rock_l_a', x: 108, y: 2, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_hoa_tvds', type: 'flower_bush', x: 116, y: 16, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_thao2_tvds', type: 'grass_clump', x: 24, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_quy_tc_tvds', type: 'flower_bush', x: 113, y: 4, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'vong_quy_tc_tvds', type: 'grass_clump', x: 114, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bia_ranh_kd_tvds', type: 'stele_small', x: 63, y: 1, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Cổng Vành Kim Đan' }
+    ];
+    var pts = [{ x: 61, y: 18, r: 3 }, { x: 61, y: 1, r: 3 },
+      { x: 30, y: 14, r: 3 }, { x: 66, y: 8, r: 3 }, { x: 100, y: 12, r: 3 }, { x: 114, y: 2, r: 3 }]
+      .concat(signPoints(TVDS_TC_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 57, y: 0, w: 8, h: 20, pad: 1 },
+      { x: 94, y: 12, w: 6, h: 8, pad: 1 },
+      { x: 15, y: 11, w: 6, h: 9, pad: 1 }
+    ]);
+    return buildTvdsSubProps(props, TVDS_TC_GRID, 124, 20, pts, rects,
+      { prefix: 'tc_', meadow: function (x, y) { return x >= 84 && y >= 8; }, forest: null },
+      { bigMod: 380, sakuraMod: 700, sakuraMax: 2, midMod: 120, smallMod: 85 }, 'phu_tc', 'cayv_tc');
+  })();
+  var TVDS_KD_PROPS = (function () {
+    var props = [
+      { id: 'anh_dao_nn2', type: 'tree_sakura', x: 116, y: 20, w: 1, h: 2, fx: 1, fy: 1, name: 'Anh Đào Bên Suối Ngọc Nữ' },
+      { id: 'bia_ho_khieu', type: 'stele', x: 22, y: 6, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Hổ Khiếu Phong' },
+      { id: 'dai_vong_nguyet', type: 'stone_platform', x: 60, y: 12, w: 2, h: 1, fx: 2, fy: 1, name: 'Đài Ngắm Trăng' },
+      { id: 'bia_vong_nguyet', type: 'stele', x: 55, y: 15, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Vọng Nguyệt Phong' },
+      { id: 'bia_long_vi', type: 'stele', x: 97, y: 14, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Long Vĩ Phong' },
+      { id: 'da_tvds_b', type: 'rock_l_b', x: 76, y: 23, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_chi_tvds', type: 'rock_m', x: 30, y: 20, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_sa_kd_tvds', type: 'rock_l_b', x: 22, y: 13, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_quy_kd_tvds', type: 'rock_m', x: 64, y: 13, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'vong_quy_kd_tvds', type: 'bones', x: 65, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bia_ranh_na_tvds', type: 'stele_small', x: 63, y: 1, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Cổng Vành Nguyên Anh' }
+    ];
+    var pts = [{ x: 61, y: 24, r: 3 }, { x: 61, y: 1, r: 3 },
+      { x: 36, y: 12, r: 3 }, { x: 84, y: 6, r: 3 }, { x: 56, y: 18, r: 3 }, { x: 61, y: 2, r: 3 }, { x: 61, y: 13, r: 3 }]
+      .concat(signPoints(TVDS_KD_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 50, y: 0, w: 17, h: 17, pad: 1 },
+      { x: 26, y: 0, w: 15, h: 18, pad: 1 },
+      { x: 28, y: 15, w: 80, h: 6, pad: 1 },
+      { x: 104, y: 14, w: 16, h: 7, pad: 1 }
+    ]);
+    return buildTvdsSubProps(props, TVDS_KD_GRID, 124, 26, pts, rects,
+      { prefix: 'kd_', meadow: function (x, y) { return x >= 44 && x <= 56 && y >= 20; }, forest: [22, 4, 52, 24] },
+      { bigMod: 380, sakuraMod: 700, sakuraMax: 1, midMod: 120, smallMod: 85 }, 'phu_kd', 'cayv_kd');
+  })();
+  var TVDS_NA_PROPS = (function () {
+    var props = [
+      { id: 'bia_thiet_kiem', type: 'stele', x: 20, y: 18, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Thiết Kiếm Phong' },
+      { id: 'kiem_tk_a', type: 'kiem_cum', x: 10, y: 18, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Chân Đỉnh' },
+      { id: 'kiem_tk_b', type: 'kiem_cum', x: 23, y: 17, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Chân Đỉnh' },
+      { id: 'bia_huyen_bang', type: 'stele', x: 100, y: 12, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Huyền Băng Phong' },
+      { id: 'bia_ngoc_nu', type: 'stele', x: 99, y: 28, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Ngọc Nữ Phong' },
+      { id: 'anh_dao_nn', type: 'tree_sakura', x: 117, y: 30, w: 1, h: 2, fx: 1, fy: 1, name: 'Anh Đào Cổ Thụ Chân Ngọc Nữ' },
+      { id: 'bia_song_tu', type: 'stele', x: 33, y: 20, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Song Tử Phong' },
+      { id: 'bia_vuc', type: 'stele_small', x: 29, y: 20, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Vực Vạn Trượng' },
+      { id: 'xuong_vuc', type: 'bones', x: 33, y: 27, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'coc_vuc', type: 'stake_cluster', x: 41, y: 25, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'den_hem_a', type: 'lantern2', x: 57, y: 26, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Bên Hẻm' },
+      { id: 'den_hem_b', type: 'lantern2', x: 66, y: 29, w: 1, h: 1, fx: 1, fy: 1, name: 'Đèn Đá Bên Hẻm' },
+      { id: 'xuong_hem', type: 'bones', x: 61, y: 28, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_tvds_a', type: 'rock_l_a', x: 24, y: 28, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_sa_tvds', type: 'rock_l_b', x: 12, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_chi_na_tvds', type: 'rock_m', x: 40, y: 27, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_quy_na_tvds', type: 'flower_bush', x: 105, y: 11, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'vong_quy_na_tvds', type: 'grass_clump', x: 104, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'bia_ranh_ht_tvds', type: 'stele_small', x: 59, y: 23, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Cổng Đài Phong Vân' },
+      { id: 'bia_van_an_tvds', type: 'stele_small', x: 93, y: 11, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Thung Lũng Vân Ẩn' }
+    ];
+    var pts = [{ x: 61, y: 30, r: 3 }, { x: 61, y: 23, r: 3 },
+      { x: 37, y: 26, r: 3 }, { x: 109, y: 24, r: 3 }, { x: 67, y: 23, r: 3 }, { x: 19, y: 5, r: 3 }, { x: 103, y: 13, r: 3 }]
+      .concat(signPoints(TVDS_NA_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 56, y: 20, w: 12, h: 12, pad: 1 },
+      { x: 26, y: 20, w: 22, h: 12, pad: 1 },
+      { x: 88, y: 9, w: 10, h: 10, pad: 0 },
+      { x: 42, y: 18, w: 42, h: 4, pad: 1 }
+    ]);
+    return buildTvdsSubProps(props, TVDS_NA_GRID, 124, 32, pts, rects,
+      { prefix: 'na_', meadow: function () { return false; }, forest: null },
+      { bigMod: 380, sakuraMod: 700, sakuraMax: 2, midMod: 120, smallMod: 85 }, 'phu_na', 'cayv_na');
+  })();
+  var TVDS_HT_PROPS = (function () {
+    var props = [
+      { id: 'bia_van_tieu', type: 'stele', x: 13, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Vân Tiêu Phong' },
+      { id: 'cot_tvds_a', type: 'cot_co', x: 10, y: 16, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'cot_tvds_b', type: 'cot_co', x: 24, y: 16, w: 1, h: 2, fx: 1, fy: 1 },
+      { id: 'bia_dai_phong_van', type: 'stele', x: 23, y: 18, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Đài Phong Vân' },
+      { id: 'kiem_tvds', type: 'kiem_cum', x: 11, y: 19, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Ven Đài' },
+      { id: 'xuong_dai', type: 'bones', x: 20, y: 20, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'da_tvds_c', type: 'rock_m', x: 46, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_chi_ht_tvds', type: 'rock_m', x: 3, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_hoa_ht_tvds', type: 'flower_bush', x: 44, y: 14, w: 1, h: 1, fx: 1, fy: 1 },
+      { id: 'neo_quy_ht_tvds', type: 'flower_bush', x: 20, y: 18, w: 1, h: 1, fx: 1, fy: 1 }
+    ];
+    var pts = [{ x: 17, y: 20, r: 3 },
+      { x: 6, y: 11, r: 3 }, { x: 44, y: 8, r: 3 }, { x: 71, y: 9, r: 3 }, { x: 17, y: 18, r: 3 }]
+      .concat(signPoints(TVDS_HT_SIGNS));
+    var rects = propRects(props).concat([
+      { x: 0, y: 14, w: 38, h: 8, pad: 1 },
+      { x: 26, y: 16, w: 14, h: 5, pad: 1 }
+    ]);
+    return buildTvdsSubProps(props, TVDS_HT_GRID, 80, 22, pts, rects,
+      { prefix: 'ht_', meadow: function () { return false; }, forest: null },
+      { bigMod: 380, sakuraMod: 700, sakuraMax: 0, midMod: 120, smallMod: 85 }, 'phu_ht', 'cayv_ht');
+  })();
+
   /* ---- Tĩnh Quan Lâu 64x48 (phần 3, chương 10) ----
      Nội thất lớn của Thiên Cơ Các: phòng kín phía bắc (nơi thẩm vấn), sảnh
      chính ở giữa, phòng kho phía tây, hành lang phía nam và sân sau là vùng
@@ -1842,7 +2226,7 @@
       // Biển tên tại (58,87) đã gỡ ở đợt làm giàu hình ảnh tông môn:
       // trụ cổng sơn môn mới che khuất nó, và tên tông môn nay nằm trên
       // bảng chữ của xà cổng (prop gate_beam) — giữ một nguồn tên duy nhất.
-      signs: [{ x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }],
+      signs: [{ x: 95, y: 64, text: 'Khu Tạp Dịch' }, { x: 20, y: 14, text: 'Thăng Long Đạo' }, { x: 57, y: 10, text: 'Đài Trúc Cơ' }, { x: 50, y: 55, text: 'Quảng Trường' }, { x: 101, y: 4, text: 'Thung Lũng Hồi Phong' }, { x: 107, y: 5, text: 'Thập Vạn Đại Sơn' }],
       portals: [
         { x: 59, y: 91, w: 6, h: 1, to: 'co_chau', toX: 94, toY: 8, label: 'Xuống Cô Châu Thành' },
         { x: 100, y: 2, w: 4, h: 1, to: 'hb_valley', toX: 49, toY: 71, label: 'Vào Thung Lũng Hồi Phong', cond: 'quest:q9_tin_du', lockMsg: 'Chưa có tin dữ nào từ sau núi — đường vào thung lũng chưa mở.' },
@@ -1850,7 +2234,15 @@
            cổng ở mép bắc của thềm đài cũ (hàng 5, ngay dưới vành vực)
            — bước lên là lên thẳng thềm vào của đỉnh Thăng Long; thềm
            đài cũ từ nay là thềm thang cổng, bia đài đã dời lên đỉnh. */
-        { x: 14, y: 5, w: 4, h: 1, to: 'thang_long_dai', toX: 23, toY: 31, label: 'Lên Đài Thăng Long' }
+        { x: 14, y: 5, w: 4, h: 1, to: 'thang_long_dai', toX: 23, toY: 31, label: 'Lên Đài Thăng Long' },
+        /* Thập Vạn Đại Sơn (2026-11-05): dải (105..108, 2) cùng hành
+           lang mép bắc sau núi với cổng Hồi Phong (điểm rơi về (107,4)
+           đã kiểm đi được, không đè vật thể). Điều kiện mở ĐÃ CHỐT
+           (Bui 04:54 ngày 2026-11-05): mở ngay khi nhập tông = xong
+           chương 7 (q7_done), thay điều kiện tạm q24_done. Điểm rơi
+           (61,15) là bãi đáp của bản đồ con vành Luyện Khí sau đợt tái
+           cấu trúc khu thành 5 bản đồ con theo vành đai. */
+        { x: 105, y: 2, w: 4, h: 1, to: 'thap_van_dai_son', toX: 61, toY: 15, label: 'Vào Thập Vạn Đại Sơn', cond: 'quest:q7_done', lockMsg: 'Đường vào Thập Vạn Đại Sơn hiểm trở — chỉ mở cho đệ tử đã nhập tông (hoàn thành chương 7).' }
       ]
     },
     hb_valley: {
@@ -1859,6 +2251,53 @@
       signs: VALLEY_SIGNS,
       portals: [
         { x: 46, y: 73, w: 4, h: 1, to: 'thanh_van_tong', toX: 101, toY: 4, label: 'Về Thanh Vân Tông' }
+      ]
+    },
+    /* Khu Thập Vạn Đại Sơn sau tái cấu trúc 2026-11-05: 5 bản đồ con
+       nối chuỗi theo vành đai, cổng lên vành có minRealm (xem khối
+       lưới TVDS_*_GRID ở trên + docs/thap-van-dai-son-design.md). */
+    thap_van_dai_son: {
+      name: 'Thập Vạn Đại Sơn — Vành Luyện Khí', w: 124, h: 18, grid: TVDS_LK_GRID, props: TVDS_LK_PROPS, npcs: [],
+      meditate: { x: 53, y: 13 },
+      signs: TVDS_LK_SIGNS,
+      portals: [
+        { x: 60, y: 17, w: 4, h: 1, to: 'thanh_van_tong', toX: 107, toY: 4, label: 'Về Thanh Vân Tông' },
+        { x: 60, y: 0, w: 3, h: 1, to: 'tvds_truc_co', toX: 61, toY: 18, label: 'Lên Vành Trúc Cơ', minRealm: 2, lockMsg: 'Đèo lên vành Trúc Cơ — chỉ mở khi đã đạt cảnh giới Trúc Cơ.' }
+      ]
+    },
+    tvds_truc_co: {
+      name: 'Thập Vạn Đại Sơn — Vành Trúc Cơ', w: 124, h: 20, grid: TVDS_TC_GRID, props: TVDS_TC_PROPS, npcs: [],
+      meditate: null,
+      signs: TVDS_TC_SIGNS,
+      portals: [
+        { x: 60, y: 19, w: 3, h: 1, to: 'thap_van_dai_son', toX: 61, toY: 1, label: 'Xuống Vành Luyện Khí' },
+        { x: 60, y: 0, w: 3, h: 1, to: 'tvds_kim_dan', toX: 61, toY: 24, label: 'Lên Vành Kim Đan', minRealm: 3, lockMsg: 'Đèo lên vành Kim Đan — chỉ mở khi đã đạt cảnh giới Kim Đan.' }
+      ]
+    },
+    tvds_kim_dan: {
+      name: 'Thập Vạn Đại Sơn — Vành Kim Đan', w: 124, h: 26, grid: TVDS_KD_GRID, props: TVDS_KD_PROPS, npcs: [],
+      meditate: null,
+      signs: TVDS_KD_SIGNS,
+      portals: [
+        { x: 60, y: 25, w: 3, h: 1, to: 'tvds_truc_co', toX: 61, toY: 1, label: 'Xuống Vành Trúc Cơ' },
+        { x: 58, y: 0, w: 8, h: 1, to: 'tvds_nguyen_anh', toX: 61, toY: 30, label: 'Qua Hẻm Lên Vành Nguyên Anh', minRealm: 4, lockMsg: 'Hẻm Phong Môn lên vành Nguyên Anh — chỉ mở khi đã đạt cảnh giới Nguyên Anh.' }
+      ]
+    },
+    tvds_nguyen_anh: {
+      name: 'Thập Vạn Đại Sơn — Vành Nguyên Anh', w: 124, h: 32, grid: TVDS_NA_GRID, props: TVDS_NA_PROPS, npcs: [],
+      meditate: null,
+      signs: TVDS_NA_SIGNS,
+      portals: [
+        { x: 58, y: 31, w: 8, h: 1, to: 'tvds_kim_dan', toX: 61, toY: 1, label: 'Xuống Hẻm Về Vành Kim Đan' },
+        { x: 58, y: 22, w: 8, h: 1, to: 'tvds_hoa_than', toX: 17, toY: 20, label: 'Lên Đài Phong Vân — Vành Hóa Thần', minRealm: 5, lockMsg: 'Đường lên Đài Phong Vân, đất vành Hóa Thần — chỉ mở khi đã đạt cảnh giới Hóa Thần.' }
+      ]
+    },
+    tvds_hoa_than: {
+      name: 'Thập Vạn Đại Sơn — Vành Hóa Thần', w: 80, h: 22, grid: TVDS_HT_GRID, props: TVDS_HT_PROPS, npcs: [],
+      meditate: null,
+      signs: TVDS_HT_SIGNS,
+      portals: [
+        { x: 13, y: 21, w: 9, h: 1, to: 'tvds_nguyen_anh', toX: 61, toY: 23, label: 'Xuống Vành Nguyên Anh' }
       ]
     },
     thien_co_lau: {
@@ -2115,7 +2554,18 @@
   // state.flags; 'quest:<id>' -> nhiệm vụ hiện tại đã tới hoặc qua <id>
   // trong chuỗi QUESTS. Đây là điểm né online: điều kiện là dữ kiện thuần.
   function portalUnlocked(state, po) {
-    if (!po || !po.cond) return true;
+    if (!po) return true;
+    // Cổng cứng theo cảnh giới lớn (minRealm = chỉ số trong REALMS) —
+    // đợt tái cấu trúc Thập Vạn Đại Sơn 2026-11-05 (lệnh Bui 04:55:
+    // mỗi bản đồ con một giới hạn cảnh giới). Chỉ khai ở cổng LÊN
+    // vành cao hơn; cổng XUỐNG vành thấp không khai nên luôn tự do.
+    // Chặn ngay tại cổng, không tốn gì; game.js đọc lockMsg của cổng
+    // để thông báo cảnh giới yêu cầu.
+    if (po.minRealm != null) {
+      if (!state) return false;
+      if ((state.realm || 0) < po.minRealm) return false;
+    }
+    if (!po.cond) return true;
     if (!state) return false;
     if (po.cond === 'dummy') return !!(state.flags && state.flags.dummyBroken);
     if (po.cond.indexOf('flag:') === 0) return !!(state.flags && state.flags[po.cond.slice(5)]);
@@ -2493,6 +2943,18 @@
     thanh_tam_thao: { name: 'Thanh Tâm Thảo', type: 'nguyen_lieu', stack: true, glyph: 'Thảo' },
     tu_linh_dan: { name: 'Tụ Linh Đan', type: 'dan', stack: true, glyph: 'Tụ' },
     ket_dan_duoc: { name: 'Dược Dẫn Kết Đan', type: 'nguyen_lieu', stack: true, glyph: 'Dẫn' },
+    /* Thiên tài địa bảo của hai vành sâu Thập Vạn Đại Sơn (bổ sung
+       thiết kế của Bui 00:44 ngày 2026-11-05) — [ĐỀ XUẤT] vật phẩm
+       MỚI, chưa nối công thức nào: Huyền Băng Linh Chi dự kiến là
+       nguyên liệu đan dược dải Nguyên Anh, Thiên Tâm Liên dự kiến là
+       nguyên liệu đan dược/pháp khí dải Hóa Thần; công thức cụ thể
+       chờ duyệt cùng cung V. Icon vẽ thật của hai vật phẩm bổ sung
+       tại lượt GỘP lên cây chính 2026-11-06 (luật icon của Bui
+       2026-11-05: vật phẩm mới phải có icon vẽ thật, không chỉ nhãn
+       chữ — tài sản đợt không có sẵn icon nên vẽ tại lượt gộp theo
+       đúng phong cách bộ icon đã live). */
+    huyen_bang_linh_chi: { name: 'Huyền Băng Linh Chi', type: 'nguyen_lieu', stack: true, glyph: 'Băng', icon: 'assets/items/huyen_bang_linh_chi.png' },
+    thien_tam_lien: { name: 'Thiên Tâm Liên', type: 'nguyen_lieu', stack: true, glyph: 'Liên', icon: 'assets/items/thien_tam_lien.png' },
     ket_dan_dan: { name: 'Vật Dẫn Kết Đan', type: 'dan', stack: true, glyph: 'Dẫn' },
     /* Đan thưởng của hệ cày (docs/grind-prep/grind-design.md mục 8): đan
        theo dải cảnh giới — Hồi Xuân Đan cho dải Luyện Khí, Phục Linh Đan
@@ -3877,6 +4339,16 @@
     // hồ sơ luôn có mục này và cửa trả là nguyên tử.
     'profile:boss_dm_lang_vuong': { lt: 12, tuviPct: 30, merit: 5, items: { hoi_xuan_dan: 1, yeu_dan_1: 1 } },
     'profile:boss_hb_son_chu': { lt: 20, tuviPct: 30, merit: 8, items: { phuc_linh_dan: 1, yeu_dan_2: 1 } },
+    /* Hồ sơ boss canh giữ Thập Vạn Đại Sơn (2026-11-05): dải Trúc Cơ
+       và Kim Đan chép nguyên khung hồ sơ Sơn Chủ / Hộ Trận cùng dải;
+       dải Luyện Khí (tinh anh Đầu Đàn) và hai dải sâu là [ĐỀ XUẤT]
+       nội suy theo cùng thang lt/công trạng, tuviPct giữ 30 như mọi
+       boss dã ngoại. */
+    'profile:boss_tvds_can_lk': { lt: 10, tuviPct: 30, merit: 4, items: { hoi_xuan_dan: 1, yeu_dan_1: 1 } },
+    'profile:boss_tvds_can_tc': { lt: 20, tuviPct: 30, merit: 8, items: { phuc_linh_dan: 1, yeu_dan_2: 1 } },
+    'profile:boss_tvds_can_kd': { lt: 32, tuviPct: 30, merit: 10, items: { yeu_dan_3: 1 } },
+    'profile:boss_tvds_can_na': { lt: 45, tuviPct: 30, merit: 14, items: { phuc_linh_dan: 1, yeu_dan_4: 1 } },
+    'profile:boss_tvds_can_ht': { lt: 70, tuviPct: 30, merit: 20, items: { phuc_linh_dan: 2, yeu_dan_4: 1 } },
     /* Hồ sơ cày lặp đợt bí cảnh + hệ cày (grind-design mục 8,
        bicanh-design mục 4.3 — dạng phẳng, KHÔNG trường soul):
        - săn: khóa theo dải tại lúc NHẬN (resolvedProfileId), không theo
@@ -4796,7 +5268,23 @@
     tran_tam_ma_anh: { name: 'Trận Tâm Ma Ảnh', rank: 'boss', hp: 5200, atk: 27, atkInterval: 1.3, speed: 46, cry: 300, partyBoss: true },
     /* Tinh anh Kim Đan ở đường mòn (bảng spawn mới — hình dùng chung
        họ Sơn Lang, tông nhiễu sóng do engine vẽ phân biệt). */
-    lang_nhiem_song: { name: 'Sơn Lang Nhiễm Sóng', rank: 'elite', hp: 1500, atk: 22, atkInterval: 1.3, speed: 50, cry: 420 }
+    lang_nhiem_song: { name: 'Sơn Lang Nhiễm Sóng', rank: 'elite', hp: 1500, atk: 22, atkInterval: 1.3, speed: 50, cry: 420 },
+    /* Thập Vạn Đại Sơn — loài theo vành đai cảnh giới (bổ sung thiết
+       kế của Bui 00:43 ngày 2026-11-05). TOÀN BỘ số của các loài mới
+       dưới đây là [ĐỀ XUẤT], nội suy theo đúng thang đã khóa trong
+       bảng này: thường Luyện Khí 70–160 hp -> Trúc Cơ ~160 -> Kim Đan
+       ~700 (tan_hon_kiem_y_sau); boss dã ngoại 560 (LK) -> 1500 (TC)
+       -> 2400–2600 (KD); mỗi cảnh giới lớn nhân ~1,7–2 lần. Hình: dùng
+       chung sheet của họ (khai báo alias ở js/game.js như tiền lệ
+       lang_nhiem_song/tan_hon_kiem_y_sau) — sheet riêng là nợ mỹ thuật
+       ghi trong báo cáo đợt, không phải số đã khóa. */
+    lang_dau_dan: { name: 'Sơn Lang Đầu Đàn', rank: 'elite', hp: 300, atk: 11, atkInterval: 1.4, speed: 48, cry: 420 },
+    huyen_bang_lang: { name: 'Huyền Băng Lang', rank: 'normal', hp: 1300, atk: 29, atkInterval: 1.4, speed: 50, cry: 400 },
+    thach_tuong_co: { name: 'Thạch Tượng Cổ', rank: 'normal', hp: 1850, atk: 26, atkInterval: 1.7, speed: 32, cry: 210 },
+    kim_dieu: { name: 'Kim Điêu', rank: 'elite', hp: 2050, atk: 33, atkInterval: 1.3, speed: 64, cry: 690 },
+    van_tieu_kiem_linh: { name: 'Vân Tiêu Kiếm Linh', rank: 'normal', hp: 2350, atk: 37, atkInterval: 1.3, speed: 50, cry: 580 },
+    tran_son_quan: { name: 'Trấn Sơn Thạch Tượng', rank: 'boss', hp: 4400, atk: 31, atkInterval: 1.5, speed: 34, cry: 210 },
+    van_tieu_son_quan: { name: 'Vân Tiêu Sơn Quân', rank: 'boss', hp: 8000, atk: 38, atkInterval: 1.3, speed: 46, cry: 300 }
   };
   var HUNT_ZONES = {
     zone_duong_mon_rung: { map: 'duong_mon', x0: 2, y0: 2, x1: 93, y1: 71, grassOnly: true, yeuDanLevel: 1 },
@@ -4814,7 +5302,27 @@
     zone_bc_hoiphong_mo: { map: 'bc_hoiphong_mo', x0: 1, y0: 1, x1: 50, y1: 36, yeuDanLevel: 2 },
     zone_bc_kiemtrung_sau: { map: 'bc_kiemtrung_sau', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 },
     zone_bc_tran_tam: { map: 'bc_tran_tam', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 3 },
-    zone_bc_tran_tam_sau: { map: 'bc_tran_tam_sau', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 3 }
+    zone_bc_tran_tam_sau: { map: 'bc_tran_tam_sau', x0: 1, y0: 1, x1: 38, y1: 28, yeuDanLevel: 3 },
+    /* Thập Vạn Đại Sơn — vùng săn theo VÀNH ĐAI CẢNH GIỚI (bổ sung
+       thiết kế của Bui 00:43 ngày 2026-11-05, thay cấu trúc ba vành
+       đai nguy hiểm của bản nháp đầu): vành ngoài Luyện Khí, sâu dần
+       Trúc Cơ -> Kim Đan -> Nguyên Anh -> lõi Hóa Thần; cao nguyên
+       đỉnh Vân Tiêu để dành cho Độ Kiếp (không vùng, không ổ — ghi
+       trong tài liệu thiết kế). Cấp yêu đan theo thang hiện có 1/2/3;
+       hai vành sâu nhất để cấp 4 [ĐỀ XUẤT] vì thang yêu đan hiện dừng
+       ở cấp 4. Các vùng con (tây/đông/vân_an) là hình chữ nhật con của
+       cùng một vành như tiền lệ vùng bãi phục kích trong rừng đường
+       mòn; vùng vân_an chồng lên hoathan_dong ở đúng bồn kín — ổ là
+       thứ quyết định quái sinh, vùng chỉ gắn cấp yêu đan (cả hai đều
+       cấp 4 nên không mâu thuẫn). */
+    zone_tvds_luyenkhi: { map: 'thap_van_dai_son', x0: 4, y0: 2, x1: 119, y1: 16, yeuDanLevel: 1 },
+    zone_tvds_trucco: { map: 'tvds_truc_co', x0: 4, y0: 2, x1: 121, y1: 19, yeuDanLevel: 2 },
+    zone_tvds_kimdan: { map: 'tvds_kim_dan', x0: 4, y0: 2, x1: 121, y1: 25, yeuDanLevel: 3 },
+    zone_tvds_nguyenanh: { map: 'tvds_nguyen_anh', x0: 4, y0: 18, x1: 121, y1: 31, yeuDanLevel: 4 },
+    zone_tvds_nguyenanh_tay: { map: 'tvds_nguyen_anh', x0: 4, y0: 0, x1: 43, y1: 17, yeuDanLevel: 4 },
+    zone_tvds_hoathan: { map: 'tvds_hoa_than', x0: 0, y0: 0, x1: 34, y1: 21, yeuDanLevel: 4 },
+    zone_tvds_hoathan_dong: { map: 'tvds_hoa_than', x0: 35, y0: 0, x1: 77, y1: 17, yeuDanLevel: 4 },
+    zone_tvds_van_an: { map: 'tvds_nguyen_anh', x0: 95, y0: 7, x1: 114, y1: 17, yeuDanLevel: 4 }
   };
   // Ổ (lair) của từng vùng: điểm sinh xác định, xa điểm cốt truyện/đường
   // chính — quái chỉ đi lại quanh ổ trong vùng của mình.
@@ -4840,7 +5348,27 @@
        duy trì). Loài kiếm linh xỉn chưa có sheet riêng: dùng
        lang_nhiem_song (loài nhiễm sóng sẵn có, đúng tông). */
     { zoneId: 'zone_duong_mon_rung', species: 'lang_nhiem_song', x: 44, y: 40, requiresQuest: 'q22_done' },
-    { zoneId: 'zone_duong_mon_rung', species: 'phong_ung', x: 38, y: 50, requiresQuest: 'q22_done' }
+    { zoneId: 'zone_duong_mon_rung', species: 'phong_ung', x: 38, y: 50, requiresQuest: 'q22_done' },
+    /* Thập Vạn Đại Sơn — ổ theo vành đai cảnh giới (bổ sung
+       2026-11-05): mỗi vành dùng đúng họ quái tầm cảnh giới của nó;
+       loài sẵn có giữ nguyên số, loài mới của hai vành sâu là
+       [ĐỀ XUẤT] trong MONSTER_DEFS. */
+    { zoneId: 'zone_tvds_luyenkhi', species: 'son_lang', x: 30, y: 12 },
+    { zoneId: 'zone_tvds_luyenkhi', species: 'doc_vu_xa', x: 92, y: 8 },
+    { zoneId: 'zone_tvds_trucco', species: 'oan_binh', x: 30, y: 14 },
+    { zoneId: 'zone_tvds_trucco', species: 'thiet_giap_tru', x: 66, y: 8 },
+    { zoneId: 'zone_tvds_trucco', species: 'phong_ung', x: 100, y: 12 },
+    { zoneId: 'zone_tvds_kimdan', species: 'thiet_giap_tru', x: 36, y: 12 },
+    { zoneId: 'zone_tvds_kimdan', species: 'phong_ung', x: 84, y: 6 },
+    { zoneId: 'zone_tvds_kimdan', species: 'lang_nhiem_song', x: 56, y: 18 },
+    { zoneId: 'zone_tvds_kimdan', species: 'tan_hon_kiem_y_sau', x: 61, y: 2 },
+    { zoneId: 'zone_tvds_nguyenanh', species: 'lang_nhiem_song', x: 37, y: 26 },
+    { zoneId: 'zone_tvds_nguyenanh', species: 'huyen_bang_lang', x: 109, y: 24 },
+    { zoneId: 'zone_tvds_nguyenanh', species: 'thach_tuong_co', x: 67, y: 23 },
+    { zoneId: 'zone_tvds_nguyenanh_tay', species: 'kim_dieu', x: 19, y: 5 },
+    { zoneId: 'zone_tvds_hoathan', species: 'van_tieu_kiem_linh', x: 6, y: 11 },
+    { zoneId: 'zone_tvds_hoathan_dong', species: 'van_tieu_kiem_linh', x: 44, y: 8 },
+    { zoneId: 'zone_tvds_hoathan_dong', species: 'kim_dieu', x: 71, y: 9 }
   ];
   var BOSS_DEFS = {
     boss_dm_lang_vuong: { name: 'Lang Vương Bãi Phục Kích', title: 'Chúa tể bãi phục kích', species: 'lang_vuong',
@@ -4859,7 +5387,39 @@
     boss_hb_ho_tran_kiem_linh: { name: 'Hộ Trận Kiếm Linh', title: 'Kiếm linh giữ trận Hồi Phong', species: 'ho_tran_kiem_linh',
       zoneId: 'zone_hb_bac', map: 'hb_valley', lair: { x: 46, y: 10 }, cycleDays: 5,
       profileId: 'profile:boss_hb_ho_tran', guaranteedYeuDan: 'yeu_dan_3',
-      requiresQuest: 'q15_done', minOrdinal: 300, biTich: null }
+      requiresQuest: 'q15_done', minOrdinal: 300, biTich: null },
+    /* Thập Vạn Đại Sơn — BOSS CANH GIỮ linh thảo quý (bổ sung thiết
+       kế của Bui 00:44 ngày 2026-11-05): mỗi vành đai có đúng một
+       điểm linh thảo quý bị một boss canh giữ trấn ngay cạnh điểm
+       (cơ chế khóa nằm ở guardBoss của RESOURCE_NODES + nodeStatus).
+       Nhịp chu kỳ theo tiền lệ boss dã ngoại: 3 ngày (Lang Vương) /
+       4 ngày (Sơn Chủ) / 5 ngày (Hộ Trận); hai vành sâu 5 và 6 ngày
+       là [ĐỀ XUẤT]. Vành Luyện Khí dùng quái TINH ANH Đầu Đàn theo
+       khung boss thu nhỏ như lựa chọn đã ghi trong thiết kế. Cổng
+       truyện của boss đi cùng điều kiện vào khu ĐÃ CHỐT q7_done
+       (Bui 04:54 ngày 2026-11-05; trước là tạm q24_done);
+       minOrdinal theo đúng thang 100/200/300/400/500 của
+       các boss dã ngoại hiện có. */
+    boss_tvds_can_lk: { name: 'Sơn Lang Đầu Đàn', title: 'Đầu đàn canh giữ Linh Chi cổng nam', species: 'lang_dau_dan',
+      zoneId: 'zone_tvds_luyenkhi', map: 'thap_van_dai_son', lair: { x: 25, y: 8 }, cycleDays: 2,
+      profileId: 'profile:boss_tvds_can_lk', guaranteedYeuDan: 'yeu_dan_1',
+      requiresQuest: 'q7_done', minOrdinal: 100, biTich: null },
+    boss_tvds_can_tc: { name: 'Sơn Chủ Suối Ngọc', title: 'Chúa suối canh giữ Dược Dẫn Kết Đan', species: 'son_chu',
+      zoneId: 'zone_tvds_trucco', map: 'tvds_truc_co', lair: { x: 114, y: 2 }, cycleDays: 4,
+      profileId: 'profile:boss_tvds_can_tc', guaranteedYeuDan: 'yeu_dan_2',
+      requiresQuest: 'q7_done', minOrdinal: 200, biTich: null },
+    boss_tvds_can_kd: { name: 'Hộ Đài Kiếm Linh', title: 'Kiếm linh canh giữ Linh Chi đài Vọng Nguyệt', species: 'ho_tran_kiem_linh',
+      zoneId: 'zone_tvds_kimdan', map: 'tvds_kim_dan', lair: { x: 61, y: 13 }, cycleDays: 5,
+      profileId: 'profile:boss_tvds_can_kd', guaranteedYeuDan: 'yeu_dan_3',
+      requiresQuest: 'q7_done', minOrdinal: 300, biTich: null },
+    boss_tvds_can_na: { name: 'Trấn Sơn Thạch Tượng', title: 'Tượng đá canh giữ Huyền Băng Linh Chi', species: 'tran_son_quan',
+      zoneId: 'zone_tvds_van_an', map: 'tvds_nguyen_anh', lair: { x: 103, y: 13 }, cycleDays: 5,
+      profileId: 'profile:boss_tvds_can_na', guaranteedYeuDan: 'yeu_dan_4',
+      requiresQuest: 'q7_done', minOrdinal: 400, biTich: null },
+    boss_tvds_can_ht: { name: 'Vân Tiêu Sơn Quân', title: 'Sơn Quân canh giữ Thiên Tâm Liên trên Đài Phong Vân', species: 'van_tieu_son_quan',
+      zoneId: 'zone_tvds_hoathan', map: 'tvds_hoa_than', lair: { x: 17, y: 18 }, cycleDays: 6,
+      profileId: 'profile:boss_tvds_can_ht', guaranteedYeuDan: 'yeu_dan_4',
+      requiresQuest: 'q7_done', minOrdinal: 500, biTich: null }
   };
   function bossClaimKey(bossId, cycleId) { return 'gr:boss:' + bossId + ':c' + cycleId; }
   // Trạng thái boss là HÀM THUẦN DUY NHẤT của dayCount + khóa chu kỳ +
@@ -5114,7 +5674,32 @@
     { nodeId: 'n_sa_tong_01', itemId: 'son_kim_sa', mapId: 'thanh_van_tong', x: 90, y: 8, anchorProp: 'rock_l_a', respawnDays: 3, yieldProfile: 'yield:son_kim_sa', yield: 1 },
     { nodeId: 'n_thao_hb_01', itemId: 'thanh_tam_thao', mapId: 'hb_valley', x: 30, y: 58, anchorProp: 'grass_clump', respawnDays: 1, yieldProfile: 'yield:thanh_tam_thao', yield: 2 },
     { nodeId: 'n_hoa_hb_01', itemId: 'xich_tam_hoa', mapId: 'hb_valley', x: 68, y: 30, anchorProp: 'flower_bush', respawnDays: 2, yieldProfile: 'yield:xich_tam_hoa', yield: 2 },
-    { nodeId: 'n_sa_hb_01', itemId: 'son_kim_sa', mapId: 'hb_valley', x: 56, y: 12, anchorProp: 'rock_l_b', respawnDays: 3, yieldProfile: 'yield:son_kim_sa', yield: 1 }
+    { nodeId: 'n_sa_hb_01', itemId: 'son_kim_sa', mapId: 'hb_valley', x: 56, y: 12, anchorProp: 'rock_l_b', respawnDays: 3, yieldProfile: 'yield:son_kim_sa', yield: 1 },
+    /* Thập Vạn Đại Sơn — THIÊN TÀI ĐỊA BẢO theo vành đai (bổ sung
+       thiết kế của Bui 00:44 ngày 2026-11-05): mỗi vành có điểm
+       thường nằm NGAY trong vùng quái của vành đó (hái tự do theo
+       cơ chế thu thập thường, sản lượng/hồi phục bê nguyên hồ sơ
+       theo vật phẩm ở các bản đồ cũ — thảo 2/1 ngày, lau 2/1, chi
+       1/2, hoa 2/2, kim sa 1/3) và đúng MỘT điểm QUÝ có boss canh
+       giữ (trường guardBoss): boss còn sống -> điểm khóa; hạ boss
+       -> hái được trong chu kỳ đó; boss hồi sinh theo chu kỳ ->
+       khóa lại (logic ở nodeStatus). Sản lượng điểm quý là
+       [ĐỀ XUẤT]; hai vật phẩm của hai vành sâu là [ĐỀ XUẤT] mới. */
+    { nodeId: 'n_thao_tvds_01', itemId: 'thanh_tam_thao', mapId: 'thap_van_dai_son', x: 48, y: 12, anchorProp: 'grass_clump', respawnDays: 1, yieldProfile: 'yield:thanh_tam_thao', yield: 2 },
+    { nodeId: 'n_lau_tvds_01', itemId: 'thuy_lau', mapId: 'thap_van_dai_son', x: 52, y: 3, anchorProp: 'reeds', respawnDays: 1, yieldProfile: 'yield:thuy_lau', yield: 2 },
+    { nodeId: 'n_quy_lk_tvds', itemId: 'linh_chi', mapId: 'thap_van_dai_son', x: 24, y: 10, anchorProp: 'rock_m', respawnDays: 2, yieldProfile: 'yield:linh_chi', yield: 1, guardBoss: 'boss_tvds_can_lk' },
+    { nodeId: 'n_hoa_tvds_01', itemId: 'xich_tam_hoa', mapId: 'tvds_truc_co', x: 116, y: 16, anchorProp: 'flower_bush', respawnDays: 2, yieldProfile: 'yield:xich_tam_hoa', yield: 2 },
+    { nodeId: 'n_thao_tvds_02', itemId: 'thanh_tam_thao', mapId: 'tvds_truc_co', x: 24, y: 12, anchorProp: 'grass_clump', respawnDays: 1, yieldProfile: 'yield:thanh_tam_thao', yield: 2 },
+    { nodeId: 'n_quy_tc_tvds', itemId: 'ket_dan_duoc', mapId: 'tvds_truc_co', x: 113, y: 4, anchorProp: 'flower_bush', respawnDays: 4, yieldProfile: 'yield:ket_dan_duoc', yield: 1, guardBoss: 'boss_tvds_can_tc' },
+    { nodeId: 'n_chi_tvds_01', itemId: 'linh_chi', mapId: 'tvds_kim_dan', x: 30, y: 20, anchorProp: 'rock_m', respawnDays: 2, yieldProfile: 'yield:linh_chi', yield: 1 },
+    { nodeId: 'n_sa_tvds_01', itemId: 'son_kim_sa', mapId: 'tvds_kim_dan', x: 22, y: 13, anchorProp: 'rock_l_b', respawnDays: 3, yieldProfile: 'yield:son_kim_sa', yield: 1 },
+    { nodeId: 'n_quy_kd_tvds', itemId: 'linh_chi', mapId: 'tvds_kim_dan', x: 64, y: 13, anchorProp: 'rock_m', respawnDays: 5, yieldProfile: 'yield:linh_chi', yield: 2, guardBoss: 'boss_tvds_can_kd' },
+    { nodeId: 'n_chi_tvds_02', itemId: 'linh_chi', mapId: 'tvds_nguyen_anh', x: 40, y: 27, anchorProp: 'rock_m', respawnDays: 2, yieldProfile: 'yield:linh_chi', yield: 1 },
+    { nodeId: 'n_sa_tvds_02', itemId: 'son_kim_sa', mapId: 'tvds_nguyen_anh', x: 12, y: 18, anchorProp: 'rock_l_b', respawnDays: 3, yieldProfile: 'yield:son_kim_sa', yield: 1 },
+    { nodeId: 'n_quy_na_tvds', itemId: 'huyen_bang_linh_chi', mapId: 'tvds_nguyen_anh', x: 105, y: 11, anchorProp: 'flower_bush', respawnDays: 5, yieldProfile: 'yield:huyen_bang_linh_chi', yield: 1, guardBoss: 'boss_tvds_can_na' },
+    { nodeId: 'n_chi_tvds_03', itemId: 'linh_chi', mapId: 'tvds_hoa_than', x: 3, y: 8, anchorProp: 'rock_m', respawnDays: 2, yieldProfile: 'yield:linh_chi', yield: 1 },
+    { nodeId: 'n_hoa_tvds_02', itemId: 'xich_tam_hoa', mapId: 'tvds_hoa_than', x: 44, y: 14, anchorProp: 'flower_bush', respawnDays: 2, yieldProfile: 'yield:xich_tam_hoa', yield: 2 },
+    { nodeId: 'n_quy_ht_tvds', itemId: 'thien_tam_lien', mapId: 'tvds_hoa_than', x: 20, y: 18, anchorProp: 'flower_bush', respawnDays: 6, yieldProfile: 'yield:thien_tam_lien', yield: 1, guardBoss: 'boss_tvds_can_ht' }
   ];
   function nodeDef(nodeId) {
     for (var i = 0; i < RESOURCE_NODES.length; i++) if (RESOURCE_NODES[i].nodeId === nodeId) return RESOURCE_NODES[i];
@@ -5123,6 +5708,23 @@
   function nodeStatus(state, nodeId) {
     var def = nodeDef(nodeId);
     if (!def) return { ready: false, daysLeft: 0 };
+    /* Điểm quý có boss canh giữ (Thập Vạn Đại Sơn, bổ sung 2026-11-05):
+       khóa mở hoàn toàn theo chu kỳ của boss canh giữ — boss chưa hạ
+       trong chu kỳ hiện tại (alive hoặc locked) -> điểm khóa với cờ
+       guarded; boss đã hạ (claimed) -> hái được MỘT lần trong chu kỳ
+       đó (lần hái ghi lastDay >= ngày đầu chu kỳ thì coi như đã hái);
+       chu kỳ sau boss hồi sinh -> tự khóa lại. Điểm thường không có
+       guardBoss đi đúng đường cũ bên dưới, không đổi hành vi. */
+    if (def.guardBoss) {
+      var bd = BOSS_DEFS[def.guardBoss];
+      var bs = bossStatus(state, def.guardBoss);
+      if (!bd || bs.state !== 'claimed') return { ready: false, guarded: true, daysLeft: bs.daysLeft, bossState: bs.state };
+      var gg = ensureGrind(state);
+      var rg = gg.nodes[nodeId];
+      var cycleStart = bs.cycleId * bd.cycleDays;
+      if (rg && typeof rg.lastDay === 'number' && rg.lastDay >= cycleStart) return { ready: false, guarded: false, daysLeft: bs.daysLeft };
+      return { ready: true, daysLeft: 0 };
+    }
     var g = ensureGrind(state);
     var rec = g.nodes[nodeId];
     if (!rec || typeof rec.lastDay !== 'number') return { ready: true, daysLeft: 0 };
