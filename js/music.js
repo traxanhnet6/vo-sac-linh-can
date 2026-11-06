@@ -130,7 +130,12 @@
      tvds_hoa_than. Đăng ký lấy HỢP NHẤT từ cây đợt vào music.js hiện
      tại của cây chính: giữ nguyên cơ chế nhạc nền tệp (FILE_MUSIC_URL)
      và mọi đăng ký đã live; 5 TRACK + 5 AMBIENCE_DEFS của khu ở dưới. */
-  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem', 'thang_long_dai', 'thap_van_dai_son', 'tvds_truc_co', 'tvds_kim_dan', 'tvds_nguyen_anh', 'tvds_hoa_than'];
+  var MAP_IDS = ['tran', 'duong_mon', 'co_chau', 'kiem_trac_thap', 'thap_noi', 'thanh_van_tong', 'hb_valley', 'thien_co_lau', 'bc_thuyliem', 'bc_tapha', 'bc_tapsau', 'bc_kiemtrung', 'bc_hoiphong_mo', 'dai_dau_kiem', 'thang_long_dai', 'thap_van_dai_son', 'tvds_truc_co', 'tvds_kim_dan', 'tvds_nguyen_anh', 'tvds_hoa_than', 'song_bac_thuong', 'bc_bendo', 'bc_bendo_sau'];
+  /* [ĐỢT GỘP CUNG V 2026-11-06: hai khai báo MAP_IDS của hai phía (cây
+     chính 20 bản đồ sau TVĐS / cây đợt 17 bản đồ) hợp nhất thành MỘT
+     danh sách 23 bản đồ — 3 bản đồ cung V thêm ở CUỐI như tiền lệ TVĐS;
+     đăng ký TRACKS + AMBIENCE_DEFS của 3 bản đồ mới lấy nguyên từ cây
+     đợt, giữ nguyên cơ chế nhạc nền tệp của cây chính.] */
   var FALLBACK_MAP = 'tran';
 
   /* Pha đêm chuẩn hóa 0..1 theo phút-trong-ngày — CHÉP cột dark của
@@ -319,6 +324,27 @@
       chords: [[36, 48, 52, 55, 64], [33, 45, 48, 52, 60], [29, 41, 45, 48, 57], [31, 43, 47, 50, 59]],
       motif: [0, -1, 2, -1, 4, -1, 5, 7, -1, 5, 4, -1, 2, -1, 1, -1]
     },
+    song_bac_thuong: { /* Sông Bạc Thượng — hành trình ven sông: thang
+      Đô ngũ cung, nhịp thong thả như nhịp chèo, mô-típ thưa. */
+      root: 59, scale: SCALE_DOR_PENT, bpm: 70, density: 0.20,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[47, 50, 54], [45, 48, 52], [50, 54, 57], [43, 47, 50]],
+      motif: [4, -1, -1, 2, -1, -1, 3, -1, -1, 4, -1, -1, 2, -1, -1, -1]
+    },
+    bc_bendo: { /* Kho Chìm Dưới Bến Đò — hang kho ngập: trầm, rất
+      thưa, chỉ còn tiếng nền và giọt nước (xem AMBIENCE_DEFS). */
+      root: 47, scale: SCALE_MIN_PENT, bpm: 44, density: 0.03,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[35, 47, 50], [33, 45, 48], [38, 50, 53], [31, 43, 46]],
+      motif: [0, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]
+    },
+    bc_bendo_sau: { /* Kho Chìm — Tầng Sâu: trầm hơn tầng ngoài một
+      nấc, mô-típ gần như tắt. */
+      root: 45, scale: SCALE_MIN_PENT, bpm: 42, density: 0.02,
+      padWave: 'triangle', motifWave: 'sine',
+      chords: [[33, 45, 48], [31, 43, 46], [36, 48, 51], [29, 41, 44]],
+      motif: [0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1]
+    },
     bc_hoiphong_mo: { /* Hồi Phong Cổ Mộ — biến thể TRẦM của hb_valley:
       gốc hạ 4 nửa cung (57 -> 53), vòng hợp âm thung lũng hạ theo,
       chậm hơn (76 -> 62 bpm), nhịp nền thưa hơn (0,26 -> 0,18), mô-típ
@@ -405,7 +431,10 @@
     tvds_truc_co: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
     tvds_kim_dan: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
     tvds_nguyen_anh: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: true },
-    tvds_hoa_than: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true }
+    tvds_hoa_than: { birds: false, crickets: false, stream: false, wind: true, market: false, drips: false, stone: false, howl: true },
+    song_bac_thuong: { birds: true, crickets: true, stream: true, wind: true, market: false, drips: false, stone: false, howl: false }, // CUNG V: sông lớn chảy qua bản đồ (có ô nước) — chim, dế, suối, gió ven sông
+    bc_bendo: { birds: false, crickets: false, stream: false, wind: false, market: false, drips: true, stone: true, howl: false }, // CUNG V: kho ngập dưới bến — giọt nước + đá ẩm, không ô nước mở nên không cờ suối
+    bc_bendo_sau: { birds: false, crickets: false, stream: true, wind: false, market: false, drips: true, stone: true, howl: false } // CUNG V: tầng sâu có hồ ngầm (ô nước thật) — cờ suối khớp quy tắc nước của test-music
   };
   function normMap(mapId) { return TRACKS[mapId] ? mapId : FALLBACK_MAP; }
   function thinMotif(motif) {

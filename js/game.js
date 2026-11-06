@@ -301,6 +301,7 @@
     if (move === 'pha_quan') { whoosh(0.26, 420, 1500, 0.13, 0, 0.9); toneWave({ f0: 160, f1: 60, dur: 0.2, type: 'triangle', gain: 0.06 }); return; }
     if (move === 'quy_nhat') { whoosh(0.34, 500, 3200, 0.10, 0, 1.4); toneWave({ f0: 880, f1: 1760, dur: 0.3, type: 'sine', gain: 0.03 }); return; }
     if (move === 'huyen_tinh_tram') { whoosh(0.22, 700, 2400, 0.10, 0, 1.2); toneWave({ f0: 1180, f1: 2360, dur: 0.18, type: 'sine', gain: 0.025 }); return; }
+    if (move === 'huyen_tinh_lien_tram') { whoosh(0.22, 700, 2400, 0.10, 0, 1.2); toneWave({ f0: 1180, f1: 2360, dur: 0.18, type: 'sine', gain: 0.025 }); whoosh(0.22, 700, 2400, 0.09, 0.12, 1.2); return; } // [ĐỢT GỘP CUNG V 2026-11-06] tiếng vung họ Huyền Tinh cho cả hai nhát, nhát hai trễ 120ms khớp nhịp áp sát thương như Liên Hoàn
     whoosh(0.16, 800, 2600, 0.11, 0, 1.15); toneWave({ f0: 1400, f1: 2400, dur: 0.1, type: 'sine', gain: 0.018 });
   }
   // Hồn lực (chương 5): âm trầm lạnh hai lớp, trầm và dài — không giống bất kỳ âm nào khác.
@@ -615,7 +616,7 @@
      dạng chung. Tên cũng hiện bằng chữ trên biểu ngữ và trong sổ. */
   function playThienDaoVoice(realmTo) {
     if (!VOICE || !VOICE.announce) return;
-    var id = realmTo === 2 ? 'truc_co' : (realmTo === 3 ? 'kim_dan' : 'fallback');
+    var id = realmTo === 2 ? 'truc_co' : (realmTo === 3 ? 'kim_dan' : (realmTo === 4 ? 'nguyen_anh' : 'fallback'));
     var a = VOICE.announce[id];
     if (!a || !a.f) return;
     /* Đợt thay tên trong thoại: tên khác mặc định và mốc tuyên đọc có
@@ -1138,7 +1139,10 @@
   var MONSTER_LOOKS = ['son_lang', 'doc_vu_xa', 'thiet_giap_tru', 'phong_ung', 'lang_vuong', 'son_chu',
     // Quái bí cảnh (làn C): cùng quy tắc ASSETS.monsBad — loài nào nạp hỏng thì loại khỏi diện sinh.
     'dong_xa', 'thuy_xa_tinh', 'thach_tuong', 'thach_tuong_thu_ve', 'tan_anh_vo_cuc', 'kiem_linh', 'kiem_y_tan_hon', 'oan_binh', 'oan_hon_chien_truong',
-    'tran_nhan_kiem_linh', 'ho_tran_kiem_linh']; // ARCIV A.2: hai boss cung IV có sheet riêng đã chép
+    'tran_nhan_kiem_linh', 'ho_tran_kiem_linh',
+    // CUNG V: sheet biến thể theo họ của các loài gốc (khai nợ mỹ thuật trong báo cáo sản xuất)
+    'giang_thu', 'giang_tu_ha_yeu', 'truong_nha_giang_thu', 'hon_nuoc', 'ha_oan_cu_hon', 'tram_hon_ha_yeu',
+    'linh_gac_kho', 'tram_kho_thach_tuong', 'niem_an_thach_hon', 'tram_loi_dien_chu', 'mo_kiem_tan_hon', 'phong_giac_son_quan']; // ARCIV A.2: hai boss cung IV có sheet riêng đã chép
   MONSTER_LOOKS.forEach(function (id) {
     var im = loadImg('assets/monsters/' + id + '.png');
     im.onerror = function () { ASSETS.monsBad[id] = true; }; // tệp hình lỗi/không có -> loài bị loại khỏi diện săn
@@ -1428,7 +1432,11 @@
     de_tu_ho_tong: 'villager_m', huyet_de: 'villager_m', mo_cuu_u: 'mac_cuu_u', tiep_khach: 'villager_f',
     chap_su_thap: 'elder', quan_phu: 'elder', gia_chu_ta: 'villager_m', gia_chu_do: 'elder', vo_dich_doi_thu: 'luc_tranh',
     truong_doan: 'villager_old', ep_gia: 'villager_m', tham_bao: 'villager_m',
-    bach_kinh_duong: 'elder', ky_luc_quan: 'villager_f', gac_kho: 'villager_m'
+    bach_kinh_duong: 'elder', ky_luc_quan: 'villager_f', gac_kho: 'villager_m',
+    nguoi_lai_do: 'villager_old', tram_truong: 'villager_m', nguoi_giu_truoc: 'villager_old',
+    truong_thon_ven_song: 'villager_old', nhan_chung: 'villager_old', dan_lang_a: 'villager_m',
+    dan_lang_b: 'villager_f', dan_lang_c: 'villager_f', chu_do: 'villager_f', tin_su_lang: 'villager_m',
+    dan_nan_truong: 'villager_m', sat_thu_truong: 'player_nam', ke_dot_giay: 'luc_tranh', cuop_truong: 'luc_tranh', chi_huy_du_dang: 'luc_tranh'
   };
   /* Chân dung của một dòng thoại (gói phụ 4 — lệnh Bui 10:02 ngày
      2026-11-02 "Khi đọc thoại có hình ảnh của nhân vật trên câu thoại"):
@@ -1474,7 +1482,12 @@
     de_tu_ho_tong: 'Đệ Tử Hộ Tống', de_tu_a: 'Đệ tử Thanh Vân', de_tu_b: 'Đệ tử Thanh Vân',
     cho_a: 'Chủ sạp chợ', cho_b: 'Chủ sạp chợ', duoc_su: 'Dược Sư Hồi Xuân',
     phap_khi_chu: 'Chủ Tụ Bảo Các', chu_quan: 'Chủ Quán Vọng Châu',
-    dan_thanh_a: 'Lão Ngô', dan_thanh_b: 'Dân thành', xa_phu: 'Xa phu Lão Mã'
+    dan_thanh_a: 'Lão Ngô', dan_thanh_b: 'Dân thành', xa_phu: 'Xa phu Lão Mã',
+    nguoi_lai_do: 'Người Lái Đò', tram_truong: 'Trạm Trưởng Trạm Lưu Trữ', nguoi_giu_truoc: 'Người Giữ Trạm Trước',
+    truong_thon_ven_song: 'Trưởng Thôn Làng Ven Sông', nhan_chung: 'Nhân Chứng Đoàn Cửu Phẩm',
+    dan_lang_a: 'Dân Làng Bến Đò', dan_lang_b: 'Dân Làng Ven Sông', dan_lang_c: 'Dân Làng Ven Sông',
+    chu_do: 'Chủ Đò', tin_su_lang: 'Tín Sứ Của Làng', dan_nan_truong: 'Trưởng Đoàn Tị Nạn',
+    sat_thu_truong: 'Đầu Lĩnh Cánh Khói', ke_dot_giay: 'Kẻ Đốt Giấy', cuop_truong: 'Đoạn Lưu Phỉ Thủ', chi_huy_du_dang: 'Thạch Liệt'
   };
 
 
@@ -2415,6 +2428,7 @@
           var flyCol = moving ? Math.floor(tNow / 110) % 5 : 0;
           ctx.drawImage(flyIm, flyCol * 96, dir8 * 120, 96, 120, px + 16 - 32, py + 32 - 80 - 20, 64, 80);
           pTop = py + 32 - 80 - 20;
+          arcvDrawSilverStreak(pTop);
           labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
           return;
         }
@@ -2439,7 +2453,7 @@
             }
             ctx.drawImage(bim, bf.x, bf.y, 96, 120, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
             if (hoverOn) drawLooseSword(swCx, swCy, dir8, 'hover');
-            pTop = py + 32 - 80 + walkBobY; labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' }); return;
+            pTop = py + 32 - 80 + walkBobY; arcvDrawSilverStreak(pTop); labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' }); return;
           }
           // Nhún thân theo pha bước (walkBobY): chỉ dời HÌNH VẼ theo chiều
           // dọc, bóng chân và ô logic giữ nguyên trên mặt đất.
@@ -2452,6 +2466,7 @@
           ctx.drawImage(wim, psrc.x, psrc.y, psrc.w, psrc.h, px + 16 - 32, py + 32 - 80 + walkBobY, 64, 80);
           if (hoverOn) drawLooseSword(swCx, swCy, dir8, 'hover');
           pTop = py + 32 - 80 + walkBobY;
+          arcvDrawSilverStreak(pTop);
         } else {
           // Ảnh chưa tải: sprite lưới theo hướng chính gần nhất của dir8, khung 1 khi đi / 0 khi đứng.
           drawSprite(S.charSprite(look, dir8NearDir(dir8), moving ? 1 : 0), px, py - 8 + walkBobY, 2);
@@ -2955,6 +2970,7 @@
     return [ST.SCENE_FASHOP[0], { who: 'choice', text: 'Ngươi muốn mua gì?', options: opts }];
   }
   function chooseOption(action) {
+    if (typeof arcvChooseOption === 'function' && arcvChooseOption(action)) return; // CUNG V
     if (action === 'write') {
       state.flags.wroteFirst = true; // nhánh [Viết chữ]: mở nhiệm vụ ẩn chứng cứ ở chương 2-4
       say(ST.SCENE_WRITE_BRANCH, function () { refreshHUD(); saveNow(); });
@@ -3396,6 +3412,123 @@
     if (p && p.id === 'tinh_mac_tran') return bcTranInteract();
     if (p && p.id === 'cua_mo_that') return bcMoThatInteract();
     if (p && p.id === 'thu_trong_mo') return bcLetterInteract();
+    /* ================= CUNG V: vật phẩm ================= */
+    if (p && p.id === 'dai_truc_co' && state.quest === 'q33_dot_pha') return arcvDoVienManBreak();
+    if (p && p.id === 'sb_023_bc_gate') return bcGateInteract('bc_bendo');
+    if (p && p.id === 'bc_gate_bendo_sau') return bcGateInteract('bc_bendo_sau');
+    if (p && p.id === 'sb_021_stone_platform') return arcvMeditateStone('Vòng đá thổ nạp ở thượng nguồn — linh khí ở đây dày và yên nhất khúc sông.');
+    if (p && p.id === 'sb_022_stone_platform') return arcvMeditateStone('Nền đá thổ nạp giữa đồng — điểm dừng chân của người đi hành trình dọc sông.');
+    if (p && p.id === 'tinh_diem_bendo') return arcvMeditateStone('Nền đá thổ nạp trong kho chìm — hơi nước lạnh, tiếng vọng xa.');
+    if (p && p.id === 'sb_017_lu_huong' && state.quest === 'q28_an_danh') {
+      return say(ST.SCENE_CH28_AN_DANH, function () {
+        arcvClaimToast('q28_done');
+        state.quest = 'q29_tram_luu_tru'; refreshHUD(); saveNow();
+        toast('Bàn thờ vô danh đã dựng ở đầu làng — trên đó chỉ có hai chữ "qua đường". Tới trạm lưu trữ ven sông: kỳ kiểm kê niêm phong đang chờ.', 5200);
+      });
+    }
+    if (p && (p.id === 'arcv_ke_a' || p.id === 'arcv_ke_b' || p.id === 'arcv_ke_c')) {
+      var keId = p.id;
+      if (state.quest === 'q26_truy_vet' && keId !== 'arcv_ke_c' && !state.flags['arcvFrag_' + keId]) {
+        state.flags['arcvFrag_' + keId] = true;
+        state.flags.arcvFrag26 = (state.flags.arcvFrag26 || 0) + 1;
+        var keLine = keId === 'arcv_ke_a'
+          ? 'Kệ phía tây: một ô hồ sơ trống trơn, mép trang bị rút rất gọn — không phải mất trộm vội vàng, mà là rút có chủ đích.'
+          : 'Kệ phía đông: vệt niêm trên mép kệ không giống niêm của trạm — sáp cứng hơn, màu sẫm hơn, và còn mới.';
+        return say([{ who: 'narrate', text: keLine }], function () {
+          if ((state.flags.arcvFrag26 || 0) >= 2) toast('Đã đủ hai mảnh dấu vết trong trạm. Mảnh thứ ba là lời của trạm trưởng — về gặp ông.', 4200);
+          refreshHUD(); saveNow();
+        });
+      }
+      if (state.quest === 'q29_tram_luu_tru' && !state.flags['arcvShelf_' + keId]) {
+        state.flags['arcvShelf_' + keId] = true;
+        state.flags.arcvShelf29 = (state.flags.arcvShelf29 || 0) + 1;
+        var shelfLine = keId === 'arcv_ke_a'
+          ? 'Kệ tây: niêm còn nguyên, bụi đều. Không ai đụng vào kệ này trong kỳ này.'
+          : (keId === 'arcv_ke_b'
+            ? 'Kệ đông: niêm còn nguyên — nhưng thứ tự vài cuốn đã lệch một nhịp so với sổ cái.'
+            : 'Kệ trong cùng: chính kệ này giữ danh sách hành khách. Niêm ngoài còn nguyên, và đó mới là điều lạ nhất.');
+        return say([{ who: 'narrate', text: shelfLine }], function () {
+          if ((state.flags.arcvShelf29 || 0) >= 3) toast('Đã kiểm đủ ba kệ. Về gặp trạm trưởng để chốt kỳ kiểm kê.', 4200);
+          refreshHUD(); saveNow();
+        });
+      }
+      return say([{ who: 'narrate', text: 'Kệ hồ sơ của trạm lưu trữ — xếp ngay ngắn, niêm còn nguyên.' }]);
+    }
+    if (p && (p.id === 'arcv_bep_a' || p.id === 'arcv_bep_b' || p.id === 'arcv_bep_c')) {
+      var bepId = p.id;
+      if (state.flags.arcvBep26Active && !state.flags['arcvBep_' + bepId]) {
+        state.flags['arcvBep_' + bepId] = true;
+        state.flags.arcvBep26 = (state.flags.arcvBep26 || 0) + 1;
+        var bepDone = (state.flags.arcvBep26 || 0) >= 3;
+        return say([{ who: 'narrate', text: bepDone
+          ? 'Điểm lửa cuối cùng tắt hẳn. Trong tro nguội, một vật cứng không cháy nằm lại: con dấu đồng nhỏ của người giữ trạm trước — thứ đáng lẽ phải nằm trong ngăn kéo của ông, không phải trong bếp.'
+          : 'Ngươi dập tắt một điểm lửa âm ỉ — lửa bén từ ngoài sân vào, không phải từ trong bếp ra.' }], function () {
+          if (bepDone) toast('Đã dập cả ba điểm lửa và tìm thấy vật không cháy trong tro. Về gặp ông lão giữ trạm trước.', 4600);
+          refreshHUD(); saveNow();
+        });
+      }
+      return say([{ who: 'narrate', text: 'Bếp nhà ông lão giữ trạm trước — tro đã nguội hẳn.' }]);
+    }
+    if (p && (p.id === 'arcv_nha_a' || p.id === 'arcv_nha_b' || p.id === 'arcv_nha_c')) {
+      var nhaId = p.id;
+      if (state.quest === 'q28_nan_hon' && !state.flags['arcvSurvey_' + nhaId]) {
+        state.flags['arcvSurvey_' + nhaId] = true;
+        state.flags.arcvSurvey28 = (state.flags.arcvSurvey28 || 0) + 1;
+        var nhaLine = nhaId === 'arcv_nha_a'
+          ? 'Nhà thứ nhất: tần số hồn trong nhà lệch xuống thấp — người bệnh mê man, miệng vẫn gọi một cái tên không phải tên người nhà.'
+          : (nhaId === 'arcv_nha_b'
+            ? 'Nhà thứ hai: tần số lệch lên cao, nhọn như tiếng sáo xa. Người bệnh tỉnh táo hơn, nhưng nói mình nghe sông gọi rõ nhất vào lúc nửa đêm.'
+            : 'Nhà thứ ba: tần số dao động hai chiều, lúc lên lúc xuống. Ba nhà, ba kiểu lệch — nhưng tai ngươi nghe ra cùng một gốc: hướng sông.');
+        return say([{ who: 'narrate', text: nhaLine }], function () {
+          if ((state.flags.arcvSurvey28 || 0) >= 3) toast('Đã khảo sát đủ ba nhà — ba kiểu lệch, cùng một gốc hướng sông. Về gặp trưởng thôn.', 4400);
+          refreshHUD(); saveNow();
+        });
+      }
+      return say([{ who: 'narrate', text: 'Nhà của người bệnh làng ven sông — cửa khép, trong nhà yên tĩnh.' }]);
+    }
+    if (p && (p.id === 'arcv_dat_a' || p.id === 'arcv_dat_b' || p.id === 'arcv_dat_c')) {
+      var datId = p.id;
+      if (state.quest === 'q34_tham_do' && !state.flags['arcvLayer_' + datId]) {
+        state.flags['arcvLayer_' + datId] = true;
+        state.flags.arcvLayers34 = (state.flags.arcvLayers34 || 0) + 1;
+        var datLine = datId === 'arcv_dat_a'
+          ? 'Lớp đất thứ nhất — sườn phía tây: tiếng vọng rỗng, đất đã bị moi ruột. Sườn này chỉ cần một rung động mạnh là sạt xuống cả mảng.'
+          : (datId === 'arcv_dat_b'
+            ? 'Lớp đất thứ hai — đường rút phía đông: tiếng vọng đặc, nặng. Đường rút của đoàn đã bị chặn bằng đất đá lấp sẵn từ trước.'
+            : 'Lớp đất thứ ba — cửa thung: ba điểm vọng nhỏ, đều nhau, ở đúng tầm người nấp. Trinh sát của đối phương đang nằm chờ sẵn quanh miệng thung.');
+        return say([{ who: 'narrate', text: datLine }], function () {
+          if ((state.flags.arcvLayers34 || 0) >= 3) toast('Đã đọc đủ ba lớp đất. Về gặp trưởng đoàn trong thung — trận đánh sẽ sáng hơn nhiều nhờ ba lớp này.', 4400);
+          refreshHUD(); saveNow();
+        });
+      }
+      return say([{ who: 'narrate', text: 'Đất đá trong thung lũng cụt — im lặng dưới chân.' }]);
+    }
+    if (p && p.id === 'sb_024_stele') {
+      if (state.quest === 'q36_do_kiep') {
+        if (!state.flags.arcvCh36GuardDone) { toast('Đỉnh núi chưa yên — dẹp đợt gác đỉnh quanh đây trước đã, rồi hãy chạm bia.', 4200); return; }
+        return arcvStartCh36Tribulation();
+      }
+      return say([{ who: 'narrate', text: 'Bia đá trên đỉnh cuối sông — mặt bia trống, như đang chờ một cái tên đầu tiên của dải Nguyên Anh.' }]);
+    }
+    if (p && p.id === 'arcv_tu_cung_phung') {
+      if (!L.questReached(state, 'q33_chuan_bi')) return say([{ who: 'narrate', text: 'Tủ cung phụng của tông — khóa chặt. Chỉ quản sự mới mở, và chỉ cho người sắp bước vào mốc lớn.' }]);
+      state.flags.arcvCatalogSect = true;
+      arcvCh33Progress();
+      return say(arcvTier2ShopScene());
+    }
+    if (p && p.id === 'arcv_bia_thu_loi') {
+      if (!L.questReached(state, 'q33_chuan_bi')) return say([{ who: 'narrate', text: 'Bia thử lôi ở sân luyện — mặt bia đầy vết sét giả của các đời đệ tử thử đồ độ kiếp.' }]);
+      if (!state.flags.arcvDemoSeen) {
+        state.flags.arcvDemoSeen = true;
+        return say([
+          { who: 'narrate', text: 'Quản sự sân luyện cho kích một đạo lôi giả lên bia — đạo lôi thử, uy lực chỉ bằng một phần lôi thật, nhưng đủ để xem đồ.' },
+          { who: 'narrate', text: 'Đạo lôi chạm vào lớp Kim Thân giả lập quanh bia: lớp vàng hiện lên, đạo lôi tàn đi bảy phần — Kim Thân Đan giữ đúng lời: giảm 70% một đạo.' },
+          { who: 'narrate', text: 'Đạo thứ hai chạm vào màn phù văn xanh trắng của Cửu Thiên Tị Lôi Phù: màn rung một nhịp rồi nuốt gần trọn đạo lôi — giảm 90% một đạo, đúng như sổ ghi.' }
+        ], function () { arcvCh33Progress(); refreshHUD(); saveNow(); });
+      }
+      return say([{ who: 'narrate', text: 'Bia thử lôi — hai vệt thử của Kim Thân Đan và Cửu Thiên Tị Lôi Phù vẫn còn in trên mặt bia.' }]);
+    }
+    /* ================= hết vật phẩm CUNG V ================= */
     if (p && p.interact) return say([{ who: 'narrate', text: 'Ngươi xem xét ' + (p.name || 'vật này') + ' — lúc này chưa có việc gì với nó.' }]);
     // ARCIV ch.14: sau trận giữ đất, hiện trường (47,38) thành điểm hái
     // dược nhỏ VĨNH VIỄN (một lượt mỗi ngày game) — cài bằng điểm tương
@@ -4327,6 +4460,7 @@
       ] }]);
       return say(ST.SCENE_PHARMACY);
     }
+    if (npc.id === 'phap_khi_chu' && L.questReached(state, 'q33_chuan_bi')) { state.flags.arcvCatalogCity = true; arcvCh33Progress(); var scV = arcvTier2ShopScene(); scV[0].options.splice(4, 0, { label: 'Xem hàng thường của hiệu', action: 'arcv_fa_normal' }); return say(scV); } // CUNG V: nguồn dải 2 ở thành
     if (npc.id === 'phap_khi_chu') return say(buildFaShopScene());
     // Chương 4: các điểm chạm trong sân phủ Hứa và Thiên Cơ Các phân đà.
     if (npc.id === 'luc_tranh' && state.map === 'co_chau' && state.quest === 'q4_vu_cao') return say(ST.SCENE_ACCUSE);
@@ -4719,6 +4853,238 @@
         toast('Manh mối đã rõ: một cái tên, một cuốn hồ sơ, một nơi cất giữ. Về Thanh Vân Đại Điện báo cáo trưởng lão.', 4600);
       });
     }
+    /* ================= CUNG V (chương 25–36) ================= */
+    if (npc.id === 'chap_su_thap' && state.map === 'kiem_trac_thap' && (state.quest === 'q24_done' || state.quest === 'q25_len_duong')) {
+      return say(ST.SCENE_CH25_LEN_DUONG, function () {
+        state.quest = 'q25_ben_do'; refreshHUD(); saveNow();
+        toast('Lên đường: qua cổng bắc của tháp (cổng chỉ mở khi đã nhận việc) xuống làng bến đò, gặp người lái đò.', 4800);
+      });
+    }
+    if (npc.id === 'chap_su_thap' && state.map === 'kiem_trac_thap' && L.questReached(state, 'q26_truy_vet') && !state.flags.arcvTinBSeen) {
+      state.flags.arcvTinBSeen = true;
+      return say(ST.SCENE_CH25_TIN_B, function () { refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'chap_su_thap' && state.quest === 'q26_ke_doc_nguoc') {
+      return say(ST.SCENE_CH26_KE_DOC, function () {
+        arcvClaimToast('q26_done');
+        if (state.flags.arcvCh26SwordPure) arcvClaimToast('q26_sword_pure');
+        state.quest = 'q27_thu_nha'; refreshHUD(); saveNow();
+        toast('Kẻ đọc ngược hành trình nằm trong Thiên Cơ Các — danh tính chưa lộ. Xuống bến đò gặp người lái đò: thư nhà vừa tới.', 5000);
+      });
+    }
+    if (npc.id === 'chap_su_thap' && state.quest === 'q30_tang_sau') {
+      return say(ST.SCENE_CH30_TANG_SAU, function () {
+        state.quest = 'q30_tan_anh'; refreshHUD(); saveNow();
+        toast('Vào Tàn Tích Tầng Sâu (bc_tapsau) — lính gác đã đổi dải Kim Đan hậu, và Niêm Ấn Thạch Hồn chờ ở cửa phòng ghi nhớ phía bắc.', 5000);
+      });
+    }
+    if (npc.id === 'chap_su_thap' && state.quest === 'q30_quyet_tam') {
+      return say(ST.SCENE_CH30_QUYET_TAM, function () {
+        arcvClaimToast('q30_done');
+        state.quest = 'q31_tin_doc_duong'; refreshHUD(); saveNow();
+        toast('Quyết tâm đã viết, có người làm chứng. Xuống bến đò — người lái đò đang giữ tin về đoàn cửu phẩm năm xưa.', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q25_ben_do') {
+      return say(ST.SCENE_CH25_BEN_DO, function () {
+        state.quest = 'q25_hoi_chuyen_xua'; refreshHUD(); saveNow();
+        toast('Chuyện cũ của sông chỉ mới nghe một nửa. Vào trạm lưu trữ ven sông gặp trạm trưởng — nửa còn lại nằm ở đó.', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q25_song_dem') {
+      return say(ST.SCENE_CH25_SONG_DEM_PRE, function () { arcvStartCh25Night(); });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q27_thu_nha') {
+      return say(ST.SCENE_CH27_THU_NHA, function () {
+        state.quest = 'q27_song_gio'; refreshHUD(); saveNow();
+        toast('Nàng không gọi ngươi về. Ra bến phụ phía đông (76,51) — cướp sông đang giữ bến, phải dẹp trước giờ thuyền ngược thác.', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q27_tin_vui') {
+      return say(ST.SCENE_CH27_TIN_VUI, function () {
+        arcvClaimToast('q27_done');
+        state.quest = 'q28_lang_ven_song'; refreshHUD(); saveNow();
+        toast('Tin vui đã trao. Sang làng ven sông phía đông gặp trưởng thôn — làng đang có chuyện lạ về đêm.', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q31_tin_doc_duong') {
+      return say(ST.SCENE_CH31_TIN, function () {
+        state.quest = 'q31_nhan_chung'; refreshHUD(); saveNow();
+        toast('Tin về đoàn cửu phẩm chỉ là lời đồn — phải có người thật. Nhân chứng năm xưa đang ở làng ven sông (68,40).', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q34_tin_ti_nan') {
+      return say(ST.SCENE_CH34_TIN, function () {
+        state.quest = 'q34_tham_do'; refreshHUD(); saveNow();
+        toast('Đoàn tị nạn bị dồn vào thung lũng cụt phía bắc (83,10). Đọc ba lớp đất trong thung trước khi đánh — tai ngươi nghe được đất rỗng.', 5000);
+      });
+    }
+    if (npc.id === 'nguoi_lai_do' && state.quest === 'q36_tin_niem_phong') {
+      return say(ST.SCENE_CH36_TIN_NIEM_PHONG, function () {
+        state.quest = 'q36_done'; refreshHUD(); saveNow();
+        toast('Hoàn thành chương 36: Nguyên Anh kết thành — cung V khép lại. Tầng sâu Kho Chìm và thư viện thượng phẩm đã mở; vòng lặp Nguyên Anh bắt đầu từ đây.', 5600);
+      });
+    }
+    if (npc.id === 'tram_truong' && state.quest === 'q25_hoi_chuyen_xua') {
+      return say(ST.SCENE_CH25_HOI_CHUYEN_XUA, function () {
+        state.quest = 'q25_song_dem'; refreshHUD(); saveNow();
+        toast('Nửa chuyện còn lại đã nghe. Đêm nay ở lại bến — gặp người lái đò khi trời tối hẳn.', 4600);
+      });
+    }
+    if (npc.id === 'tram_truong' && state.quest === 'q26_truy_vet') {
+      if ((state.flags.arcvFrag26 || 0) < 2) {
+        return say([{ who: 'tram_truong', text: 'Dấu vết còn thiếu. Ngươi tự tay kiểm lại hai chỗ trong trạm này: kệ hồ sơ phía tây và kệ hồ sơ phía đông — trang bị rút và vệt niêm lạ đều ở đó.' }], function () { refreshHUD(); saveNow(); });
+      }
+      return say(ST.SCENE_CH26_TRUY_VET, function () {
+        state.quest = 'q26_nguoi_giu_truoc'; refreshHUD(); saveNow();
+        toast('Người giữ trạm trước vẫn còn sống, ở làng ven sông (62,40). Tới gặp ông — và để ý bếp nhà ông đêm nay.', 4800);
+      });
+    }
+    if (npc.id === 'tram_truong' && state.quest === 'q29_tram_luu_tru') {
+      if (!state.flags.arcvCh29TramSeen) {
+        state.flags.arcvCh29TramSeen = true;
+        return say(ST.SCENE_CH29_TRAM, function () { refreshHUD(); saveNow(); });
+      }
+      if ((state.flags.arcvShelf29 || 0) < 3) {
+        return say([{ who: 'tram_truong', text: 'Kiểm kê phải đủ ba kệ, tận tay: kệ tây, kệ đông và kệ trong cùng của trạm. Dấu chấm than ở đúng kệ cần kiểm.' }], function () { refreshHUD(); saveNow(); });
+      }
+      return say(ST.SCENE_CH29_DOT_GIAY_PRE, function () {
+        state.quest = 'q29_dot_giay'; refreshHUD(); saveNow();
+        arcvStartCh29Fire();
+      });
+    }
+    if (npc.id === 'tram_truong' && state.quest === 'q29_dot_giay') {
+      return say([{ who: 'tram_truong', text: 'Lửa chưa tắt hẳn thì chưa xong! Quay lại các kệ — dập điểm cháy, hạ tay quạt, kết liễu đầu lĩnh đốt giấy.' }], function () { arcvStartCh29Fire(); });
+    }
+    if (npc.id === 'tram_truong' && state.quest === 'q29_trang_danh_sach') {
+      return say(ST.SCENE_CH29_TRANG, function () {
+        state.quest = 'q29_duoi_theo'; refreshHUD(); saveNow();
+        toast('Trang giữa đã bị xé từ trước khi trạm nhận sổ. Theo vệt tro xuống miệng hang dưới bến đò (21,43).', 4800);
+      });
+    }
+    if (npc.id === 'nguoi_giu_truoc' && state.quest === 'q26_nguoi_giu_truoc') {
+      if ((state.flags.arcvBep26 || 0) >= 3) {
+        return say(ST.SCENE_CH26_BEP_END, function () {
+          state.quest = 'q26_bay_tai_nan'; refreshHUD(); saveNow();
+          toast('Bếp đã dập, vật không cháy đã thấy. Lên đường về tháp — đoạn đường ngang (40,31) đêm nay e không yên.', 4800);
+        });
+      }
+      if (!state.flags.arcvBep26Active) {
+        return say(ST.SCENE_CH26_GIU_TRUOC, function () {
+          state.flags.arcvBep26Active = true; state.flags.arcvBep26 = 0; refreshHUD(); saveNow();
+          toast('Bếp nhà ông lão đang cháy âm ỉ ở ba điểm quanh sân (59,41), (62,41), (65,41) — dập cả ba bằng tay, rồi tìm trong tro.', 5000);
+        });
+      }
+      return say([{ who: 'nguoi_giu_truoc', text: 'Bếp còn cháy âm ỉ đấy — dập nốt các điểm lửa quanh sân nhà ta, rồi hẳn nói chuyện.' }], function () { refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'nhan_chung' && state.quest === 'q31_nhan_chung') {
+      return say(ST.SCENE_CH31_NHAN_CHUNG, function () {
+        state.quest = 'q31_phuc_kich'; refreshHUD(); saveNow();
+        toast('Đưa nhân chứng ra bãi cát giữa sông (58,47) — đường về sẽ không yên, giữ ông ấy vô sự.', 4800);
+      });
+    }
+    if (npc.id === 'truong_thon_ven_song' && state.quest === 'q28_lang_ven_song') {
+      return say(ST.SCENE_CH28_LANG, function () {
+        state.quest = 'q28_nan_hon'; state.flags.arcvSurvey28 = 0; refreshHUD(); saveNow();
+        toast('Hơn mười người bệnh, cùng một câu nói. Khảo sát ba nhà người bệnh quanh làng (55,34), (67,34), (62,37) trước khi trời tối.', 5000);
+      });
+    }
+    if (npc.id === 'truong_thon_ven_song' && state.quest === 'q28_nan_hon') {
+      if ((state.flags.arcvSurvey28 || 0) < 3) {
+        return say([{ who: 'truong_thon_ven_song', text: 'Chưa đủ ba nhà thì chưa kết luận được gì. Mỗi nhà lệch tần một kiểu — ngươi phải tận tai nghe từng nhà.' }], function () { refreshHUD(); saveNow(); });
+      }
+      return say(ST.SCENE_CH28_NAN_HON, function () {
+        state.quest = 'q28_luyen_hon'; refreshHUD(); saveNow();
+        toast('Người bệnh đã gom về sân làng. Nói với trưởng thôn lần nữa khi ngươi sẵn sàng mở buổi luyện hồn lớn nhất từ trước tới nay.', 4800);
+      });
+    }
+    if (npc.id === 'truong_thon_ven_song' && state.quest === 'q28_luyen_hon') {
+      return say(ST.SCENE_CH28_TRUOC_TRAM, function () { arcvStartCh28Souls(false); });
+    }
+    if (npc.id === 'truong_thon_ven_song' && L.questReached(state, 'q28_done')) {
+      return say([{ who: 'choice', text: 'Trưởng thôn: "Buổi luyện hồn ở sân làng giờ thành lệ — tuần nào hồn nước cũng về quấy. Ngươi có muốn giữ một buổi nữa cho làng không? (Nội dung lặp: thưởng theo hồ sơ luyện hồn.)"', options: [
+        { label: 'Giữ một buổi luyện hồn cho làng', action: 'arcv_repeat_souls' },
+        { label: 'Để khi khác', action: 'shop_leave' }
+      ] }]);
+    }
+    if (npc.id === 'chu_do' && state.quest === 'q27_ho_tong_ben') {
+      return say(ST.SCENE_CH27_HO_TONG_PRE, function () { arcvStartCh27Escort(1, false); });
+    }
+    if (npc.id === 'chu_do' && L.questReached(state, 'q27_done')) {
+      return say([{ who: 'choice', text: 'Chủ đò: "Thuyền vẫn ngược thác đều đặn. Đi thêm một chuyến hộ tống nữa không? (Nội dung lặp: thưởng theo hồ sơ hộ tống.)"', options: [
+        { label: 'Hộ tống thêm một chuyến qua thác', action: 'arcv_repeat_escort' },
+        { label: 'Để khi khác', action: 'shop_leave' }
+      ] }]);
+    }
+    if (npc.id === 'dan_nan_truong' && state.quest === 'q34_tham_do') {
+      if ((state.flags.arcvLayers34 || 0) >= 3) {
+        state.flags.arcvCh34ThreeLayers = true;
+        return say(ST.SCENE_CH34_THAM_DO, function () { arcvStartCh34Scout(); });
+      }
+      return say([{ who: 'choice', text: 'Trưởng đoàn: "Ngươi đã nghe đủ ba lớp đất trong thung chưa? Sườn rỗng dễ sạt ở phía tây (77,10), đường rút bị chặn ở phía đông (90,10), và vị trí trinh sát ở cửa thung (82,16). Đọc đủ cả ba trước trận thì mắt ngươi sáng hơn hẳn."', options: [
+        { label: 'Đánh ngay, không đọc nữa', action: 'arcv_ch34_fight_now' },
+        { label: 'Đi đọc nốt các lớp đất', action: 'shop_leave' }
+      ] }]);
+    }
+    if (npc.id === 'dan_nan_truong' && state.quest === 'q34_tram_giu') {
+      return say(ST.SCENE_CH34_TRAM_GIU, function () { arcvStartCh34Hold(); });
+    }
+    if (npc.id === 'dan_nan_truong' && state.quest === 'q35_hoi_suc') {
+      return say(ST.SCENE_CH35_HOI_SUC, function () {
+        arcvClaimToast('q35_done');
+        state.quest = 'q36_chuan_bi_kiep'; refreshHUD(); saveNow();
+        toast('Đoàn đã qua cơn nguy. Về Thanh Vân Tông gặp trưởng lão — việc chuẩn bị cho mốc Nguyên Anh bắt đầu từ hôm nay.', 5000);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q32_ve_thanh') {
+      return say(ST.SCENE_CH32_VE_THANH, function () {
+        state.quest = 'q32_ho_phap'; refreshHUD(); saveNow();
+        toast('Tới thung lũng Hồi Phong, gặp Hứa U Nhàn ở bìa thung (46,40) — nàng tự chọn ngày độ kiếp, ngươi giữ vòng cho nàng.', 5000);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q33_canh_bao') {
+      var mk = state.flags.thienDaoMark || 0;
+      var warnScene = mk <= 0 ? ST.SCENE_CH33_CANH_BAO_A : (mk <= 2 ? ST.SCENE_CH33_CANH_BAO_B : ST.SCENE_CH33_CANH_BAO_C);
+      return say(warnScene, function () {
+        state.quest = 'q33_chuan_bi'; refreshHUD(); saveNow();
+        toast('Nguồn đan/phù dải 2 đã mở: tủ cung phụng của tông (52,30) và hiệu pháp khí ở Cô Châu Thành. Đừng quên thử lôi giả ở bia thử lôi (33,58) gần sân luyện.', 5400);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q33_chuan_bi' && !state.flags.arcvCh33PrepSeen) {
+      state.flags.arcvCh33PrepSeen = true;
+      return say(ST.SCENE_CH33_CHUAN_BI, function () { refreshHUD(); saveNow(); });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q33_tang_kinh_sau') {
+      return say(ST.SCENE_CH33_TANG_KINH, function () {
+        state.quest = 'q34_tin_ti_nan'; refreshHUD(); saveNow();
+        toast('Cửa thư viện thượng phẩm vẫn khóa — nó chờ Nguyên Anh. Xuống bến đò: tin về đoàn tị nạn ở sông Bạc vừa tới.', 4800);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && state.quest === 'q36_chuan_bi_kiep') {
+      return say(ST.SCENE_CH36_CHUAN_BI, function () {
+        state.quest = 'q36_do_kiep'; refreshHUD(); saveNow();
+        toast('Lên đỉnh núi phía đông bắc sông Bạc Thượng (89,35): dẹp đợt gác đỉnh, rồi chạm bia đá trên đỉnh để độ kiếp Nguyên Anh — bảy đạo lôi.', 5400);
+      });
+    }
+    if (npc.id === 'truong_lao_tong' && L.questReached(state, 'q36_done')) {
+      return say(arcvLibraryScene());
+    }
+    if (npc.id === 'u_nhan' && state.map === 'hb_valley' && state.quest === 'q32_ho_phap') {
+      return say(ST.SCENE_CH32_HO_PHAP_PRE, function () { arcvStartCh32Guard(); });
+    }
+    if (npc.id === 'u_nhan' && state.map === 'hb_valley' && state.quest === 'q32_chuyen_tho_nguyen') {
+      return say(ST.SCENE_CH32_THO_NGUYEN, function () {
+        arcvClaimToast('q32_done');
+        if (!state.flags.arcvCh32RingTouched) arcvClaimToast('q32_ring_untouched');
+        state.quest = 'q33_canh_bao'; refreshHUD(); saveNow();
+        toast('Tu vi Kim Đan Hậu Kỳ đã đầy. Về Thanh Vân Đại Điện gặp trưởng lão — mốc Viên Mãn đang chờ, và có một lời cảnh báo về những lần đối hưởng của ngươi.', 5200);
+      });
+    }
+    if (['nguoi_lai_do', 'tram_truong', 'truong_thon_ven_song', 'nguoi_giu_truoc', 'nhan_chung', 'dan_nan_truong', 'chu_do'].indexOf(npc.id) >= 0) {
+      var idleLines = arcvNpcIdleLine(npc);
+      if (idleLines) return say(idleLines);
+    }
+    /* ================= hết khối CUNG V ================= */
     if (npc.id === 'tap_dich_truong' && state.map === 'thanh_van_tong') {
       var chNow = L.chapterOfQuest(state);
       if ((chNow === 9 || chNow === 11) && (state.flags.sectJobPaidFor || 0) < chNow) {
@@ -6028,7 +6394,9 @@
                escorts: (cfg.escorts || []).map(function (e) {
                  return { x: e.tx * TILE, y: e.ty * TILE, look: e.look, name: e.name, title: '', species: null,
                    hp: e.hp, hpMax: e.hp, injured: false, dir: 'down', walkT: 0, flashT: 0, resVibT: 0, holdT: 0, sealT: 0, atkAnimT: 0, dead: false,
-                   anchorX: 51 * TILE, anchorY: 62 * TILE, safeX: 51 * TILE, safeY: 74 * TILE, seed: Math.random() * 6.3 };
+                   /* CUNG V: neo hộ tống đọc từ cấu hình fig (mặc định giữ đúng neo chương 19 ở Cô Châu). */
+                   anchorX: (e.anchorTx != null ? e.anchorTx : 51) * TILE, anchorY: (e.anchorTy != null ? e.anchorTy : 62) * TILE,
+                   safeX: (e.safeTx != null ? e.safeTx : 51) * TILE, safeY: (e.safeTy != null ? e.safeTy : 74) * TILE, seed: Math.random() * 6.3 };
                }),
                cartCfg: cfg.cart || null, cart: null, cartSpawned: false,
                soulChaos: cfg.soulChaos || null, soulHolds: 0,
@@ -6564,6 +6932,8 @@
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
     startResBodyLive(false, { tier: resTierFor(silenceBefore) }); // đợt bắt ấn 2026-11-05
+    f.lastWordSkill = skill; // CUNG V: bộ điều khiển telegraph đọc chiêu vừa tung
+    startResBody(false);
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
     if (skill === 'phong') {
       f.usedPhong++;
@@ -8233,6 +8603,7 @@
     // trận, trước đường tự do. Ngoài vùng gần thước thì chỉ nhắc, KHÔNG
     // trừ gì; trong vùng thì đòn vẫn trừ như khuôn giữ bia chương 12.
     if (state && state.map === 'thap_noi' && state.quest === 'q17_do_lai' && state.flags.q17RulerShaking) { arcRulerDinh(); return; }
+    if (state && state.map === 'bc_tapsau' && state.quest === 'q30_niem_phong' && state.flags.arcvHoldActive) { arcvMemoryDinh(); return; } // CUNG V ch.30: Định Âm giữ nét gạch tên trong cảnh
     if (dlg) return;
     if (enc) { encCastWord('dinh'); return; }
     if (startEncounterNear(3.2)) { encCastWord('dinh'); return; }
@@ -9677,6 +10048,12 @@
     else if (move === 'pha_quan') startBodySegment(kc, 'C', hitAtAbs);
     else if (move === 'quy_nhat') startBodySegment(kc, 'D', hitAtAbs);
     else if (move === 'huyen_tinh_tram') startBodySegment(kc, 'HT', hitAtAbs); // đợt bắt ấn/vũ khí 2026-11-05: Huyền Tinh Trảm có bộ vung riêng HT, hết dùng chung bộ A với Trảm
+    /* [ĐỢT GỘP CUNG V 2026-11-06 — việc nối theo lưu ý mục 14 của báo
+       cáo đợt actions: Huyền Tinh Liên Trảm (dải 2 của Huyền Tinh Kiếm
+       Phổ, 2 nhát x 110%) RẼ SANG BỘ NHỊP HT cho cả hai nhát (đoạn thân
+       HT tổng 690ms, dừng tích lực 170ms ở đỉnh) thay vì rơi về bộ A
+       của Trảm như bản sản xuất trên cây đợt; khóa bởi khẳng định 89q.] */
+    else if (move === 'huyen_tinh_lien_tram') { startBodySegment(kc, 'HT', hitAtAbs); if (secondHitAtAbs) startBodySegment(kc, 'HT', secondHitAtAbs); }
     else startBodySegment(kc, 'A', hitAtAbs); // tram
   }
   function startResBody(fast) {
@@ -10593,7 +10970,7 @@
   function presentSwordHit(tx, ty, ang, move, crit, hitIdx) {
     var P = fxTier(), colBody = crit ? '255,226,150' : '170,230,255';
     swordFxLog.push({ move: move || 'tram', P: P, t: tNow }); if (swordFxLog.length > 40) swordFxLog.shift();
-    if (move === 'huyen_tinh_tram') { presentHuyenTinh(tx, ty, ang, crit); return; }
+    if (move === 'huyen_tinh_tram' || move === 'huyen_tinh_lien_tram') { presentHuyenTinh(tx, ty, ang, crit); return; } // [ĐỢT GỘP CUNG V 2026-11-06] Liên Trảm mang fxId 'huyen_tinh_tram' trong SWORD_MOVES nên trình diễn theo đúng họ Huyền Tinh ở cả hai nhát, không rơi về vệt Trảm thường
     if (move === 'pha_quan') {
       var n = P >= 4 ? 7 : 5, sang = ang;
       for (var i = 0; i < n; i++) { var off = (i - (n - 1) / 2) * 26; spawnStar(tx + Math.cos(sang) * off, ty + Math.sin(sang) * off - 6, '150,200,255', '235,245,255', 0.95, i * 0.02, 0.5); }
@@ -12944,6 +13321,7 @@
         return;
       }
     }
+    if (typeof arcvOnMonsterKill === 'function') arcvOnMonsterKill(m); // CUNG V: mảnh bí pháp theo loài/boss
     m.state = 'dying'; m.deathT = 0; m.holdT = 0; m.sealT = 0;
     // Bộ đếm thống kê chơi (đợt bảng nhân vật 2026-11-06): đếm tại đây —
     // SAU hai cửa túi-đầy ở trên nên boss gượng dậy chưa tính là đã hạ.
@@ -13858,7 +14236,9 @@
     'Đạo lôi thứ hai nặng hơn đạo trước — mây kiếp cuộn thấp hơn nữa, tiếng sấm dội vào lồng ngực.',
     'Đạo lôi thứ ba tụ lại lâu hơn, sáng trắng cả một góc trời phía bắc.',
     'Đạo lôi thứ tư giáng xuống kèm mưa đá nhỏ — trận văn quanh đài rung lên từng hồi.',
-    'Đạo lôi cuối cùng của kiếp này: cả bầu trời như nín lại một nhịp trước khi sét xé xuống.'
+    'Đạo lôi cuối cùng của kiếp này: cả bầu trời như nín lại một nhịp trước khi sét xé xuống.',
+    'Đạo lôi thứ sáu: sét không còn trắng nữa mà ánh tím — thiên uy đã gần chạm ngưỡng cuối.',
+    'Đạo lôi thứ bảy — đạo cuối cùng của kiếp Nguyên Anh: cả bầu trời như nín lại một nhịp, rồi sét xé xuống mang theo thiên uy trọn vẹn.'
   ];
   function tribGuardCutNow(targetRealm) {
     if (targetRealm === 2) return L.tribGuardCut(state.flags.guardBroken || 0);
@@ -13926,6 +14306,8 @@
     var opts = [{ label: 'Ngạnh kháng — chịu toàn bộ sát thương của đạo này', action: 'trib_tank' }];
     if (L.bagCount(state, 'ho_the_dan') > 0) opts.push({ label: 'Nuốt Hộ Thể Đan — đạo này giảm 60% sát thương (còn ' + L.bagCount(state, 'ho_the_dan') + ' viên)', action: 'trib_dan' });
     if (L.bagCount(state, 'ti_loi_phu') > 0) opts.push({ label: 'Kích Tị Lôi Phù — đạo này giảm 85% sát thương (còn ' + L.bagCount(state, 'ti_loi_phu') + ' lá)', action: 'trib_phu' });
+    if (trib.targetRealm >= 4 && L.bagCount(state, 'kim_than_dan') > 0) opts.push({ label: 'Nuốt Kim Thân Đan — đạo này giảm 70% sát thương (còn ' + L.bagCount(state, 'kim_than_dan') + ' viên)', action: 'trib_dan2' });
+    if (trib.targetRealm >= 4 && L.bagCount(state, 'cuu_thien_ti_loi_phu') > 0) opts.push({ label: 'Kích Cửu Thiên Tị Lôi Phù — đạo này giảm 90% sát thương (còn ' + L.bagCount(state, 'cuu_thien_ti_loi_phu') + ' lá)', action: 'trib_phu2' });
     var best = L.tribBestResonance(state, trib.spoken);
     if (best) opts.push({ label: 'Đối hưởng thiên lôi bằng ' + best.word + ' (uy lực ' + best.power + ' / ngưỡng thiên uy ' + bolt.uy + ') — xóa đạo này nếu vượt ngưỡng; trời sẽ nghe được ngươi', action: 'trib_speak' });
     return opts;
@@ -13971,9 +14353,11 @@
       tribShowBolt(); return;
     }
     if (action === 'trib_speak') { tribSpeakBolt(); return; }
-    var active = action === 'trib_dan' ? 'dan' : (action === 'trib_phu' ? 'phu' : 'none');
+    var active = action === 'trib_dan' ? 'dan' : (action === 'trib_phu' ? 'phu' : (action === 'trib_dan2' ? 'dan2' : (action === 'trib_phu2' ? 'phu2' : 'none')));
     if (active === 'dan' && !L.bagRemove(state, 'ho_the_dan', 1).ok) { toast('Không còn Hộ Thể Đan trong túi.'); tribShowBolt(); return; }
     if (active === 'phu' && !L.bagRemove(state, 'ti_loi_phu', 1).ok) { toast('Không còn Tị Lôi Phù trong túi.'); tribShowBolt(); return; }
+    if (active === 'dan2' && !L.bagRemove(state, 'kim_than_dan', 1).ok) { toast('Không còn Kim Thân Đan trong túi.'); tribShowBolt(); return; }
+    if (active === 'phu2' && !L.bagRemove(state, 'cuu_thien_ti_loi_phu', 1).ok) { toast('Không còn Cửu Thiên Tị Lôi Phù trong túi.'); tribShowBolt(); return; }
     tribStrikeBolt(active);
   }
   /* Đối hưởng thiên lôi (thiết kế mục 3.5): dùng đòn cộng hưởng mạnh
@@ -14469,6 +14853,14 @@
     // hiện khi thân đang mang thương sau độ kiếp hỏng.
     var injEl = $('hud-injury');
     if (injEl) injEl.classList.toggle('hidden', !state.flags.trongThuong);
+    // Sổ thọ nguyên (CUNG V): chỉ hiện sau khi sổ mở ở chương 35 —
+    // con số chỉ người chơi và Giang Phàm biết.
+    var thoEl = $('hud-tho');
+    if (thoEl) {
+      var tnV = L.ensureThoNguyen(state);
+      thoEl.classList.toggle('hidden', !tnV.open);
+      if (tnV.open) thoEl.textContent = 'Sổ thọ nguyên: đã trả ' + tnV.paid + ' năm';
+    }
     renderAnnounceLog();
     var cap = L.REALMS[state.realm].tuviNext;
     $('hud-tuvi').textContent = cap ? Math.floor(state.tuvi) + ' / ' + cap : Math.floor(state.tuvi) + '';
@@ -15072,6 +15464,7 @@
       if (daiFight && state && state.map === 'dai_dau_kiem') { px = Math.max(HHT_ARENA.x0 * TILE, Math.min(HHT_ARENA.x1 * TILE, px)); py = Math.max(HHT_ARENA.y0 * TILE, Math.min(HHT_ARENA.y1 * TILE, py)); } // ARCIV: kẹp bệ đấu như HHT
       if (arcFig) updateArcFig(dtW); // ARCIV ch.14/15: trận kịch bản dã ngoại
       if (pracFight) updatePracFight(dtW); // bot luyện tập: trận tỉ thí sân luyện công
+      arcvTick(dtW); // CUNG V: bộ điều khiển chiêu boss, thuyền hộ tống, nhịp giữ Định Âm
       arcBossTick(dtW); // ARCIV ch.16 + boss Hộ Trận: đồng hồ chiêu boss trong trận chạm trán
       checkPortalsAndZones();
     } else {
@@ -15176,6 +15569,7 @@
     if (daiFight || arcFig) return; // ARCIV: đang trong trận kịch bản — cổng/vùng khóa cho tới khi trận khép
     arcIvMaybeInjectWitness(); // ARCIV q14: tiêm nhân chứng giữ đất theo pha (hàm tự kiểm điều kiện + chống trùng)
     arcIvMaybeInjectWave2(); // ARCIV đợt 2 (ch.17–20): tiêm NPC theo quest/cờ + gỡ khi điều kiện hết
+    arcvMaybeInject(); // CUNG V: Hứa U Nhàn ở thung lũng trong mạch chương 32
     arcIvMaybeInjectWave3(); // ARCIV đợt 3 (ch.21–24): tiêm NPC theo quest + gỡ khi điều kiện hết
     var pt = playerTile();
     var def = L.activeMap();
@@ -15320,6 +15714,53 @@
       say(ST.SCENE_CH16_KIEMTRUNG, function () { state.flags.ch16KiemTrungSeen = true; refreshHUD(); saveNow(); });
       return;
     }
+    /* ---------- CUNG V: trigger vùng chương 25–36 ---------- */
+    if (state.map !== 'bc_tapsau') state.flags.arcvRematchArmed = true;
+    if (state.map === 'song_bac_thuong' && state.quest === 'q26_bay_tai_nan' && !state.flags.arcvAmbush26Started && Math.abs(pt.x - 40) <= 1 && Math.abs(pt.y - 31) <= 1) {
+      state.flags.arcvAmbush26Started = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH26_BAY_PRE, function () { arcvStartCh26Ambush(); });
+      return;
+    }
+    if (state.map === 'song_bac_thuong' && state.quest === 'q27_song_gio' && !state.flags.arcvPirates27Started && Math.abs(pt.x - 76) <= 1 && Math.abs(pt.y - 51) <= 1) {
+      state.flags.arcvPirates27Started = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH27_SONG_GIO_PRE, function () { arcvStartCh27Pirates(); });
+      return;
+    }
+    if (state.map === 'song_bac_thuong' && state.quest === 'q29_duoi_theo' && Math.abs(pt.x - 21) <= 1 && Math.abs(pt.y - 43) <= 1) {
+      say(ST.SCENE_CH29_DUOI_THEO, function () {
+        arcvClaimToast('q29_done');
+        state.quest = 'q30_tang_sau'; refreshHUD(); saveNow();
+        toast('Miệng hang dưới bến đò chính là cổng Kho Chìm (bc_bendo) — bí cảnh hai tầng đã mở (cổng ở (20,42), vào theo lượt chung của hệ bí cảnh). Về tháp gặp chấp sự trước đã.', 5400);
+      });
+      return;
+    }
+    if (state.map === 'song_bac_thuong' && state.quest === 'q31_phuc_kich' && !state.flags.arcvAmbush31Started && Math.abs(pt.x - 44) <= 1 && Math.abs(pt.y - 57) <= 1) {
+      state.flags.arcvAmbush31Started = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH31_PHUC_KICH_PRE, function () { arcvStartCh31Ambush(); });
+      return;
+    }
+    if (state.map === 'song_bac_thuong' && state.quest === 'q35_cuu_doan' && !state.flags.arcvRescue35Started && Math.abs(pt.x - 82) <= 1 && Math.abs(pt.y - 18) <= 1) {
+      state.flags.arcvRescue35Started = true; refreshHUD(); saveNow();
+      say(ST.SCENE_CH35_CUU_PRE, function () { arcvStartCh35Rescue(); });
+      return;
+    }
+    if (state.map === 'song_bac_thuong' && state.quest === 'q36_do_kiep' && !state.flags.arcvCh36GuardDone && !arcFig && Math.abs(pt.x - 89) <= 2 && Math.abs(pt.y - 35) <= 2) {
+      arcvStartCh36Guard();
+      return;
+    }
+    if (state.map === 'bc_tapsau' && state.quest === 'q30_tan_anh' && !state.flags.arcvCh30BossDone && !arcFig && Math.abs(pt.x - 19) <= 2 && Math.abs(pt.y - 10) <= 2) {
+      arcvStartCh30Boss(false);
+      return;
+    }
+    if (state.map === 'bc_tapsau' && L.questReached(state, 'q30_done') && state.flags.arcvRematchArmed && !arcFig && Math.abs(pt.x - 19) <= 2 && Math.abs(pt.y - 10) <= 2) {
+      // Hồ sơ lặp Kim Đan hậu của Tàn Tích: tái đấu Niêm Ấn Thạch
+      // Hồn, một lần mỗi lượt vào bí cảnh (cờ vũ trang lại khi rời
+      // bản đồ). Thưởng theo hồ sơ đợt của bí cảnh.
+      state.flags.arcvRematchArmed = false;
+      arcvStartCh30Boss(true);
+      return;
+    }
+    /* ---------- hết trigger CUNG V ---------- */
     /* ---------- ARCIV đợt 2: trigger vùng chương 19–20 (B.5) ---------- */
     if (state.map === 'co_chau' && state.quest === 'q19_phan_ung' && !state.flags.ch19AmbushStarted && pt.x >= 49 && pt.x <= 53 && pt.y >= 62 && pt.y <= 66) {
       // Phục kích phố nam: cờ đặt TRƯỚC khi cảnh mở (cảnh/trận không bị
@@ -16031,7 +16472,7 @@
       [{ species: 'oan_binh', x: 16, y: 33 }, { species: 'oan_binh', x: 38, y: 33 }],
       [{ species: 'oan_binh', x: 16, y: 14 }, { species: 'oan_binh', x: 38, y: 14 }] ] }
   };
-  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 }, bc_kiemtrung_sau: { x: 22, y: 5 }, bc_tran_tam: { x: 22, y: 5 }, bc_tran_tam_sau: { x: 19, y: 6 } }; // ARCIV A.2 + Trận Tâm
+  var BC_BOSS_POS = { bc_thuyliem: { x: 21, y: 5 }, bc_tapha: { x: 19, y: 5 }, bc_tapsau: { x: 19, y: 5 }, bc_kiemtrung: { x: 23, y: 4 }, bc_hoiphong_mo: { x: 25, y: 5 }, bc_kiemtrung_sau: { x: 22, y: 5 }, bc_tran_tam: { x: 22, y: 5 }, bc_tran_tam_sau: { x: 19, y: 6 }, bc_bendo: { x: 23, y: 5 }, bc_bendo_sau: { x: 9, y: 6 } }; // ARCIV A.2 + Trận Tâm + CUNG V
   // ARCIV A.2: BC_KIEMTRUNG_SAU_WAVES của logic có dạng [[loài, số]...]
   // KHÁC định dạng bcSpawnMonsters ({species,x,y}) — chuyển đổi tại đây
   // thành tọa độ thật trên lưới đi được của tầng sâu, giữ đúng số lượng
@@ -16045,6 +16486,13 @@
     [{ species: 'tan_hon_kiem_y_sau', x: 6, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 8, y: 14 }],
     [{ species: 'tan_hon_kiem_y_sau', x: 37, y: 13 }, { species: 'tan_hon_kiem_y_sau', x: 38, y: 14 }, { species: 'tan_hon_kiem_y_sau', x: 36, y: 15 }] ] }; // tọa độ waves1 trong docs/party-boss-coords.json
   BC_WAVES.bc_tran_tam_sau = { zone: 'zone_bc_tran_tam_sau', waves: [] };
+  // CUNG V: Kho Chìm hai tầng — đợt lính gác kho, boss ở đài phía bắc.
+  BC_WAVES.bc_bendo = { zone: 'zone_bc_bendo', waves: [
+    [{ species: 'linh_gac_kho', x: 14, y: 26 }, { species: 'linh_gac_kho', x: 32, y: 26 }],
+    [{ species: 'linh_gac_kho', x: 12, y: 13 }, { species: 'linh_gac_kho', x: 34, y: 13 }, { species: 'linh_gac_kho', x: 23, y: 20 }] ] };
+  BC_WAVES.bc_bendo_sau = { zone: 'zone_bc_bendo_sau', waves: [
+    [{ species: 'linh_gac_kho', x: 10, y: 16 }, { species: 'linh_gac_kho', x: 33, y: 16 }],
+    [{ species: 'linh_gac_kho', x: 8, y: 12 }, { species: 'linh_gac_kho', x: 35, y: 12 }, { species: 'linh_gac_kho', x: 15, y: 22 }] ] };
   // Thưởng LẦN ĐẦU (ngoài hồ trần, cờ firstClear chống trùng — đúng hồ sơ
   // đã duyệt; ti_loi_phu là thưởng lần đầu đã duyệt, KHÔNG phải Dẫn Lôi
   // Pháp và không bao giờ phát dan_loi_phap trong bí cảnh).
@@ -16055,7 +16503,9 @@
     bc_kiemtrung: { lt: 25, items: { yeu_dan_2: 1 }, tech: { id: 'that_tinh', pts: 120 }, story: [] },
     bc_hoiphong_mo: { lt: 25, items: { ti_loi_phu: 1, yeu_dan_2: 1 }, tech: null, story: ['thu_trong_mo', 'ngoc_boi_nua'] },
     bc_tran_tam: { lt: 30, items: { yeu_dan_3: 1 }, tech: null, story: [] },
-    bc_tran_tam_sau: { lt: 40, items: { yeu_dan_3: 1, phuc_linh_dan: 1 }, tech: null, story: [] }
+    bc_tran_tam_sau: { lt: 40, items: { yeu_dan_3: 1, phuc_linh_dan: 1 }, tech: null, story: [] },
+    bc_bendo: { lt: 30, items: { yeu_dan_3: 1 }, tech: null, story: ['khoa_dong_ben'] },
+    bc_bendo_sau: { lt: 40, items: { yeu_dan_4: 1 }, tech: null, story: [] }
   };
   var ZONE_SHORT = { zone_duong_mon_rung: 'rừng đường mòn', zone_duong_mon_phuc_kich: 'bãi phục kích', zone_tong_sau_nui: 'rừng sau núi tông', zone_hb_rung: 'rừng thung lũng', zone_hb_bac: 'bãi bắc thung lũng' };
   var SECT_JOB_LABEL = { cleanup: 'Dọn dẹp', delivery: 'Giao hàng', patrol: 'Tuần tra', escort: 'Hộ tống' };
@@ -16516,6 +16966,1128 @@
       toast('Đã vào: ' + dest.name + '. Lượt kho chung còn lại hôm nay: ' + L.bcPoolLeft(state) + '.', 4200);
     });
   }
+  /* ============================================================
+     CUNG V (chương 25–36) — "Thọ nguyên là giá" (docs/arc-v-detail/;
+     cả 9 điểm [ĐỀ XUẤT] ở mục 6 tổng quan đã được Bui duyệt ngày
+     2026-11-04 và là luật khóa). Khối này: hàm lĩnh thưởng cung V,
+     bộ điều khiển chiêu boss riêng của cung (arcvTick), các trận
+     kịch bản chương 25–36 trên khuôn arcFigStart, móc tương tác
+     NPC/vật phẩm, điểm kích hoạt theo vị trí và lựa chọn riêng.
+     Số liệu quái/boss: bảng MONSTER_DEFS ở logic.js ([ĐỀ XUẤT SỐ
+     theo thang] trong báo cáo sản xuất); tu vi sự kiện: bảng
+     ARC_V_STORY_REWARDS ở logic.js (số đã khóa trong thiết kế).
+     ============================================================ */
+  /* Dấu tóc bạc (CUNG V, từ chương 35): lọn bạc vẽ phủ lên đầu
+     nhân vật trong mọi trạng thái vẽ chính — lớp trình diễn theo
+     cờ silverHair; bản nướng vào sheet là đợt mỹ thuật riêng. */
+  function arcvDrawSilverStreak(topY) {
+    if (!state || !state.flags || !state.flags.silverHair) return;
+    var cx = px + 16;
+    var off = (dir8 === 2 || dir8 === 3 || dir8 === 4) ? -5 : 5;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(228,233,242,0.95)';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(cx + off * 0.3, topY + 6);
+    ctx.quadraticCurveTo(cx + off, topY + 12, cx + off * 0.8, topY + 21);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(188,198,214,0.55)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx + off * 0.3 + 2.5, topY + 7);
+    ctx.quadraticCurveTo(cx + off + 2.5, topY + 13, cx + off * 0.8 + 2.5, topY + 19);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function arcvClaimToast(key) {
+    var r = L.claimArcVStoryReward(state, key);
+    if (!r.ok) { if (r.reason !== 'duplicate') toast('Không lĩnh được thưởng chương: ' + r.reason); return r; }
+    var parts = [];
+    if (r.tuvi) parts.push('+' + r.tuvi + ' tu vi');
+    if (r.swordInsight) parts.push('ngộ tính kiếm +' + r.swordInsight);
+    if (parts.length) toast('Thưởng chương: ' + parts.join(' · ') + '.', 4200);
+    (r.tierUps || []).forEach(function (t) { presentTechTierUp((L.ARC_V_STORY_REWARDS[key] || {}).insightTech || 'huyen_tinh_kiem_pho', t); });
+    refreshHUD(); saveNow();
+    return r;
+  }
+  function arcvHitFig(fig, dmg) {
+    if (!fig || fig.dead) return;
+    fig.hp = Math.max(0, fig.hp - dmg);
+    fig.flashT = 0.18;
+    addDmgFloat(fig.x + 16, fig.y - 26, '-' + dmg, '255,190,120', { size: 18, targetKey: 'arcfig' });
+    if (fig.hp <= 0) { fig.dead = true; spawnParts(fig.x + 16, fig.y + 20, 12, '170,180,190', 32, false); spawnSmoke(fig.x + 16, fig.y + 12, 3); }
+  }
+  function arcvHurtPlayerPct(pct) {
+    return arcHurtPlayer(Math.max(1, Math.round((state.hpMax || 100) * pct)));
+  }
+  function arcvAliveFigs(f) { return f.figs.filter(function (g) { return !g.dead; }); }
+  function arcvWordsCast() { return state.timesSpoken || 0; }
+  /* Telegraph chung của cung: vòng báo trước tại một điểm, hết giờ thì
+     nổ theo điều kiện riêng của từng chiêu (đọc trong arcvTick). */
+  function arcvTelegraph(f, x, y, rTiles, dur, kind, data) {
+    if (!f.arcv) f.arcv = {};
+    if (!f.arcv.tele) f.arcv.tele = [];
+    f.arcv.tele.push({ x: x, y: y, r: rTiles * TILE, t: 0, dur: dur, kind: kind, data: data || {} });
+    rings.push({ x: x, y: y, r: 10, a: 0.9 });
+    spawnParts(x, y, 8, '255,170,90', 26, false);
+  }
+  /* Bộ điều khiển cung V: chạy mỗi khung hình từ vòng lặp chính.
+     - Telegraph của các chiêu boss (vỡ khi người chơi tung đúng chiêu
+       cộng hưởng trong cửa sổ báo trước — đọc qua state.timesSpoken).
+     - Thuyền hộ tống chương 27 (xe chạy theo chặng, thú cắn thuyền).
+     - Thanh lửa lan chương 29.
+     - Nhịp giữ Định Âm trong cảnh chương 30 (arcvHoldActive). */
+  function arcvTick(dt) {
+    if (!state) return;
+    // Cảnh chương 30: nét gạch tên đang tan — cửa sổ giữ nhịp.
+    if (state.flags.arcvHoldActive) {
+      state.flags.arcvHoldT = (state.flags.arcvHoldT || 0) - dt;
+      if (state.flags.arcvHoldT <= 0) {
+        state.flags.arcvHoldCount = 0; state.flags.arcvHoldT = 14;
+        toast('Nét gạch lại mờ đi — giữ Định Âm hai nhịp liền trong cửa sổ mới yên. Thử lại ngay tại cửa phòng ghi nhớ.', 4200);
+      }
+    }
+    var f = arcFig;
+    if (!f || !f.arcv) return;
+    var A = f.arcv;
+    var pcx = px + 16, pcy = py + 16;
+    // Gán vai theo tên cho các fig chủ chốt (arcFigMake không giữ
+    // trường tự do trong cấu hình fig, nên vai neo theo tên fig).
+    f.figs.forEach(function (g) {
+      if (g.name === 'Giang Tu Hà Yêu' || g.name === 'Đoạn Lưu Phỉ Thủ') A.elite = g;
+      if (g.name === 'Niêm Ấn Thạch Hồn') A.boss = g;
+      if (g.name === 'Hà Oán Cự Hồn') A.core = g;
+      if (g.name === 'Đầu Lĩnh Cánh Khói') A.smoker = g;
+      if (g.name === 'Đội Trưởng Trinh Sát') A.captain = g;
+    });
+    // --- telegraph chung ---
+    if (A.tele) {
+      for (var i = A.tele.length - 1; i >= 0; i--) {
+        var tg = A.tele[i];
+        tg.t += dt;
+        if (Math.random() < dt * 6) spawnParts(tg.x + (Math.random() - 0.5) * tg.r, tg.y + (Math.random() - 0.5) * tg.r, 1, '255,170,90', 14, false);
+        if (tg.t >= tg.dur) { A.tele.splice(i, 1); arcvTelegraphFire(f, tg); if (!arcFig) return; }
+      }
+    }
+    // --- từng trận ---
+    if (f.id === 'ch25_night') {
+      A.vortexT = (A.vortexT == null ? 6 : A.vortexT) - dt;
+      if (A.vortexT <= 0 && A.elite && !A.elite.dead) {
+        A.vortexT = 11;
+        arcvTelegraph(f, pcx, pcy, 1.7, 1.0, 'vortex', { wordsAtStart: arcvWordsCast(), need: 'pha' });
+        addFloat(A.elite.x + 16, A.elite.y - 44, 'XOÁY BẾN!', '150,220,255');
+      }
+      A.spoutT = (A.spoutT == null ? 4 : A.spoutT) - dt;
+      if (A.spoutT <= 0 && A.elite && !A.elite.dead) {
+        A.spoutT = 8;
+        arcvTelegraph(f, pcx, pcy, 1.1, 0.7, 'spout', {});
+        addFloat(A.elite.x + 16, A.elite.y - 44, 'VÒI NƯỚC!', '150,220,255');
+      }
+      if (A.elite && !A.elite.dead) {
+        var hpFrac = A.elite.hp / A.elite.hpMax;
+        [0.6, 0.3].forEach(function (th) {
+          var key = 'summoned' + Math.round(th * 100);
+          if (hpFrac <= th && !A[key] && arcvAliveFigs(f).length < 6) {
+            A[key] = true;
+            f.figs.push(arcFigMake({ tx: Math.round(A.elite.x / TILE) + 1, ty: Math.round(A.elite.y / TILE), look: 'villager_m', name: 'Giang Thú', title: 'Đàn sông theo tiếng gọi', hp: 620, atk: 20, interval: 1.3, speed: 56, monsterLook: 'giang_thu' }));
+            addFloat(A.elite.x + 16, A.elite.y - 52, 'GỌI ĐÀN!', '150,220,255');
+          }
+        });
+      }
+    }
+    if (f.id === 'ch26_ambush') {
+      // Khói độc của cánh khói: đứng trong vùng khói quanh đầu lĩnh thì
+      // Tĩnh Âm hao dần — ra khỏi vùng hoặc hạ đầu lĩnh.
+      if (A.smoker && !A.smoker.dead && Math.hypot(pcx - (A.smoker.x + 16), pcy - (A.smoker.y + 16)) <= 2.2 * TILE) {
+        state.silence = Math.max(0, state.silence - 5 * dt);
+        if (Math.random() < dt * 3) spawnParts(pcx, pcy - 10, 1, '150,160,140', 10, false);
+      }
+      A.dartT = (A.dartT == null ? 5 : A.dartT) - dt;
+      if (A.dartT <= 0) {
+        A.dartT = 6.5;
+        var anyFar = arcvAliveFigs(f).some(function (g) { return Math.hypot(g.x + 16 - pcx, g.y + 16 - pcy) > 3 * TILE; });
+        if (anyFar) { addFloat(pcx, pcy - 46, 'PHI TIÊU!', '255,190,120'); if (arcvHurtPlayerPct(0.05)) { arcFigLose(); return; } }
+      }
+    }
+    if (f.id === 'ch27_escort') arcvBoatTick(f, dt);
+    if (f.id === 'ch28_souls') {
+      var boss = A.core;
+      if (boss && !boss.dead) {
+        A.waveT = (A.waveT == null ? 5 : A.waveT) - dt;
+        if (A.waveT <= 0) { A.waveT = 9; arcvTelegraph(f, 63 * TILE + 16, 34 * TILE + 16, 3.1, 1.0, 'soul_wave', { wordsAtStart: arcvWordsCast(), need: 'dinh' }); addFloat(boss.x + 16, boss.y - 46, 'SÓNG LỆCH TẦN!', '190,170,255'); }
+        A.coldT = (A.coldT == null ? 7 : A.coldT) - dt;
+        if (A.coldT <= 0 && f.escorts.length) {
+          A.coldT = 11;
+          var esc = f.escorts[Math.floor(Math.random() * f.escorts.length)];
+          arcvTelegraph(f, esc.x + 16, esc.y + 16, 1.6, 1.0, 'cold_zone', { esc: esc, wordsAtStart: arcvWordsCast(), need: 'dinh' });
+          addFloat(boss.x + 16, boss.y - 54, 'VÙNG HỒN LẠNH!', '170,220,255');
+        }
+      }
+    }
+    if (f.id === 'ch29_fire') {
+      var cartsAlive = f.carts.filter(function (c) { return c.hp > 0; }).length;
+      var fansAlive = arcvAliveFigs(f).filter(function (g) { return g.name === 'Tay Quạt Lửa'; }).length;
+      A.fire = (A.fire || 0) + (cartsAlive * 0.8 + fansAlive * 0.6 + 0.25) * dt;
+      A.spreadT = (A.spreadT == null ? 12 : A.spreadT) - dt;
+      if (A.spreadT <= 0) {
+        A.spreadT = 12;
+        var deadCart = f.carts.filter(function (c) { return c.hp <= 0; })[0];
+        var leaderAlive = arcvAliveFigs(f).some(function (g) { return g.name === 'Kẻ Đốt Giấy'; });
+        if (deadCart && leaderAlive) { deadCart.hp = 120; deadCart.state = 'intact'; addFloat(deadCart.x, deadCart.y - 40, 'LỬA LẠI BÉN!', '255,150,80'); }
+      }
+      if (A.fire >= 100) {
+        toast('Kệ chính đã cháy trụi — trận phải đánh lại từ đầu. Dập các điểm cháy trước, để ý tay quạt lửa.', 4600);
+        arcFigLose(); return;
+      }
+      if (Math.random() < dt * 2) {
+        var fc = f.carts[Math.floor(Math.random() * f.carts.length)];
+        if (fc && fc.hp > 0) spawnParts(fc.x, fc.y - 8, 2, '255,140,60', 20, false);
+      }
+    }
+    if (f.id === 'ch30_boss') {
+      var b30 = A.boss;
+      if (b30 && !b30.dead) {
+        A.chanT = (A.chanT == null ? 6 : A.chanT) - dt;
+        if (A.chanT <= 0) { A.chanT = 12; arcvTelegraph(f, b30.x + 16, b30.y + 16, 2.6, 1.1, 'stone_chan', { wordsAtStart: arcvWordsCast(), need: 'chan', boss: b30 }); addFloat(b30.x + 16, b30.y - 48, 'THẠCH HỒN CHẤN!', '200,208,220'); }
+        if (!A.sealed && b30.hp <= b30.hpMax * 0.25) {
+          A.sealed = true; b30.holdT = 6;
+          addFloat(b30.x + 16, b30.y - 56, 'BOSS TỰ NIÊM CỬA — CỬA SỔ PHÁ!', '255,224,150');
+          spawnPillar(b30.x + 16, b30.y + 14, { dur: 1.2, h: 120 });
+        }
+      }
+    }
+    if (f.id === 'ch31_ambush') {
+      var elite = A.elite, wit = f.escorts[0];
+      if (elite && !elite.dead && wit && !wit.injured) {
+        A.hookT = (A.hookT == null ? 5 : A.hookT) - dt;
+        if (A.hookT <= 0) { A.hookT = 9; arcvTelegraph(f, wit.x + 16, wit.y + 16, 1.3, 0.8, 'ring_blade', { esc: wit }); addFloat(elite.x + 16, elite.y - 46, 'ĐAO VÒNG!', '255,190,120'); }
+      }
+    }
+    if (f.id === 'ch32_guard') arcvGuardTick(f, dt);
+    if (f.id === 'ch34_scout') {
+      var cap = A.captain;
+      if (cap && !cap.dead) {
+        A.slideT = (A.slideT == null ? 5 : A.slideT) - dt;
+        if (A.slideT <= 0) { A.slideT = 11; arcvTelegraph(f, pcx, pcy, 2.0, 1.2, 'slide_small', {}); addFloat(cap.x + 16, cap.y - 46, 'PHÁ ĐẤT!', '220,180,120'); }
+      }
+    }
+    if (f.id === 'ch35_rescue') arcvRescueTick(f, dt);
+  }
+  function arcvTelegraphFire(f, tg) {
+    var pcx = px + 16, pcy = py + 16;
+    var inZone = Math.hypot(pcx - tg.x, pcy - tg.y) <= tg.r;
+    var A = f.arcv;
+    if (tg.kind === 'vortex') {
+      // Xoáy Bến: Phá Âm tung trong lúc xoáy đang tụ thì xoáy vỡ;
+      // đứng trong vùng khi xoáy khép = chịu đòn.
+      if (arcvWordsCast() > tg.data.wordsAtStart && f.lastWordSkill === 'pha') { addFloat(tg.x, tg.y - 30, 'XOÁY VỠ!', '170,220,255'); spawnParts(tg.x, tg.y, 14, '150,220,255', 40, false); return; }
+      spawnPillar(tg.x, tg.y + 10, { dur: 0.8, h: 120, top: 'cyan' });
+      if (inZone && arcvHurtPlayerPct(0.12)) arcFigLose();
+      return;
+    }
+    if (tg.kind === 'spout') {
+      spawnPillar(tg.x, tg.y + 10, { dur: 0.7, h: 130, top: 'cyan' });
+      if (inZone && arcvHurtPlayerPct(0.09)) arcFigLose();
+      return;
+    }
+    if (tg.kind === 'soul_wave') {
+      spawnPillar(tg.x, tg.y + 10, { dur: 0.9, h: 110, top: 'purple' });
+      if (arcvWordsCast() > tg.data.wordsAtStart && f.lastWordSkill === 'dinh') { addFloat(tg.x, tg.y - 34, 'NHỊP ĐÃ GIỮ!', '170,220,255'); return; }
+      if (inZone && arcvHurtPlayerPct(0.10)) { arcFigLose(); return; }
+      (f.escorts || []).forEach(function (e) { if (Math.hypot(e.x + 16 - tg.x, e.y + 16 - tg.y) <= tg.r) { e.hp = Math.max(1, e.hp - 60); e.flashT = 0.2; } });
+      return;
+    }
+    if (tg.kind === 'cold_zone') {
+      if (arcvWordsCast() > tg.data.wordsAtStart && f.lastWordSkill === 'dinh') { addFloat(tg.x, tg.y - 30, 'HỒN ẤM LẠI!', '170,220,255'); return; }
+      var esc = tg.data.esc;
+      if (esc && !esc.injured) { esc.hp = Math.max(1, esc.hp - 90); esc.flashT = 0.25; addFloat(esc.x + 16, esc.y - 30, 'HỒN LẠNH BÁM!', '170,220,255'); }
+      return;
+    }
+    if (tg.kind === 'stone_chan') {
+      if (arcvWordsCast() > tg.data.wordsAtStart && f.lastWordSkill === 'chan') { addFloat(tg.x, tg.y - 34, 'CHẤN VỠ ẤN!', '170,220,255'); spawnParts(tg.x, tg.y, 12, '200,208,220', 36, false); return; }
+      spawnPillar(tg.x, tg.y + 10, { dur: 0.8, h: 110 });
+      if (inZone && arcvHurtPlayerPct(0.12)) arcFigLose();
+      return;
+    }
+    if (tg.kind === 'ring_blade') {
+      var w = tg.data.esc;
+      if (!w || w.injured) return;
+      // Người chơi đứng sát nhân chứng = chắn đao bằng thân mình.
+      if (Math.hypot(pcx - (w.x + 16), pcy - (w.y + 16)) <= 1.3 * TILE) {
+        addFloat(w.x + 16, w.y - 40, 'CHE CHO NHÂN CHỨNG!', '255,224,150');
+        if (arcvHurtPlayerPct(0.06)) arcFigLose();
+        return;
+      }
+      w.hp = Math.max(1, w.hp - 130); w.flashT = 0.25; w.injured = w.hp < w.hpMax;
+      addFloat(w.x + 16, w.y - 40, 'NHÂN CHỨNG TRÚNG ĐAO!', '255,120,120');
+      return;
+    }
+    if (tg.kind === 'slide_small') {
+      spawnParts(tg.x, tg.y, 16, '190,150,100', 44, false); sfxHitBlade();
+      if (inZone) {
+        if (arcvHurtPlayerPct(0.10)) { arcFigLose(); return; }
+        // Hất văng 2 ô về phía xa tâm sạt (nếu ô đích đi được).
+        var dx = pcx - tg.x, dy = pcy - tg.y, dl = Math.hypot(dx, dy) || 1;
+        var nx = px + Math.round(dx / dl) * 2 * TILE, ny = py + Math.round(dy / dl) * 2 * TILE;
+        if (nx >= 0 && ny >= 0 && nx < L.activeMap().w * TILE && ny < L.activeMap().h * TILE) { px = nx; py = ny; }
+      }
+      return;
+    }
+    if (tg.kind === 'slide_fan') {
+      spawnParts(tg.x, tg.y, 22, '190,150,100', 50, false); sfxHitBlade();
+      if (arcvWordsCast() > tg.data.wordsAtStart && f.lastWordSkill === 'dinh') { addFloat(tg.x, tg.y - 36, 'SƯỜN ĐÃ GIỮ!', '170,220,255'); return; }
+      (tg.data.groups || []).forEach(function (e) {
+        if (Math.hypot(e.x + 16 - tg.x, e.y + 16 - tg.y) <= tg.r) { e.hp = Math.max(1, e.hp - 260); e.flashT = 0.3; addFloat(e.x + 16, e.y - 34, 'ĐOÀN NGƯỜI BỊ SẠT!', '255,120,120'); }
+      });
+      if (inZone && arcvHurtPlayerPct(0.10)) arcFigLose();
+      return;
+    }
+  }
+
+  /* ---------- Trận chương 25: bầy sông đêm + Giang Tu Hà Yêu ---------- */
+  function arcvStartCh25Night() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    var words0 = arcvWordsCast();
+    arcFigStart({ id: 'ch25_night',
+      waves: [
+        [
+          { tx: 24, ty: 44, look: 'villager_m', name: 'Giang Thú', title: 'Bầy sông đêm', hp: 650, atk: 20, interval: 1.3, speed: 56, monsterLook: 'giang_thu' },
+          { tx: 17, ty: 44, look: 'villager_m', name: 'Giang Thú', title: 'Bầy sông đêm', hp: 650, atk: 20, interval: 1.3, speed: 56, monsterLook: 'giang_thu' },
+          { tx: 20, ty: 42, look: 'villager_m', name: 'Giang Thú', title: 'Bầy sông đêm', hp: 650, atk: 20, interval: 1.4, speed: 54, monsterLook: 'giang_thu' }
+        ],
+        [
+          { tx: 25, ty: 51, look: 'villager_m', name: 'Giang Thú', title: 'Bầy sông đêm', hp: 650, atk: 20, interval: 1.3, speed: 56, monsterLook: 'giang_thu' },
+          { tx: 16, ty: 51, look: 'villager_m', name: 'Giang Thú', title: 'Bầy sông đêm', hp: 650, atk: 20, interval: 1.3, speed: 58, monsterLook: 'giang_thu' },
+          { tx: 20, ty: 44, look: 'villager_m', name: 'Giang Tu Hà Yêu', title: 'Tinh anh giữ xoáy bến', hp: 1750, atk: 23, interval: 1.3, speed: 52, monsterLook: 'giang_tu_ha_yeu', champ: true }
+        ]
+      ],
+      onWin: function () {
+        say(ST.SCENE_CH25_SONG_DEM_END, function () {
+          arcvClaimToast('q25_done');
+          state.quest = 'q26_truy_vet'; refreshHUD(); saveNow();
+          toast('Đàn sông đã tan. Sông Bạc Thượng mở săn từ nay: bãi sông, vùng vực sâu phía đông và vùng săn trong thung lũng cụt.', 4600);
+        });
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = { words0: words0 };
+    toast('Bầy sông đêm tràn lên bến! Giang Tu Hà Yêu giữ xoáy nước — khi xoáy đang tụ, tung Phá Âm để phá nhịp tụ của nó.', 5200);
+  }
+  /* ---------- Trận chương 26: phục kích tai nạn dàn dựng ---------- */
+  function arcvStartCh26Ambush() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    var words0 = arcvWordsCast();
+    arcFigStart({ id: 'ch26_ambush',
+      waves: [[
+        { tx: 34, ty: 28, look: 'villager_m', name: 'Sát Thủ A Cánh', title: 'Cánh phi tiêu', hp: 700, atk: 20, interval: 1.4, speed: 58 },
+        { tx: 46, ty: 28, look: 'villager_f', name: 'Sát Thủ A Cánh', title: 'Cánh phi tiêu', hp: 700, atk: 20, interval: 1.4, speed: 58 },
+        { tx: 34, ty: 34, look: 'villager_m', name: 'Sát Thủ Ép Cánh', title: 'Cánh ép', hp: 720, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 46, ty: 34, look: 'villager_f', name: 'Sát Thủ Ép Cánh', title: 'Cánh ép', hp: 720, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 41, ty: 27, look: 'player_nam', name: 'Đầu Lĩnh Cánh Khói', title: 'Vùng khói độc', hp: 1250, atk: 22, interval: 1.3, speed: 54, champ: true }
+      ]],
+      onWin: function () {
+        var pureSword = (arcvWordsCast() === words0);
+        if (pureSword) state.flags.arcvCh26SwordPure = true;
+        say(ST.SCENE_CH26_BAY_END, function () {
+          if (pureSword) toast('Trận này ngươi thắng bằng kiếm thuần, không một tiếng cộng hưởng — chi tiết này sẽ được ghi nhận ở chương sau của hành trình.', 4600);
+          state.quest = 'q26_ke_doc_nguoc'; refreshHUD(); saveNow();
+          toast('Đường đã thông. Về tháp, gặp chấp sự — kẻ đọc ngược hành trình phải được báo lên tận nơi ghi sổ.', 4600);
+        });
+      },
+      onLose: function () { state.flags.arcvAmbush26Started = false; refreshHUD(); saveNow(); } });
+    arcFig.arcv = { words0: words0 };
+    toast('Phục kích ba cánh dồn về một điểm! Vùng khói quanh đầu lĩnh hút Tĩnh Âm — tránh đứng lâu trong khói.', 5200);
+  }
+  /* ---------- Chương 27a: cướp sông ở bến phụ ---------- */
+  function arcvStartCh27Pirates() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch27_pirates',
+      carts: [{ tx: 58, ty: 47, hp: 500, targetable: false }],
+      waves: [
+        [
+          { tx: 56, ty: 49, look: 'villager_m', name: 'Sông Tặc', title: 'Cướp bến phụ', hp: 620, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 60, ty: 49, look: 'villager_f', name: 'Sông Tặc', title: 'Cướp bến phụ', hp: 620, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 58, ty: 44, look: 'villager_m', name: 'Trường Nha Giang Thú', title: 'Thú bị nhốt, nghe cồi là hung', hp: 900, atk: 22, interval: 1.3, speed: 58, monsterLook: 'truong_nha_giang_thu' }
+        ],
+        [
+          { tx: 56, ty: 46, look: 'villager_m', name: 'Sông Tặc Thổi Cồi', title: 'Cồi hiệu gọi thú', hp: 680, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 60, ty: 46, look: 'villager_f', name: 'Sông Tặc', title: 'Cướp bến phụ', hp: 620, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 57, ty: 43, look: 'villager_m', name: 'Trường Nha Giang Thú', title: 'Thú bị nhốt, nghe cồi là hung', hp: 900, atk: 22, interval: 1.3, speed: 58, monsterLook: 'truong_nha_giang_thu' }
+        ]
+      ],
+      onWin: function () {
+        say(ST.SCENE_CH27_SONG_GIO_END, function () {
+          state.quest = 'q27_ho_tong_ben'; refreshHUD(); saveNow();
+          toast('Bến phụ đã yên. Về bến chính gặp chủ đò — chuyến hàng ngược thác đang chờ người giữ thuyền.', 4600);
+        });
+      },
+      onLose: function () { state.flags.arcvPirates27Started = false; refreshHUD(); saveNow(); } });
+    toast('Cướp sông chiếm bến phụ! Lồng thú ở giữa bãi — đừng để chúng mở lồng thả thêm thú.', 4800);
+  }
+  /* ---------- Chương 27b: hộ tống thuyền hàng qua thác ----------
+     Thuyền là một "xe" (cart) do arcvBoatTick kéo đi về phía đông
+     theo các chặng neo; mỗi chặng dừng lại chờ dẹp thú cản. Hàng còn
+     trên 50% khi tới bến đích = thắng trọn; thuyền chìm = thua. */
+  function arcvStartCh27Escort(leg, repeat) {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    // Ba chặng neo theo đúng khuôn chuỗi trận chương 15: mỗi chặng
+    // một trận tại chỗ quanh thuyền; giữa các chặng là cảnh dẫn
+    // ngắn. Máu thuyền = phần hàng còn lại, mang qua các chặng
+    // bằng state.flags.arcvCargoHp (tổng 700).
+    var legs = [
+      { px: 21, py: 52, boatTx: 20, boatTy: 48, beasts: [
+        { tx: 26, ty: 44, hp: 1000 }, { tx: 27, ty: 51, hp: 1000 }] },
+      { px: 57, py: 48, boatTx: 58, boatTy: 47, beasts: [
+        { tx: 60, ty: 46, hp: 1100 }, { tx: 60, ty: 49, hp: 1100 }, { tx: 55, ty: 44, hp: 1100 }] },
+      { px: 77, py: 51, boatTx: 76, boatTy: 50, beasts: [
+        { tx: 79, ty: 51, hp: 1200 }, { tx: 80, ty: 51, hp: 1200 }, { tx: 73, ty: 51, hp: 1200 }] }
+    ];
+    if (repeat) legs = [legs[1]];
+    var cfg = legs[(leg || 1) - 1] || legs[0];
+    px = cfg.px * TILE; py = cfg.py * TILE;
+    var cargoHp = repeat ? 700 : (state.flags.arcvCargoHp == null ? 700 : state.flags.arcvCargoHp);
+    arcFigStart({ id: 'ch27_escort',
+      carts: [{ tx: cfg.boatTx, ty: cfg.boatTy, hp: Math.max(60, cargoHp), targetable: false }],
+      waves: [cfg.beasts.map(function (b) {
+        return { tx: b.tx, ty: b.ty, look: 'villager_m', name: 'Trường Nha Giang Thú', title: 'Thú thác cản thuyền', hp: b.hp, atk: 22, interval: 1.3, speed: 57, monsterLook: 'truong_nha_giang_thu' };
+      })],
+      onWin: function (fDone) {
+        var cart = fDone.carts[0];
+        var frac = cart ? Math.max(0, cart.hp / 700) : 0;
+        if (repeat) {
+          var rw = L.grantReward(state, 'profile:bc:bc_bendo:wave', {});
+          toast('Chuyến hộ tống lặp đã qua thác (hàng còn ' + Math.round(frac * 100) + '%). ' + ((rw && rw.messages && rw.messages[0]) || ''), 4600);
+          refreshHUD(); saveNow();
+          return;
+        }
+        state.flags.arcvCargoHp = cart ? cart.hp : 0;
+        if ((leg || 1) === 1) {
+          say([{ who: 'narrate', text: 'Thuyền qua khỏi khúc thác thứ nhất. Chủ đò chống sào cho thuyền lách vào bãi cát giữa sông — phía trước là khúc thác thứ hai, nước xiết hơn.' }], function () { arcvStartCh27Escort(2, false); });
+        } else if ((leg || 1) === 2) {
+          say(ST.SCENE_CH27_NHA_XEN, function () { arcvStartCh27Escort(3, false); });
+        } else {
+          state.flags.arcvCh27CargoFrac = Math.round(frac * 100);
+          state.flags.arcvCargoHp = null;
+          state.quest = 'q27_tin_vui'; refreshHUD(); saveNow();
+          toast('Thuyền đã qua hết thác (hàng còn ' + Math.round(frac * 100) + '%). Về bến chính — người lái đò đang chờ để nói tin vui.', 4800);
+        }
+      },
+      onLose: function () { state.flags.arcvCargoHp = null; refreshHUD(); saveNow(); } });
+    arcFig.arcv = { biteT: 3 };
+    toast('Hộ tống thuyền hàng — chặng ' + (leg || 1) + ' trong 3 chặng thác. Thú thác sẽ cắn thuyền: giữ chúng xa mạn thuyền.', 5000);
+  }
+  /* Thú gần thuyền thì cắn thuyền theo nhịp (dùng cho hộ tống ch.27). */
+  function arcvBoatTick(f, dt) {
+    var A = f.arcv, boat = f.carts[0];
+    if (!boat) return;
+    A.biteT -= dt;
+    if (A.biteT <= 0) {
+      A.biteT = 2.5;
+      arcvAliveFigs(f).forEach(function (g) {
+        if (Math.hypot(g.x + 16 - boat.x, g.y + 16 - boat.y) <= 2.6 * TILE) {
+          boat.hp = Math.max(0, boat.hp - Math.round(g.atk * 1.6));
+          boat.flashT = 0.2;
+          addFloat(boat.x, boat.y - 40, 'THÚ CẮN THUYỀN!', '255,150,80');
+          spawnParts(boat.x, boat.y, 5, '150,120,80', 24, false);
+        }
+      });
+      if (boat.hp <= 0) { toast('Thuyền hàng đã chìm giữa thác — chuyến hộ tống phải làm lại từ chặng đầu.', 4600); arcFigLose(); return; }
+    }
+  }
+  /* ---------- Trận chương 28: luyện hồn ở sân làng ---------- */
+  function arcvStartCh28Souls(repeat) {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    var pts = playerTile();
+    arcFigStart({ id: 'ch28_souls', soulChaos: null,
+      escorts: [
+        { tx: 60, ty: 33, look: 'villager_old', name: 'Người Bệnh Làng', hp: 800, anchorTx: 60, anchorTy: 33, safeTx: 60, safeTy: 33 },
+        { tx: 63, ty: 35, look: 'villager_f', name: 'Người Bệnh Làng', hp: 800, anchorTx: 63, anchorTy: 35, safeTx: 63, safeTy: 35 },
+        { tx: 64, ty: 35, look: 'villager_m', name: 'Người Bệnh Làng', hp: 800, anchorTx: 64, anchorTy: 35, safeTx: 64, safeTy: 35 }
+      ],
+      waves: [
+        [
+          { tx: 58, ty: 30, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 560, atk: 19, interval: 1.4, speed: 30, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 68, ty: 30, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 560, atk: 19, interval: 1.4, speed: 30, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 63, ty: 38, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 560, atk: 19, interval: 1.4, speed: 30, monsterLook: 'hon_nuoc', soulChaos: true }
+        ],
+        [
+          { tx: 57, ty: 34, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 19, interval: 1.4, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 69, ty: 34, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 19, interval: 1.4, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 63, ty: 29, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 20, interval: 1.3, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 63, ty: 39, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 20, interval: 1.3, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true }
+        ],
+        [
+          { tx: 63, ty: 31, look: 'villager_m', name: 'Hà Oán Cự Hồn', title: 'Lõi oán của khúc sông', hp: 3000, atk: 24, interval: 1.3, speed: 26, monsterLook: 'ha_oan_cu_hon', champ: true },
+          { tx: 59, ty: 36, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 20, interval: 1.4, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true },
+          { tx: 63, ty: 36, look: 'villager_m', name: 'Hồn Nước', title: 'Hồn lệch tần', hp: 600, atk: 20, interval: 1.4, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true }
+        ]
+      ],
+      onWin: function (fDone) {
+        var total = 0, left = 0;
+        (fDone.escorts || []).forEach(function (e) { total += e.hpMax; left += Math.max(0, e.hp); });
+        var pct = total ? Math.round(left / total * 100) : 100;
+        if (repeat) {
+          var rw = L.grantReward(state, 'profile:bc:bc_bendo:wave', {});
+          toast('Buổi luyện hồn lặp đã yên (người bệnh còn ' + pct + '% sức). ' + ((rw && rw.messages && rw.messages[0]) || ''), 4600);
+          refreshHUD(); saveNow();
+          return;
+        }
+        state.flags.arcvCh28VillagePct = pct;
+        state.quest = 'q28_an_danh'; refreshHUD(); saveNow();
+        toast('Sân làng đã yên (người bệnh giữ được ' + pct + '% sức). Ra đầu làng gặp trưởng thôn — bàn thờ vô danh đang chờ dựng.', 5000);
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = {};
+    toast('Đợt hồn lớn nhất từ trước tới nay tràn vào sân làng! Giữ nhịp bằng Định Âm khi Sóng Lệch Tần tụ — người bệnh nằm giữa sân, đừng để Vùng Hồn Lạnh bám vào họ.', 5600);
+  }
+
+  /* ---------- Trận chương 29: cháy trạm lưu trữ ----------
+     Thanh lửa (arcv.fire) tăng theo số điểm cháy đang hoạt động và
+     số tay quạt còn sống; đầy 100 trước khi đầu lĩnh gục = thua,
+     đánh lại từ đầu trận. Điểm cháy là các "xe" có máu: đánh vào
+     chúng là dập lửa. */
+  function arcvStartCh29Fire() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch29_fire',
+      carts: [
+        { tx: 16, ty: 20, hp: 120 }, { tx: 24, ty: 20, hp: 120 }, { tx: 16, ty: 24, hp: 120 }
+      ],
+      waves: [[
+        { tx: 18, ty: 27, look: 'villager_m', name: 'Kẻ Cứng Đầu', title: 'Đội đốt giấy', hp: 700, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 22, ty: 27, look: 'villager_f', name: 'Kẻ Cứng Đầu', title: 'Đội đốt giấy', hp: 700, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 17, ty: 28, look: 'villager_m', name: 'Tay Quạt Lửa', title: 'Quạt cho lửa lan', hp: 600, atk: 19, interval: 1.5, speed: 54 },
+        { tx: 23, ty: 28, look: 'villager_f', name: 'Tay Quạt Lửa', title: 'Quạt cho lửa lan', hp: 600, atk: 19, interval: 1.5, speed: 54 },
+        { tx: 20, ty: 29, look: 'luc_tranh', name: 'Kẻ Đốt Giấy', title: 'Đầu lĩnh đội đốt giấy', hp: 1700, atk: 22, interval: 1.3, speed: 56, champ: true }
+      ]],
+      onWin: function () {
+        state.quest = 'q29_trang_danh_sach'; refreshHUD(); saveNow();
+        toast('Lửa đã tắt, kệ chính còn nguyên. Gặp trạm trưởng — trang danh sách hành khách vừa cứu được đang ở chỗ ông.', 4800);
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = { fire: 12 };
+    toast('ĐỘI ĐỐT GIẤY ĐANG PHÓNG HỎA! Thanh lửa lan đầy 100 là kệ chính cháy trụi: dập các điểm cháy (đánh vào chúng), hạ tay quạt lửa, và kết liễu đầu lĩnh Kẻ Đốt Giấy.', 5800);
+  }
+  /* ---------- Trận chương 30: Niêm Ấn Thạch Hồn ở cửa phòng ghi nhớ ---------- */
+  function arcvStartCh30Boss(repeat) {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch30_boss',
+      waves: [[
+        { tx: 17, ty: 8, look: 'villager_m', name: 'Lính Gác Kho', title: 'Thạch tượng dải Kim Đan hậu', hp: 720, atk: 20, interval: 1.4, speed: 40, monsterLook: 'linh_gac_kho' },
+        { tx: 21, ty: 8, look: 'villager_m', name: 'Lính Gác Kho', title: 'Thạch tượng dải Kim Đan hậu', hp: 720, atk: 20, interval: 1.4, speed: 40, monsterLook: 'linh_gac_kho' },
+        { tx: 19, ty: 6, look: 'villager_m', name: 'Niêm Ấn Thạch Hồn', title: 'Hồn đá giữ ấn cửa phòng ghi nhớ', hp: 2800, atk: 24, interval: 1.3, speed: 34, monsterLook: 'niem_an_thach_hon', champ: true }
+      ]],
+      onWin: function () {
+        if (repeat) {
+          var rw = L.grantReward(state, 'profile:bc:bc_bendo:wave', {});
+          toast('Đã thắng trận tái đấu với Niêm Ấn Thạch Hồn. ' + ((rw && rw.messages && rw.messages[0]) || ''), 4200);
+          refreshHUD(); saveNow();
+          return;
+        }
+        state.flags.arcvCh30BossDone = true;
+        state.quest = 'q30_niem_phong'; refreshHUD(); saveNow();
+        // Mở nhịp giữ Định Âm ngay tại cửa phòng ghi nhớ.
+        say(ST.SCENE_CH30_NIEM_PHONG_A, function () {
+          state.flags.arcvHoldActive = true; state.flags.arcvHoldCount = 0; state.flags.arcvHoldT = 14;
+          toast('Nét gạch đang tan dần. Đứng yên tại cửa phòng và tung Định Âm hai nhịp liền để giữ nó lại — hụt nhịp thì giữ lại từ đầu, không mất gì.', 5200);
+          refreshHUD(); saveNow();
+        });
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = {};
+    toast('Niêm Ấn Thạch Hồn chắn cửa phòng ghi nhớ! Thạch Hồn Chấn của nó vỡ được bằng Chấn Âm khi vòng báo trước đang tụ; cuối trận nó tự niêm cửa — đó là cửa sổ để kết liễu.', 5600);
+  }
+  /* Nhịp giữ Định Âm trong cảnh chương 30 (khuôn chương 17: đòn giữ
+     trong cảnh, hụt thì giữ lại, không phạt). */
+  function arcvMemoryDinh() {
+    if (!state.flags.arcvHoldActive) return;
+    var before = state.silence;
+    var r = L.castWord(state, 'dinh');
+    if (!r.ok) { toast(r.reason); return; }
+    startResBody(false);
+    castResonanceFx('dinh', px + 16, py + 30, { silenceBefore: before, baseFreq: 300, target: null });
+    spawnPillar(px + 16, py + 30, { top: 'purple', dur: 0.85, h: 105 });
+    addFloat(px + 16, py - 20, 'ĐỊNH!', '170,220,255');
+    state.flags.arcvHoldCount = (state.flags.arcvHoldCount || 0) + 1;
+    state.flags.arcvHoldT = 14;
+    if (state.flags.arcvHoldCount >= 2) {
+      state.flags.arcvHoldActive = false;
+      say(ST.SCENE_CH30_NIEM_PHONG_B, function () {
+        state.quest = 'q30_quyet_tam'; refreshHUD(); saveNow();
+        toast('Cái tên vô sắc đã hiện rõ. Về tháp — viết quyết tâm trước mặt chấp sự, có người làm chứng.', 4800);
+      });
+    } else {
+      toast('Đã giữ được một nhịp — nét gạch đứng lại. Thêm một nhịp Định Âm nữa!', 3000);
+    }
+    refreshHUD(); saveNow();
+  }
+  /* ---------- Trận chương 31: phục kích đoàn nhân chứng ---------- */
+  function arcvStartCh31Ambush() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch31_ambush',
+      escorts: [
+        { tx: 44, ty: 57, look: 'villager_old', name: 'Nhân Chứng', hp: 500, anchorTx: 44, anchorTy: 57, safeTx: 40, safeTy: 60 }
+      ],
+      waves: [
+        [
+          { tx: 40, ty: 54, look: 'villager_m', name: 'Cướp Đường', title: 'Cướp vặt tưởng đoàn nhà giàu', hp: 620, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 48, ty: 54, look: 'villager_f', name: 'Cướp Đường', title: 'Cướp vặt tưởng đoàn nhà giàu', hp: 620, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 44, ty: 52, look: 'villager_m', name: 'Cướp Đường', title: 'Cướp vặt tưởng đoàn nhà giàu', hp: 620, atk: 20, interval: 1.4, speed: 57 }
+        ],
+        [
+          { tx: 41, ty: 60, look: 'villager_m', name: 'Cướp Đường', title: 'Cướp vặt tưởng đoàn nhà giàu', hp: 660, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 47, ty: 60, look: 'villager_f', name: 'Cướp Đường', title: 'Cướp vặt tưởng đoàn nhà giàu', hp: 660, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 44, ty: 53, look: 'luc_tranh', name: 'Đoạn Lưu Phỉ Thủ', title: 'Đao vòng cong theo nhân chứng', hp: 1700, atk: 23, interval: 1.3, speed: 58, champ: true }
+        ]
+      ],
+      onWin: function (fDone) {
+        var wit = (fDone.escorts || [])[0];
+        var clean = wit && wit.hp >= wit.hpMax && !wit.injured;
+        if (clean) state.flags.arcvCh31WitnessClean = true;
+        say(ST.SCENE_CH31_RONG, function () {
+          arcvClaimToast('q31_done');
+          if (clean) arcvClaimToast('q31_witness_clean');
+          state.quest = 'q32_ve_thanh'; refreshHUD(); saveNow();
+          toast('Nhân chứng vô sự. Từ xa, đoàn cửu phẩm đã hiện bóng — không mặt, không tiếng. Việc của ngươi bây giờ là về tông.', 4800);
+        });
+      },
+      onLose: function () { state.flags.arcvAmbush31Started = false; refreshHUD(); saveNow(); } });
+    arcFig.arcv = {};
+    toast('Cướp đường phục kích! Đoạn Lưu Phỉ Thủ phóng đao vòng cong theo NHÂN CHỨNG — đứng sát nhân chứng để chắn đao bằng thân mình. Nhân chứng ngã là phải đánh lại.', 5600);
+  }
+  /* ---------- Trận chương 32: hộ pháp ba đợt ở thung lũng ----------
+     Vòng độ kiếp của Hứa U Nhàn là một "người hộ tống" đứng yên giữa
+     vòng (điểm an toàn = chính vòng); ba đạo lôi của nàng rơi theo
+     nhịp cuối đợt 1 / giữa đợt 2 / mở đợt 3 — chỉ là cảnh, người
+     chơi không điều khiển, không thông cáo, không sổ. */
+  function arcvStartCh32Guard() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    // Nàng đang đứng giữa vòng trong trận (hình người được hộ tống) —
+    // gỡ bản NPC tĩnh ở bìa thung để không trùng hai hình.
+    npcsLive = npcsLive.filter(function (n) { return n.id !== 'u_nhan'; });
+    arcFigStart({ id: 'ch32_guard',
+      escorts: [
+        { tx: 49, ty: 42, look: 'u_nhan', name: 'Hứa U Nhàn (đang độ kiếp)', hp: 3000, anchorTx: 49, anchorTy: 42, safeTx: 49, safeTy: 42 }
+      ],
+      waves: [
+        [
+          { tx: 46, ty: 38, look: 'villager_m', name: 'Thú Hoảng', title: 'Thú rừng bị lôi uy làm hoảng', hp: 700, atk: 20, interval: 1.4, speed: 58, monsterLook: 'son_lang' },
+          { tx: 53, ty: 38, look: 'villager_m', name: 'Thú Hoảng', title: 'Thú rừng bị lôi uy làm hoảng', hp: 700, atk: 20, interval: 1.4, speed: 58, monsterLook: 'son_lang' },
+          { tx: 49, ty: 47, look: 'villager_m', name: 'Thú Hoảng', title: 'Thú rừng bị lôi uy làm hoảng', hp: 700, atk: 20, interval: 1.4, speed: 58, monsterLook: 'son_lang' }
+        ],
+        [
+          { tx: 43, ty: 42, look: 'villager_m', name: 'Sơn Lang', title: 'Đàn hai hướng', hp: 800, atk: 21, interval: 1.3, speed: 58, monsterLook: 'son_lang' },
+          { tx: 55, ty: 42, look: 'villager_m', name: 'Sơn Lang', title: 'Đàn hai hướng', hp: 800, atk: 21, interval: 1.3, speed: 58, monsterLook: 'son_lang' },
+          { tx: 49, ty: 36, look: 'villager_m', name: 'Lang Đầu Đàn', title: 'Lao theo vệt đất', hp: 1200, atk: 22, interval: 1.3, speed: 60, monsterLook: 'son_chu' }
+        ],
+        [
+          { tx: 49, ty: 34, look: 'villager_m', name: 'Phong Giác Sơn Quân', title: 'Boss thung lũng — nhắm thẳng vòng độ kiếp', hp: 3000, atk: 24, interval: 1.3, speed: 56, monsterLook: 'phong_giac_son_quan', champ: true },
+          { tx: 47, ty: 38, look: 'villager_m', name: 'Sơn Lang', title: 'Đàn theo tiếng gầm', hp: 800, atk: 21, interval: 1.4, speed: 58, monsterLook: 'son_lang' },
+          { tx: 53, ty: 38, look: 'villager_m', name: 'Sơn Lang', title: 'Đàn theo tiếng gầm', hp: 800, atk: 21, interval: 1.4, speed: 58, monsterLook: 'son_lang' }
+        ]
+      ],
+      onWin: function () {
+        // Nàng đã qua ba đạo lôi trong lúc người chơi giữ vòng.
+        spawnPillar(49 * TILE + 16, 42 * TILE + 16, { dur: 1.4, h: 150, top: 'cyan' });
+        if (typeof sfxBolt === 'function') sfxBolt(2);
+        if (!npcsLive.some(function (n) { return n.id === 'u_nhan'; })) npcsLive.push({ id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 46, y: 40, dir: 'down' });
+        var untouched = !state.flags.arcvCh32RingTouched;
+        state.quest = 'q32_chuyen_tho_nguyen'; refreshHUD(); saveNow();
+        toast(untouched ? 'Ba đạo lôi đã qua, vòng độ kiếp không hề bị chạm tới. Ra bìa thung lũng — nàng đang chờ nói chuyện thọ nguyên.' : 'Ba đạo lôi đã qua. Ra bìa thung lũng — nàng đang chờ nói chuyện thọ nguyên.', 5200);
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = { boltsDone: 0, ringX: 49 * TILE + 16, ringY: 42 * TILE + 16 };
+    toast('HỘ PHÁP! Ba đợt thú dữ dồn về vòng độ kiếp — đừng để bất kỳ con nào chạm vào vòng. Trong lúc giữ vòng, ngươi KHÔNG nói, KHÔNG viết — chỉ ra hiệu bằng tay như đã hẹn.', 5800);
+  }
+  function arcvGuardTick(f, dt) {
+    var A = f.arcv;
+    // Vòng bị chạm? (bất kỳ địch nào lọt vào 1,5 ô quanh tâm vòng)
+    if (!state.flags.arcvCh32RingTouched) {
+      var touched = arcvAliveFigs(f).some(function (g) { return Math.hypot(g.x + 16 - A.ringX, g.y + 16 - A.ringY) <= 1.5 * TILE; });
+      if (touched) { state.flags.arcvCh32RingTouched = true; addFloat(A.ringX, A.ringY - 60, 'VÒNG BỊ CHẠM!', '255,120,120'); }
+    }
+    // Lôi của nàng rơi theo nhịp đợt: cuối đợt 1 (đợt 2 mở), giữa đợt 2
+    // (còn ≤1 địch), mở đợt 3 (boss xuất hiện).
+    if (A.boltsDone === 0 && f.wave >= 1) { A.boltsDone = 1; arcvGuardBolt(1); }
+    else if (A.boltsDone === 1 && f.wave === 1 && arcvAliveFigs(f).length <= 1) { A.boltsDone = 2; arcvGuardBolt(2); }
+    else if (A.boltsDone === 2 && f.wave >= 2) { A.boltsDone = 3; arcvGuardBolt(3); }
+  }
+  function arcvGuardBolt(n) {
+    if (typeof sfxBolt === 'function') sfxBolt(n - 1);
+    spawnPillar(49 * TILE + 16, 42 * TILE + 16, { dur: 1.1, h: 140, top: 'cyan' });
+    shakeWorld(0.35);
+    addFloat(49 * TILE + 16, 42 * TILE - 30, 'ĐẠO LÔI ' + n + ' CỦA NÀNG!', '170,220,255');
+  }
+  /* ---------- Trận chương 34a: trinh sát ở cửa thung lũng ---------- */
+  function arcvStartCh34Scout() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch34_scout',
+      waves: [[
+        { tx: 79, ty: 19, look: 'villager_m', name: 'Lính Đào Đất', title: 'Đội trinh sát đào sườn', hp: 680, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 85, ty: 19, look: 'villager_f', name: 'Lính Đào Đất', title: 'Đội trinh sát đào sườn', hp: 680, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 82, ty: 21, look: 'villager_m', name: 'Lính Đào Đất', title: 'Đội trinh sát đào sườn', hp: 680, atk: 20, interval: 1.4, speed: 56 },
+        { tx: 82, ty: 18, look: 'luc_tranh', name: 'Đội Trưởng Trinh Sát', title: 'Phá đất gây sạt lở', hp: 1800, atk: 23, interval: 1.3, speed: 56, champ: true }
+      ]],
+      onWin: function () {
+        say(ST.SCENE_CH34_HAI_DUONG, function () {
+          state.quest = 'q34_tram_giu'; refreshHUD(); saveNow();
+          toast('Đã chọn đường cho đoàn. Trở lại chỗ đoàn tị nạn trong thung lũng, gặp trưởng đoàn — đêm nay phải giữ cửa thung.', 4800);
+        });
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    arcFig.arcv = {};
+    toast('Đội trinh sát đào sườn ở cửa thung! Đội trưởng gây sạt lở theo vòng báo trước 1,2 giây — né khỏi vùng nứt, hoặc giữ sườn lớn bằng Định Âm rồi kết liễu hắn.', 5400);
+  }
+  /* ---------- Trận chương 34b: giữ thung trong đêm (2 đợt quấy rối) ---------- */
+  function arcvStartCh34Hold() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch34_hold',
+      waves: [
+        [
+          { tx: 79, ty: 18, look: 'villager_m', name: 'Lính Quấy Rối', title: 'Đợt quấy rối đêm một', hp: 650, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 85, ty: 18, look: 'villager_f', name: 'Lính Quấy Rối', title: 'Đợt quấy rối đêm một', hp: 650, atk: 20, interval: 1.4, speed: 57 }
+        ],
+        [
+          { tx: 78, ty: 19, look: 'villager_m', name: 'Lính Quấy Rối', title: 'Đợt quấy rối đêm hai', hp: 680, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 86, ty: 19, look: 'villager_f', name: 'Lính Quấy Rối', title: 'Đợt quấy rối đêm hai', hp: 680, atk: 20, interval: 1.4, speed: 57 },
+          { tx: 82, ty: 17, look: 'villager_m', name: 'Tay Đạn Đất', title: 'Đạn đất nén từ xa', hp: 700, atk: 21, interval: 1.6, speed: 54 }
+        ]
+      ],
+      onWin: function () {
+        arcvClaimToast('q34_done');
+        if (state.flags.arcvCh34ThreeLayers) arcvClaimToast('q34_three_layers');
+        state.quest = 'q35_cuu_doan'; refreshHUD(); saveNow();
+        toast('Đêm đã giữ yên. Sáng mai đoàn rút — ra cửa thung lũng (82,18) để mở trận cứu đoàn.', 4800);
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    toast('Đêm giữ thung: hai đợt quấy rối ngắn. Xa xa, tiếng đất sạt nhỏ vẫn vọng lại suốt đêm.', 4600);
+  }
+  /* ---------- Trận chương 35: cứu đoàn qua cửa thung ----------
+     Ba đợt: phá chướng ngại cửa thung (xe), giữ hai phía trong lúc
+     các nhóm dân đầu tiên băng qua (người hộ tống di chuyển chậm về
+     phía cửa), và boss Thạch Liệt với sạt lở hình quạt báo trước
+     1,8 giây — Định Âm giữ sườn trong cửa sổ báo trước thì đoàn
+     trong quạt không hề hấn gì. */
+  function arcvStartCh35Rescue() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch35_rescue',
+      carts: [{ tx: 82, ty: 17, hp: 400 }],
+      escorts: [
+        { tx: 80, ty: 12, look: 'villager_f', name: 'Nhóm Dân Thứ Nhất', hp: 900, anchorTx: 82, anchorTy: 16, safeTx: 82, safeTy: 16 },
+        { tx: 84, ty: 12, look: 'villager_old', name: 'Nhóm Dân Thứ Hai', hp: 900, anchorTx: 82, anchorTy: 16, safeTx: 82, safeTy: 16 }
+      ],
+      waves: [
+        [
+          { tx: 79, ty: 19, look: 'villager_m', name: 'Lính Chặn Cửa', title: 'Giữ chướng ngại cửa thung', hp: 680, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 85, ty: 19, look: 'villager_f', name: 'Lính Chặn Cửa', title: 'Giữ chướng ngại cửa thung', hp: 680, atk: 20, interval: 1.4, speed: 56 }
+        ],
+        [
+          { tx: 77, ty: 14, look: 'villager_m', name: 'Lính Ép Sườn', title: 'Ép hai phía lúc đoàn băng qua', hp: 720, atk: 21, interval: 1.4, speed: 57 },
+          { tx: 87, ty: 14, look: 'villager_f', name: 'Lính Ép Sườn', title: 'Ép hai phía lúc đoàn băng qua', hp: 720, atk: 21, interval: 1.4, speed: 57 },
+          { tx: 82, ty: 20, look: 'villager_m', name: 'Lính Ép Sườn', title: 'Ép hai phía lúc đoàn băng qua', hp: 720, atk: 21, interval: 1.4, speed: 57 }
+        ],
+        [
+          { tx: 82, ty: 19, look: 'luc_tranh', name: 'Thạch Liệt', title: 'Chỉ huy du kích — sạt lở hình quạt', hp: 3200, atk: 25, interval: 1.3, speed: 55, champ: true },
+          { tx: 79, ty: 20, look: 'villager_m', name: 'Lính Đào Đất', title: 'Đội đào sườn', hp: 700, atk: 20, interval: 1.4, speed: 56 },
+          { tx: 85, ty: 20, look: 'villager_f', name: 'Lính Đào Đất', title: 'Đội đào sườn', hp: 700, atk: 20, interval: 1.4, speed: 56 }
+        ]
+      ],
+      onWin: function () {
+        say(ST.SCENE_CH35_LOI, function () {
+          L.recordSpeech(state, 35, 'ch35_cuu_doan_nan', 'song_bac_thuong');
+          var paid = L.payThoNguyen(state, 3);
+          state.flags.silverHair = true;
+          state.quest = 'q35_hoi_suc'; refreshHUD(); saveNow();
+          toast('Sổ thọ nguyên đã mở: vừa trả ' + paid.justPaid + ' năm (tổng đã trả: ' + paid.paid + ' năm). Một lọn tóc bạc đã hiện trên đầu ngươi — xem ở ô thông tin nhân vật.', 5600);
+        });
+      },
+      onLose: function () { state.flags.arcvRescue35Started = false; refreshHUD(); saveNow(); } });
+    arcFig.arcv = {};
+    toast('CỨU ĐOÀN! Phá chướng ngại ở cửa thung, giữ hai phía cho đoàn băng qua, rồi đối mặt Thạch Liệt — sạt lở hình quạt của hắn báo trước 1,8 giây: Định Âm giữ sườn, hoặc kéo đoàn khỏi quạt.', 5800);
+  }
+  function arcvRescueTick(f, dt) {
+    var A = f.arcv;
+    var boss = null;
+    arcvAliveFigs(f).forEach(function (g) { if (g.name === 'Thạch Liệt') boss = g; });
+    if (!boss) return;
+    A.fanT = (A.fanT == null ? 6 : A.fanT) - dt;
+    if (A.fanT <= 0) {
+      A.fanT = 13;
+      // Quạt hướng về phía đoàn dân đang băng qua (tâm quạt = trung
+      // điểm của hai nhóm dân).
+      var gx = 0, gy = 0, n = 0;
+      (f.escorts || []).forEach(function (e) { gx += e.x + 16; gy += e.y + 16; n++; });
+      if (n) {
+        arcvTelegraph(f, Math.round(gx / n), Math.round(gy / n), 2.5, 1.8, 'slide_fan', { wordsAtStart: arcvWordsCast(), need: 'dinh', groups: f.escorts.slice() });
+        addFloat(boss.x + 16, boss.y - 48, 'SẠT LỞ HÌNH QUẠT!', '255,170,90');
+      }
+    }
+    A.shotT = (A.shotT == null ? 4 : A.shotT) - dt;
+    if (A.shotT <= 0) {
+      A.shotT = 8;
+      addFloat(boss.x + 16, boss.y - 56, 'ĐẤT NÉN LIÊN HOÀN!', '220,180,120');
+      arcvTelegraph(f, px + 16, py + 16, 1.0, 0.5, 'spout', {});
+    }
+    // Phá Đường ở mốc 66% / 33%: boss đứng đào đường rút 3 giây —
+    // gây đủ 150 sát thương lên boss trong lúc đào, hoặc Định Âm,
+    // thì ngắt được; không ngắt được thì một đoạn đường mất (chỉ
+    // ảnh hưởng trong trận: các nhóm dân đi chậm lại).
+    var frac = boss.hp / boss.hpMax;
+    [0.66, 0.33].forEach(function (th) {
+      var key = 'road' + Math.round(th * 100);
+      if (!A[key] && frac <= th && !A.channel) {
+        A[key] = true;
+        A.channel = { t: 3, hpAtStart: boss.hp, wordsAtStart: arcvWordsCast() };
+        addFloat(boss.x + 16, boss.y - 64, 'THẠCH LIỆT ĐÀO ĐƯỜNG RÚT!', '255,120,120');
+      }
+    });
+    if (A.channel) {
+      A.channel.t -= dt;
+      if (boss.hp <= A.channel.hpAtStart - 150 || arcvWordsCast() > A.channel.wordsAtStart) {
+        addFloat(boss.x + 16, boss.y - 64, 'NGẮT ĐƯỢC ĐÀO ĐƯỜNG!', '170,220,255');
+        A.channel = null;
+      } else if (A.channel.t <= 0) {
+        A.channel = null;
+        state.flags.arcvRoadSegLost = (state.flags.arcvRoadSegLost || 0) + 1;
+        addFloat(boss.x + 16, boss.y - 64, 'MỘT ĐOẠN ĐƯỜNG RÚT ĐÃ SỤP!', '255,120,120');
+        (f.escorts || []).forEach(function (e) { e.hp = Math.max(1, e.hp - 80); });
+      }
+    }
+  }
+  /* ---------- Trận gác đỉnh chương 36 (trước độ kiếp) ---------- */
+  function arcvStartCh36Guard() {
+    if (arcFig || !state) return;
+    arcEyes.length = 0;
+    arcFigStart({ id: 'ch36_guard',
+      waves: [[
+        { tx: 85, ty: 33, look: 'villager_m', name: 'Giang Thú Dải Viên Mãn', title: 'Quái sông dải Viên Mãn', hp: 800, atk: 22, interval: 1.3, speed: 56, monsterLook: 'giang_thu' },
+        { tx: 93, ty: 33, look: 'villager_m', name: 'Hồn Nước Dải Viên Mãn', title: 'Hồn lệch tần dải Viên Mãn', hp: 750, atk: 22, interval: 1.4, speed: 32, monsterLook: 'hon_nuoc', soulChaos: true },
+        { tx: 89, ty: 39, look: 'villager_m', name: 'Giang Thú Dải Viên Mãn', title: 'Quái sông dải Viên Mãn', hp: 800, atk: 22, interval: 1.3, speed: 56, monsterLook: 'giang_thu' },
+        { tx: 89, ty: 30, look: 'villager_m', name: 'Tàn Binh Huyết Bạc Cung', title: 'Tàn binh lạc lên đỉnh', hp: 750, atk: 22, interval: 1.4, speed: 56 }
+      ]],
+      onWin: function () {
+        state.flags.arcvCh36GuardDone = true; refreshHUD(); saveNow();
+        toast('Đỉnh núi đã yên. Chạm vào bia đá trên đỉnh (87,31) để bắt đầu độ kiếp Nguyên Anh — bảy đạo lôi, đạo cuối mang thiên uy 220.', 5400);
+      },
+      onLose: function () { refreshHUD(); saveNow(); } });
+    toast('Đợt gác đỉnh cuối cùng trước giờ độ kiếp — dẹp sạch quái sông và tàn binh quanh đỉnh.', 4600);
+  }
+
+  /* ---------- CUNG V: lựa chọn riêng (chooseOption móc vào đầu) ---------- */
+  function arcvChooseOption(action) {
+    if (action === 'arcv_ch34_duong_tat') {
+      state.flags.arcvCh34Road = 'tat';
+      toast('Đã chọn đường tắt ven sườn — nhanh hơn, nhưng sườn dốc và dễ sạt. Lựa chọn này được ghi nhận, đoàn sẽ nhắc lại nó.', 4200);
+      refreshHUD(); saveNow();
+      return true;
+    }
+    if (action === 'arcv_ch34_duong_vong') {
+      state.flags.arcvCh34Road = 'vong';
+      toast('Đã chọn đường vòng qua bãi cạn — chậm hơn một buổi, nhưng chân đất chắc. Lựa chọn này được ghi nhận, đoàn sẽ nhắc lại nó.', 4200);
+      refreshHUD(); saveNow();
+      return true;
+    }
+    if (action === 'buy_kim_than_dan' || action === 'buy_cuu_thien_ti_loi_phu') {
+      var id2 = action === 'buy_kim_than_dan' ? 'kim_than_dan' : 'cuu_thien_ti_loi_phu';
+      var price2 = action === 'buy_kim_than_dan' ? 60 : 100;
+      var nm2 = L.ITEM_DEFS[id2].name;
+      var chk2 = L.bagCanAdd(state, id2, 1);
+      if (!chk2.ok) { toast(chk2.reason); return true; }
+      var rs2 = L.spendLinhThach(state, price2);
+      if (rs2.ok) { L.bagAdd(state, id2, 1); sfxUi(); toast('Đã mua một ' + nm2 + ' (−' + price2 + ' Linh Thạch). Trong túi: ' + L.bagCount(state, id2) + '.', 3400); }
+      else toast(rs2.reason);
+      refreshHUD(); saveNow();
+      say(arcvTier2ShopScene());
+      return true;
+    }
+    if (action === 'doi_kim_than_dan' || action === 'doi_cuu_thien_ti_loi_phu') {
+      var id3 = action === 'doi_kim_than_dan' ? 'kim_than_dan' : 'cuu_thien_ti_loi_phu';
+      var meritCost = action === 'doi_kim_than_dan' ? 40 : 70; // [ĐỀ XUẤT SỐ theo thang dải 1: Tị Lôi Phù 40 LT / 30 công trạng]
+      var nm3 = L.ITEM_DEFS[id3].name;
+      var chk3 = L.bagCanAdd(state, id3, 1);
+      if (!chk3.ok) { toast(chk3.reason); return true; }
+      var g3 = L.ensureGrind(state);
+      if ((g3.sectMerit || 0) < meritCost) { toast('Chưa đủ điểm cống hiến tông môn (cần ' + meritCost + ', đang có ' + (g3.sectMerit || 0) + ').'); return true; }
+      g3.sectMerit -= meritCost;
+      L.bagAdd(state, id3, 1); sfxUi();
+      toast('Đã đổi một ' + nm3 + ' bằng ' + meritCost + ' điểm cống hiến. Trong túi: ' + L.bagCount(state, id3) + '.', 3400);
+      refreshHUD(); saveNow();
+      say(arcvTier2ShopScene());
+      return true;
+    }
+    if (action === 'arcv_lib_o22' || action === 'arcv_lib_o27' || action === 'arcv_lib_lian_tram' || action === 'arcv_lib_o30') {
+      arcvLibraryGrant(action);
+      return true;
+    }
+    if (action === 'arcv_repeat_souls') { arcvStartCh28Souls(true); return true; }
+    if (action === 'arcv_repeat_escort') { arcvStartCh27Escort(1, true); return true; }
+    if (action === 'arcv_fa_normal') { say(buildFaShopScene()); return true; }
+    if (action === 'arcv_ch34_fight_now') {
+      say(ST.SCENE_CH34_THAM_DO, function () { arcvStartCh34Scout(); });
+      return true;
+    }
+    return false;
+  }
+  /* Nguồn vật phẩm dải 2 (thiết kế realm-prep mục 5 cho cung V):
+     MỖI vật có HAI nguồn — mua bằng Linh Thạch và đổi bằng điểm
+     cống hiến tông môn; mở từ chương 33 ở cả tủ cung phụng của tông
+     lẫn hiệu pháp khí ở thành. */
+  function arcvTier2ShopScene() {
+    state.flags.arcvCatalogSeen = true;
+    return [{ who: 'choice', text: 'Vật phẩm độ kiếp dải 2 — mỗi thứ đều có hai nguồn: mua bằng Linh Thạch, hoặc đổi bằng điểm cống hiến tông môn.\nKim Thân Đan (giảm 70% một đạo lôi): 60 Linh Thạch / 40 công trạng — trong túi: ' + L.bagCount(state, 'kim_than_dan') + '.\nCửu Thiên Tị Lôi Phù (giảm 90% một đạo lôi): 100 Linh Thạch / 70 công trạng — trong túi: ' + L.bagCount(state, 'cuu_thien_ti_loi_phu') + '.\n(Linh Thạch hiện có: ' + L.fmtNum(state.linhThach || 0) + ' · công trạng: ' + ((L.ensureGrind(state).sectMerit) || 0) + '.)', options: [
+      { label: 'Mua Kim Thân Đan — 60 Linh Thạch', action: 'buy_kim_than_dan' },
+      { label: 'Đổi Kim Thân Đan — 40 công trạng', action: 'doi_kim_than_dan' },
+      { label: 'Mua Cửu Thiên Tị Lôi Phù — 100 Linh Thạch', action: 'buy_cuu_thien_ti_loi_phu' },
+      { label: 'Đổi Cửu Thiên Tị Lôi Phù — 70 công trạng', action: 'doi_cuu_thien_ti_loi_phu' },
+      { label: 'Rời đi', action: 'shop_leave' }
+    ] }];
+  }
+  /* Thư viện thượng phẩm (mở sau q36_done — truyền thừa tại chỗ,
+     đúng luật "nguồn trong thế giới" của công pháp): ô 22 cần
+     ô 19 + ô 20; ô 27 cần ô 26; Huyền Tinh Liên Trảm cần đã có
+     Huyền Tinh Kiếm Phổ; ô 30 ghi nhận hoàn tất khi bốn hàng
+     nguyên tố đều ở bậc cao nhất của sổ ngũ hành. */
+  function arcvLibraryScene() {
+    return [{ who: 'choice', text: 'Thư viện thượng phẩm của Thanh Vân Tông. Các truyền thừa chỉ trao cho người đã kết Nguyên Anh và có đủ nền:\n— Cửu Thiên Lôi Phạt (ô 22): cần Tử Điện Kích và Lôi Quang Thần Kiếm.\n— Bất Diệt Kim Thân (ô 27): cần Thái Bạch Kim Kiếm.\n— Huyền Tinh Liên Trảm (dải 2 của Huyền Tinh Kiếm Phổ, 2 nhát × 110%): cần đã lĩnh Huyền Tinh Kiếm Phổ và lĩnh tại di chỉ tàn kiếm.\n— Hỗn Độn Pháp Luân (ô 30): ghi nhận hoàn tất khi mỗi hàng nguyên tố đều có một bộ lên Viên Mãn.', options: [
+      { label: 'Nhận truyền thừa Cửu Thiên Lôi Phạt', action: 'arcv_lib_o22' },
+      { label: 'Nhận truyền thừa Bất Diệt Kim Thân', action: 'arcv_lib_o27' },
+      { label: 'Lĩnh Huyền Tinh Liên Trảm tại di chỉ tàn kiếm', action: 'arcv_lib_lian_tram' },
+      { label: 'Ghi nhận hoàn tất Hỗn Độn Pháp Luân', action: 'arcv_lib_o30' },
+      { label: 'Rời thư viện', action: 'shop_leave' }
+    ] }];
+  }
+  function arcvTechniqueOwned(id) {
+    return !!L.techniqueOf(state, id);
+  }
+  function arcvLibraryGrant(action) {
+    if (action === 'arcv_lib_o22') {
+      // Điều kiện theo hồ sơ đã khóa trong TECHNIQUE_DEFS: ô 22 cần
+      // Tử Điện Kích (ô 19 của hệ lôi trong sổ) + Lôi Quang Thần Kiếm.
+      if (!arcvTechniqueOwned('tu_dien_kich') || !arcvTechniqueOwned('loi_quang_than_kiem')) { toast('Chưa đủ nền: Cửu Thiên Lôi Phạt cần cả Tử Điện Kích và Lôi Quang Thần Kiếm. Mảnh lôi pháp sâu nhất của cung này nằm ở tầng sâu Kho Chìm, do Trầm Lôi Điện Chủ giữ (ô 21 và ô 24).', 5200); say(arcvLibraryScene()); return; }
+      var r22 = L.nguHanhLearn(state, 'cuu_thien_loi_phat');
+      if (r22 && r22.ok) toast('Đã nhận truyền thừa Cửu Thiên Lôi Phạt (ô 22) tại thư viện thượng phẩm.', 4200);
+      else toast('Truyền thừa chưa thành: ' + ((r22 && r22.reason) || 'điều kiện chưa đủ') + '.', 4200);
+    } else if (action === 'arcv_lib_o27') {
+      // Điều kiện theo TECHNIQUE_DEFS: ô 27 cần Thái Bạch Kim Kiếm.
+      if (!arcvTechniqueOwned('thai_bach_kim_kiem')) { toast('Chưa đủ nền: Bất Diệt Kim Thân (ô 27) cần Thái Bạch Kim Kiếm trước.', 4200); say(arcvLibraryScene()); return; }
+      var r27 = L.nguHanhLearn(state, 'bat_diet_kim_than');
+      if (r27 && r27.ok) toast('Đã nhận truyền thừa Bất Diệt Kim Thân (ô 27) tại thư viện thượng phẩm.', 4200);
+      else toast('Truyền thừa chưa thành: ' + ((r27 && r27.reason) || 'điều kiện chưa đủ') + '.', 4200);
+    } else if (action === 'arcv_lib_lian_tram') {
+      if (!arcvTechniqueOwned('huyen_tinh_kiem_pho')) { toast('Chưa có Huyền Tinh Kiếm Phổ — Liên Trảm là dải 2 của chính bộ kiếm phổ đó.', 4200); say(arcvLibraryScene()); return; }
+      if (state.flags.arcvLianTram) { toast('Ngươi đã lĩnh Huyền Tinh Liên Trảm rồi — hai vì sao của Huyền Câu đã thuộc về kiếm của ngươi.', 3600); say(arcvLibraryScene()); return; }
+      state.flags.arcvLianTram = true;
+      toast('Đã lĩnh Huyền Tinh Liên Trảm (2 nhát × 110% = 220%): từ nay chiêu này hiện trong danh sách kiếm quyết khi giao chiến, ở dải Nguyên Anh.', 5200);
+    } else if (action === 'arcv_lib_o30') {
+      // Điều kiện tích lũy theo hồ sơ ô 30 trong TECHNIQUE_DEFS: ít
+      // nhất một bộ của MỖI hàng trong năm hàng nguyên tố (Kim, Mộc,
+      // Thủy, Hỏa, Thổ) đã lên Viên Mãn (bậc cao nhất của bộ).
+      var els = ['kim', 'moc', 'thuy', 'hoa', 'tho'];
+      var full = els.every(function (el) {
+        return Object.keys(L.TECHNIQUE_DEFS).some(function (tid) {
+          var d = L.TECHNIQUE_DEFS[tid];
+          if (!d || d.element !== el) return false;
+          var t = L.techniqueOf(state, tid);
+          return t && t.tier >= 4;
+        });
+      });
+      if (!full) { toast('Sổ ngũ hành chưa đủ: Hỗn Độn Pháp Luân chỉ ghi nhận hoàn tất khi mỗi hàng trong năm hàng nguyên tố đều có ít nhất một bộ lên Viên Mãn. Điều kiện này hoàn thành được sớm nhất trong cung này — cứ tích lũy tiếp.', 5200); say(arcvLibraryScene()); return; }
+      if (arcvTechniqueOwned('hon_don_phap_luan')) { toast('Hỗn Độn Pháp Luân đã được ghi nhận hoàn tất ở thư viện rồi.', 3600); say(arcvLibraryScene()); return; }
+      var r30 = L.nguHanhLearn(state, 'hon_don_phap_luan');
+      if (r30 && r30.ok) toast('Thư viện thượng phẩm đã ghi nhận: Hỗn Độn Pháp Luân (ô 30) hoàn tất điều kiện tích lũy.', 4600);
+      else toast('Ghi nhận chưa thành: ' + ((r30 && r30.reason) || 'điều kiện chưa đủ') + '.', 4200);
+    }
+    refreshHUD(); saveNow();
+    say(arcvLibraryScene());
+  }
+  /* ---------- Tiêm NPC cung V theo nhiệm vụ ---------- */
+  function arcvMaybeInject() {
+    if (!state || state.map !== 'hb_valley') return;
+    // Hứa U Nhàn ở thung lũng trong mạch chương 32 (trước trận hộ
+    // pháp nàng đứng ở bìa thung; trong trận, hình của nàng là người
+    // được hộ tống giữa vòng; sau trận nàng trở lại bìa thung).
+    var want = (state.quest === 'q32_ho_phap' || state.quest === 'q32_chuyen_tho_nguyen');
+    var has = npcsLive.some(function (n) { return n.id === 'u_nhan'; });
+    if (want && !has) npcsLive.push({ id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 46, y: 40, dir: 'down' });
+    if (!want && has) npcsLive = npcsLive.filter(function (n) { return n.id !== 'u_nhan'; });
+  }
+  /* ---------- Móc rơi mảnh bí pháp của cung V ----------
+     Gọi từ killMonster ngay sau khi thưởng hạ quái đã chốt:
+     - Trầm Lôi Điện Chủ (boss tầng sâu bc_bendo): mảnh ô 21 (Tử Lôi
+       Thần Long, 12) + mảnh ô 24 (Tử Lôi Thần Phù, 8) — cùng một boss.
+     - Mộ Kiếm Tàn Hồn (boss vùng mộ kiếm, tầng sâu): mảnh SP-02
+       (Tử Dạ Ảnh Kiếm Quyết, 12).
+     - Trầm Hồn Hà Yêu (boss dã ngoại): ô 29 (Huyết Ảnh Ma Hồn) rơi
+       8% mỗi lần hạ, bảo đảm ở lần hạ thứ 15 (đếm theo sổ boss). */
+  function arcvFragDrop(tid, fromName) {
+    var def = L.TECHNIQUE_DEFS[tid];
+    if (!def || !def.fragmentsNeeded) return;
+    if (L.techniqueOf(state, tid)) return;
+    if (L.nguHanhFragments(state, tid) >= def.fragmentsNeeded) return;
+    var fr = L.nguHanhAddFragment(state, tid);
+    if (!fr || !fr.ok || fr.converted) return;
+    if (fr.complete) toast('Đủ mảnh ' + def.name + ' (' + fr.count + '/' + fr.needed + ') rơi từ ' + fromName + ' — tới Tàng Kinh Các của tông để ghép thành bí tịch.', 4800);
+    else toast('Mảnh bí pháp: ' + def.name + ' (' + fr.count + '/' + fr.needed + ') — rơi từ ' + fromName + '.', 4200);
+    refreshHUD(); saveNow();
+  }
+  function arcvOnMonsterKill(m) {
+    if (!m || !state) return;
+    if (m.species === 'tram_loi_dien_chu') {
+      arcvFragDrop('tu_loi_than_long', 'Trầm Lôi Điện Chủ');
+      arcvFragDrop('tu_loi_than_phu', 'Trầm Lôi Điện Chủ');
+    }
+    if (m.species === 'mo_kiem_tan_hon') {
+      arcvFragDrop('tu_da_anh_kiem', 'Mộ Kiếm Tàn Hồn');
+    }
+    if (m.bossId === 'boss_song_tram_hon_ha_yeu') {
+      // Ô 29 theo hồ sơ dropGuarantee trong TECHNIQUE_DEFS: tỉ lệ
+      // 8% mỗi lần hạ, đếm lần thử và bảo đảm ở lần thứ 15 (đúng
+      // khuôn nguHanhRecordTry của hệ bí pháp). Rơi = trọn bộ.
+      var def29 = L.TECHNIQUE_DEFS.huyet_anh_ma_hon;
+      if (def29 && !L.techniqueOf(state, 'huyet_anh_ma_hon')) {
+        var dg = def29.dropGuarantee || { chance: 0.08, tries: 15 };
+        var drop = Math.random() < dg.chance;
+        if (!drop) {
+          var tr = L.nguHanhRecordTry(state, 'boss:ma_nguyen_anh', dg.tries);
+          drop = !!tr.guaranteed;
+        }
+        if (drop) {
+          var r29 = L.nguHanhLearn(state, 'huyet_anh_ma_hon');
+          if (r29 && r29.ok) {
+            L.nguHanhResetTries(state, 'boss:ma_nguyen_anh');
+            toast('Huyết Ảnh Ma Hồn (ô 29) rơi trọn bộ từ Trầm Hồn Hà Yêu! Bộ này mang tiếng cấm thuật — dùng hay không là quyền của ngươi.', 5200);
+            refreshHUD(); saveNow();
+          }
+        }
+      }
+    }
+  }
+  /* Lời thoại chờ của NPC cung V (ngoài mạch nhiệm vụ). */
+  function arcvNpcIdleLine(npc) {
+    if (npc.id === 'nguoi_lai_do') return [{ who: 'nguoi_lai_do', text: 'Đò vẫn chạy theo con nước. Ngươi cần sang sông, hay cần nghe chuyện sông?' }];
+    if (npc.id === 'tram_truong') return [{ who: 'tram_truong', text: 'Sổ sách của trạm này, trang nào cũng có người giữ. Ngươi cứ hỏi khi cần.' }];
+    if (npc.id === 'truong_thon_ven_song') return [{ who: 'truong_thon_ven_song', text: 'Làng đã yên hơn nhiều từ buổi luyện hồn ấy. Bàn thờ đầu làng vẫn thắp hương mỗi sớm.' }];
+    if (npc.id === 'nguoi_giu_truoc') return [{ who: 'nguoi_giu_truoc', text: 'Bếp nhà ta cháy hai lần trong một đời — lần thứ hai có người dập hộ. Ta nhớ ơn đó.' }];
+    if (npc.id === 'nhan_chung') return [{ who: 'nhan_chung', text: 'Ta chỉ là người khuân vác năm xưa. Những gì ta thấy, ta đã nói hết với ngươi rồi.' }];
+    if (npc.id === 'dan_nan_truong') return [{ who: 'dan_nan_truong', text: 'Đoàn của ta nợ ngươi một mạng đường. Có việc gì ở thung lũng này, cứ gọi.' }];
+    if (npc.id === 'chu_do') return [{ who: 'chu_do', text: 'Thuyền của ta vẫn ngược thác đều đặn. Cần hộ tống chuyến nữa thì cứ nói — công cán tính theo chuyến.' }];
+    return null;
+  }
+
+  /* Điểm thổ nạp phụ của hành trình (điểm chính của bản đồ nằm ở
+     thượng nguồn): tương tác để tĩnh tọa một lúc — hồi Tĩnh Âm và
+     một nhịp thổ nạp như đang ở điểm linh khí. */
+  function arcvMeditateStone(text) {
+    state.silence = L.silenceGain('meditate', 10, state.silence);
+    L.meditateTick(state, 5);
+    sfxUi();
+    toast(text + ' (+Tĩnh Âm, +tu vi thổ nạp)', 3800);
+    refreshHUD(); saveNow();
+  }
+  /* Tiến độ chuẩn bị chương 33: mở đủ hai danh mục nguồn (tông +
+     thành) và xem buổi thử lôi ở bia thì bước chuẩn bị khép lại. */
+  function arcvCh33Progress() {
+    if (!state || state.quest !== 'q33_chuan_bi') return;
+    if (state.flags.arcvCatalogSect && state.flags.arcvCatalogCity && state.flags.arcvDemoSeen) {
+      state.quest = 'q33_dot_pha'; refreshHUD(); saveNow();
+      toast('Đã đủ phần chuẩn bị: hai nguồn cung dải 2 đã mở và đã xem thử lôi ở bia. Lên Đài Trúc Cơ (60,6) phía bắc tông để đột phá Kim Đan Viên Mãn.', 5400);
+    }
+  }
+  /* Đột phá Kim Đan Viên Mãn trong cảnh chương 33 tại Đài (khuôn
+     arcDoHauKyBreak): KHÔNG thiên kiếp, KHÔNG thông cáo — cổng
+     chung stageGateBlocked ngay trước tryBreakthrough; khoản
+     q33_pre_break (+150) lĩnh SAU khi đột phá thành công theo
+     đúng thứ tự của thiết kế chương 33. */
+  function arcvDoVienManBreak() {
+    return say(ST.SCENE_CH33_DOT_PHA, function () {
+      var gate = L.stageGateBlocked(state);
+      if (gate && gate.reason && gate.reason !== 'great_border') { toast(gate.reason, 4600); refreshHUD(); saveNow(); return; }
+      var r = L.tryBreakthrough(state);
+      if (!r.ok) { toast(r.reason || 'Đột phá chưa thành — hãy kiểm tra lại tu vi.', 4200); refreshHUD(); saveNow(); return; }
+      pillarT = 2.8;
+      spawnParts(px + 16, py + 24, 40, '255,232,160', 34, true);
+      rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+      rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+      shakeT = Math.max(shakeT, 0.8);
+      if (typeof sfxBigBell === 'function') sfxBigBell();
+      if (state.realm === 3 && state.stage === 3) {
+        arcvClaimToast('q33_pre_break');
+        state.quest = 'q33_tang_kinh_sau'; refreshHUD(); saveNow();
+        toast('Đột phá thành công: ' + (r.label || 'Kim Đan Viên Mãn') + ' — một nghi lễ yên, không thông cáo. Gặp trưởng lão: cửa thư viện thượng phẩm và tin về hai boss tầng sâu đang chờ.', 5600);
+      }
+      refreshHUD(); saveNow();
+    });
+  }
+  /* Độ kiếp Nguyên Anh ở đỉnh núi (chương 36): qua hệ độ kiếp
+     chung (7 đạo, đan/phù dải 2 đã nối ở tribBoltOptions), vật dẫn
+     không có — catalystId để trống như thiết kế (chuẩn bị bằng
+     đan/phù trong túi và hộ pháp là việc của người chơi). */
+  function arcvStartCh36Tribulation() {
+    say(ST.SCENE_CH36_TRUOC_KIEP, function () {
+      startTribulation({
+        targetRealm: 4, catalystId: null, chapter: 36,
+        onSuccess: function (fireAnnounce) {
+          var r = L.tryBreakthrough(state);
+          if (!r.ok) { toast(r.reason); refreshHUD(); saveNow(); return; }
+          if (typeof sfxBigBell === 'function') sfxBigBell();
+          pillarT = 3.5;
+          spawnParts(px + 16, py + 24, 48, '255,232,160', 36, true);
+          rings.push({ x: px + 16, y: py + 16, r: 8, a: 0.95 });
+          rings.push({ x: px + 16, y: py + 16, r: 3, a: 0.85 });
+          shakeT = Math.max(shakeT, 0.9);
+          say(ST.SCENE_CH36_TUYEN_CAO, function () {
+            state.quest = 'q36_tin_niem_phong';
+            fireAnnounce();
+            refreshHUD(); saveNow();
+            toast('Nguyên Anh kết thành: ' + (r.label || 'Nguyên Anh Sơ Kỳ') + '! Thiên Đạo đã tuyên đọc tên ngươi hai lần. Xuống bến đò — tin niêm phong cuối cùng của cung đang chờ ở đó.', 5800);
+          });
+        }
+      });
+    });
+  }
+  /* Vật phẩm phụ trợ cài thêm của cung V (điểm tương tác không nằm
+     trong dữ kiện bản đồ gốc): kệ trạm, bếp nhà giữ trạm trước, nhà
+     người bệnh, lớp đất thung lũng, tủ cung phụng + bia thử lôi ở
+     tông. Tọa độ đã kiểm trên lưới: đều là ô đi được, không trùng
+     vật phẩm sẵn có. */
+  (function arcvPushProps() {
+    var sb = L.MAPS.song_bac_thuong;
+    if (sb && !sb.props.some(function (p) { return p.id === 'arcv_ke_a'; })) {
+      sb.props.push(
+        { id: 'arcv_ke_a', type: 'stele_small', x: 15, y: 20, w: 1, h: 1, fx: 1, fy: 1, name: 'Kệ Hồ Sơ Trạm', interact: true },
+        { id: 'arcv_ke_b', type: 'stele_small', x: 24, y: 20, w: 1, h: 1, fx: 1, fy: 1, name: 'Kệ Hồ Sơ Trạm', interact: true },
+        { id: 'arcv_ke_c', type: 'stele_small', x: 15, y: 24, w: 1, h: 1, fx: 1, fy: 1, name: 'Kệ Hồ Sơ Trạm', interact: true },
+        { id: 'arcv_bep_a', type: 'sacks', x: 59, y: 41, w: 1, h: 1, fx: 1, fy: 1, name: 'Bếp Cháy Dở', interact: true },
+        { id: 'arcv_bep_b', type: 'sacks', x: 62, y: 41, w: 1, h: 1, fx: 1, fy: 1, name: 'Bếp Cháy Dở', interact: true },
+        { id: 'arcv_bep_c', type: 'sacks', x: 65, y: 41, w: 1, h: 1, fx: 1, fy: 1, name: 'Bếp Cháy Dở', interact: true },
+        { id: 'arcv_nha_a', type: 'lantern_low', x: 55, y: 34, w: 1, h: 1, fx: 1, fy: 1, name: 'Nhà Người Bệnh', interact: true },
+        { id: 'arcv_nha_b', type: 'lantern_low', x: 67, y: 34, w: 1, h: 1, fx: 1, fy: 1, name: 'Nhà Người Bệnh', interact: true },
+        { id: 'arcv_nha_c', type: 'lantern_low', x: 62, y: 37, w: 1, h: 1, fx: 1, fy: 1, name: 'Nhà Người Bệnh', interact: true },
+        { id: 'arcv_dat_a', type: 'rock_s', x: 77, y: 10, w: 1, h: 1, fx: 1, fy: 1, name: 'Lớp Đất Sườn Tây', interact: true },
+        { id: 'arcv_dat_b', type: 'rock_s', x: 90, y: 10, w: 1, h: 1, fx: 1, fy: 1, name: 'Lớp Đất Đường Rút', interact: true },
+        { id: 'arcv_dat_c', type: 'rock_s', x: 82, y: 16, w: 1, h: 1, fx: 1, fy: 1, name: 'Lớp Đất Cửa Thung', interact: true }
+      );
+    }
+    var tv = L.MAPS.thanh_van_tong;
+    if (tv && !tv.props.some(function (p) { return p.id === 'arcv_tu_cung_phung'; })) {
+      tv.props.push(
+        { id: 'arcv_tu_cung_phung', type: 'sacks', x: 52, y: 30, w: 1, h: 1, fx: 1, fy: 1, name: 'Tủ Cung Phụng Của Tông', interact: true },
+        { id: 'arcv_bia_thu_loi', type: 'stele', x: 33, y: 58, w: 1, h: 1, fx: 1, fy: 1, name: 'Bia Thử Lôi', interact: true }
+      );
+    }
+  })();
+
   /* ================= BOT GHÉP TỔ SỐNG TRONG PHIÊN + BOSS TỔ ĐỘI ================= */
   function partyBotFootFree(nx, ny) {
     var tx = Math.floor((nx + 16) / TILE), ty = Math.floor((ny + 30) / TILE);

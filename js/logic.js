@@ -2147,6 +2147,343 @@
     { id: 'dao_vai_dong', type: 'sakura_big', x: 37, y: 20, w: 2, h: 3, fx: 2, fy: 1, name: 'Anh Đào Vai Núi' },
     { id: 'thong_vai_dong', type: 'pine', x: 34, y: 23, w: 1, h: 2, fx: 1, fy: 1, name: 'Thông Vai Núi' }
   ];
+  /* ---- Cung V: sông Bạc + kho chìm bc_bendo (hai tầng) ----
+     song_bac_thuong 96x74: sông y44-51 (chỗ qua đò x19-21), vũng sâu
+     đông nam x66-92/y52-66 (ổ Trầm Hồn Hà Yêu (79,58)), làng bến đò bờ
+     nam, trạm lưu trữ (20,21), làng ven sông + bàn thờ vô danh (62,27),
+     điểm cao cuối sông bệ P (86-91,32-37), thung cụt đông bắc miệng
+     (81-84,17), điểm thổ nạp thượng nguồn (10,8) + giữa bản đồ (48,20).
+     Lưới sinh bằng tools/work-arcv/gen-grids.py, props bằng
+     gen-props.py (kiểm BFS: mọi điểm chức năng tới được). */
+  var SONG_BAC_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'X..,......................,........,............,.....,......,.....,..,,..........,............X',
+    'X.,,.,...............,..,...,................................,...,....................,........X',
+    'X.................,................,......,.....,..,,...........,.........XXXXXXXXXXXXXXXXXXXX.X',
+    'X....,,..,....,.,.,..,,...,...,,,............,..,........,.,..........,...X.............,....X.X',
+    'X,,....SSSSSSS........,.................,.....,.....,.,...................X.SSS.,........SSS.X.X',
+    'X.,....SSSSSSS.......,......,,.....,..,..........,.,...,,........,......,,X.SSS,,,,,,,,,,SSS.X.X',
+    'X......SSPPPSS.,.....,........,.,....,..............,............,......,.X.SSS,,,,,,,,,,SSS.X,X',
+    'X...,..SSPPPSS...,.,...,................,..,..............,.....,....,....X.SSS,,,,,,,,,,SSS.X.X',
+    'X......SSPPPSS...,.,....,..,...........,.........,......,...........,.....X.SSS,,,,,,,,,,SSS.X.X',
+    'X..,,.,SSSSSSS..........,....,..,.,..............................,........X.SSS..,.......SSS.X.X',
+    'X......SSSSSSS,....,...............,..,......................,....,.,.....X.SSS..,.,.....SSS.X.X',
+    'X.........,..,.........................,.................,..........,,....X.SSS,.........SSS.X,X',
+    'X.......,...........,..............................,....,..............,..X.SSS...,......SSS.X.X',
+    'X........,,.....,......,......,........,.............,...............,..,.X.SSS..........SSS.X.X',
+    'X..,.......,,,..............,...,.,....,............,.....................X,SSS..........SSS.X.X',
+    'X..,.........XXXXXXXXXXXXXXX,,...,......,......,....,.,..........,..,.....X........,.......,.X.X',
+    'X.,..........XSSSSSSSSSSSSSX...........,.,.,.......,......................XXXXXXXDDDDXXXXXXXXX.X',
+    'X...,.......,XSXXXXSSSXXXXSX.,....,...........SSSSS......,,...............,.......DD....,,...,.X',
+    'X,........,..XSXXXXSSSXXXXSX...,..........,...SSSSS.,..............,..,.....,,....DD....,.....,X',
+    'X........,...XSSSSSSSSSSSSSX.............,....SSSSS............,............,.....DD.........,.X',
+    'X............XSSSSSSSSSSSSSX..................SSSSS...........,.............,....,DD...,......,X',
+    'X..,.,,...,..XSXXXXSSSSSSSSX...,....,...,.....SSSSS..,..........................,,DD,..,.......X',
+    'X....,.......XSXXXXSSSSSSSSX..................,........................,..........DD....,.....,X',
+    'X...,........XSSSSSSSSSSSSSX.,..,....,...,..........,,......,.......,..,.,........DD...........X',
+    'X............XXXXXXXSXXXXXXX.....,...,.........,..........,SSSSSSS.....,......,..,DD...........X',
+    'X....,..,............,...................,.......,...,.....SSSSSSS,.........,.....DD,.,........X',
+    'X...,...,......,.DDDDDDDD,.....,.,.....,...........,..,....SSSSSSS....,.,,,.,....,DD.,,.......,X',
+    'X..........,.,..,DDDDDDDD....,,......................,..,..SSSSSSS................DD....,......X',
+    'X..,....,........DDDDDDDD...,.......,...,,,,,,........,,......D.................,.DDSSSSSSSSSSSX',
+    'X..,............,...DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...,.,,.............SSSSSSSSSSSSX',
+    'X..,.,..............D,..,......,...,.............,..,.XXXXDDDDDDDDXXXXD............SSSSSSSSSSSSX',
+    'X..............,....D......,.,...,..,...,..........,..XXXXDDDDDDDDXXXXD.,..,...,.,.SSSPPPPPPSSSX',
+    'X,.......,,.,....,..D.,..,............,..,,...,.......XXXXDDDDDDDDXXXXDDDDDDDDDDDDDSSSPPPPPPSSSX',
+    'X..........,,.......D...................,.........,...,.DDDDDDDDDDDDDDD...,........SSSPPPPPPSSSX',
+    'X.....,.....,.......D.,....................,........,.XXXXDDDDDDDDDXXXX.........,..SSSPPPPPPSSSX',
+    'X...,...............D.....,......,..,..........,..,...XXXXDDDDDDDDDXXXX.,..........SSSPPPPPPSSSX',
+    'X..,....,...........D...,....,.......,.....,..,..,....XXXXDDDDDDDDDXXXX..,.........SSSPPPPPPSSSX',
+    'X....,......,.,,....D,...,....,.........,...,.......,.....XXXX..XXXX.......,.......SSSSSSSSSSSSX',
+    'X..,..............,.D......,......,....,.,...,..,......,..XXXX..XXXX.,........,....SSSSSSSSSSSSX',
+    'X...,.,...........,.D...................,.......,.....,...XXXX.,XXXX..,..........,.SSSSSSSSSSSSX',
+    'X...................D........,...........,..,..,.,,...........,,.........,.,..,....SSSSSSSSSSSSX',
+    'X...............,...D.........,,,...........................,,.............,................,..X',
+    'X.......,...........D............,,......,.....,.,......,..,...................,......,........X',
+    'XwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwwwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XWWWWWWWWWWWWWWWWWWwwwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWX',
+    'XwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwX',
+    'X..,....,......,..,DDD,..,................,,.................,,.,wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X....,.....,..,,...DDD..................DDDDDDDDDDDDDDDDDDDDDDDDDwWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X..........,.......DDD.....,..............................,......wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X.....,.........,.,DDD...........,.,.......,........,........,...wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X..,.............,.DDD................,......,..,................wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X.....,,,...,...,.,DDD....,,................,...,.......,,.......wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X......,..DDDDDDDDDDDDDDDDDDDDD......,........,,......,......,..,wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X.....,...DXXXXDDXXXXDDDDDDDDDD......,....,..,,......,,.........,wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X......,..DXXXXDDXXXXDDDXXXXDDD,.........,..........,,.....,.....wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X.....,...DXXXXDDXXXXDDDXXXXDDD..............,.,...,.............wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X....,...,DDDDDDDDDDDDDDXXXXDDD,..,.........,........,...,..,..,,wWWWWWWWWWWWWWWWWWWWWWWWWWWWw,X',
+    'X...,.,,..DDDDDDDDDDDDDDDDDDDDD..,........................,...,..wWWWWWWWWWWWWWWWWWWWWWWWWWWWw,X',
+    'X...,,....DXXXXDDDDDDDDDDXXXXDD...,........,,...,.............,..wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X....,....DXXXXDDDDDDDDDDXXXXDD................................,,wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X,........DXXXXDDDDDDDDDDXXXXDD............,.....................wWWWWWWWWWWWWWWWWWWWWWWWWWWWw.X',
+    'X....,.,..DDDDDDDDDDDDDDDDDDDDD.,..............,,.,,..............wwwwwwwwwwwwwwwwwwwwwwwwwww..X',
+    'X.........,........,............,........,............,......,..........,,.,...,,.,.....,.,....X',
+    'X.,,.,...,...................,.,......,.....................,....,.,..........................,X',
+    'X.....,.....DDDDD....,.............,.,..,........,..,,.............,........,..................X',
+    'X...,.....,.DDDDD............,..........,..........,.................,............,.......,,...X',
+    'X.,.....,,.,DDDDD........,....,.,......,..,,.....,,.,..,......,.....,.,..........,......,...,..X',
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  ];
+
+  var BC_BENDO_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSPPPPPPPPPPSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSPPPPPPPPPPSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSPPPPPPPPPPSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSPPPPPPPPPPSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSPPPPPPPPPPSSSSSXXXXSXXXXXXXXX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSXXXXSSSSSSSSSSSSSSSSSSSSSSSSSSSSXXXXSSSSSSSX',
+    'XSSSXXXXSSSSSSSSSSSSSSSSSSSSSSSSSSSSXXXXSSSSSSSX',
+    'XSSSXXXXSSSSSSSSSSSSSSSSSSSSSSSSSSSSXXXXSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSXXXXSXXXXSSSSSSSSSSSSSSSSSSSSSSSXXXXSXXXXSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XXXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXXXXX'
+  ];
+
+  var BC_BENDO_SAU_GRID = [
+    'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSPPPPPPPPSSSSSSSXXSSSSSSSPPPPPPPPSSSSSX',
+    'XSSSSSPPPPPPPPSSSSSSSXXSSSSSSSPPPPPPPPSSSSSX',
+    'XSSSSSPPPPPPPPSSSSSSSXXSSSSSSSPPPPPPPPSSSSSX',
+    'XSSSSSPPPPPPPPSSSSSSSXXSSSSSSSPPPPPPPPSSSSSX',
+    'XSSSSSPPPPPPPPSSSSSSSXXSSSSSSSPPPPPPPPSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSPPSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSPPSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSXXSSSPPPPSSSSSSSSSSSSSX',
+    'XSSwwwwwwSSSSSSSSSSSSXXSSSPPPPSSSSSSSSSSSSSX',
+    'XSwWWWWWWwSSSSSSSSSSSXXSSSPPPPSSSSSSSSSSSSSX',
+    'XSwWWWWWWwSSSSSSSSSSSXXSSSSSSSSSSSSSSSSSSSSX',
+    'XSwWWWWWWwSSSSSSSSSSSXXSSSSSSSSSSSSSPPPPSSSX',
+    'XSwWWWWWWwSSSSSSSSSSSXXSSSSSSSSSSSSSPPPPSSSX',
+    'XSwWWWWWWwSSSSSSSSSSSXXSSSSSSSSSSSSSPPPPSSSX',
+    'XSSwwwwwwSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSX',
+    'XXXXXXXXXXXXXXXXXXXXSSSSXXXXXXXXXXXXXXXXXXXX'
+  ];
+
+  var SONG_BAC_PROPS = [
+    { id: 'sb_001_house', type: 'house', x: 11, y: 59, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng bến đò' },
+    { id: 'sb_002_house_b', type: 'house_b', x: 17, y: 59, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng bến đò' },
+    { id: 'sb_003_house', type: 'house', x: 24, y: 60, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng bến đò' },
+    { id: 'sb_004_house_b', type: 'house_b', x: 11, y: 64, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng bến đò' },
+    { id: 'sb_005_house', type: 'house', x: 25, y: 64, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng bến đò' },
+    { id: 'sb_006_house', type: 'house', x: 54, y: 31, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_007_house_b', type: 'house_b', x: 66, y: 31, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_008_house_b', type: 'house_b', x: 54, y: 35, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_009_house', type: 'house', x: 67, y: 35, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_010_house', type: 'house', x: 58, y: 38, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_011_house_b', type: 'house_b', x: 64, y: 38, w: 4, h: 3, fx: 4, fy: 1, name: 'Nhà dân làng ven sông' },
+    { id: 'sb_012_stall', type: 'stall', x: 22, y: 52, w: 2, h: 2, fx: 2, fy: 1, name: 'Lều đò của lão lái đò' },
+    { id: 'sb_013_sacks', type: 'sacks', x: 17, y: 52, w: 1, h: 1, fx: 1, fy: 1, name: 'Bao hàng chờ đò' },
+    { id: 'sb_014_bench_stone', type: 'bench_stone', x: 24, y: 54, w: 2, h: 1, fx: 2, fy: 1, name: 'Ghế đá đầu bến' },
+    { id: 'sb_015_lantern', type: 'lantern', x: 18, y: 51, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn bến đò' },
+    { id: 'sb_016_lantern', type: 'lantern', x: 22, y: 51, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn bến đò' },
+    { id: 'sb_017_lu_huong', type: 'lu_huong', x: 62, y: 26, w: 1, h: 1, fx: 1, fy: 1, name: 'Bát hương bàn thờ vô danh', interact: true },
+    { id: 'sb_018_stele_small', type: 'stele_small', x: 60, y: 26, w: 2, h: 2, fx: 2, fy: 1, name: 'Bàn thờ vô danh đầu làng' },
+    { id: 'sb_019_lantern_low', type: 'lantern_low', x: 59, y: 28, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn đá đầu làng' },
+    { id: 'sb_020_lantern_low', type: 'lantern_low', x: 65, y: 28, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn đá đầu làng' },
+    { id: 'sb_021_stone_platform', type: 'stone_platform', x: 9, y: 7, w: 3, h: 3, fx: 3, fy: 1, name: 'Vòng đá thổ nạp thượng nguồn' },
+    { id: 'sb_022_stone_platform', type: 'stone_platform', x: 47, y: 19, w: 3, h: 3, fx: 3, fy: 1, name: 'Nền đá thổ nạp giữa đồng' },
+    { id: 'sb_023_bc_gate', type: 'bc_gate', x: 20, y: 42, w: 2, h: 2, fx: 2, fy: 1, name: 'Miệng hang kho chìm (bc_bendo)', interact: true },
+    { id: 'sb_024_stele', type: 'stele', x: 87, y: 31, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia đá điểm cao cuối sông' },
+    { id: 'sb_025_bench_stone', type: 'bench_stone', x: 84, y: 38, w: 2, h: 1, fx: 2, fy: 1, name: 'Ghế đá điểm cao' },
+    { id: 'sb_026_sacks', type: 'sacks', x: 80, y: 8, w: 1, h: 1, fx: 1, fy: 1, name: 'Bao lương của đoàn tị nạn' },
+    { id: 'sb_027_sacks', type: 'sacks', x: 86, y: 12, w: 1, h: 1, fx: 1, fy: 1, name: 'Bao đồ của đoàn tị nạn' },
+    { id: 'sb_028_bench_stone', type: 'bench_stone', x: 82, y: 12, w: 2, h: 1, fx: 2, fy: 1, name: 'Đá ngồi trong thung cụt' },
+    { id: 'sb_029_tree_big', type: 'tree_big', x: 74, y: 35, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_030_tree_big', type: 'tree_big', x: 44, y: 69, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_031_tree_big', type: 'tree_big', x: 6, y: 58, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_032_tree_big', type: 'tree_big', x: 77, y: 37, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_033_tree_big', type: 'tree_big', x: 43, y: 14, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_034_tree_big', type: 'tree_big', x: 37, y: 35, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_035_tree', type: 'tree', x: 14, y: 27, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_036_tree', type: 'tree', x: 40, y: 65, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_037_tree', type: 'tree', x: 45, y: 19, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_038_tree', type: 'tree', x: 74, y: 68, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_039_tree', type: 'tree', x: 10, y: 70, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_040_tree', type: 'tree', x: 22, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_041_tree', type: 'tree', x: 9, y: 69, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_042_tree', type: 'tree', x: 51, y: 41, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_043_tree', type: 'tree', x: 40, y: 25, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_044_tree', type: 'tree', x: 16, y: 5, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_045_tree', type: 'tree', x: 1, y: 61, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_046_tree', type: 'tree', x: 76, y: 34, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_047_tree', type: 'tree', x: 2, y: 22, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_048_tree', type: 'tree', x: 50, y: 16, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_049_tree', type: 'tree', x: 52, y: 55, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_050_tree', type: 'tree', x: 52, y: 57, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_051_tree', type: 'tree', x: 87, y: 70, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_052_tree', type: 'tree', x: 48, y: 37, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_053_tree', type: 'tree', x: 2, y: 36, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_054_tree', type: 'tree', x: 42, y: 11, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_055_tree', type: 'tree', x: 37, y: 35, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_056_tree', type: 'tree', x: 39, y: 55, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_057_tree', type: 'tree', x: 73, y: 22, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_058_tree', type: 'tree', x: 86, y: 26, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_059_tree', type: 'tree', x: 60, y: 56, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_060_tree', type: 'tree', x: 6, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_061_pine', type: 'pine', x: 55, y: 64, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_062_pine', type: 'pine', x: 47, y: 35, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_063_pine', type: 'pine', x: 8, y: 36, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_064_pine', type: 'pine', x: 4, y: 17, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_065_pine', type: 'pine', x: 12, y: 23, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_066_pine', type: 'pine', x: 37, y: 64, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_067_pine', type: 'pine', x: 8, y: 42, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_068_pine', type: 'pine', x: 5, y: 35, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_069_pine', type: 'pine', x: 49, y: 33, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_070_pine', type: 'pine', x: 38, y: 55, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_071_pine', type: 'pine', x: 28, y: 19, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_072_pine', type: 'pine', x: 3, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_073_pine', type: 'pine', x: 32, y: 68, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_074_pine', type: 'pine', x: 52, y: 65, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_075_pine2', type: 'pine2', x: 51, y: 9, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_076_pine2', type: 'pine2', x: 57, y: 62, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_077_pine2', type: 'pine2', x: 45, y: 2, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_078_pine2', type: 'pine2', x: 35, y: 26, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_079_pine2', type: 'pine2', x: 64, y: 58, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_080_pine2', type: 'pine2', x: 59, y: 6, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_081_pine2', type: 'pine2', x: 66, y: 21, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_082_pine2', type: 'pine2', x: 82, y: 35, w: 1, h: 2, fx: 1, fy: 1 },
+    { id: 'sb_083_sakura_big', type: 'sakura_big', x: 42, y: 21, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_084_sakura_big', type: 'sakura_big', x: 23, y: 9, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_085_sakura_big', type: 'sakura_big', x: 24, y: 55, w: 2, h: 3, fx: 2, fy: 1 },
+    { id: 'sb_086_flower_bush', type: 'flower_bush', x: 78, y: 37, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_087_flower_bush', type: 'flower_bush', x: 8, y: 67, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_088_flower_bush', type: 'flower_bush', x: 62, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_089_flower_bush', type: 'flower_bush', x: 42, y: 58, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_090_flower_bush', type: 'flower_bush', x: 48, y: 27, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_091_flower_bush', type: 'flower_bush', x: 2, y: 19, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_092_flower_bush', type: 'flower_bush', x: 31, y: 9, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_093_flower_bush', type: 'flower_bush', x: 10, y: 36, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_094_flower_bush', type: 'flower_bush', x: 85, y: 1, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_095_flower_bush', type: 'flower_bush', x: 3, y: 59, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_096_flower_bush', type: 'flower_bush', x: 58, y: 54, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_097_flower_bush', type: 'flower_bush', x: 54, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_098_flower_bush', type: 'flower_bush', x: 40, y: 61, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_099_flower_bush', type: 'flower_bush', x: 23, y: 15, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_100_flower_bush', type: 'flower_bush', x: 81, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_101_flower_bush', type: 'flower_bush', x: 39, y: 63, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_102_flower_bush', type: 'flower_bush', x: 49, y: 23, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_103_flower_bush', type: 'flower_bush', x: 39, y: 5, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_104_flower_bush', type: 'flower_bush', x: 52, y: 57, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_105_flower_bush', type: 'flower_bush', x: 1, y: 2, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_106_flower_bush', type: 'flower_bush', x: 55, y: 64, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_107_flower_bush', type: 'flower_bush', x: 69, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_108_rock_m', type: 'rock_m', x: 76, y: 24, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_109_rock_m', type: 'rock_m', x: 86, y: 23, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_110_rock_m', type: 'rock_m', x: 50, y: 59, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_111_rock_m', type: 'rock_m', x: 44, y: 3, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_112_rock_m', type: 'rock_m', x: 72, y: 70, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_113_rock_m', type: 'rock_m', x: 48, y: 35, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_114_rock_m', type: 'rock_m', x: 89, y: 16, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_115_rock_m', type: 'rock_m', x: 83, y: 69, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_116_rock_m', type: 'rock_m', x: 12, y: 55, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_117_rock_m', type: 'rock_m', x: 17, y: 10, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_118_rock_s', type: 'rock_s', x: 28, y: 69, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_119_rock_s', type: 'rock_s', x: 67, y: 12, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_120_rock_s', type: 'rock_s', x: 16, y: 8, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_121_rock_s', type: 'rock_s', x: 65, y: 6, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_122_rock_s', type: 'rock_s', x: 52, y: 68, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_123_rock_s', type: 'rock_s', x: 68, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_124_rock_s', type: 'rock_s', x: 3, y: 18, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_125_rock_s', type: 'rock_s', x: 25, y: 35, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_126_rock_s', type: 'rock_s', x: 3, y: 57, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_127_rock_s', type: 'rock_s', x: 67, y: 69, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_128_rock_s', type: 'rock_s', x: 32, y: 7, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_129_rock_s', type: 'rock_s', x: 44, y: 19, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_130_flower_pot', type: 'flower_pot', x: 48, y: 36, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_131_flower_pot', type: 'flower_pot', x: 79, y: 1, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_132_flower_pot', type: 'flower_pot', x: 3, y: 32, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_133_flower_pot', type: 'flower_pot', x: 47, y: 58, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_134_flower_pot', type: 'flower_pot', x: 90, y: 2, w: 1, h: 1, fx: 1, fy: 1 },
+    { id: 'sb_135_flower_pot', type: 'flower_pot', x: 55, y: 41, w: 1, h: 1, fx: 1, fy: 1 }
+  ];
+  var SONG_BAC_NPCS = [
+    { id: 'nguoi_lai_do', name: 'Lão Lái Đò', look: 'villager_old', x: 20, y: 53, dir: 'up' },
+    { id: 'tram_truong', name: 'Trạm Trưởng Lưu Trữ', look: 'villager_m', x: 20, y: 21, dir: 'down' },
+    { id: 'gac_kho', name: 'Lính Gác Trạm', look: 'villager_m', x: 23, y: 27, dir: 'down' },
+    { id: 'truong_thon_ven_song', name: 'Trưởng Thôn Ven Sông', look: 'villager_old', x: 62, y: 33, dir: 'down' },
+    { id: 'nguoi_giu_truoc', name: 'Người Giữ Trước', look: 'villager_old', x: 62, y: 40, dir: 'down' },
+    { id: 'nhan_chung', name: 'Người Phu Cũ', look: 'villager_old', x: 68, y: 40, dir: 'down' },
+    { id: 'dan_lang_a', name: 'Dân Làng Bến Đò', look: 'villager_m', x: 15, y: 62, dir: 'down' },
+    { id: 'dan_lang_b', name: 'Dân Làng Ven Sông', look: 'villager_f', x: 60, y: 34, dir: 'down' },
+    { id: 'dan_lang_c', name: 'Người Làng Ven Sông', look: 'villager_f', x: 66, y: 33, dir: 'down' },
+    { id: 'chu_do', name: 'Chủ Đò Hàng', look: 'villager_f', x: 17, y: 54, dir: 'down' },
+    { id: 'tin_su_lang', name: 'Người Đưa Tin Của Làng', look: 'villager_m', x: 13, y: 69, dir: 'down' },
+    { id: 'dan_nan_truong', name: 'Trưởng Đoàn Tị Nạn', look: 'villager_m', x: 83, y: 10, dir: 'down' }
+  ];
+  var BC_BENDO_PROPS = [
+    { id: 'ke_ho_so_a', type: 'stele_small', x: 5, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Kệ Hồ Sơ Đá' },
+    { id: 'ke_ho_so_b', type: 'stele_small', x: 10, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Kệ Hồ Sơ Đá' },
+    { id: 'ke_ho_so_c', type: 'stele_small', x: 37, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Kệ Hồ Sơ Đá' },
+    { id: 'ke_ho_so_d', type: 'stele_small', x: 42, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Kệ Hồ Sơ Đá' },
+    { id: 'ruong_niem_a', type: 'sacks', x: 6, y: 24, w: 1, h: 1, fx: 1, fy: 1, name: 'Rương Niêm Phong' },
+    { id: 'ruong_niem_b', type: 'sacks', x: 41, y: 24, w: 1, h: 1, fx: 1, fy: 1, name: 'Rương Niêm Phong' },
+    { id: 'den_kho_a', type: 'lantern_low', x: 3, y: 3, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Kho Chìm' },
+    { id: 'den_kho_b', type: 'lantern_low', x: 44, y: 3, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Kho Chìm' },
+    { id: 'den_kho_c', type: 'lantern_low', x: 3, y: 29, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Kho Chìm' },
+    { id: 'den_kho_d', type: 'lantern_low', x: 44, y: 29, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Kho Chìm' },
+    { id: 'xuong_kho', type: 'bones', x: 30, y: 20, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Người Gác Kho' },
+    { id: 'tinh_diem_bendo', type: 'stone_platform', x: 39, y: 27, w: 3, h: 3, fx: 3, fy: 1, name: 'Nền đá thổ nạp trong kho' },
+    { id: 'bc_gate_bendo_sau', type: 'bc_gate', x: 42, y: 3, w: 2, h: 2, fx: 2, fy: 1, name: 'Cổng Tầng Sâu Kho Chìm', interact: true },
+    { id: 'bia_kho', type: 'stele', x: 22, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Kho Chìm' }
+  ];
+  var BC_BENDO_SAU_PROPS = [
+    { id: 'cot_dien_a', type: 'stele', x: 4, y: 10, w: 2, h: 2, fx: 2, fy: 1, name: 'Cột Điện Gãy' },
+    { id: 'cot_dien_b', type: 'stele', x: 15, y: 14, w: 2, h: 2, fx: 2, fy: 1, name: 'Cột Điện Gãy' },
+    { id: 'den_dien_a', type: 'lantern_low', x: 2, y: 2, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Điện Chìm' },
+    { id: 'den_dien_b', type: 'lantern_low', x: 18, y: 26, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Điện Chìm' },
+    { id: 'kiem_cam_a', type: 'kiem_cum', x: 27, y: 19, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Mộ Kiếm' },
+    { id: 'kiem_cam_b', type: 'kiem_cum', x: 37, y: 23, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Mộ Kiếm' },
+    { id: 'kiem_cam_c', type: 'kiem_cum', x: 33, y: 12, w: 2, h: 2, fx: 2, fy: 1, name: 'Cụm Kiếm Cắm Mộ Kiếm' },
+    { id: 'xuong_mo_kiem', type: 'bones', x: 30, y: 26, w: 2, h: 1, fx: 2, fy: 1, name: 'Tàn Cốt Kiếm Tu Mộ Kiếm' },
+    { id: 'den_mo_a', type: 'lantern_low', x: 41, y: 2, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Mộ Kiếm' },
+    { id: 'den_mo_b', type: 'lantern_low', x: 24, y: 26, w: 1, h: 2, fx: 1, fy: 1, name: 'Đèn Đá Mộ Kiếm' },
+    { id: 'bia_mo_kiem', type: 'stele_small', x: 32, y: 9, w: 2, h: 2, fx: 2, fy: 1, name: 'Bia Mộ Kiếm Không Tên' }
+  ];
 
   var MAPS = {
     tran: {
@@ -2194,6 +2531,7 @@
       portals: [
         { x: 34, y: 55, w: 4, h: 1, to: 'co_chau', toX: 51, toY: 6, label: 'Về Cô Châu Thành' },
         { x: 34, y: 0, w: 4, h: 4, to: 'thap_noi', toX: 19, toY: 27, label: 'Vào Sảnh Tháp', cond: 'quest:q3_thuoc_do', lockMsg: 'Chưa tới lượt vào sảnh — hãy chờ ở sân theo thứ tự danh sách.' }
+        ,{ x: 40, y: 0, w: 4, h: 2, to: 'song_bac_thuong', toX: 13, toY: 70, label: 'Đường Ra Sông Bạc', cond: 'quest:q25_len_duong', lockMsg: 'Đường ra sông Bạc chỉ mở khi tháp giao việc ở chương 25.' }
       ]
     },
     thap_noi: {
@@ -2298,6 +2636,30 @@
       signs: TVDS_HT_SIGNS,
       portals: [
         { x: 13, y: 21, w: 9, h: 1, to: 'tvds_nguyen_anh', toX: 61, toY: 23, label: 'Xuống Vành Nguyên Anh' }
+      ]
+    },
+    song_bac_thuong: {
+      name: 'Sông Bạc Thượng Nguồn', w: 96, h: 74, grid: SONG_BAC_GRID, props: SONG_BAC_PROPS, npcs: SONG_BAC_NPCS,
+      meditate: { x: 10, y: 8 },
+      signs: [{ x: 14, y: 68, text: 'Làng Bến Đò' }, { x: 20, y: 52, text: 'Bến Đò Sông Bạc' }, { x: 20, y: 28, text: 'Trạm Lưu Trữ' }, { x: 62, y: 29, text: 'Làng Ven Sông' }, { x: 83, y: 19, text: 'Thung Cụt' }, { x: 88, y: 39, text: 'Điểm Cao Cuối Sông' }, { x: 65, y: 55, text: 'Vũng Sâu' }],
+      portals: [
+        { x: 12, y: 73, w: 4, h: 1, to: 'kiem_trac_thap', toX: 41, toY: 5, label: 'Về Kiểm Trắc Tháp' }
+      ]
+    },
+    bc_bendo: {
+      name: 'Kho Chìm Dưới Bến Đò', w: 48, h: 34, grid: BC_BENDO_GRID, props: BC_BENDO_PROPS, npcs: [],
+      meditate: null, spawn: { x: 23, y: 29 },
+      signs: [{ x: 23, y: 30, text: 'Kho Chìm Dưới Bến Đò' }],
+      portals: [
+        { x: 21, y: 33, w: 4, h: 1, to: 'song_bac_thuong', toX: 21, toY: 41, label: 'Lên Bờ Bắc Sông Bạc' }
+      ]
+    },
+    bc_bendo_sau: {
+      name: 'Kho Chìm — Tầng Sâu', w: 44, h: 32, grid: BC_BENDO_SAU_GRID, props: BC_BENDO_SAU_PROPS, npcs: [],
+      meditate: null, spawn: { x: 21, y: 26 },
+      signs: [{ x: 21, y: 28, text: 'Kho Chìm — Tầng Sâu' }],
+      portals: [
+        { x: 20, y: 31, w: 4, h: 1, to: 'bc_bendo', toX: 23, toY: 29, label: 'Về Tầng Chính Kho Chìm' }
       ]
     },
     thien_co_lau: {
@@ -2729,7 +3091,66 @@
     { id: 'q24_tha_mang', name: 'Kẻ bị bỏ lại', desc: 'Sau trận, ở mép đoạn đường: Mạc Cửu U — người điều trận của Huyết Bạc Cung — trọng thương và bị chính người của hắn bỏ lại khi rút. Hắn đang chờ một lời kết liễu.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // ô đứng kề đông của Mạc Cửu U tiêm ở (43,45); dời khỏi (44,44) như q23_vong_vay — tự kiểm đợt 3
     { id: 'q24_manh_moi', name: 'Cái tên trong hồ sơ', desc: 'Kẻ bị bỏ rơi ấy vừa thốt ra một điều về vụ bến đò năm xưa. Nghe cho hết — đây là manh mối cứng đầu tiên sau mười hai năm.', hint: { map: 'duong_mon', x: 44, y: 45 } }, // ô đứng kề Mạc Cửu U như q24_tha_mang — tự kiểm đợt 3
     { id: 'q24_len_duong', name: 'Chuẩn bị lên đường', desc: 'Về đại điện tông báo cáo vụ việc và sắp xếp hành trình sông Bạc, rồi xuống thành từ biệt Hứa U Nhàn — nàng giờ đã là người thay mặt Hứa gia.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
-    { id: 'q24_done', name: 'Kết thúc cung IV', desc: 'Cung IV khép lại ở Kim Đan Hậu Kỳ, tu vi giai đoạn 450/1.200. +250 tu vi sự kiện của chương. Cổng cung V mở từ mốc này: hành trình sông Bạc và cái tên trong hồ sơ của Thiên Cơ Các.', hint: null }
+    { id: 'q24_done', name: 'Kết thúc cung IV', desc: 'Cung IV khép lại ở Kim Đan Hậu Kỳ, tu vi giai đoạn 450/1.200. +250 tu vi sự kiện của chương. Cổng cung V mở từ mốc này: hành trình sông Bạc và cái tên trong hồ sơ của Thiên Cơ Các.', hint: null },
+    { id: 'q25_len_duong', name: 'Lên đường ra sông Bạc', desc: 'Tới Kiểm Trắc Tháp nhận việc của tháp: đi trạm lưu trữ ven sông Bạc xem vì sao thư của trạm cứ viết cụt. Qua cửa bắc của tháp để ra đường sông.', hint: { map: 'kiem_trac_thap', x: 35, y: 3 } },
+    { id: 'q25_ben_do', name: 'Bến đò sông Bạc', desc: 'Qua cổng bắc Kiểm Trắc Tháp tới làng bến đò bờ nam sông Bạc, gặp người lái đò ở đầu cầu ván.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q25_hoi_chuyen_xua', name: 'Hỏi chuyện xưa', desc: 'Qua đò sang bờ bắc, vào trạm lưu trữ của tháp gặp trạm trưởng, hỏi về đoàn người qua sông năm xưa và tra kệ hồ sơ.', hint: { map: 'song_bac_thuong', x: 20, y: 22 } },
+    { id: 'q25_song_dem', name: 'Sông đêm', desc: 'Trời tối hẳn, quay lại bến đò gặp người lái đò. Đàn quái sông quậy bến về đêm — đánh yên khúc sông trước khi nghe nốt câu chuyện.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q25_done', name: 'Đêm yên ở bến đò', desc: 'Sông đã yên một đêm. Lão đò kể nửa sau câu chuyện: một đoàn người "coi như không có" — và gần đây có kẻ khác cũng đang hỏi về họ. +75 tu vi sự kiện của chương.', hint: null },
+    { id: 'q26_truy_vet', name: 'Truy vết hồ sơ', desc: 'Quay lại trạm lưu trữ, tra kỹ dãy kệ hồ sơ có âm gốc lệch — tìm quãng năm bị rút trang.', hint: { map: 'song_bac_thuong', x: 20, y: 22 } },
+    { id: 'q26_nguoi_giu_truoc', name: 'Người giữ trước', desc: 'Tới nhà người giữ hồ sơ đời trước ở cuối làng ven sông bờ bắc. Bếp nhà ông vừa cháy dở — dập lửa và tìm vật chưa cháy trong tro.', hint: { map: 'song_bac_thuong', x: 62, y: 39 } },
+    { id: 'q26_bay_tai_nan', name: 'Bẫy tai nạn', desc: 'Về bến đò trình tháp. Trên đường, một nhóm "người bị nạn" chặn đường — hãy nghe nhịp tim của họ trước khi lại gần.', hint: { map: 'song_bac_thuong', x: 40, y: 30 } },
+    { id: 'q26_ke_doc_nguoc', name: 'Kẻ đọc ngược hành trình', desc: 'Về Kiểm Trắc Tháp, đặt ba manh mối lên bàn: khóa đồng cháy dở, bản ghi lời người giữ trước, lời khai về đèn lồng chụp tròn.', hint: { map: 'kiem_trac_thap', x: 35, y: 3 } },
+    { id: 'q26_done', name: 'Đường dây trong tháp', desc: 'Kết luận: có nội gián tuồn hành trình từ trong Thiên Cơ Các — chưa lật vội. +100 tu vi sự kiện của chương.', hint: null },
+    { id: 'q27_thu_nha', name: 'Thư nhà', desc: 'Thư của Hứa U Nhàn tới bến đò. Đọc thư ở làng bến đò — nàng không gọi ngươi về; nàng báo rằng nàng sắp đột phá theo con đường của riêng mình.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q27_song_gio', name: 'Sông gió ở bến phụ', desc: 'Đò hàng của làng bị thủy tặc cướp lần thứ ba ở bến phụ phía đông. Tới bến phụ dẹp thủy tặc và đàn thú nghe còi của chúng.', hint: { map: 'song_bac_thuong', x: 76, y: 51 } },
+    { id: 'q27_ho_tong_ben', name: 'Hộ tống qua ghềnh', desc: 'Nhận chuyến hộ tống đò hàng lớn qua ghềnh xiết phía đông. Giữ cho đò và hàng qua được các đợt thú dữ nghe còi đón ở khúc quanh.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q27_tin_vui', name: 'Tin vui cập bến', desc: 'Đò hàng đã cập bến trên. Kiểm hàng và nhận công ở bến đò.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q27_done', name: 'Tiếng còi dứt', desc: 'Chuyến đò an toàn. Chuông làng ven sông bên kia bờ mấy hôm nay cứ lạc giọng — đầu mối tiếp theo. +75 tu vi sự kiện của chương.', hint: null },
+    { id: 'q28_lang_ven_song', name: 'Làng ven sông', desc: 'Qua đò sang làng ven sông bờ bắc, gặp trưởng thôn: hơn chục người bệnh cùng một kiểu, cùng nói một câu về tiếng gọi dưới sông.', hint: { map: 'song_bac_thuong', x: 62, y: 34 } },
+    { id: 'q28_nan_hon', name: 'Nạn hồn', desc: 'Đi từng nhà người bệnh trong làng ven sông, lắng nghe độ lệch âm gốc quanh mỗi nhà — mọi sợi lệch đều phải chỉ về cùng một phía.', hint: { map: 'song_bac_thuong', x: 62, y: 34 } },
+    { id: 'q28_luyen_hon', name: 'Đêm luyện hồn ở sân đình', desc: 'Trước khi trời tối, gom người bệnh ra sân đình làng ven sông. Đêm xuống, giữ sân qua các đợt hồn nước — tâm điểm là Hà Oán Cự Hồn.', hint: { map: 'song_bac_thuong', x: 62, y: 34 } },
+    { id: 'q28_an_danh', name: 'Bàn thờ vô danh', desc: 'Sáng hôm sau: người bệnh tỉnh lại. Dựng bàn thờ vô danh ở đầu làng — việc khắc tên, ngươi tự quyết bằng chữ viết của mình.', hint: { map: 'song_bac_thuong', x: 62, y: 27 } },
+    { id: 'q28_done', name: 'Sổ còn để trống một dòng', desc: 'Làng đã yên. Ở vũng sâu dưới làng, Trầm Hồn Hà Yêu mở săn theo chu kỳ 5 ngày. +100 tu vi sự kiện của chương.', hint: null },
+    { id: 'q29_tram_luu_tru', name: 'Trạm lưu trữ', desc: 'Kiểm kê niêm phong hồ sơ ở trạm lưu trữ bờ bắc: đi từng kệ theo dấu "!" — có kệ mang dấu niêm của hai đời trạm chồng nhau.', hint: { map: 'song_bac_thuong', x: 20, y: 22 } },
+    { id: 'q29_dot_giay', name: 'Đợt đốt giấy', desc: 'Người của phe cứng rắn xông vào trạm đốt hồ sơ. Giữ thanh lửa của kệ chính: dập điểm cháy, chặn đường lan, hạ kẻ cầm đầu đội lửa.', hint: { map: 'song_bac_thuong', x: 20, y: 22 } },
+    { id: 'q29_trang_danh_sach', name: 'Trang danh sách', desc: 'Sau trận cháy: thu lại trang danh sách hành khách còn sót trong đống tro ấm của trạm.', hint: { map: 'song_bac_thuong', x: 20, y: 22 } },
+    { id: 'q29_duoi_theo', name: 'Đuổi theo vệt tro', desc: 'Kẻ châm lửa chạy thoát về phía bến đò và biến vào một miệng hang khuất dưới bờ bắc. Theo vệt tro tới miệng hang.', hint: { map: 'song_bac_thuong', x: 21, y: 44 } },
+    { id: 'q29_done', name: 'Cửa kho dưới hang', desc: 'Miệng hang mở ra bc_bendo — kho chìm dưới bến đò. +100 tu vi sự kiện của chương.', hint: null },
+    { id: 'q30_tang_sau', name: 'Tin từ tầng sâu', desc: 'Về tháp nghe tin: Tàn Ảnh trong Tàn Tích tầng sâu đang gõ lên niêm phong cũ. Tới Kiểm Trắc Tháp nghe chấp sự giao việc.', hint: { map: 'kiem_trac_thap', x: 35, y: 3 } },
+    { id: 'q30_tan_anh', name: 'Tàn Ảnh gõ cửa', desc: 'Vào Tàn Tích Dưới Tháp — Tầng Sâu (bc_tapsau) đánh tới phòng ghi nhớ: hạ Niêm Ấn Thạch Hồn giữ cửa.', hint: { map: 'thap_noi', x: 4, y: 28 } },
+    { id: 'q30_niem_phong', name: 'Cảnh niêm phong', desc: 'Qua cửa phòng ghi nhớ: xem cảnh niêm phong năm xưa hiện lại. Có một khoảnh khắc đang tan — giữ nó lại bằng Định Âm.', hint: { map: 'thap_noi', x: 4, y: 28 } },
+    { id: 'q30_quyet_tam', name: 'Quyết tâm ở tháp', desc: 'Về tháp, viết quyết tâm của ngươi trước mặt chấp sự và Trần Tư Linh.', hint: { map: 'kiem_trac_thap', x: 35, y: 3 } },
+    { id: 'q30_done', name: 'Cái tên bị xóa', desc: 'Sự thật tầng sâu: Thiên Cơ Các từng niêm phong cả một cái tên khỏi hồ sơ. +125 tu vi sự kiện của chương.', hint: null },
+    { id: 'q31_tin_doc_duong', name: 'Tin dọc đường', desc: 'Ở bến đò, nghe tin đồn về đoàn rước của kẻ cửu phẩm sắp đi qua vùng sông. Tin đồn chỉ là tin đồn — nghe cho biết, đừng vội tin.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q31_nhan_chung', name: 'Nhân chứng', desc: 'Tìm người phu cũ từng đi theo đoàn rước năm xưa, đang ở làng ven sông. Nghe ông kể — ghi lại cả sự im lặng trong lời kể.', hint: { map: 'song_bac_thuong', x: 62, y: 34 } },
+    { id: 'q31_phuc_kich', name: 'Phục kích trên đường', desc: 'Hộ tống nhân chứng qua bãi bồi giữa sông về bến đò. Bọn cướp đường thường phục kích ở đó — chúng chỉ thấy một đoàn có tiền, và chúng nhắm vào nhân chứng.', hint: { map: 'song_bac_thuong', x: 44, y: 57 } },
+    { id: 'q31_rong', name: 'Bóng đoàn rước bên kia sông', desc: 'Sau trận: đứng ở bến đò nhìn sang bờ bên kia — đoàn rước đi qua ở rất xa. Đừng lại gần.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q31_done', name: 'Thấy mà không gặp', desc: 'Ngươi đã thấy đoàn rước từ xa. Không một lời nào được nói giữa hai bờ sông. +75 tu vi sự kiện của chương.', hint: null },
+    { id: 'q32_ve_thanh', name: 'Về thành đón tin', desc: 'Người của Hứa gia báo: Hứa U Nhàn đã tự chọn ngày đột phá ở Thung Lũng Hồi Phong. Về Thanh Vân Tông nghe trưởng lão giao việc hộ pháp.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q32_ho_phap', name: 'Hộ pháp ba đợt', desc: 'Tới Thung Lũng Hồi Phong: đặt đá hiệu ở hai miệng thung, thống nhất hiệu tay với U Nhàn, rồi giữ ba đợt thú dữ quanh vòng đột phá của nàng. Trong suốt đợt giữ vòng — im lặng tuyệt đối, chỉ dùng hiệu tay.', hint: { map: 'hb_valley', x: 49, y: 42 } },
+    { id: 'q32_chuyen_tho_nguyen', name: 'Chuyện thọ nguyên', desc: 'Sau khi nàng đột phá xong: nói chuyện với U Nhàn dưới gốc anh đào thung lũng — lần đầu tiên nói về cái giá thọ nguyên, bằng chữ viết.', hint: { map: 'hb_valley', x: 49, y: 42 } },
+    { id: 'q32_done', name: 'Đầy giai đoạn', desc: 'Tu vi giai đoạn đã đầy 1.200/1.200. Con đường Viên Mãn mở ra ở chương sau. +100 tu vi sự kiện của chương.', hint: null },
+    { id: 'q33_canh_bao', name: 'Cảnh báo của trưởng lão', desc: 'Tới Thanh Vân Đại Điện gặp trưởng lão tông: ông có lời cảnh báo về dấu ấn Thiên Đạo và mốc Viên Mãn phía trước.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q33_chuan_bi', name: 'Chuẩn bị dải hai', desc: 'Nguồn đan/phù dải 2 mở: Kim Thân Đan và Cửu Thiên Tị Lôi Phù có ở quản sự tông và tiệm trong thành. Mở xem cả hai danh mục và xem diễn tập thử trên bia đá ở sân luyện.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q33_dot_pha', name: 'Đột phá Viên Mãn', desc: 'Lên Đài Trúc Cơ của tông, đột phá Kim Đan Viên Mãn khi tu vi đã đầy. Đây là mốc giai đoạn — không thiên kiếp, không tuyên cáo.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q33_tang_kinh_sau', name: 'Cửa thư viện trên cao', desc: 'Tới xem cửa Tàng Kinh cấp cao của tông — cửa còn khóa, chờ mốc Nguyên Anh. Nghe thêm tin về tầng sâu của bc_bendo từ người của bến đò.', hint: { map: 'thanh_van_tong', x: 60, y: 27 } },
+    { id: 'q33_done', name: 'Kim Đan Viên Mãn', desc: 'Đã ở Kim Đan Viên Mãn, tu vi 150/1.200. Tin dữ từ vùng sông Bạc sắp tới. +150 tu vi sự kiện của chương (cấp sau đột phá).', hint: null },
+    { id: 'q34_tin_ti_nan', name: 'Tin đoàn tị nạn', desc: 'Về bến đò sông Bạc: một đoàn tị nạn bị dồn vào thung cụt đông bắc, quân vây đang đào rỗng miệng thung chờ sạt lở.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q34_tham_do', name: 'Thám dò ba lớp đất', desc: 'Bay thấp vào thung cụt (đi bộ trước khi bị phát hiện), lắng nghe ba lớp địa hình quanh miệng thung, rồi gặp trưởng đoàn tị nạn.', hint: { map: 'song_bac_thuong', x: 83, y: 11 } },
+    { id: 'q34_hai_duong', name: 'Hai đường', desc: 'Trận ở miệng thung đã xong. Chọn đường cứu đoàn: đường tắt nguy hiểm hay đường vòng an toàn — chọn bằng chữ viết, ghi vào sổ.', hint: { map: 'song_bac_thuong', x: 82, y: 18 } },
+    { id: 'q34_tram_giu', name: 'Một đêm giữ thung', desc: 'Ở lại thung cụt giữ qua đêm: hai đợt quấy rối ngắn. Nghe trưởng đoàn kể vì sao họ phải chạy.', hint: { map: 'song_bac_thuong', x: 83, y: 11 } },
+    { id: 'q34_done', name: 'Đêm trước ngày cứu', desc: 'Đoàn tị nạn còn nguyên sau một đêm. Ngày mai là ngày mở đường. +200 tu vi sự kiện của chương.', hint: null },
+    { id: 'q35_cuu_doan', name: 'Cứu đoàn', desc: 'Mở đường cứu đoàn tị nạn ra khỏi thung cụt: ba đợt trận, tâm điểm là Thạch Liệt và quạt sạt lở của hắn. Kéo người ra khỏi vùng sạt TRONG lúc chiêu còn đang báo trước.', hint: { map: 'song_bac_thuong', x: 82, y: 18 } },
+    { id: 'q35_loi_cuu_nguoi', name: 'Lời cứu người', desc: 'Đoàn đã qua. Nhưng sườn đất sau đoàn cuối vẫn đang trôi xuống…', hint: { map: 'song_bac_thuong', x: 82, y: 18 } },
+    { id: 'q35_hoi_suc', name: 'Hồi sức ở cửa thung', desc: 'Ngồi lại ở cửa thung cho đoàn tị nạn qua hết. Trưởng đoàn sẽ tới nói lời cảm ơn.', hint: { map: 'song_bac_thuong', x: 82, y: 18 } },
+    { id: 'q35_done', name: 'Ba năm', desc: 'Sổ thọ nguyên đã mở trong ô thông tin nhân vật. +250 tu vi sự kiện của chương.', hint: null },
+    { id: 'q36_chuan_bi_kiep', name: 'Chuẩn bị kiếp', desc: 'Việc chuẩn bị độ kiếp Nguyên Anh ở Thanh Vân Tông: xem bảng chuẩn bị (7 đạo lôi, vật phẩm dải 2 trong túi, ngưỡng thiên uy đạo cuối 220), rồi giữ đợt quái kéo tới điểm độ kiếp ở đầu xa sông Bạc.', hint: { map: 'thanh_van_tong', x: 60, y: 6 } },
+    { id: 'q36_do_kiep', name: 'Độ kiếp Nguyên Anh', desc: 'Tới điểm cao cuối sông Bạc — nơi đã chọn từ chương 33 — và bước vào mây kiếp. Bảy đạo lôi.', hint: { map: 'song_bac_thuong', x: 89, y: 35 } },
+    { id: 'q36_tuyen_cao', name: 'Tuyên cáo', desc: 'Thiên Đạo đã tuyên đọc. Nghe phản ứng từ ba phía: tông môn, tháp, và đoàn tị nạn được cứu.', hint: { map: 'song_bac_thuong', x: 89, y: 35 } },
+    { id: 'q36_tin_niem_phong', name: 'Tin niêm phong', desc: 'Hai tin cuối cùng của cung: nhánh hồ sơ bến đò bị niêm phong thêm một lớp, và Huyết Bạc Cung chủ bắt đầu điều quân về hành lang sông Bạc.', hint: { map: 'song_bac_thuong', x: 20, y: 54 } },
+    { id: 'q36_done', name: 'Nguyên Anh', desc: 'Cung V khép lại ở Nguyên Anh Sơ Kỳ. Tầng sâu bc_bendo và Tàng Kinh cấp cao đã mở.', hint: null }
+
   ];
   function questById(id) {
     for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
@@ -2867,7 +3288,12 @@
        techId riêng: tầng kiểm theo chính bộ phổ, fxId là id trình diễn
        engine dùng ('huyen_tinh_tram'). Hệ số 1,9 nằm giữa Phá Quân 1,7
        và Quy Nhất 2,5 theo khóa thiết kế; không đổi số nào đã duyệt. */
-    { id: 'huyen_tinh_tram', name: 'Huyền Tinh Trảm', tier: 1, mult: 1.9, hits: 1, techId: 'huyen_tinh_kiem_pho', fxId: 'huyen_tinh_tram' }
+    { id: 'huyen_tinh_tram', name: 'Huyền Tinh Trảm', tier: 1, mult: 1.9, hits: 1, techId: 'huyen_tinh_kiem_pho', fxId: 'huyen_tinh_tram' },
+    /* CUNG V: dải 2 của Huyền Tinh Kiếm Phổ — hai nhát 110% (tổng
+       220% < Quy Nhất 250%, mỗi nhát dưới trần 190%). Cổng riêng:
+       Nguyên Anh (minRealm 4) + đã lĩnh tại di chỉ tàn kiếm ở tầng
+       sâu Kho Chìm (cờ arcvLianTram). */
+    { id: 'huyen_tinh_lien_tram', name: 'Huyền Tinh Liên Trảm', tier: 2, mult: 1.1, hits: 2, techId: 'huyen_tinh_kiem_pho', fxId: 'huyen_tinh_tram', minRealm: 4, flag: 'arcvLianTram' }
   ];
   function swordMoveById(id) {
     for (var i = 0; i < SWORD_MOVES.length; i++) if (SWORD_MOVES[i].id === id) return SWORD_MOVES[i];
@@ -2884,6 +3310,8 @@
       if (tid !== 'that_tinh' && !tech) return { ok: false, reason: 'Chưa học ' + (TECHNIQUE_DEFS[tid] ? TECHNIQUE_DEFS[tid].name : tid) + '.' };
       var tier = tech ? tech.tier : 1; // save chưa di trú: coi như tầng 1 (chỉ chiêu gốc chắc chắn mở)
       if (tier < move.tier) return { ok: false, reason: 'Kiếm quyết mới tầng ' + tier + ' — chưa lĩnh ngộ được ' + move.name + '.' };
+      if (move.minRealm && state.realm < move.minRealm) return { ok: false, reason: move.name + ' chỉ mở ở cảnh giới ' + (REALMS[move.minRealm] ? REALMS[move.minRealm].name : '') + '.' };
+      if (move.flag && !(state.flags && state.flags[move.flag])) return { ok: false, reason: 'Chưa lĩnh ' + move.name + ' — di chỉ tàn kiếm ở tầng sâu Kho Chìm đang giữ nó.' };
     } else if (!state.unlocked || state.unlocked.indexOf('that_tinh') < 0) {
       return { ok: false, reason: 'Chưa học Thất Tinh Kiếm Quyết.' };
     }
@@ -2970,6 +3398,10 @@
        lôi, nguồn bền vững là mua 40 Linh Thạch / đổi 30 điểm cống hiến,
        và type chuyển từ 'dan' sang 'phu' — loại vật phẩm mới đã duyệt. */
     ti_loi_phu: { name: 'Tị Lôi Phù', type: 'phu', stack: true, glyph: 'Phù' },
+    kim_than_dan: { name: 'Kim Thân Đan', type: 'dan', stack: true, glyph: 'Kim' },
+    cuu_thien_ti_loi_phu: { name: 'Cửu Thiên Tị Lôi Phù', type: 'phu', stack: true, glyph: 'Cửu' },
+    khoa_dong_ben: { name: 'Mảnh Khóa Đồng Rương Bến Đò', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Khóa', unlockKey: 'khoa_dong_ben' },
+
     phuc_linh_dan: { name: 'Phục Linh Đan', type: 'dan', stack: true, glyph: 'Linh' },
     /* ĐỒ ĂN hồi máu + Tĩnh Âm (lệnh của Bui 06:11 ngày 2026-11-04):
        vật phẩm tiêu hao dân dã dùng được từ chương 1–2 — "linh lực"
@@ -3402,6 +3834,8 @@
   };
   var TRIB_REDUCTION_CAP = 0.90;    // trần tổng giảm trừ một đạo (trừ đối hưởng thiên lôi)
   var TRIB_DAN_CUT = 0.60;          // Hộ Thể Đan: giảm 60% sát thương một đạo
+  var TRIB_DAN2_CUT = 0.70;         // CUNG V: Kim Thân Đan (dải 2): giảm 70% một đạo
+  var TRIB_PHU2_CUT = 0.90;         // CUNG V: Cửu Thiên Tị Lôi Phù (dải 2): giảm 90% một đạo
   var TRIB_PHU_CUT = 0.85;          // Tị Lôi Phù: giảm 85% sát thương một đạo
   var TRIB_PHAP_CUT = 0.25;         // Dẫn Lôi Pháp trong túi: bị động giảm 25% mọi đạo
   var TRIB_GUARD_CUT_FULL = 0.20;   // hộ pháp trọn vẹn, chưa từng vỡ: giảm 20% mọi đạo
@@ -3434,6 +3868,8 @@
     mult *= (1 - (opts.guardCut || 0));
     if (opts.active === 'dan') mult *= (1 - TRIB_DAN_CUT);
     else if (opts.active === 'phu') mult *= (1 - TRIB_PHU_CUT);
+    else if (opts.active === 'dan2') mult *= (1 - TRIB_DAN2_CUT);
+    else if (opts.active === 'phu2') mult *= (1 - TRIB_PHU2_CUT);
     var minMult = boosted * (1 - TRIB_REDUCTION_CAP);
     if (mult < minMult) mult = minMult;
     return Math.max(1, Math.floor(base * mult));
@@ -3463,11 +3899,13 @@
      lại dương nhưng mỏng = căng; không dương = nguy hiểm. */
   function tribEstimate(state, targetRealm, guardCut) {
     var prof = tribProfileFor(targetRealm); if (!prof) return null;
-    var phuLeft = bagCount(state, 'ti_loi_phu'), danLeft = bagCount(state, 'ho_the_dan');
+    var phu2Left = bagCount(state, 'cuu_thien_ti_loi_phu'), phuLeft = bagCount(state, 'ti_loi_phu'), dan2Left = bagCount(state, 'kim_than_dan'), danLeft = bagCount(state, 'ho_the_dan');
     var order = prof.bolts.map(function (b, i) { return i; }).sort(function (a, b) { return prof.bolts[b].pct - prof.bolts[a].pct; });
     var assign = {};
     for (var k = 0; k < order.length; k++) {
-      if (phuLeft > 0) { assign[order[k]] = 'phu'; phuLeft--; }
+      if (phu2Left > 0) { assign[order[k]] = 'phu2'; phu2Left--; }
+      else if (phuLeft > 0) { assign[order[k]] = 'phu'; phuLeft--; }
+      else if (dan2Left > 0) { assign[order[k]] = 'dan2'; dan2Left--; }
       else if (danLeft > 0) { assign[order[k]] = 'dan'; danLeft--; }
     }
     var total = 0, perBolt = [];
@@ -3546,6 +3984,7 @@
     '2:0': { quest: 'q9_done', label: 'Hoàn thành sự kiện đóng chương 9 tại Thung Lũng Hồi Phong', hint: 'Đột phá Trúc Cơ Trung Kỳ diễn ra trong cảnh đóng chương 9.' },
     '2:1': { quest: 'q10_done', label: 'Hoàn thành sự kiện đóng chương 10 tại Thiên Cơ Các', hint: 'Đột phá Trúc Cơ Hậu Kỳ diễn ra trong cảnh đóng chương 10.' },
     '2:2': { quest: 'q11_vat_dan', label: 'Hoàn thành mốc Viên Mãn của chương 11 (gặp trưởng lão khi tu vi đầy)', hint: 'Đột phá Trúc Cơ Viên Mãn diễn ra trong cảnh chương 11 tại đại điện.' }
+    ,'3:2': { quest: 'q33_dot_pha', label: 'Hoàn thành mốc Viên Mãn của chương 33 (sự kiện chuẩn bị ở tông đã mở)', hint: 'Đột phá Kim Đan Viên Mãn diễn ra trong cảnh chương 33 tại Đài của tông.' }
   };
   /* Điều kiện của mốc đột phá KẾ TIẾP — nguồn sự thật duy nhất cho
      hiển thị (panel đột phá ở game.js) và cho lớp chặn ở nút Đột phá.
@@ -3565,7 +4004,7 @@
     if (!r.tuviNext) { info.kind = 'none'; return info; }
     if (state.stage < r.stages.length - 1) {
       info.targetLabel = realmName(state.realm, state.stage + 1);
-      var ms = state.realm === 2 ? TRIB_STAGE_MILESTONES['2:' + state.stage] : null;
+      var ms = TRIB_STAGE_MILESTONES[state.realm + ':' + state.stage] || null;
       if (ms) {
         info.kind = 'stage';
         info.conditions.push({ id: 'milestone', label: ms.label, ok: questReached(state, ms.quest), hint: ms.hint });
@@ -3576,7 +4015,7 @@
     if (state.realm === 0) return info; // Phàm Nhân -> Luyện Khí tầng 1: mốc thức tỉnh, không thiên kiếp (mục 2.1)
     info.kind = 'great';
     info.tribulation = tribProfileFor(state.realm + 1);
-    info.tribulationOpen = state.realm + 1 === 2 || state.realm + 1 === 3;
+    info.tribulationOpen = state.realm + 1 === 2 || state.realm + 1 === 3 || (state.realm + 1 === 4 && questReached(state, 'q36_do_kiep'));
     return info;
   }
   /* Lớp chặn cho nút Đột phá thường: null = cứ để tryBreakthrough xử
@@ -3845,6 +4284,7 @@
     else state.dayCount = Math.floor(state.dayCount);
     ensureGrind(state);
     ensureSecretRealms(state);
+    ensureThoNguyen(state);
     ensureParty(state);
     ensureGiftCodes(state); // đợt giftcode 2026-11-06: save cũ chưa có danh sách mã đã dùng -> dựng rỗng
     ensureSideQuests(state);
@@ -4399,6 +4839,11 @@
        Phục Linh Đan x1 nằm ở thưởng LẦN ĐẦU ngoài hồ sơ, như mọi bí
        cảnh). Đợt quái 5% tu vi như mọi bí cảnh. */
     'profile:bc_tran_tam_boss': { lt: 24, tuviPct: 20, merit: 9, items: { phuc_linh_dan: 1 } },
+    'profile:boss_song_tram_hon': { lt: 48, tuviPct: 30, merit: 15, items: { yeu_dan_4: 1 } },
+    'profile:bc_bendo_boss': { lt: 30, tuviPct: 25, merit: 12, items: { yeu_dan_3: 1 } },
+    'profile:bc:bc_bendo:wave': { tuviPct: 5 },
+    'profile:bc_bendo_sau_boss': { lt: 40, tuviPct: 30, merit: 15, items: { yeu_dan_4: 1 } },
+    'profile:bc:bc_bendo_sau:wave': { tuviPct: 5 },
     'profile:bc_tran_tam_sau_boss': { lt: 32, tuviPct: 30, merit: 10, items: {} },
     'profile:boss_hb_ho_tran': { lt: 32, tuviPct: 30, merit: 10, items: { yeu_dan_3: 1 } },
     /* Đài thách đấu (trần mềm, điểm nhỏ): chỉ tu vi — đệ tử đấu giao
@@ -4633,7 +5078,13 @@
        công pháp nào khác (luật cứng). */
     huyen_tinh_kiem_pho: { name: 'Huyền Tinh Kiếm Phổ', kind: 'kiem_quyet', unlockKey: 'huyen_tinh_kiem_pho', grade: 'Huyen',
       tiers: [null,
-        { xp: 0 }] },
+        { xp: 0 },
+        /* CUNG V: tầng 2 của phổ (chiêu Huyền Tinh Liên Trảm, mục
+           4.4 thiết kế cung V đã duyệt) — ngưỡng lĩnh ngộ 120 điểm
+           [ĐỀ XUẤT SỐ theo thang điểm lĩnh ngộ của cung], cổng cảnh
+           giới Nguyên Anh; việc DÙNG chiêu còn qua cờ lĩnh tại di
+           chỉ tàn kiếm (arcvLianTram) trong SWORD_MOVES. */
+        { xp: 120, realm: 4, stage: 0 }] },
     luyen_hon: { name: 'Luyện Hồn', kind: 'luyen_hon', tiersBy: 'soulRank' },
     ngu_kiem: { name: 'Ngự Kiếm', kind: 'than_phap', tiersBy: 'flags.fly' },
     // ===== 33 mục của chương trình bí pháp (khung ẩn — cơ chế tích
@@ -5284,7 +5735,80 @@
     kim_dieu: { name: 'Kim Điêu', rank: 'elite', hp: 2050, atk: 33, atkInterval: 1.3, speed: 64, cry: 690 },
     van_tieu_kiem_linh: { name: 'Vân Tiêu Kiếm Linh', rank: 'normal', hp: 2350, atk: 37, atkInterval: 1.3, speed: 50, cry: 580 },
     tran_son_quan: { name: 'Trấn Sơn Thạch Tượng', rank: 'boss', hp: 4400, atk: 31, atkInterval: 1.5, speed: 34, cry: 210 },
-    van_tieu_son_quan: { name: 'Vân Tiêu Sơn Quân', rank: 'boss', hp: 8000, atk: 38, atkInterval: 1.3, speed: 46, cry: 300 }
+    van_tieu_son_quan: { name: 'Vân Tiêu Sơn Quân', rank: 'boss', hp: 8000, atk: 38, atkInterval: 1.3, speed: 46, cry: 300 },
+    giang_thu: { name: 'Giang Thú', rank: 'normal', hp: 650, atk: 20, atkInterval: 1.4, speed: 56, cry: 500 },
+    giang_tu_ha_yeu: { name: 'Giang Tu Hà Yêu', rank: 'elite', hp: 1750, atk: 23, atkInterval: 1.3, speed: 54, cry: 380,
+      skills: [
+        { id: 'xoay_ben', name: 'Xoáy Bến', telegraphSec: 1.0, note: 'xoáy nước tụ giữa bến rồi cột nước phun lên diện rộng — Phá Âm đánh tan lúc xoáy còn đang tụ' },
+        { id: 'voi_nuoc', name: 'Vòi Nước', telegraphSec: 0.7, note: 'tia nước thẳng có vệt báo trên mặt nước' },
+        { id: 'goi_dan', name: 'Gọi Đàn', note: 'gọi giang thú nhỏ lên phụ — có trần số đàn' }
+      ] },
+    song_tac: { name: 'Thủy Tặc Sông Bạc', rank: 'normal', hp: 620, atk: 20, atkInterval: 1.4, speed: 52, cry: 460 },
+    truong_nha_giang_thu: { name: 'Trường Nha Giang Thú', rank: 'elite', hp: 1650, atk: 23, atkInterval: 1.35, speed: 58, cry: 440,
+      skills: [
+        { id: 'lao_theo_coi', name: 'Lao Theo Còi', telegraphSec: 0.8, note: 'lao thẳng theo vệt sóng khi nghe hiệu còi' },
+        { id: 'kep_hai_con', name: 'Kẹp Hai Con', note: 'hai con cong vệt sóng kẹp từ hai phía' },
+        { id: 'hung_do', name: 'Húc Đỗ Đò', note: 'nhắm vào ĐƯỜNG ĐI của đò hàng chứ không nhắm người' }
+      ] },
+    hon_nuoc: { name: 'Hồn Nước', rank: 'normal', hp: 560, atk: 19, atkInterval: 1.4, speed: 44, cry: 240 },
+    ha_oan_cu_hon: { name: 'Hà Oán Cự Hồn', rank: 'boss', hp: 3000, atk: 24, atkInterval: 1.3, speed: 42, cry: 200,
+      skills: [
+        { id: 'song_lech_tan', name: 'Sóng Lệch Tần', telegraphSec: 1.0, note: 'sóng lệch tần phủ sân — chuông/đèn cả làng lạc nhịp là dấu báo' },
+        { id: 'goi_hon_nuoc', name: 'Gọi Hồn Nước', note: 'hồn nước trôi ngược dòng vào sân theo đợt' },
+        { id: 'vung_hon_lanh', name: 'Vùng Hồn Lạnh', telegraphSec: 1.0, note: 'vùng lạnh đóng băng hồn — đóng băng cả người bệnh nằm trong vùng' }
+      ] },
+    tram_hon_ha_yeu: { name: 'Trầm Hồn Hà Yêu', rank: 'boss', hp: 3600, atk: 26, atkInterval: 1.3, speed: 50, cry: 190,
+      skills: [
+        { id: 'song_hon_tram', name: 'Sóng Hồn Trầm', telegraphSec: 1.0, note: 'sóng hồn tần lệch đánh xuống vùng nước sâu' },
+        { id: 'goi_hon_vung', name: 'Gọi Hồn Vũng', note: 'triệu hồn nước từ đáy vũng lên phụ chiến' }
+      ] },
+    /* Pha 2: lính gác kho chìm + boss tầng chính bc_bendo + boss tầng
+       sâu bc_tapsau nâng dải. */
+    linh_gac_kho: { name: 'Lính Gác Kho', rank: 'normal', hp: 720, atk: 20, atkInterval: 1.4, speed: 46, cry: 300 },
+    tram_kho_thach_tuong: { name: 'Trầm Khố Thạch Tượng', rank: 'boss', hp: 2600, atk: 24, atkInterval: 1.35, speed: 38, cry: 260,
+      skills: [
+        { id: 'song_nen_ngam', name: 'Sóng Nén Ngầm', telegraphSec: 0.8, note: 'vòng nén chạy trên mặt đất ướt từ cú dậm' },
+        { id: 'da_chim_roi', name: 'Đá Chìm Rơi', telegraphSec: 1.0, note: 'bóng + gợn nước báo trước, đá rơi theo nhịp — boss tự sập sau cú rơi là cửa sổ đánh' },
+        { id: 'cuon_troi', name: 'Cuốn Trôi', note: 'pha cuối: dòng nước kéo người, không gây sát thương thẳng + gọi lính từ cửa hông' }
+      ] },
+    niem_an_thach_hon: { name: 'Niêm Ấn Thạch Hồn', rank: 'boss', hp: 2800, atk: 24, atkInterval: 1.35, speed: 40, cry: 220,
+      skills: [
+        { id: 'an_de', name: 'Ấn Đè', telegraphSec: 1.1, note: 'bóng ấn phóng to theo nhịp đếm rồi nện xuống + vòng chấn' },
+        { id: 'thach_hon_chan', name: 'Thạch Hồn Chấn', note: 'sóng đá mang mảnh hồn chạy thẳng — Chấn Âm phá được sóng' },
+        { id: 'goi_manh_hon', name: 'Gọi Mảnh Hồn', note: '2–3 mảnh hồn tự đi — hạ mảnh trừ lớp giáp, để yên chúng tự nhập lại' },
+        { id: 'niem_cua', name: 'Niêm Cửa', note: 'pha cuối tự niêm phong, giáp hồi chậm — kênh đứng yên là cửa sổ hạ boss' }
+      ] },
+    /* Pha 3: hai boss tầng sâu bc_bendo + boss cứu đoàn + boss vòng hộ pháp. */
+    tram_loi_dien_chu: { name: 'Trầm Lôi Điện Chủ', rank: 'boss', hp: 3400, atk: 26, atkInterval: 1.3, speed: 46, cry: 300,
+      skills: [
+        { id: 'loi_tram', name: 'Lôi Trầm', telegraphSec: 0.9, note: 'lôi đánh từ dưới nước đọng lên, cột sáng báo trước ở mặt nước' },
+        { id: 'dien_xuyen', name: 'Điện Xuyên', note: 'tia lôi chạy dọc rãnh nước của điện chìm' }
+      ] },
+    mo_kiem_tan_hon: { name: 'Mộ Kiếm Tàn Hồn', rank: 'boss', hp: 3400, atk: 26, atkInterval: 1.3, speed: 52, cry: 580, wordResist: 0.5,
+      skills: [
+        { id: 'anh_kiem_tram', name: 'Ảnh Kiếm Trầm', telegraphSec: 0.8, note: 'kiếm ảnh lặng lẽ trồi từ mặt đất mộ kiếm' },
+        { id: 'lien_tram_bong', name: 'Liên Trảm Bóng', note: 'hai nhát bóng nối nhau — ngôn ngữ sao dẫn của Huyền Tinh' }
+      ] },
+    thach_liet: { name: 'Thạch Liệt', rank: 'boss', hp: 3200, atk: 25, atkInterval: 1.35, speed: 44, cry: 300,
+      skills: [
+        { id: 'sat_lo_quat', name: 'Sạt Lở Quạt', telegraphSec: 1.8, note: 'vết nứt lan hình quạt từ chân hắn trong 1,8 giây rồi cả sườn chảy LIÊN TỤC — kéo người tị nạn ra khỏi quạt TRONG lúc báo trước' },
+        { id: 'goi_linh_dat', name: 'Gọi Lính', note: 'dậm đất gọi lính từ hai cửa hông, trần theo pha máu' },
+        { id: 'pha_duong', name: 'Phá Đường', telegraphSec: 1.2, note: 'nhắm vào chính đường rút — ngắt bằng ngưỡng sát thương hoặc Định Âm, thua thì mất một đoạn đường' },
+        { id: 'dat_nen_lien_hoan', name: 'Đất Nén Liên Hoàn', note: '3 viên đất nén nối nhau, viên cuối hơi đuổi theo' }
+      ] },
+    phong_giac_son_quan: { name: 'Phong Giác Sơn Quân', rank: 'boss', hp: 3000, atk: 24, atkInterval: 1.3, speed: 60, cry: 340,
+      skills: [
+        { id: 'giac_xung', name: 'Giác Xung', telegraphSec: 1.0, note: 'gió xoáy tụ ở sừng rồi lao theo vệt gió bụi VẼ TRƯỚC — nhắm vào VÒNG đột phá' },
+        { id: 'phong_ap', name: 'Phong Áp', telegraphSec: 0.9, note: 'vòng gió phồng theo nhịp đếm rồi nổ bụi đá' },
+        { id: 'gam_goi_bay', name: 'Gầm Gọi Bầy', note: 'gọi tàn quân đợt hai từ một hướng' }
+      ] },
+    doan_luu_phi_thu: { name: 'Đoạn Lưu Phỉ Thủ', rank: 'elite', hp: 1700, atk: 23, atkInterval: 1.3, speed: 56, cry: 460,
+      skills: [
+        { id: 'dao_vong_cong', name: 'Đao Vòng Đoạn Lưu', note: 'đao vòng bay thẳng rồi CONG về phía nhân chứng — lấy thân chắn là đường chơi hợp lệ' },
+        { id: 'moc_cau_keo', name: 'Móc Câu Kéo Ngã', note: 'dây móc kéo mục tiêu ra khỏi đội hình — cướp đường ưu tiên nhân chứng' },
+        { id: 'bun_tron', name: 'Bùn Trơn', telegraphSec: 0.8, note: 'vệt bùn tối báo trước, giảm tốc di chuyển' }
+      ] },
+    linh_dao_dat: { name: 'Lính Đào Đất', rank: 'normal', hp: 680, atk: 20, atkInterval: 1.4, speed: 50, cry: 460 }
   };
   var HUNT_ZONES = {
     zone_duong_mon_rung: { map: 'duong_mon', x0: 2, y0: 2, x1: 93, y1: 71, grassOnly: true, yeuDanLevel: 1 },
@@ -5322,7 +5846,12 @@
     zone_tvds_nguyenanh_tay: { map: 'tvds_nguyen_anh', x0: 4, y0: 0, x1: 43, y1: 17, yeuDanLevel: 4 },
     zone_tvds_hoathan: { map: 'tvds_hoa_than', x0: 0, y0: 0, x1: 34, y1: 21, yeuDanLevel: 4 },
     zone_tvds_hoathan_dong: { map: 'tvds_hoa_than', x0: 35, y0: 0, x1: 77, y1: 17, yeuDanLevel: 4 },
-    zone_tvds_van_an: { map: 'tvds_nguyen_anh', x0: 95, y0: 7, x1: 114, y1: 17, yeuDanLevel: 4 }
+    zone_tvds_van_an: { map: 'tvds_nguyen_anh', x0: 95, y0: 7, x1: 114, y1: 17, yeuDanLevel: 4 },
+    zone_song_bac: { map: 'song_bac_thuong', x0: 2, y0: 40, x1: 93, y1: 56, yeuDanLevel: 3 },
+    zone_song_bac_vung: { map: 'song_bac_thuong', x0: 63, y0: 50, x1: 94, y1: 68, yeuDanLevel: 4 },
+    zone_song_bac_thung: { map: 'song_bac_thuong', x0: 75, y0: 4, x1: 92, y1: 16, yeuDanLevel: 3 },
+    zone_bc_bendo: { map: 'bc_bendo', x0: 1, y0: 1, x1: 46, y1: 32, yeuDanLevel: 3 },
+    zone_bc_bendo_sau: { map: 'bc_bendo_sau', x0: 1, y0: 1, x1: 42, y1: 30, yeuDanLevel: 4 }
   };
   // Ổ (lair) của từng vùng: điểm sinh xác định, xa điểm cốt truyện/đường
   // chính — quái chỉ đi lại quanh ổ trong vùng của mình.
@@ -5368,7 +5897,17 @@
     { zoneId: 'zone_tvds_nguyenanh_tay', species: 'kim_dieu', x: 19, y: 5 },
     { zoneId: 'zone_tvds_hoathan', species: 'van_tieu_kiem_linh', x: 6, y: 11 },
     { zoneId: 'zone_tvds_hoathan_dong', species: 'van_tieu_kiem_linh', x: 44, y: 8 },
-    { zoneId: 'zone_tvds_hoathan_dong', species: 'kim_dieu', x: 71, y: 9 }
+    { zoneId: 'zone_tvds_hoathan_dong', species: 'kim_dieu', x: 71, y: 9 },
+    { zoneId: 'zone_song_bac', species: 'giang_thu', x: 34, y: 44 },
+    { zoneId: 'zone_song_bac', species: 'giang_thu', x: 52, y: 51 },
+    { zoneId: 'zone_song_bac', species: 'giang_thu', x: 64, y: 44 },
+    { zoneId: 'zone_song_bac', species: 'giang_tu_ha_yeu', x: 58, y: 51, requiresQuest: 'q26_done' },
+    { zoneId: 'zone_song_bac', species: 'truong_nha_giang_thu', x: 84, y: 51, requiresQuest: 'q27_done' },
+    { zoneId: 'zone_bc_bendo_sau', species: 'mo_kiem_tan_hon', x: 33, y: 6, requiresQuest: 'q36_done' }
+/* LƯU Ý: thủy tặc (song_tac) và lính đào đất (linh_dao_dat) là loài
+   NGƯỜI — không sinh qua ổ quái (không có sheet quái người); chúng vào
+   thế giới qua trận arcFig lặp tại điểm tương tác (bến phụ / miệng
+   thung) ở làn game.js, đúng khuôn điểm lặp hiện trường chương 14. */
   ];
   var BOSS_DEFS = {
     boss_dm_lang_vuong: { name: 'Lang Vương Bãi Phục Kích', title: 'Chúa tể bãi phục kích', species: 'lang_vuong',
@@ -5419,7 +5958,11 @@
     boss_tvds_can_ht: { name: 'Vân Tiêu Sơn Quân', title: 'Sơn Quân canh giữ Thiên Tâm Liên trên Đài Phong Vân', species: 'van_tieu_son_quan',
       zoneId: 'zone_tvds_hoathan', map: 'tvds_hoa_than', lair: { x: 17, y: 18 }, cycleDays: 6,
       profileId: 'profile:boss_tvds_can_ht', guaranteedYeuDan: 'yeu_dan_4',
-      requiresQuest: 'q7_done', minOrdinal: 500, biTich: null }
+      requiresQuest: 'q7_done', minOrdinal: 500, biTich: null },
+    boss_song_tram_hon_ha_yeu: { name: 'Trầm Hồn Hà Yêu', title: 'Yêu hồn của khúc sông sâu', species: 'tram_hon_ha_yeu',
+      zoneId: 'zone_song_bac_vung', map: 'song_bac_thuong', lair: { x: 79, y: 58 }, cycleDays: 5,
+      profileId: 'profile:boss_song_tram_hon', guaranteedYeuDan: 'yeu_dan_4',
+      requiresQuest: 'q28_done', minOrdinal: 300, biTich: null }
   };
   function bossClaimKey(bossId, cycleId) { return 'gr:boss:' + bossId + ':c' + cycleId; }
   // Trạng thái boss là HÀM THUẦN DUY NHẤT của dayCount + khóa chu kỳ +
@@ -5759,7 +6302,9 @@
        firstClear tầng ngoài — xem bcTranTamSauOpen (cổng vào ở làn
        game.js phải gọi hàm đó, không chỉ secretRealmUnlocked). */
     bc_tran_tam: { name: 'Di Tích Trận Tâm — Tầng Ngoài', band: 'kimdan', unlockQuest: 'q24_done', map: 'bc_tran_tam', boss: 'ho_tam_thach_tuong', bossProfileId: 'profile:bc_tran_tam_boss', waveProfileId: 'profile:bc:bc_tran_tam:wave', yeuDanLevel: 3 },
-    bc_tran_tam_sau: { name: 'Di Tích Trận Tâm — Tâm Trận', band: 'kimdan', unlockQuest: 'q24_done', map: 'bc_tran_tam_sau', boss: 'tran_tam_ma_anh', bossProfileId: 'profile:bc_tran_tam_sau_boss', waveProfileId: 'profile:bc:bc_tran_tam_sau:wave', yeuDanLevel: 3, partyMin: 2, partyRoles: ['dps', 'tank'] }
+    bc_tran_tam_sau: { name: 'Di Tích Trận Tâm — Tâm Trận', band: 'kimdan', unlockQuest: 'q24_done', map: 'bc_tran_tam_sau', boss: 'tran_tam_ma_anh', bossProfileId: 'profile:bc_tran_tam_sau_boss', waveProfileId: 'profile:bc:bc_tran_tam_sau:wave', yeuDanLevel: 3, partyMin: 2, partyRoles: ['dps', 'tank'] },
+    bc_bendo: { name: 'Kho Chìm Dưới Bến Đò', band: 'kimdan', unlockQuest: 'q29_done', map: 'bc_bendo', boss: 'tram_kho_thach_tuong', bossProfileId: 'profile:bc_bendo_boss', waveProfileId: 'profile:bc:bc_bendo:wave', yeuDanLevel: 3 },
+    bc_bendo_sau: { name: 'Kho Chìm — Tầng Sâu', band: 'nguyenanh', unlockQuest: 'q36_done', map: 'bc_bendo_sau', boss: 'tram_loi_dien_chu', bossProfileId: 'profile:bc_bendo_sau_boss', waveProfileId: 'profile:bc:bc_bendo_sau:wave', yeuDanLevel: 4 }
   };
   function defaultSecretRealms() {
     return { pool: { day: 0, used: 0 }, realms: {} };
@@ -6883,6 +7428,78 @@
      hạn khi đã đóng chương 20, phẩm hồn >= 4, và chương hiện tại chưa
      trả khoản dịch vụ cấp tông (soulGrandPaidFor < chương hiện tại —
      cùng khuôn soulServiceDue/soulPaidFor của dịch vụ kín chương 5). */
+/* ===== ARC_V_STORY_REWARDS (khung claimArcIvStoryReward) =====
+   q33: khoản +150 cấp SAU đột phá (khóa q33_pre_break gọi sau
+   tryBreakthrough thành công trong cảnh q33_dot_pha — khuôn q16/q22).
+   Các khoản ngộ tính kiếm [tiền lệ đã duyệt]: q26_sword_pure +60 (thuần
+   kiếm, không cộng hưởng, qua trận phục kích), q31_witness_clean +60
+   (nhân chứng không trúng đòn nào), q32_ring_untouched +120 (vòng đột
+   phá không bị chạm), q34 ba lớp đất +60 (swordInsight vào huyen_tinh). */
+  var ARC_V_STORY_REWARDS = {
+    q25_done: { tuvi: 75, flag: 'ch25Reward' },
+    q26_done: { tuvi: 100, flag: 'ch26Reward' },
+    q27_done: { tuvi: 75, flag: 'ch27Reward' },
+    q28_done: { tuvi: 100, flag: 'ch28Reward' },
+    q29_done: { tuvi: 100, flag: 'ch29Reward' },
+    q30_done: { tuvi: 125, flag: 'ch30Reward' },
+    q31_done: { tuvi: 75, flag: 'ch31Reward' },
+    q32_done: { tuvi: 100, flag: 'ch32Reward' },
+    q33_pre_break: { tuvi: 150, flag: 'ch33Reward' },
+    q34_done: { tuvi: 200, flag: 'ch34Reward' },
+    q35_done: { tuvi: 250, flag: 'ch35Reward' },
+    q26_sword_pure: { tuvi: 0, flag: 'ch26Insight', swordInsight: 60, insightTech: 'huyen_tinh_kiem_pho' },
+    q31_witness_clean: { tuvi: 0, flag: 'ch31Insight', swordInsight: 60, insightTech: 'huyen_tinh_kiem_pho' },
+    q32_ring_untouched: { tuvi: 0, flag: 'ch32Insight', swordInsight: 120, insightTech: 'huyen_tinh_kiem_pho' },
+    q34_three_layers: { tuvi: 0, flag: 'ch34Insight', swordInsight: 60, insightTech: 'huyen_tinh_kiem_pho' }
+  };
+
+  function claimArcVStoryReward(state, key) {
+    var spec = ARC_V_STORY_REWARDS[key];
+    if (!spec) return { ok: false, reason: 'unknown_reward' };
+    if (!state.flags || typeof state.flags !== 'object') state.flags = {};
+    if (state.flags[spec.flag]) return { ok: false, reason: 'duplicate' };
+    var cap = REALMS[state.realm] && REALMS[state.realm].tuviNext;
+    var gained = 0;
+    if (cap) { gained = Math.max(0, Math.min(spec.tuvi, cap - (state.tuvi || 0))); state.tuvi = (state.tuvi || 0) + gained; }
+    var tierUps = [];
+    if (spec.swordInsight) { var tg = techniqueGain(state, spec.insightTech || 'that_tinh', spec.swordInsight); if (tg && tg.tierUps) tierUps = tg.tierUps; }
+    state.flags[spec.flag] = true;
+    return { ok: true, tuvi: gained, swordInsight: spec.swordInsight || 0, tierUps: tierUps };
+  }
+
+  /* ---- CUNG V: SỔ THỌ NGUYÊN (trục "Thọ nguyên là giá") ----
+     state.thoNguyen = { paid: <tổng số năm đã trả>, open: <sổ đã mở —
+     mở tại q35_loi_cuu_nguoi> }. Thọ nguyên KHÔNG BAO GIỜ là cổng:
+     không hàm điều kiện nào của game đọc paid để chặn nội dung
+     (Nguyên tắc 0 của realm-prep). Dấu tóc bạc suy từ open. */
+  function ensureThoNguyen(state) {
+    if (!state || typeof state !== 'object') return { paid: 0, open: false };
+    /* [ĐỢT GỘP CUNG V 2026-11-06 — xử lý va chạm trường thoNguyen: đợt
+       bảng nhân vật trên cây chính đã dùng thoNguyen dạng SỐ (số năm
+       còn lại; charLifespanOf đọc phòng thủ cả hai hình dạng số ở
+       state.thoNguyen và state.flags.thoNguyen) TRƯỚC khi sổ thọ của
+       cung V (dạng vật {paid, open}) gộp vào. Save mang số thì DI TRÚ
+       số đó sang flags.thoNguyen — khe đọc phòng thủ mà đợt bảng nhân
+       vật đã chừa sẵn — để thẻ Tu luyện vẫn hiện đúng số năm, thay vì
+       để đường chuẩn hoá dưới đây lặng lẽ vứt bỏ.] */
+    if (typeof state.thoNguyen === 'number' && isFinite(state.thoNguyen) && state.thoNguyen >= 0) {
+      if (!state.flags || typeof state.flags !== 'object') state.flags = {};
+      if (typeof state.flags.thoNguyen !== 'number') state.flags.thoNguyen = state.thoNguyen;
+      state.thoNguyen = { paid: 0, open: false };
+    }
+    if (!state.thoNguyen || typeof state.thoNguyen !== 'object') state.thoNguyen = { paid: 0, open: false };
+    if (typeof state.thoNguyen.paid !== 'number' || !isFinite(state.thoNguyen.paid) || state.thoNguyen.paid < 0) state.thoNguyen.paid = 0;
+    state.thoNguyen.open = !!state.thoNguyen.open;
+    return state.thoNguyen;
+  }
+  function payThoNguyen(state, years) {
+    var t = ensureThoNguyen(state);
+    var y = Math.max(0, Math.floor(years || 0));
+    t.paid += y;
+    if (y > 0) t.open = true;
+    return { ok: true, paid: t.paid, justPaid: y, open: t.open };
+  }
+
   function arcIvRecognizeSoulRank4(state) {
     if (!state || typeof state !== 'object') return { ok: false, reason: 'no_state' };
     if (!state.flags || typeof state.flags !== 'object') state.flags = {};
@@ -6941,7 +7558,7 @@
         if (tier >= mv.tier) out.push(mv);
       } else {
         var t2 = techniqueOf(state, tid);
-        if (t2 && t2.tier >= mv.tier) out.push(mv);
+        if (t2 && t2.tier >= mv.tier && !(mv.minRealm && state.realm < mv.minRealm) && !(mv.flag && !(state.flags && state.flags[mv.flag]))) out.push(mv);
       }
     });
     return out;
@@ -7212,6 +7829,9 @@
     MONSTER_DEFS: MONSTER_DEFS, HUNT_ZONES: HUNT_ZONES, HUNT_LAIRS: HUNT_LAIRS, BOSS_DEFS: BOSS_DEFS,
     /* Cung IV (đợt 1): dữ kiện + hàm chương 13–16 cho worker engine. */
     ARC_IV_STORY_REWARDS: ARC_IV_STORY_REWARDS, claimArcIvStoryReward: claimArcIvStoryReward,
+    ARC_V_STORY_REWARDS: ARC_V_STORY_REWARDS, claimArcVStoryReward: claimArcVStoryReward,
+    ensureThoNguyen: ensureThoNguyen, payThoNguyen: payThoNguyen,
+    TRIB_DAN2_CUT: TRIB_DAN2_CUT, TRIB_PHU2_CUT: TRIB_PHU2_CUT,
     arcIvRecognizeSoulRank4: arcIvRecognizeSoulRank4, arcIvSectSoulServiceDue: arcIvSectSoulServiceDue,
     ARC_IV_CH15_LOCK_FLAG: ARC_IV_CH15_LOCK_FLAG, arcIvCh15ResonanceLocked: arcIvCh15ResonanceLocked,
     BC_SAU_GATE: BC_SAU_GATE, bcSauGateOpen: bcSauGateOpen,

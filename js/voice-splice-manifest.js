@@ -632,6 +632,30 @@ window.VSLC_VOICE_SPLICE = {
    "s": "mo_cuu_u",
    "k": "say"
   },
+  "5731f7229d36": {
+   "parts": [
+    null,
+    "v401124b687c1.mp3"
+   ],
+   "s": "truong_lao_tong",
+   "k": "say"
+  },
+  "b93efab5cb97": {
+   "parts": [
+    "ve9c6b4e7d756.mp3",
+    "va03491786a41.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
+  "f87bb92ff6eb": {
+   "parts": [
+    "v2e440e9ffe61.mp3",
+    "v5a06cf44729f.mp3"
+   ],
+   "s": "chap_su_thap",
+   "k": "say"
+  },
   "209fa37be659": {
    "parts": [
     null,
@@ -665,10 +689,20 @@ window.VSLC_VOICE_SPLICE = {
    ],
    "s": "thien_dao",
    "k": "say"
+  },
+  "885912e5e924": {
+   "parts": [
+    "v7ba0b1bcf472.mp3",
+    "v40c7c95433cf.mp3",
+    "vd67cdcc1193d.mp3"
+   ],
+   "s": "thien_dao",
+   "k": "say"
   }
  },
  "announce": {
   "truc_co": "ae81e8ccb32c",
-  "kim_dan": "6e17f56bc94f"
+  "kim_dan": "6e17f56bc94f",
+  "nguyen_anh": "885912e5e924"
  }
 };

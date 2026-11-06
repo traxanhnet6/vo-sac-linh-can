@@ -1487,6 +1487,42 @@
     { who: 'npc', text: 'Hồ sơ không biết nói dối, cậu Giang. Chỉ có người ghi hồ sơ mới nói dối — vì thế ta mới tự tay ghi mọi dòng quan trọng suốt hai mươi năm.' },
     { who: 'npc', text: 'Ngồi xuống uống chén trà đã. Người mang bí mật đi qua cửa lầu này, ra về nhẹ hơn lúc vào — hoặc không ra về được nữa. Cậu thuộc loại nào, lát nữa sẽ rõ.' }
   ];
+  /* Cung V (chương 25–36): bể thoại chờ của 11 NPC sông Bạc — 7 câu đầu
+     chép nguyên văn từ lời chờ trong game.js (arcvNpcIdleLine) để hai
+     đường nói chờ không lệch nhau; 4 câu sau viết cho dân làng/tín sứ. */
+  IDLE_AFTER.nguoi_lai_do = [
+    { who: 'npc', text: 'Đò vẫn chạy theo con nước. Ngươi cần sang sông, hay cần nghe chuyện sông?' }
+  ];
+  IDLE_AFTER.tram_truong = [
+    { who: 'npc', text: 'Sổ sách của trạm này, trang nào cũng có người giữ. Ngươi cứ hỏi khi cần.' }
+  ];
+  IDLE_AFTER.truong_thon_ven_song = [
+    { who: 'npc', text: 'Làng đã yên hơn nhiều từ buổi luyện hồn ấy. Bàn thờ đầu làng vẫn thắp hương mỗi sớm.' }
+  ];
+  IDLE_AFTER.nguoi_giu_truoc = [
+    { who: 'npc', text: 'Bếp nhà ta cháy hai lần trong một đời — lần thứ hai có người dập hộ. Ta nhớ ơn đó.' }
+  ];
+  IDLE_AFTER.nhan_chung = [
+    { who: 'npc', text: 'Ta chỉ là người khuân vác năm xưa. Những gì ta thấy, ta đã nói hết với ngươi rồi.' }
+  ];
+  IDLE_AFTER.dan_nan_truong = [
+    { who: 'npc', text: 'Đoàn của ta nợ ngươi một mạng đường. Có việc gì ở thung lũng này, cứ gọi.' }
+  ];
+  IDLE_AFTER.chu_do = [
+    { who: 'npc', text: 'Thuyền của ta vẫn ngược thác đều đặn. Cần hộ tống chuyến nữa thì cứ nói — công cán tính theo chuyến.' }
+  ];
+  IDLE_AFTER.dan_lang_a = [
+    { who: 'npc', text: 'Sông năm nay hiền hơn năm ngoái. Từ buổi luyện hồn xong, đêm nào làng cũng ngủ yên.' }
+  ];
+  IDLE_AFTER.dan_lang_b = [
+    { who: 'npc', text: 'Người bệnh trong làng khỏi gần hết rồi. Ơn này làng nhớ lâu lắm.' }
+  ];
+  IDLE_AFTER.dan_lang_c = [
+    { who: 'npc', text: 'Ta ở đầu làng, có gì cứ ghé. Bàn thờ vô danh kia, sáng nào ta cũng thắp hương.' }
+  ];
+  IDLE_AFTER.tin_su_lang = [
+    { who: 'npc', text: 'Ta chạy tin cho mấy làng quanh bến. Chuyện lớn nhỏ gì, qua miệng ta cũng thành tin cả.' }
+  ];
   IDLE_AFTER.ky_luc_quan = [
     { who: 'npc', text: 'Tiểu nhân chỉ ghi chép. Giám sát sứ đọc gì, tiểu nhân ghi nấy — không thêm một chữ, không bớt một chữ.' },
     { who: 'npc', text: 'Hồ sơ của cậu là chồng giấy dày nhất phòng này tháng này đấy. Tiểu nhân phải thay bút hai lần rồi.' }
@@ -2232,6 +2268,488 @@
     { who: 'narrate', text: 'Ngươi nghe trang tàn quyển trước khi chạm vào nó: nhịp điện còn ấm trong từng nét chữ gõ rất khẽ, đều, và quen — cùng một họ nhịp với thứ ngươi từng nghe trong chu kỳ của những vật cổ xưa. Đây không phải sách của người thường để lại. Đây là một đòn lôi đang ngủ trong một trang giấy.' },
     { who: 'choice', text: 'Trang tàn quyển trong hốc cây cháy vẫn còn ấm điện quang. Ngươi…', options: [ { label: 'Nhận trang tàn quyển, ghi nhớ nhịp sét vào lòng', action: 'kyngo_bon_loi_nhan' }, { label: 'Đọc kỹ tại chỗ cho tới khi điện quang tắt hẳn', action: 'kyngo_bon_loi_doc' } ] }
   ];
+/* ===== CUNG V — CHƯƠNG 25 ===== */
+/* SCENE_CH25_LEN_DUONG — tháp giao việc lên đường (25.md mục 3, cảnh 1).
+   R-5 nhịp phụ: tiễn ở sân tháp có mặt đệ tử trực kỳ + dân chờ kiểm trắc. */
+var SCENE_CH25_LEN_DUONG = [
+  { who: 'narrate', text: 'Kiểm Trắc Tháp, sáng sớm. Chấp sự tháp trải một cuộn hồ sơ cũ lên bàn đá giữa sân — mép giấy đã vàng, dấu triện của tháp đóng chồng lên nhau theo năm tháng.' },
+  { who: 'chap_su_thap', text: 'Cậu Giang, tháp gọi cậu không phải để kiểm trắc. Dọc sông Bạc phía bắc có một trạm lưu trữ của tháp — nơi giữ hồ sơ các đoàn kiểm trắc đi qua con sông ấy. Mấy tháng nay, trạm gửi về toàn những phong thư cụt: viết dở, không kết, không dấu hiệu nguy cấp rõ ràng.' },
+  { who: 'chap_su_thap', text: 'Tháp cần một người tới tận nơi, nhìn tận mắt, rồi về nói lại cho rõ. Ta chọn cậu — vì cậu là người nghe được những thứ mà giấy tờ không ghi.' },
+  { who: 'tran_tu_linh', text: 'Ta ghi sẵn cho huynh lộ trình: qua cửa bắc của tháp, theo đường mòn ven đồi nửa ngày là tới bến đò sông Bạc. Người lái đò ở đó tên họ gì ta chưa rõ — sổ của tháp chỉ ghi một chữ "lão đò", kèm một dòng bút tích cũ: "hỏi chuyện sông, đừng hỏi chuyện người".' },
+  { who: 'tran_tu_linh', text: 'Huynh đi chuyến này, tiện thể xem giúp ta một việc nhỏ: trạm lưu trữ ấy có giữ danh sách hành khách qua sông của nhiều năm về trước. Nếu hồ sơ còn nguyên, ta muốn biết một đoàn người năm xưa đã qua sông vào ngày nào. Chỉ vậy thôi — đừng đào sâu khi chưa rõ nước sông đục trong ra sao.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta đi. Có tin gì, ta viết về tháp trước, rồi mới về trình diện sau.' },
+  { who: 'chap_su_thap', text: 'Tốt. Nhớ một điều: sông Bạc không phải đất của tông môn nào. Ở đó, danh phận Kiểm Trắc Tháp mở được cửa trạm, nhưng không mở được lòng người. Cậu tự liệu.' },
+  { who: 'narrate', text: 'Ngoài sân, mấy đệ tử trực kỳ và dân chờ kiểm trắc đứng nép hai bên nhường lối. Tin "người của tháp đi sông Bạc" đã kịp lan ra tới cổng trước khi ngươi bước qua cửa bắc.' }
+];
+/* SCENE_CH25_BEN_DO — tới bến đò, gặp người lái đò (cảnh 2). */
+var SCENE_CH25_BEN_DO = [
+  { who: 'narrate', text: 'Bến đò sông Bạc hiện ra sau một khúc quanh: một làng nhỏ nép bờ nam, mấy con đò ngang buộc cọc tre, và mặt sông rộng tới mức bờ bên kia chỉ còn là một vệt xanh mờ trong nắng chiều.' },
+  { who: 'nguoi_lai_do', text: 'Khách của tháp phải không? Nhìn cái cách cậu đứng nhìn sông là lão biết — người thường nhìn đò, người của tháp nhìn nước. Lão chèo đò ở bến này bốn mươi năm rồi. Sông này có chuyện gì, lão là người biết đầu tiên — và thường cũng là người biết cuối cùng, vì chả ai hỏi.' },
+  { who: 'hero', mode: 'write', text: '(viết) Lão cho ta qua sông. Và nếu lão không vội, ta muốn hỏi chuyện con sông này — chuyện từ nhiều năm trước.' },
+  { who: 'nguoi_lai_do', text: 'Qua sông thì dễ. Hỏi chuyện thì… để coi trời đã. Ban ngày lão chỉ nói chuyện đò, chuyện nước, chuyện cá. Chuyện người trên sông này — phải đợi tối, đợi lão nghe sông nói xong đã.' },
+  { who: 'nguoi_lai_do', text: 'Cậu cứ qua bờ bắc trước, ghé trạm lưu trữ của tháp làm việc của cậu. Tối xuống, quay lại bến này. Lão pha ấm trà, ngồi ở đầu cầu ván này chờ.' },
+  { who: 'narrate', text: 'Con đò lướt êm qua mặt sông phẳng như gương. Giữa dòng, lão đò bỗng ngừng chèo một nhịp, nghiêng đầu nghe — như thể dưới mặt nước phẳng lặng kia có thứ gì vừa đi qua rất sâu.' }
+];
+/* SCENE_CH25_HOI_CHUYEN_XUA — ban ngày chỉ được nửa vời (cảnh 3, ở trạm). */
+var SCENE_CH25_HOI_CHUYEN_XUA = [
+  { who: 'narrate', text: 'Trạm lưu trữ của tháp nằm trên bờ bắc: một dãy nhà đá thấp, sân lát gạch, kệ hồ sơ xếp theo năm tháng. Mọi thứ ngăn nắp — ngăn nắp tới mức không giống một nơi đang có chuyện.' },
+  { who: 'tram_truong', text: 'Người của tháp tới kiểm tra, phải không? Mời cậu xem: sổ sách đủ, triện đủ, không thiếu một trang. Mấy phong thư cụt mà tháp lo — là do người viết thư trước đây của trạm có tật viết dở rồi gửi luôn. Tôi đã cho thay người.' },
+  { who: 'tram_truong', text: 'Còn chuyện năm xưa… cậu hỏi đoàn người nào qua sông, thì xin nói rõ tên đoàn, năm nào. Hồ sơ của trạm tra theo danh sách, không tra theo lời đồn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta chưa có tên đoàn. Ta chỉ có một khoảng năm, và một hướng đi: từ phía tháp, qua sông, về bắc.' },
+  { who: 'tram_truong', text: 'Vậy thì khó. Không tên, không ngày — hồ sơ mấy chục năm tra bằng tay tới bao giờ. Cậu cứ ở lại trạm vài hôm, tự tra lấy. Kệ nào cũng mở cho người của tháp — trừ việc tra ra được gì, trạm không dám hứa.' },
+  { who: 'narrate', text: 'Ngươi tra kệ hồ sơ tới khi nắng xiên qua cửa sổ. Danh sách qua sông của những năm ấy vẫn còn — nhưng các trang đều mỏng một cách lạ lùng so với độ dày của gáy sổ. Có điều gì đó ở đây ban ngày không nói được; ngươi nhớ lời lão đò: chuyện người, phải đợi tối.' }
+];
+/* SCENE_CH25_SONG_DEM_PRE — đêm ở bến: quái sông trồi lên (cảnh 4, trước trận). */
+var SCENE_CH25_SONG_DEM_PRE = [
+  { who: 'narrate', text: 'Màn đêm buông xuống bến đò. Lão đò ngồi ở đầu cầu ván như đã hẹn, ấm trà chưa kịp rót — thì mặt sông phẳng lặng bỗng gợn lên từng vòng tròn không gió, đều đặn như có bầy gì đang bơi vòng dưới nước.' },
+  { who: 'nguoi_lai_do', text: 'Đấy. Cậu nghe đi — sông đang nói đấy. Mấy tháng nay, cứ đêm xuống là chúng nó về. Dân làng đóng cửa sớm, đò không dám qua sông sau giờ này. Lão già này ngồi đây mỗi đêm, một là canh bến, hai là… chờ xem có ai tới nghe cùng không.' },
+  { who: 'nguoi_lai_do', text: 'Con đầu đàn to lắm — dân gọi nó là Giang Tu, "râu sông". Nó quậy phá không phải vì đói. Nó như đang… tìm cái gì đó dưới đáy, hoặc đuổi cái gì đó khỏi khúc sông này. Cậu cẩn thận: nước xiết theo nó, đứng gần mép là bị cuốn chân.' },
+  { who: 'narrate', text: 'Một cái lưng đen trơn trồi lên giữa dòng, dài như một con đò lật úp, rồi lặn xuống để lại xoáy nước xoáy tròn giữa bến. Đàn quái sông nổi lên theo, mắt sáng lấm tấm trong đêm.' }
+];
+/* SCENE_CH25_SONG_DEM_END — sau trận: nửa sau câu chuyện của lão đò (cảnh 5). */
+var SCENE_CH25_SONG_DEM_END = [
+  { who: 'narrate', text: 'Con đầu đàn chìm xuống dòng sâu, đàn quái tan theo. Mặt sông lặng dần; đèn trong làng bến đò lần lượt sáng lại sau những cánh cửa khép chặt cả buổi tối.' },
+  { who: 'nguoi_lai_do', text: 'Bốn mươi năm chèo đò, lão mới thấy có người đứng ở bến này mà đánh cho sông yên lại. Cậu hỏi chuyện năm xưa — giờ lão nói được rồi. Nói trong đêm yên thế này mới là nói thật.' },
+  { who: 'nguoi_lai_do', text: 'Hồi ấy, có một đoàn người qua sông ở bến này. Không phải đoàn thương, không phải đoàn kiểm trắc thường — họ đi lặng lắm, đồ đạc gói kín, trẻ con được bế trên tay không cho khóc. Người dẫn đoàn trả lão gấp ba tiền đò, dặn một câu: "Chuyến này, coi như không có."' },
+  { who: 'nguoi_lai_do', text: 'Lão nhận tiền, và lão giữ lời — bốn mươi năm. Nhưng đêm nay lão nói, vì một lẽ: dạo gần đây, có người khác cũng tới hỏi chuyện chuyến đò ấy. Hỏi quanh co, hỏi qua người khác, không dám đứng ở bến này như cậu. Người ta hỏi trước cậu không lâu đâu.' },
+  { who: 'hero', mode: 'write', text: '(viết) Người hỏi ấy — lão còn nhớ gì không? Một nét mặt, một giọng nói, một thói quen?' },
+  { who: 'nguoi_lai_do', text: 'Không thấy mặt. Nhưng có một thứ lão nhớ: người ấy đứng trên bờ mà nghe sông rất lâu, hệt như cậu ban chiều. Nghe xong, bỏ đi, để lại trên cầu ván một vệt nước hình vòng tròn — như dấu của một thứ gì tròn ướt đặt xuống rồi nhấc lên.' },
+  { who: 'narrate', text: 'Ngươi nhìn xuống cầu ván: gỗ đã khô từ lâu, chẳng còn vệt gì. Nhưng trong sổ ghi chép của tháp, có một đoàn người từng "coi như không có" — và gần đây, có kẻ khác cũng đang lần theo dấu của họ, đi trước ngươi một bước.' },
+  { who: 'nguoi_lai_do', text: 'Cậu ở lại bến này ít hôm đi. Sông yên được một đêm chưa chắc yên hẳn — và chuyện cũ, lão nhớ tới đâu sẽ kể tới đó. Người già nhớ chậm, nhưng nhớ dai.' }
+];
+/* SCENE_CH25_TIN_B — sáng hôm sau ở tháp: tin "người của tháp ở bến đò"
+   lan về trước người (25.md mục 3 cảnh cuối + mục 5 nhịp R-5 phụ). Chơi
+   khi người chơi quay lại tháp gặp chấp sự sau q25_done. */
+var SCENE_CH25_TIN_B = [
+  { who: 'tin_su_b', text: 'Thưa chấp sự, tin từ trạm ven sông vừa về: người của tháp tới bến đò hôm qua, đêm qua đánh yên cả đàn quái sông quậy bến. Dân làng bến đò sáng nay đã dám mở cửa sớm — họ gửi lời hỏi thăm và một giỏ cá khô theo đường trạm.' },
+  { who: 'chap_su_thap', text: 'Người chưa về mà việc đã về trước. Tốt. Ghi vào sổ trực của tháp: bến đò sông Bạc, từ đêm qua, đò được qua sông trở lại sau khi trời tối.' },
+  { who: 'narrate', text: 'Câu chuyện ở bến đò lan đi nhanh hơn bất kỳ phong thư nào của trạm — đó là cách tin tức vẫn đi lại trên con sông này: bằng miệng của những người chèo đò.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 26 ===== */
+/* SCENE_CH26_TRUY_VET — tháp đối chiếu ba mảnh dấu vết (26.md cảnh 1). */
+var SCENE_CH26_TRUY_VET = [
+  { who: 'narrate', text: 'Trạm lưu trữ, góc kệ hồ sơ phía trong cùng. Ngươi quay lại tra nốt phần sổ còn dở hôm qua — và lần này ngươi tra bằng tai trước khi tra bằng mắt: cả dãy kệ im lặng đều nhau, trừ một quãng ngắn có âm gốc lệch đi rất khẽ, như tiếng giấy từng bị rút ra rồi nhét lại vội.' },
+  { who: 'tram_truong', text: 'Cậu lại tra kệ ấy à? Tôi nói rồi, hồ sơ đủ trang. Sổ dày mỏng là do giấy mỗi năm mỗi khác, cậu đừng suy diễn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta không suy diễn. Ta đếm. Gáy sổ ghi bốn mươi tám trang; trang còn lại bốn mươi lăm. Ba trang mất đi, mất cùng một quãng năm. Trạm trưởng, ông viết giải trình, hay để ta viết?' },
+  { who: 'tram_truong', text: '…Tôi không rút. Tôi thề — tôi chỉ là người giữ chìa khóa của đời trạm này. Nhưng… đời trạm trước tôi, có một người giữ hồ sơ riêng. Ông ta nghỉ việc đã lâu, nhà ở cuối làng ven sông phía bắc. Người ta gọi ông ta là "người giữ trước".' },
+  { who: 'tram_truong', text: 'Trước khi nghỉ, ông ta có dặn tôi một câu mà tới giờ tôi mới hiểu: "Kệ hồ sơ thiếu gì, đừng hỏi trạm. Hỏi sông." Tôi tưởng ông ta nói mê. Giờ thì…' },
+  { who: 'narrate', text: 'Ba mảnh dấu vết đã rõ: một quãng năm mất trang, một người giữ hồ sơ đời trước còn sống, và một câu dặn nghe như mê sảng. Ngươi gấp sổ lại. Muốn biết hồ sơ mất những gì, phải tới nhà người giữ trước.' }
+];
+/* SCENE_CH26_GIU_TRUOC — nhà người giữ trước: bếp cháy dở (cảnh 2, trước nhịp tay). */
+var SCENE_CH26_GIU_TRUOC = [
+  { who: 'narrate', text: 'Nhà người giữ trước ở cuối làng ven sông: mái thấp, sân nhỏ, một ông lão gầy ngồi vá lưới ở hiên. Thấy người của tháp tới, ông không ngạc nhiên — như thể ông đã chờ chuyến thăm này từ rất lâu.' },
+  { who: 'nguoi_giu_truoc', text: 'Ngồi đi, cậu. Ta chờ người của tháp tới hỏi chuyện này… mười mấy năm rồi. Hỏi thì ta trả lời. Nhưng trước hết — cậu ngửi thấy không? Mùi khét. Bếp nhà ta cháy từ chiều qua, cháy rất đúng chỗ: đúng cái bếp kê sát vách buồng chứa đồ cũ của ta.' },
+  { who: 'nguoi_giu_truoc', text: 'Lạ ở chỗ: lửa bén từ ngoài vào trong, mà chiều qua ta không nhóm bếp. Hàng xóm dập giúp, đồ trong buồng cháy mất một nửa. Nửa còn lại — tro còn ấm. Cậu có tai nghe được đồ vật, phải không? Vậy nghe giúp ta: trong đống tro ấy, còn thứ gì chưa cháy hết không?' },
+  { who: 'hero', mode: 'write', text: '(viết) Ông lùi ra. Ta nghe.' },
+  { who: 'narrate', text: 'Việc trước mắt: dập nốt những đốm lửa âm ỉ trong bếp cháy (điểm lửa còn đỏ sẽ bén lại), rồi nghe âm gốc trong đống tro tìm vật chưa cháy hết. Làm bằng tay, ngay tại hiện trường.' }
+];
+/* SCENE_CH26_BEP_END — sau nhịp tay ở bếp: vật chưa cháy + lời người giữ (cảnh 2b). */
+var SCENE_CH26_BEP_END = [
+  { who: 'narrate', text: 'Dưới lớp tro ấm, âm gốc của một vật bằng đồng vẫn còn nguyên vẹn: một chiếc khóa nhỏ không cháy — khóa của một chiếc rương hồ sơ cũ, miệng khóa còn dính sáp niêm phong của tháp từ đời trạm trước.' },
+  { who: 'nguoi_giu_truoc', text: 'Cái khóa ấy… là khóa rương riêng của ta. Trong rương từng có bản sao tay của mấy trang hồ sơ — ta chép lại ngày xưa vì linh cảm chúng sẽ bị rút. Rương cháy rồi; bản chép cháy theo. Nhưng cậu nghe này: kẻ đốt bếp không tìm khóa. Chúng tìm bản chép — và chúng tưởng đã đốt sạch.' },
+  { who: 'nguoi_giu_truoc', text: 'Chúng chậm một bước. Bản chép thật sự không nằm trong rương. Năm ấy ta cẩn thận hơn thế: ta đọc thuộc chúng, từng chữ, rồi mới đốt bản gốc của chính mình. Mười mấy năm, ta giữ trong đầu. Giờ cậu tới — ta nói lại cho cậu ghi.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ông nói đi. Chậm thôi. Ta ghi từng chữ.' },
+  { who: 'nguoi_giu_truoc', text: 'Đó là danh sách một đoàn qua sông: mười một người lớn, ba trẻ nhỏ, đi về hướng bắc, không ghi họ tên — chỉ ghi một ký hiệu chung cho cả đoàn: một vòng tròn không khép kín. Và một dòng ghi chú của người viết sổ năm ấy: "đoàn này qua sông, không lưu dấu — theo lệnh truyền miệng, không có lệnh văn".' },
+  { who: 'narrate', text: 'Ngươi ghi lại từng chữ. Một đoàn người không tên, một ký hiệu vòng tròn không khép, một lệnh truyền miệng không văn bản — hồ sơ đã bị rút trang chính là để che đi chừng ấy. Ngoài sân, nắng chiều đang ngả; con đường về bến đò còn dài.' }
+];
+/* SCENE_CH26_BAY_PRE — phục kích trên đường về (cảnh 3, trước trận). */
+var SCENE_CH26_BAY_PRE = [
+  { who: 'narrate', text: 'Đường bờ bắc về chiều vắng người. Đi được nửa đường, ngươi nghe thấy tiếng kêu cứu yếu ớt từ khúc sông phía trước: một nhóm người nằm ngồi la liệt bên vệ đường như vừa gặp nạn, áo rách, máu giả thấm khăn — và âm gốc của họ thì hoàn toàn bình tĩnh.' },
+  { who: 'sat_thu_truong', text: 'Cứu… cứu với… đò của chúng tôi lật giữa dòng, người còn kẹt dưới nước… cậu ơi, lại gần đây, đỡ giúp một tay…' },
+  { who: 'narrate', text: 'Tai ngươi đếm được nhịp tim của chúng: đều, chậm, không một nhịp nào hoảng loạn. Đây không phải nạn nhân. Đây là một cái bẫy bày hình người bị nạn — và ngươi đã đi vào giữa vòng của chúng.' }
+];
+/* SCENE_CH26_BAY_END — sau trận phục kích (cảnh 3b). */
+var SCENE_CH26_BAY_END = [
+  { who: 'narrate', text: 'Tên cầm đầu trúng đòn ngã xuống vệ đường, đội hình ba cánh tan vỡ. Những tên còn lại tháo chạy về hai phía — ngươi không đuổi: người giữ trước còn ở nhà một mình, và tin ngươi nghe được hôm nay quý hơn một tù binh.' },
+  { who: 'sat_thu_truong', text: 'Đừng… đừng giết ta. Ta chỉ là kẻ được thuê. Người thuê không nói tên — chúng ta nhận việc qua một mối ở trấn ven sông, tiền trả trước một nửa, dặn rõ: "chỉ cần giữ chân người của tháp trên đường về, lấy được cuốn sổ ghi chép trên người hắn thì càng tốt".' },
+  { who: 'hero', mode: 'write', text: '(viết) Mối ở trấn ven sông tên gì? Nhận diện ra sao?' },
+  { who: 'sat_thu_truong', text: 'Không tên. Mỗi lần gặp đều ở bến cá lúc trời chưa sáng, người ấy không xuống đò, chỉ đứng trên bờ nói vọng xuống. Một điều ta nhớ: bên cạnh người ấy luôn có một kẻ theo hầu xách một chiếc đèn lồng có chụp tròn — đèn của… của người làm trong các lầu lớn.' },
+  { who: 'narrate', text: 'Đèn lồng chụp tròn là đèn của Thiên Cơ Các — loại đèn chỉ người trong các mới dùng khi đi việc ngoài. Ngươi thả tên sát thủ đi với một lời nhắn viết nguệch ngoạc dúi vào tay hắn: "Sổ không ở trên người ta. Sổ ở trong đầu một ông lão mà các ngươi đã đốt hụt một lần."' }
+];
+/* SCENE_CH26_KE_DOC — về tháp: kết luận có nội gián (cảnh 4). */
+var SCENE_CH26_KE_DOC = [
+  { who: 'narrate', text: 'Kiểm Trắc Tháp, phòng hồ sơ. Ngươi đặt lên bàn ba thứ: chiếc khóa đồng cháy dở, bản ghi lời người giữ trước, và lời khai của tên sát thủ về chiếc đèn lồng chụp tròn.' },
+  { who: 'chap_su_thap', text: 'Khoan. Cậu nói lại cho rõ: chúng biết cậu đi đường nào, về giờ nào — và biết cả chuyện cuốn sổ ghi chép. Hành trình của cậu, tháp chỉ ghi trong sổ trực nội bộ. Người ngoài không thể biết.' },
+  { who: 'tran_tu_linh', text: 'Trừ phi… tin rò từ bên trong. Chấp sự, sổ trực kỳ này qua tay mấy người? Ta cần danh sách: ai chép, ai đọc, ai mang đi sao lưu. Không phải để buộc tội vội — để biết đường mà giữ những việc sau.' },
+  { who: 'chap_su_thap', text: 'Việc này ta xử lý trong tháp, kín đáo. Cậu Giang: từ giờ, hành trình của cậu ta sẽ ghi làm hai bản — một bản thật, một bản để cho kẻ rò tin đọc. Còn danh tính kẻ ấy… chưa phải lúc lật. Lật sớm, chúng ta mất đường dây; để lâu, chúng ta mất người.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta hiểu. Ta về bến đò tiếp tục việc của trạm. Phía tháp — giữ cho khéo.' },
+  { who: 'narrate', text: 'Một đoàn người không tên trong hồ sơ mười mấy năm trước; một kẻ trong Thiên Cơ Các đang tuồn hành trình của ngươi ra ngoài; và ở bến đò, lão lái đò vẫn pha trà chờ người nghe sông nói hết câu chuyện. Chương này khép lại ở đó — mọi sợi dây đều còn đang căng.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 27 ===== */
+/* SCENE_CH27_THU_NHA — thư của U Nhàn tới bến đò (27.md cảnh 1). */
+var SCENE_CH27_THU_NHA = [
+  { who: 'narrate', text: 'Sáng ở làng bến đò. Người đưa tin của trạm trao cho ngươi một phong thư dán kín, nét chữ quen thuộc tới mức ngươi nhận ra trước khi nhìn dấu niêm: chữ của Hứa U Nhàn.' },
+  { who: 'u_nhan', text: 'Phàm ca. Thư này muội viết khi nhà vừa qua một đợt sóng: Đỗ gia lại cho người tới nói chuyện cũ, mang theo cả lời đe dọa về việc làm ăn của Hứa gia ở thành. Cha đứng ra chắn hết; còn muội — muội đã thôi chờ ai tới giải quyết thay.' },
+  { who: 'u_nhan', text: 'Muội nói việc chính: muội sắp đột phá. Không phải chuyện gấp gáp nay mai, nhưng không còn xa. Lần này muội không viết để báo tin vui, cũng không viết để gọi huynh về. Muội viết để huynh biết: con đường của muội, muội tự đi — như con đường của huynh, huynh đang tự đi vậy.' },
+  { who: 'u_nhan', text: 'Huynh ở sông Bạc lo việc của huynh. Khi nào muội chọn được ngày và chỗ, muội sẽ cho người báo. Tới lúc ấy, nếu huynh về được thì về — không về được, muội cũng không trách. Người tu tiên với nhau, hiểu nhau ở chỗ đó.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta đọc rồi. Thư của nàng không xin gì cả — và chính vì thế, nó nặng hơn mọi lời nhờ vả.' },
+  { who: 'narrate', text: 'Ngươi gấp thư cất vào ngực áo. Ở bến đò, người của làng đang xôn xao một chuyện khác: đêm qua, đò hàng của làng bị cướp ở bến phụ phía đông — lần thứ ba trong tháng.' }
+];
+/* SCENE_CH27_SONG_GIO_PRE — bến phụ: thủy tặc + thú bị nhốt (cảnh 2, trước trận). */
+var SCENE_CH27_SONG_GIO_PRE = [
+  { who: 'narrate', text: 'Bến phụ phía đông của làng: mấy khoang đò hàng bị phá, thùng gỗ vỡ tung, hàng hóa vơ vét sạch. Dân làng đứng quanh, mặt người nào cũng là một màu mệt mỏi quen thuộc — thứ mệt của người bị cướp tới lần thứ ba.' },
+  { who: 'dan_lang_b', text: 'Cậu của tháp ơi, chúng tôi chịu hết nổi rồi. Bọn thủy tặc này lạ lắm: chúng không đi lẻ, chúng đi theo một tiếng còi. Nghe còi là cả đàn thú dữ từ dưới nước trồi lên húc đò — thú hoang mà như thú nhà có người chăn vậy.' },
+  { who: 'nguoi_lai_do', text: 'Lão nghe dân nói mà tới xem. Cậu nhìn kìa — trong lồng gỗ kia, chúng bỏ lại một con thú bị thương không mang đi nổi. Răng nó dài như răng cưa, cổ còn vết dây và một cái còi nhỏ buộc bằng dây da… Cậu nghe được âm của nó không? Nó sợ. Nó bị người ta dạy bằng cái còi ấy.' },
+  { who: 'narrate', text: 'Từ phía mặt sông, một hồi còi ngắn vang lên — và mặt nước quanh bến sủi bọt. Bọn thủy tặc quay lại lấy nốt phần hàng còn sót, dẫn theo đàn thú dữ của chúng.' }
+];
+/* SCENE_CH27_SONG_GIO_END — sau khi dẹp thủy tặc ở bến phụ (cảnh 2b, ngắn). */
+var SCENE_CH27_SONG_GIO_END = [
+  { who: 'narrate', text: 'Tiếng còi chỉ huy bị cắt đứt giữa chừng; đàn thú mất hiệu lệnh, tán loạn rồi lặn dần xuống dòng sâu. Bọn thủy tặc tháo chạy theo đường nước cạn phía đông.' },
+  { who: 'nguoi_lai_do', text: 'Con thú trong lồng kia… cậu tính sao? Nó là thú dữ, thả ra nó lại theo còi người ta mà hại đò. Nhưng nó cũng chỉ là con vật bị dạy dỗ sai đường.' },
+  { who: 'hero', mode: 'write', text: '(viết) Mở lồng, thả nó về khúc sông sâu phía trên nguồn — xa bến, xa còi. Nó còn quay lại theo còi hay không là việc của nó. Người ở bến này từ nay tự phải có cách giữ đò: việc ấy, để ta nói với trưởng thôn.' },
+  { who: 'narrate', text: 'Việc giữ đò hóa ra có sẵn một đường: đoàn đò hàng lớn của vùng sắp qua bến, cần người hộ tống qua ghềnh xiết. Làng cử ngươi — người vừa dẹp yên bến phụ — đi cùng chuyến đò ấy.' }
+];
+/* SCENE_CH27_HO_TONG_PRE — nhận chuyến hộ tống đò hàng (cảnh 3, trước khởi hành). */
+var SCENE_CH27_HO_TONG_PRE = [
+  { who: 'narrate', text: 'Đò hàng lớn neo ở bến chính: ba khoang hàng chất đầy, dây neo căng, người chèo đò là những tay sông nước lâu năm của làng. Chủ đò là một người đàn bà đứng tuổi, nói năng rành rọt như đếm tiền.' },
+  { who: 'chu_do', text: 'Tôi là chủ chuyến hàng này. Nghe tiếng cậu ở bến phụ rồi nên tôi nói thẳng: chuyến này qua ghềnh xiết phía đông, nơi bọn thủy tặc hay đón. Tôi trả công theo hàng: hàng nguyên vẹn tới bến trên, công đầy đủ; hàng mất mát, công trừ theo phần mất. Cậu giữ đò, tôi giữ lời.' },
+  { who: 'nguoi_lai_do', text: 'Ghềnh xiết ấy lão biết rõ: nước xoáy ba vòng, đá ngầm hai bãi. Thú dữ nghe còi hay đón ở khúc quanh thứ hai — thuyền chậm, người trên thuyền còn phải lo giữ thăng bằng. Cậu đứng mũi đò là hợp nhất: tai cậu nghe được cả tiếng còi lẫn tiếng nước đổi dòng.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta nhận. Lúc qua ghềnh: người chèo nghe hiệu của ta — ta ra hiệu bằng tay, không bằng lời. Hàng và người, ta giữ cả hai.' },
+  { who: 'narrate', text: 'Đò rời bến trong tiếng nước vỗ mạn đều đặn. Chuyến hộ tống bắt đầu — ghềnh xiết ở phía trước, và đâu đó dọc bờ, một tiếng còi đang chờ.' }
+];
+/* SCENE_CH27_NHA_XEN — cảnh xen ở Hứa gia giữa các đợt sóng (cảnh 3b, <6 dòng). */
+var SCENE_CH27_NHA_XEN = [
+  { who: 'narrate', text: 'Cùng lúc ấy, ở Hứa gia cách sông Bạc nhiều ngày đường, Hứa U Nhàn đứng trong sân sau, tự mình xem lại danh sách những việc nhà cần lo trước khi nàng bế quan chuẩn bị đột phá.' },
+  { who: 'u_nhan', text: 'Việc nhà: xong. Việc người: xong. Còn lại là việc của mình. Lần này, ta không để ai đứng chắn trước cho ta nữa — ta tự đứng.' },
+  { who: 'anh_phung', text: 'Con bé này… từ ngày thằng Phàm đi xa, nó như đổi hẳn một người. Việc gì cũng tự gánh. Ta nhìn mà không biết nên mừng hay nên lo.' },
+  { who: 'narrate', text: 'Ở rất xa nơi nàng đứng, một con đò hàng đang vào ghềnh xiết — và người nàng vừa viết thư cho đang đứng ở mũi đò, lắng nghe tiếng nước đổi dòng.' }
+];
+/* SCENE_CH27_TIN_VUI — đò tới bến trên an toàn (cảnh 4). */
+var SCENE_CH27_TIN_VUI = [
+  { who: 'narrate', text: 'Đò hàng cập bến trên khi nắng đã đứng bóng. Thùng hàng được kiểm lại từng khoang trước mặt chủ đò và người của bến.' },
+  { who: 'chu_do', text: 'Đủ. Không thiếu một thùng. Cậu Giang, chuyến đò này mà mất hàng như mấy chuyến trước, cả làng tôi mất luôn đường buôn. Công của cậu đây — và thêm một phần của dân bến góp, không phải tiền, là lòng: từ nay đò của làng qua lại khúc sông này, có người của tháp đi cùng tiếng.' },
+  { who: 'nguoi_lai_do', text: 'Lão chèo đò bốn mươi năm, hôm nay mới thấy một chuyến qua ghềnh mà người trên đò cười được lúc cập bến. Cậu ở lại với sông này thêm ít hôm nữa đi — làng ven sông bên kia bờ còn đang có chuyện lạ: người ta bệnh mà không phải bệnh. Lão nghe trưởng thôn bên ấy than từ mấy hôm rồi.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta sẽ qua làng ấy. Chuyện lạ ở sông này — hình như sợi nào cũng nối về cùng một đầu mối.' },
+  { who: 'narrate', text: 'Tin chuyến đò an toàn lan dọc hai bờ nhanh như nước chảy. Còn ở làng ven sông phía bắc, chuông làng mấy hôm nay cứ đến chiều là lạc giọng — mà không ai trong làng biết vì sao.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 28 ===== */
+/* SCENE_CH28_LANG — trưởng thôn kể nạn hồn (28.md cảnh 1). */
+var SCENE_CH28_LANG = [
+  { who: 'narrate', text: 'Làng ven sông bên bờ bắc nằm yên ả dưới nắng chiều — quá yên ả: sân nhà nào cũng vắng người, cửa khép, và trên đầu làng, tiếng chuông điểm giờ chiều nghe lạc đi một nốt rất khó chịu.' },
+  { who: 'truong_thon_ven_song', text: 'Cậu là người của tháp mà lão đò giới thiệu phải không? Vào nhà uống chén nước đã… À mà thôi, cậu nghe tôi nói ngay cho kịp: làng này có hơn chục người đổ bệnh cùng một kiểu. Không sốt, không đau — chỉ nằm lặng, mắt mở mà như nghe cái gì rất xa. Hễ ai hỏi, họ đều nói đúng một câu.' },
+  { who: 'truong_thon_ven_song', text: 'Câu ấy là: "Dưới sông có người gọi tên tôi." Người già nhất làng là bà cụ Tám mươi — cụ nằm ba hôm, hôm qua bỗng ngồi dậy nói: "Nó gọi đúng tên cúng cơm của ta. Tên ấy, người ngoài làng không ai biết." Cậu nghe xem: chuông làng này chiều nào cũng lạc một nốt. Đèn dầu thì cứ tới giờ ấy là lụi đi một nửa, không gió.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta cần đi từng nhà. Người bệnh nằm ở đâu, ta nghe ở đó. Đừng đánh thức họ — ta chỉ đứng ngoài cửa nghe thôi.' },
+  { who: 'truong_thon_ven_song', text: 'Được. Tôi dẫn cậu đi. Cả làng này giờ chỉ còn biết trông vào người nghe được những thứ người ta không nghe thấy.' },
+  { who: 'narrate', text: 'Việc trước mắt: đi từng nhà người bệnh trong làng, lắng nghe âm gốc quanh mỗi nhà — ghi lại độ lệch của từng nhà. Mọi sợi lệch đều phải chỉ về cùng một phía: phía sông.' }
+];
+/* SCENE_CH28_NAN_HON — sau khảo sát: kết luận + gom người bệnh (cảnh 2). */
+var SCENE_CH28_NAN_HON = [
+  { who: 'narrate', text: 'Bảy nhà, bảy độ lệch khác nhau — nhà gần sông lệch nặng, nhà xa sông lệch nhẹ, nhưng mọi độ lệch đều kéo về một hướng: khúc sông sâu phía dưới làng. Âm gốc của cả làng đang bị một thứ gì dưới sông kéo lệch, nhà nào cũng như một sợi dây đàn bị vặn chệch khóa.' },
+  { who: 'truong_thon_ven_song', text: 'Cậu nói đi, nói thẳng cho tôi mừng hay lo: bệnh này là bệnh gì?' },
+  { who: 'hero', mode: 'write', text: '(viết) Không phải bệnh. Là hồn người đang bị gọi đi từng chút một, như nước rỉ qua kẽ tay. Tối nay, thứ dưới sông sẽ gọi mạnh hơn — nó gọi cả làng cùng lúc khi trời tối hẳn. Trước khi trời tối: gom hết người bệnh ra sân đình, thắp đèn quanh sân, người khỏe đứng vòng ngoài. Ta giữ sân.' },
+  { who: 'truong_thon_ven_song', text: 'Gom người bệnh ra sân đình… được, tôi hô hào cả làng ngay. Còn cậu — cậu cầm cự được không? Hơn chục mạng người nằm đó, và cả làng đứng nhìn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta giữ nhịp của sân. Ông giữ nhịp của người làng: ai hoảng, ông trấn. Đêm nay, làng này không mất thêm ai.' },
+  { who: 'narrate', text: 'Người bệnh được khiêng ra sân đình trước khi nắng tắt. Đèn dầu thắp vòng quanh sân; chuông làng treo im trên gác — và khi bóng tối phủ xuống, mặt sông phía dưới làng bắt đầu sáng lên những vệt sáng trắng lạnh lẽo, trôi ngược dòng về phía làng.' }
+];
+/* SCENE_CH28_TRUOC_TRAM — trước trận luyện hồn ở sân đình (cảnh 3 mở). */
+var SCENE_CH28_TRUOC_TRAM = [
+  { who: 'narrate', text: 'Sân đình. Hơn chục người bệnh nằm yên giữa vòng đèn; dân làng đứng chen ở vòng ngoài, tay nắm tay. Từ phía sông, những bóng hồn nước đầu tiên trồi lên bờ, đi thẳng về phía sân — chúng đi như người mộng du bị gọi tên.' },
+  { who: 'truong_thon_ven_song', text: 'Cậu ơi… chúng nó đông quá. Người làng tôi tay không tấc sắt…' },
+  { who: 'hero', mode: 'write', text: '(viết) Đứng yên sau vòng đèn. Dù thấy gì, nghe gọi tên ai — không ai bước ra khỏi vòng. Phần còn lại để ta.' },
+  { who: 'narrate', text: 'Ngươi đứng giữa sân, nhắm mắt. Cả sân đình trong tai ngươi là một dàn dây đang bị kéo lệch — và việc của ngươi đêm nay là giữ cho không một sợi dây nào đứt.' }
+];
+/* SCENE_CH28_AN_DANH — sáng hôm sau + bàn thờ vô danh (cảnh 4). */
+var SCENE_CH28_AN_DANH = [
+  { who: 'narrate', text: 'Trời sáng. Người bệnh lần lượt tỉnh lại trong sân đình, người nào cũng nói câu đầu tiên giống nhau: "Ta nghe gọi… rồi bỗng ai đó giữ ta lại." Chuông làng điểm giờ sáng — trong trẻo, không lạc một nốt nào.' },
+  { who: 'truong_thon_ven_song', text: 'Cậu cứu cả làng này trong một đêm. Làng không có gì quý — chỉ có một việc tôi muốn làm ngay: dựng một bàn thờ nhỏ ở đầu làng, thờ "người giữ hồn cho làng" — thờ cậu, để con cháu nhớ ơn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Đừng thờ ta. Bàn thờ ấy — dựng thì dựng, nhưng không khắc tên ai. Dưới sông còn bao nhiêu hồn không ai gọi về được; bàn thờ này là cho họ. Khắc hai chữ thôi: "qua đường".' },
+  { who: 'truong_thon_ven_song', text: '"Qua đường"… Được. Làng tôi dựng bàn thờ vô danh ở đầu làng, khắc hai chữ "qua đường". Mai này ai qua làng này dừng chân thắp nén hương, là nhớ rằng có những ơn không cần biết tên người làm ơn.' },
+  { who: 'narrate', text: 'Bàn thờ đá nhỏ được dựng ngay trong buổi sáng ở đầu làng ven sông — không tên, không tượng, chỉ có một bát hương và hai chữ khắc sâu vào đá.' },
+  { who: 'tran_tu_linh', text: '(ghi trong sổ tay của Trần Tư Linh, ở tháp — nhiều ngày sau, khi tin về làng ven sông tới tai nàng) "Một bàn thờ không tên cho những hồn không ai gọi. Nếu thiên hạ có một cuốn sổ ghi lại mọi hồn sư đã đi qua đời này mà không để lại tên… thì trang đầu tiên của nó, có lẽ phải để trống một dòng như thế." — nàng ghi xong, ngồi lặng rất lâu.' },
+  { who: 'narrate', text: 'Dưới khúc sông sâu phía dưới làng, thứ đã gọi hồn cả làng giờ đã lặng. Nhưng âm gốc của khúc sông ấy vẫn chưa yên hẳn: một con yêu lớn mang hồn oán của dòng sông vẫn nằm ở vũng sâu — từ nay, nó là việc của những người săn quái dám xuống vùng nước ấy.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 29 ===== */
+/* SCENE_CH29_TRAM — kiểm kê niêm phong ở trạm (29.md cảnh 1). */
+var SCENE_CH29_TRAM = [
+  { who: 'narrate', text: 'Trạm lưu trữ, buổi sáng. Sau vụ hồ sơ mất trang, tháp ra lệnh kiểm kê niêm phong toàn trạm: từng kệ, từng dấu sáp, đối chiếu hai đời trạm trưởng.' },
+  { who: 'tram_truong', text: 'Tôi dẫn cậu đi từng kệ. Kệ nào niêm của đời tôi thì sáp đỏ; kệ nào niêm từ đời trạm trước thì sáp nâu — lệ cũ của trạm là không phá niêm cũ, chỉ đóng chồng niêm mới lên.' },
+  { who: 'gac_kho', text: 'Tôi là lính gác của trạm, giữ kho này sáu năm. Nói cậu biết: ban đêm kho này không yên như ban ngày. Có đêm tôi nghe tiếng giấy sột soạt trong kho khóa kín — vào kiểm tra thì không thấy gì, chỉ thấy dấu niêm nào cũng nguyên.' },
+  { who: 'hero', mode: 'write', text: '(viết) Kiểm kê bằng tai trước: kệ nào âm gốc lệch, ta mở kệ đó trước. Hai người đi cùng ta, làm chứng cho nhau.' },
+  { who: 'narrate', text: 'Việc tay: đi từng kệ trong trạm, lắng nghe dấu niêm — kệ đúng có dấu "!" chờ kiểm. Có một kệ mang niêm của hai đời trạm chồng nhau, và âm gốc của nó lệch hẳn khỏi cả dãy.' }
+];
+/* SCENE_CH29_DOT_GIAY_PRE — phe cứng rắn xông vào (cảnh 2 mở). */
+var SCENE_CH29_DOT_GIAY_PRE = [
+  { who: 'narrate', text: 'Cửa trạm bật mở. Một toán người áo xám bước vào, đi đầu là một kẻ cầm đuốc chưa châm, giọng nói lạnh và rất lễ phép — lễ phép như người tới làm một việc đã được cho phép.' },
+  { who: 'ke_dot_giay', text: 'Người của tháp, lùi ra. Chúng ta thi hành lệnh thanh lọc hồ sơ ô nhiễm của trạm này. Giấy nào không rõ nguồn gốc — đốt. Đây là việc nội bộ của các; cậu không có phận sự ở đây nữa.' },
+  { who: 'tram_truong', text: 'Lệnh nào? Đưa văn bản lệnh ra! Trạm này thuộc Kiểm Trắc Tháp, không phải thuộc các của các ngươi từ bao giờ—' },
+  { who: 'ke_dot_giay', text: 'Không có lệnh văn. Có lệnh truyền miệng. Châm lửa.' },
+  { who: 'narrate', text: 'Đuốc châm vào thùng dầu hắt sẵn ở chân kệ chính. Ngọn lửa đầu tiên bò lên giấy khô nhanh như nước chảy ngược. Giữ kệ chính: dập các điểm cháy, chặn đường lửa lan, và hạ kẻ cầm đầu trước khi thanh lửa đầy.' }
+];
+/* SCENE_CH29_TRANG — sau trận cháy: trang danh sách thu lại (cảnh 3). */
+var SCENE_CH29_TRANG = [
+  { who: 'narrate', text: 'Ngọn lửa cuối cùng tắt. Kệ chính còn đứng, cháy xém một góc; toán áo xám tháo chạy, riêng kẻ cầm đầu bị lính gác giữ lại rồi cũng vùng thoát theo đường sau, để lại một vệt tro dài về phía bến đò.' },
+  { who: 'tram_truong', text: 'Cậu… cậu giữ được kệ chính. Trời ơi, suýt nữa thì… Khoan. Nhìn đống tro ấm kia: có một trang giấy cháy dở mà chưa cháy hết — mép trang còn dấu niêm, và dòng chữ đầu trang còn đọc được.' },
+  { who: 'gac_kho', text: 'Để tôi gắp ra cho. …Đây là một trang danh sách hành khách qua sông. Tên người còn đọc được một nửa cột. Nhưng cậu nhìn giữa trang này: giấy mỏng hẳn đi — trang giữa của danh sách này đã bị xé từ rất lâu rồi, trước cả đời tôi gác kho.' },
+  { who: 'tram_truong', text: 'Tôi đối chiếu sổ nhận hồ sơ của trạm: đúng — trang giữa đã mất từ khi trạm nhận bàn giao, sổ ghi rõ "nhận về đã thiếu một trang giữa, không rõ nguyên nhân". Thiếu từ đầu, cậu à. Không phải mất ở đời trạm này.' },
+  { who: 'hero', mode: 'write', text: '(viết) Gói trang này lại, niêm phong ba lớp, gửi về tháp theo đường kín. Còn kẻ châm lửa — hắn chạy về phía bến. Ta đuổi theo vệt tro.' },
+  { who: 'narrate', text: 'Một trang danh sách còn nửa cột tên; một trang giữa mất từ ngày trạm nhận hồ sơ. Đầu mối về đoàn người không tên lại dài thêm một đoạn — và vệt tro của kẻ chạy trốn đang nguội dần về phía bờ sông.' }
+];
+/* SCENE_CH29_DUOI_THEO — miệng hang dưới bến đò (cảnh 4). */
+var SCENE_CH29_DUOI_THEO = [
+  { who: 'narrate', text: 'Vệt tro dẫn xuống bờ bắc, tới một vách đá rêu phong ngay dưới bến đò — và mất hút ở một khe tối giữa hai tảng đá, nơi gió lạnh từ dưới đất thổi lên mang theo mùi giấy cũ và đá ẩm.' },
+  { who: 'nguoi_lai_do', text: 'Cậu tìm ra nó rồi đấy. Cái khe ấy, dân bến gọi là "miệng kho" — người già kể ngày xưa có một kho chìm dưới bến đò này, từ thời trạm lưu trữ còn đặt ở dưới ấy. Sông đổi dòng, kho bị bỏ, cửa vào bị đá lấp — ai ngờ vẫn còn đường cho kẻ đốt giấy chui vào.' },
+  { who: 'hero', mode: 'write', text: '(viết) Kho chìm giữ gì của trạm, lão biết không?' },
+  { who: 'nguoi_lai_do', text: 'Nghe kể là giữ những thứ trạm không dám để trên mặt đất: hồ sơ niêm kín, vật chứng, cả những thứ "không rõ nguồn gốc" mà toán áo xám hôm nay nói tới. Cậu xuống đó — cẩn thận: kho của người ta bỏ quên mấy chục năm, thứ còn thức trong ấy chưa chắc đã là người.' },
+  { who: 'narrate', text: 'Miệng hang mở ra trước mặt: bc_bendo — kho chìm dưới bến đò. Kẻ châm lửa đã vào trước ngươi; và ở sâu dưới kia, có thứ đang gác cửa kho.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 30 ===== */
+/* SCENE_CH30_TANG_SAU — tháp giao việc tầng sâu (30.md cảnh 1). */
+var SCENE_CH30_TANG_SAU = [
+  { who: 'narrate', text: 'Kiểm Trắc Tháp. Chấp sự tháp đặt lên bàn một viên đá niêm phong đã nứt một đường mảnh như tóc — viên đá lấy từ cửa phòng ghi nhớ của Tàn Tích tầng sâu, dưới chân tháp này.' },
+  { who: 'chap_su_thap', text: 'Đêm qua, lính canh tháp nghe tiếng gõ từ dưới đất. Ba tiếng, dừng, rồi ba tiếng nữa — đều như đếm. Tàn Ảnh trong tầng sâu đang gõ lên niêm phong cũ của nó, cậu Giang. Nó gõ mỗi đêm một mạnh hơn.' },
+  { who: 'tran_tu_linh', text: 'Ta đã tra hồ sơ niêm phong của tầng sâu: lệnh niêm năm ấy do chính Thiên Cơ Các ban, tháp chỉ thi hành. Điều lạ là: hồ sơ ghi niêm phong "một tàn ảnh nguy hiểm" — nhưng không ghi nó là ai, từ đâu, phạm tội gì. Một lệnh niêm không có lý do, giữ kín tới mức bất thường.' },
+  { who: 'chap_su_thap', text: 'Tháp cử cậu xuống. Không phải để giết nó — để xem nó muốn gì, và niêm phong còn giữ được bao lâu. Nếu phải đánh, hãy nhớ: thứ bị nhốt mấy chục năm mà vẫn còn đếm được nhịp gõ, không phải thứ yếu.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta xuống. Nếu nó chỉ muốn được nghe — ta nghe. Nếu nó muốn ra bằng đường máu — ta chặn.' },
+  { who: 'narrate', text: 'Đường xuống Tàn Tích tầng sâu bắt đầu từ sảnh tháp. Ở dưới đó, lính canh đá của phòng ghi nhớ đã thức dậy theo nhịp gõ — chúng không còn là lính canh cũ nữa.' }
+];
+/* SCENE_CH30_NIEM_PHONG — cảnh ghi nhớ trong phòng niêm phong (cảnh 3).
+   Sự kiện DIỄN lại, không kể: người xem CHỨNG KIẾN việc xóa tên. */
+var SCENE_CH30_NIEM_PHONG = [
+  { who: 'narrate', text: 'Cửa phòng ghi nhớ mở ra. Bên trong không có kho báu, không có vũ khí — chỉ có một gian phòng đá trống và một bia đá lớn khắc đầy tên người. Rồi không khí trong phòng lạnh đi: cảnh năm xưa hiện lại như một lớp khói biết cử động.' },
+  { who: 'narrate', text: 'Một đoàn người của Thiên Cơ Các bước vào phòng — dẫn đầu là một vị trưởng lão thời ấy, tay cầm một cuộn lệnh niêm. Trước bia đá, một tu sĩ trẻ bị dẫn tới: người ấy không bị trói, không chống cự; người ấy chỉ đứng nhìn cái tên của chính mình khắc trên bia.' },
+  { who: 'thap_chu', text: 'Lệnh của các: từ hôm nay, cái tên này không còn trong bất kỳ hồ sơ nào. Không truy cứu, không kết tội, không ghi lý do. Thiên hạ sẽ quên người này — như thể người này chưa từng qua sông, chưa từng đứng trên đất này.' },
+  { who: 'narrate', text: 'Vị trưởng lão giơ tay. Trên bia đá, cái tên của tu sĩ trẻ bắt đầu mờ đi từng nét — như có một bàn tay vô hình đang gạch xóa nó khỏi đá, khỏi giấy, khỏi trí nhớ của mọi người. Người tu sĩ trẻ vẫn đứng yên. Người ấy chỉ làm một việc duy nhất: quay đầu, nhìn thẳng về phía ngươi — qua mấy chục năm — và chờ.' },
+  { who: 'oan_hon', text: 'Ngươi… nghe được ta. Mấy chục năm, ngươi là người đầu tiên vào phòng này mà nghe được ta trước khi nhìn thấy ta.' },
+  { who: 'narrate', text: 'Cảnh ghi nhớ đang tan dần — và nét gạch xóa trên cái tên kia cũng đang tan ra theo, như thể việc xóa chưa từng hoàn tất. Nếu để cảnh tan hẳn, khoảnh khắc này mất vĩnh viễn. GIỮ NÓ LẠI: dùng Định Âm khóa khoảnh khắc nét gạch đang mờ — giữ cho tới khi cảnh đứng yên hoàn toàn.' },
+  { who: 'oan_hon', text: 'Ngươi giữ được nó. Mấy chục năm rồi, ngươi là người đầu tiên giữ lại cho ta một bằng chứng rằng ta từng có tên. Ta không xin ra khỏi đây. Ta chỉ xin một điều: khi ngươi biết được vì sao họ xóa ta — hãy để ít nhất một người nữa biết. Một người nhớ, thì việc xóa chưa xong.' },
+  { who: 'narrate', text: 'Cảnh ghi nhớ đứng yên như một bức tranh đóng băng giữa phòng đá: một cái tên gạch dở, một tu sĩ trẻ nhìn qua thời gian, và một lệnh niêm không lý do. Ngươi đã thấy tận mắt: Thiên Cơ Các năm ấy đã niêm phong không chỉ một con người — mà cả một cái tên, khỏi mọi hồ sơ của thiên hạ.' }
+];
+/* SCENE_CH30_QUYET_TAM — quyết tâm ở tháp (cảnh 4). */
+var SCENE_CH30_QUYET_TAM = [
+  { who: 'narrate', text: 'Trở lại sảnh tháp. Ngươi đặt viên đá niêm đã nứt lên bàn, đứng trước chấp sự và Trần Tư Linh. Lần này, ngươi viết chậm — từng chữ một, như khắc vào đá.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta đã thấy việc xóa tên. Ta không đứng về phía lệnh ấy. Từ nay: việc của tháp, ta làm tới nơi; việc của hồ sơ, ta tra tới cùng. Ai muốn xóa thêm một cái tên nữa — sẽ phải qua tai ta trước.' },
+  { who: 'tran_tu_linh', text: 'Huynh viết câu ấy ở đây là có ta làm chứng. Ta ghi thêm một dòng vào sổ tay của mình — sổ riêng, không nộp cho các: "Ngày này, có một người thề giữ tên cho người khác." Sổ của các xóa được tên người; sổ của ta thì không ai xóa được.' },
+  { who: 'chap_su_thap', text: 'Tháp nghe rõ quyết tâm của cậu. Ta chỉ dặn thêm một câu: đường tra hồ sơ này càng đi càng gần lửa. Hôm nay cậu thấy cảnh xóa tên — ngày nào đó, có thể cậu sẽ phải đứng giữa hai phía mà chọn. Tới lúc ấy, nhớ đêm nay.' },
+  { who: 'narrate', text: 'Ngoài sân tháp, trời đã khuya. Dưới chân tháp, nhịp gõ trong tầng sâu đã im — không phải vì niêm phong mạnh lại, mà vì kẻ bị nhốt đã được nghe, lần đầu tiên sau mấy chục năm.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 31 ===== */
+/* SCENE_CH31_TIN — tin đồn đoàn rước ở bến đò (31.md cảnh 1). Tin đồn
+   được viết NHƯ tin đồn. TUYỆT ĐỐI không có thoại Lục Tranh/Tần. */
+var SCENE_CH31_TIN = [
+  { who: 'narrate', text: 'Bến đò, buổi trưa. Tin đồn chạy nhanh hơn đò: dân hai bờ đang truyền nhau chuyện một đoàn rước lớn sắp đi qua vùng sông này — đoàn của một vị "cửu phẩm" nào đó ở phương xa, đi tới đâu dân vùng ấy đổ ra xem tới đó.' },
+  { who: 'dan_lang_a', text: 'Nghe nói đoàn rước ấy dài tới nửa dặm đường! Cờ xí, lọng che, nhạc lễ — mà lạ nhất là: nghe nói vị cửu phẩm trong đoàn từ ngày thành danh tới giờ không nói một lời nào trước đám đông. Người ta bảo đó là "bế quan dưỡng khí".' },
+  { who: 'dan_lang_b', text: 'Tôi lại nghe khác: có người bảo sự im lặng ấy được đoàn của ngài trưng ra như một thứ thành tích — in cả vào văn tế đọc ở các trạm dừng chân. Im lặng mà cũng thành tích… nghe cứ sao sao ấy, cậu nhỉ?' },
+  { who: 'nguoi_lai_do', text: 'Lão chèo đò nghe tin đồn thì chỉ cười. Nhưng có một việc thật trong đống tin đồn này: đoàn rước thuê phu khuân vác ở từng chặng, trả công hậu. Ở làng ven sông có một ông lão từng đi phu cho đoàn ấy một chặng, năm ngoái. Cậu muốn nghe chuyện thật — thì nghe từ miệng ông ta, đừng nghe từ miệng tin đồn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta tới gặp ông lão ấy. Tin đồn ta nghe đủ rồi — giờ ta cần một người đã tận mắt thấy.' },
+  { who: 'narrate', text: 'Người phu cũ ở làng ven sông bờ bắc. Ông là nhân chứng duy nhất trong vùng từng đi trong đoàn rước ấy — và cũng là người duy nhất kể chuyện về nó mà không thêm mắm muối.' }
+];
+/* SCENE_CH31_NHAN_CHUNG — lời kể của người phu cũ (cảnh 2). */
+var SCENE_CH31_NHAN_CHUNG = [
+  { who: 'narrate', text: 'Nhà người phu cũ ở rìa làng ven sông. Ông lão lưng còng, tay chai sần, rót nước mời khách bằng một sự cẩn thận của người từng phục dịch những đoàn sang trọng.' },
+  { who: 'nhan_chung', text: 'Cậu hỏi chuyện đoàn rước — già này kể, nhưng kể đúng cái già thấy, không thêm. Già đi phu một chặng ba ngày, khuân lọng và rương lễ. Đoàn ấy… không giống đoàn rước. Nó giống một đoàn triển lãm đi dọc thiên hạ: tới trạm nào cũng dựng đài, đọc văn tế, cho dân xem "kỳ tài cửu phẩm" từ xa.' },
+  { who: 'nhan_chung', text: 'Vị cửu phẩm ngồi trong kiệu kín phần lớn thời gian. Có một lần kiệu dừng nghỉ, già bưng nước tới gần — thấy ngài ngồi lặng, nhìn ra sông, không nói, không cười. Quan hầu cận đứng bên đọc to cho dân nghe: "Ngài đang dưỡng khí, sự im lặng của ngài là kết quả tu luyện hiếm có." Dân vỗ tay. Còn ngài… ngài vẫn nhìn ra sông.' },
+  { who: 'nhan_chung', text: 'Già là phu, già không hiểu chuyện tu tiên. Già chỉ nhớ một điều: ba ngày trong đoàn, già chưa từng nghe ngài nói một chữ nào — và những người quanh ngài hình như rất sợ chuyện ngài mở miệng. Mỗi lần ngài hơi nhúc nhích như muốn nói, quan hầu cận lại đọc văn tế to hơn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ông kể rất rõ. Ta cần đưa ông về bến đò gặp người của trạm ghi lại lời kể này — đi đường bãi bồi, ta đi cùng ông.' },
+  { who: 'nhan_chung', text: 'Già đi. Già già rồi, kể được chuyện này ra cho người biết ghi chép, già cũng nhẹ lòng. Nhưng cậu này — đường bãi bồi vắng lắm, dạo này có bọn cướp đường hay đón người ở đó. Chúng nó chỉ nhắm vào đoàn có tiền thôi… đoàn của ta nhìn nghèo thế này, chắc không sao đâu.' },
+  { who: 'narrate', text: 'Ông lão đã lầm ở câu cuối. Bọn cướp đường không cần biết đoàn giàu hay nghèo — chúng chỉ cần thấy một đoàn ít người, đi đường vắng, có vẻ mang theo đồ đáng giá.' }
+];
+/* SCENE_CH31_PHUC_KICH_PRE — phục kích ở bãi bồi (cảnh 3 mở). */
+var SCENE_CH31_PHUC_KICH_PRE = [
+  { who: 'narrate', text: 'Bãi bồi giữa sông, đường vắng hai bên là lau sậy cao quá đầu người. Tiếng cười chặn đường vang lên từ trong lau: một toán cướp đường hiện ra, đao vòng sáng loáng — chúng nhìn đoàn của ngươi và cười như thấy một món hời.' },
+  { who: 'cuop_truong', text: 'Đoàn ít người mà đi đường này thì là đoàn có tiền sợ lộ. Để đồ lại, người đi. Còn ông già kia — nghe nói mồm miệng ông ta dạo này kể chuyện hay lắm. Bọn ta cũng muốn nghe ông ta kể… kể cho bọn ta, ở chỗ khác.' },
+  { who: 'narrate', text: 'Chúng nhắm vào nhân chứng. Giữ ông lão đứng vững cho tới khi toán cướp tan — ông không biết đánh nhau, và đao vòng của tên đầu lĩnh bay cong được theo đường mà mắt thường không lường trước.' }
+];
+/* SCENE_CH31_RONG — bóng đoàn rước bên kia sông (cảnh 4). KHÔNG mặt,
+   KHÔNG tiếng, KHÔNG tương tác. */
+var SCENE_CH31_RONG = [
+  { who: 'narrate', text: 'Bến đò, chiều muộn. Nhân chứng đã an toàn trong trạm. Ngươi đứng ở đầu cầu ván nhìn sang bờ bên kia — và rồi, ở rất xa trên con đường ven sông phía bắc, một đoàn rước hiện ra.' },
+  { who: 'narrate', text: 'Cờ xí nối nhau như một vệt màu chậm rãi. Lọng che lớn đi giữa đoàn. Và ở trung tâm của tất cả sự phô trương ấy — một bóng người ngồi lặng lẽ, nhỏ bé đến lạ trong chính đoàn rước của mình, không vẫy tay, không nhìn về phía đám đông hai bên đường.' },
+  { who: 'nhan_chung', text: 'Đấy… đấy, cậu thấy không: vẫn cái cách ngồi ấy. Ba ngày già đi phu, ngài ngồi như thế cả ba ngày.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta thấy rồi. Chỉ thấy vậy thôi — và hôm nay, thấy vậy là đủ.' },
+  { who: 'narrate', text: 'Đoàn rước đi khuất sau khúc quanh của con sông. Không một lời nào được nói giữa hai bờ. Nhưng ngươi đã ghi lại được lời của một nhân chứng, và tận mắt thấy sự im lặng mà thiên hạ đang trưng ra như một thành tích.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 32 ===== */
+/* SCENE_CH32_VE_THANH — trưởng lão giao việc hộ pháp (32.md cảnh 1). */
+var SCENE_CH32_VE_THANH = [
+  { who: 'narrate', text: 'Thanh Vân Đại Điện. Trưởng lão tông đón ngươi với một phong thư vừa tới từ Hứa gia — và một câu nói không vòng vo.' },
+  { who: 'truong_lao_tong', text: 'Hứa U Nhàn đã tự chọn ngày đột phá: ba hôm nữa, tại Thung Lũng Hồi Phong, dưới gốc anh đào. Nàng không xin tông phái người hộ pháp — nàng chỉ gửi một dòng cho ngươi, qua thư của Hứa gia: "Chỗ cũ. Ta tự lo phần của ta."' },
+  { who: 'truong_lao_tong', text: 'Tông giao cho ngươi việc hộ pháp chuyến này — không phải vì nàng yếu, mà vì lệ của tông: ai đột phá ở thung lũng cũng phải có một người giữ vòng ngoài. Thú dữ trong thung ngửi thấy linh khí động là kéo tới; việc của người giữ vòng là không cho một con nào chạm vào vòng đột phá.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta nhận. Ta tới thung trước một buổi: đặt đá hiệu ở hai miệng thung, thống nhất hiệu tay với nàng. Lúc nàng vào kiếp, ta không nói, không viết — chỉ hiệu tay. Lệ của người giữ vòng, ta hiểu.' },
+  { who: 'truong_lao_tong', text: 'Tốt. Còn một việc riêng: đột phá của nàng là việc của nàng — ngươi đừng can thiệp vào kiếp của nàng, dù thấy gì. Ba đạo lôi của nàng, nàng tự qua. Ngươi chỉ giữ đất dưới chân nàng cho yên.' },
+  { who: 'narrate', text: 'Thung Lũng Hồi Phong vào qua cổng sau núi của tông. Gốc anh đào ở bãi đáp đang chờ — nơi hai người từng đứng, và sắp đứng lại, ở hai phía của một vòng đột phá.' }
+];
+/* SCENE_CH32_HO_PHAP_PRE — chuẩn bị ở thung: đá hiệu + hiệu tay (cảnh 2 mở).
+   Từ cảnh này trở đi cho tới hết đợt giữ vòng: KHÔNG hộp thoại của Giang Phàm. */
+var SCENE_CH32_HO_PHAP_PRE = [
+  { who: 'narrate', text: 'Thung Lũng Hồi Phong, chiều trước ngày đột phá. Hứa U Nhàn đã đứng dưới gốc anh đào từ sớm, vòng đột phá vẽ sẵn trên bãi cỏ, hành trang gọn ghẽ như người đi một chuyến xa đã tính trước mọi thứ.' },
+  { who: 'u_nhan', text: 'Huynh tới rồi. Muội nói phần việc của muội trước: ba đạo lôi, muội tự qua. Không ai đỡ, không ai chắn. Phần của huynh là đất quanh vòng này: thú dữ kéo tới vì linh khí động — huynh giữ cho không con nào chạm vào vòng.' },
+  { who: 'u_nhan', text: 'Đá hiệu muội đã mang theo: hai viên, đặt ở hai miệng thung. Ba hiệu tay, thống nhất ngay bây giờ: tay giơ cao — đợt mới tới. Tay chém ngang — muội vẫn ổn, đừng vào vòng. Hai tay chéo — rút về điểm hẹn sau, dù có chuyện gì.' },
+  { who: 'u_nhan', text: 'Và một điều nữa, nói trước khi trời tối: lúc muội vào kiếp, huynh không được nói, không được viết, không được gọi muội. Hiệu tay là đủ. Muội muốn qua kiếp này bằng chính sức của muội — huynh giữ cho muội cái yên để làm việc đó.' },
+  { who: 'narrate', text: 'Ngươi gật đầu. Đá hiệu được đặt ở hai miệng thung; ba hiệu tay đã thống nhất. Từ khoảnh khắc này cho tới khi nàng qua hết ba đạo lôi — ngươi im lặng tuyệt đối, như lệ của người giữ vòng, và như ý của nàng.' }
+];
+/* SCENE_CH32_THO_NGUYEN — sau trận + đột phá: chuyện thọ nguyên (cảnh 3).
+   Cuộc nói chuyện ĐẦU TIÊN về giá thọ nguyên — bằng chữ viết. */
+var SCENE_CH32_THO_NGUYEN = [
+  { who: 'narrate', text: 'Đạo lôi cuối cùng tan vào mây. Hứa U Nhàn đứng dậy giữa vòng đột phá, áo còn vương khói nhẹ, mắt sáng như người vừa qua một chặng đường dài bằng chính đôi chân mình. Nàng nhìn ngươi rất lâu trước khi lên tiếng.' },
+  { who: 'u_nhan', text: 'Xong rồi. Phần của muội — muội tự qua. Phần của huynh — huynh giữ yên cả thung cho muội. Giờ thì ngồi xuống đây. Có một chuyện muội chờ qua kiếp này mới hỏi, vì muội muốn hỏi khi muội đã đứng cùng một phía của con đường tu tiên với huynh.' },
+  { who: 'u_nhan', text: 'Những lần huynh cất lời… muội đã thấy cái giá của nó, dù huynh chưa từng nói. Hồi ở trấn, sau lần đầu huynh nói, huynh ốm một trận không rõ bệnh. Về sau muội để ý: mỗi lần huynh dùng tiếng nói làm việc lớn, người huynh lại hao đi một chút mà thuốc thang không giải thích được.' },
+  { who: 'u_nhan', text: 'Hôm nay muội hỏi thẳng — và huynh trả lời thẳng, bằng chữ của huynh: cái giá ấy là gì?' },
+  { who: 'hero', mode: 'write', text: '(viết) Là thọ nguyên. Mỗi lần ta dùng tiếng nói vượt qua giới hạn của nó, trời trừ vào số năm ta được sống. Không nhiều mỗi lần — nhưng có sổ, có ghi, và không xóa được.' },
+  { who: 'u_nhan', text: '…Muội hiểu rồi. Vậy nghe điều kiện của muội — không phải thỉnh cầu, là điều kiện: từ nay, chuyện này không được giấu muội nữa. Huynh trả giá bao nhiêu, muội không cần biết con số — nhưng việc huynh đang trả giá, muội phải được biết. Người ta có thể đi cùng nhau qua kiếp nạn, nhưng không ai được giấu nhau cái giá của kiếp nạn.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta hứa. Từ nay không giấu nàng việc này nữa.' },
+  { who: 'u_nhan', text: 'Tốt. Vậy thì nghe muội nói câu cuối của hôm nay: huynh giữ tên cho người khác, giữ hồn cho cả làng, giữ vòng cho muội. Từ nay, phần giữ cho chính huynh — chia cho muội một nửa. Đứng dậy đi, trời sắp tối, đường về tông còn dài.' },
+  { who: 'narrate', text: 'Gốc anh đào rụng hoa xuống vai hai người. Ở Kiểm Trắc Tháp xa xôi, có những hồ sơ đang chờ; ở sông Bạc, có những dấu vết đang căng. Nhưng giây phút này thuộc về hai người vừa qua một kiếp nạn — mỗi người bằng sức của chính mình.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 33 ===== */
+/* SCENE_CH33_CANH_BAO_A/B/C — trưởng lão đọc dấu ấn Thiên Đạo THẬT của
+   người chơi (33.md cảnh 1): A = 0 lần đối hưởng, B = 1–2 lần, C = 3+.
+   Cả ba biến thể khép bằng cùng một câu. */
+var SCENE_CH33_CANH_BAO_A = [
+  { who: 'narrate', text: 'Thanh Vân Đại Điện, chiều muộn. Trưởng lão tông cho lui hết đệ tử trực điện, đóng cửa điện, rồi mới nhìn ngươi — nhìn rất lâu, như nhìn một trang sổ mà ông phải đọc lại từ đầu.' },
+  { who: 'truong_lao_tong', text: 'Giang Phàm. Tu vi của ngươi đã đầy giai đoạn Hậu Kỳ. Trước khi nói việc Viên Mãn, ta phải nói một việc mà ít trưởng lão nào nói với đệ tử: chuyện sổ sách của trời.' },
+  { who: 'truong_lao_tong', text: 'Ta xem lại cách ngươi qua hai lần thiên kiếp. Trúc Cơ: ngươi nuốt lôi bằng đan phù và sức mình. Kết Đan: cũng vậy. Ngươi chưa từng một lần lên tiếng đối lại trời — chưa từng để trời ghi cho ngươi một nét sổ nào vì tiếng nói của ngươi.' },
+  { who: 'truong_lao_tong', text: 'Sổ sạch như thế là hiếm. Nhưng nghe cho rõ: sổ sạch không có nghĩa là trời không tính. Nó chỉ có nghĩa là tới giờ, ngươi chưa cho trời một cái cớ để tính sớm.' },
+  { who: 'truong_lao_tong', text: 'Từ Nguyên Anh, trời bắt đầu tính sổ.' }
+];
+var SCENE_CH33_CANH_BAO_B = [
+  { who: 'narrate', text: 'Thanh Vân Đại Điện, chiều muộn. Trưởng lão tông cho lui hết đệ tử trực điện, đóng cửa điện, rồi mới nhìn ngươi — nhìn rất lâu, như nhìn một trang sổ có vài nét chữ không nên có ở đó.' },
+  { who: 'truong_lao_tong', text: 'Giang Phàm. Tu vi của ngươi đã đầy giai đoạn Hậu Kỳ. Trước khi nói việc Viên Mãn, ta phải nói một việc mà ít trưởng lão nào nói với đệ tử: chuyện sổ sách của trời.' },
+  { who: 'truong_lao_tong', text: 'Ta xem lại cách ngươi qua hai lần thiên kiếp. Có lần, giữa lôi kiếp, ngươi đã cất lời đối lại trời. Tiếng nói của ngươi xóa được lôi — điều ấy cả tông đều phục. Nhưng mỗi lần như thế, trên sổ của trời lại thêm một nét: không phải nét phạt, là nét GHI NHỚ. Trời nhớ những ai dám đối thoại với nó.' },
+  { who: 'truong_lao_tong', text: 'Ta không trách ngươi — lúc sinh tử, dùng được gì thì dùng. Ta chỉ cần ngươi biết: những nét ghi nhớ ấy không mất đi. Chúng chờ ở phía trước, cộng dồn theo từng lần ngươi cất lời.' },
+  { who: 'truong_lao_tong', text: 'Từ Nguyên Anh, trời bắt đầu tính sổ.' }
+];
+var SCENE_CH33_CANH_BAO_C = [
+  { who: 'narrate', text: 'Thanh Vân Đại Điện, chiều muộn. Trưởng lão tông cho lui hết đệ tử trực điện, đóng cửa điện. Ông đặt lên bàn một tách trà đã nguội — ông đã ngồi chờ ngươi lâu hơn ngươi tưởng.' },
+  { who: 'truong_lao_tong', text: 'Giang Phàm. Tu vi của ngươi đã đầy giai đoạn Hậu Kỳ. Trước khi nói việc Viên Mãn, ta phải nói một việc mà ít trưởng lão nào nói với đệ tử: chuyện sổ sách của trời.' },
+  { who: 'truong_lao_tong', text: 'Ta xem lại cách ngươi qua hai lần thiên kiếp, và ta phải nói thẳng: ngươi cất lời đối trời nhiều hơn bất kỳ tu sĩ nào ta từng biết còn sống. Mỗi lần đối hưởng là một nét sổ. Sổ của ngươi… đã có một hàng nét như thế, và trời đọc sổ của nó kỹ hơn người ta tưởng.' },
+  { who: 'truong_lao_tong', text: 'Ta nói điều này không phải để dọa. Là để ngươi đi tiếp với đôi mắt mở: tiếng nói của ngươi là sức mạnh thật — và cũng là thứ duy nhất trên đời này mà trời chịu khó ghi chép từng lần.' },
+  { who: 'truong_lao_tong', text: 'Từ Nguyên Anh, trời bắt đầu tính sổ.' }
+];
+/* SCENE_CH33_CHUAN_BI — nguồn dải 2 mở + diễn tập trên bia (cảnh 2). */
+var SCENE_CH33_CHUAN_BI = [
+  { who: 'narrate', text: 'Quản sự tông mở danh mục vật phẩm chuẩn bị độ kiếp dải hai ngay tại đại điện: Kim Thân Đan — 60 Linh Thạch một viên, hoặc đổi bằng điểm cống hiến và dược liệu săn được; Cửu Thiên Tị Lôi Phù — 100 Linh Thạch một lá, hoặc đổi qua đường công trạng. Mọi vật phẩm đều có HAI nguồn: mua, hoặc đổi bằng sức cày.' },
+  { who: 'tap_dich_truong', text: 'Cậu xem cho kỹ hai món này khác hẳn đan phù dải một: Kim Thân Đan nuốt một đạo lôi tới bảy phần; lá phù kia dựng màn phù văn nuốt gần trọn một đạo. Đồ dải hai cho kiếp Nguyên Anh — đắt vì nó đáng giá từng ấy mạng.' },
+  { who: 'truong_lao_tong', text: 'Ở sân luyện có bia đá thử lôi. Ta cho người dẫn một đạo lôi giả xuống bia: ngươi tự xem hai món ấy nuốt lôi thế nào bằng mắt, trước khi quyết định mang gì theo người. Người tu tiên khôn không mua đồ bằng lời quảng cáo.' },
+  { who: 'narrate', text: 'Việc của chương này không phải mua sắm: hãy MỞ XEM cả hai danh mục (quản sự tông và tiệm trong thành), và xem buổi diễn tập thử lôi trên bia đá ở sân luyện. Mua hay không — tùy túi của ngươi.' }
+];
+/* SCENE_CH33_DOT_PHA — nghi thức mốc giai đoạn ở Đài (cảnh 3). KHÔNG
+   thiên kiếp, KHÔNG tuyên cáo — một nghi thức yên tĩnh. */
+var SCENE_CH33_DOT_PHA = [
+  { who: 'narrate', text: 'Đài Trúc Cơ của Thanh Vân Tông, sớm tinh mơ. Không đám đông, không nghi lễ rình rang — chỉ có trưởng lão đứng ở bậc đài dưới, và gió núi đi qua những lá Thanh Phong trên vai ngươi, đổi nhịp theo đúng tầng cộng hưởng thật của ngươi.' },
+  { who: 'truong_lao_tong', text: 'Mốc giai đoạn không có lôi kiếp — trời chưa cần ra tay ở những bậc thang trong nhà. Ngươi chỉ cần một thứ: đứng yên, và để tu vi đầy của mình tự tìm bậc cao hơn. Ta gióng một tiếng chuông khi ngươi bắt đầu. Còn lại là việc của ngươi.' },
+  { who: 'narrate', text: 'Tiếng chuông ngân lên một hồi dài. Một cột sáng mảnh dựng lên quanh ngươi trên đài — sáng vừa đủ để thấy, không chói. Khi cột sáng tan, hơi thở của ngươi đã chậm hơn, sâu hơn: Kim Đan Viên Mãn.' },
+  { who: 'truong_lao_tong', text: 'Xong. Từ đây tới Nguyên Anh chỉ còn một việc: tích lũy cho đầy, và chuẩn bị cho bảy đạo lôi. Đừng vội — kiếp Nguyên Anh không tha cho kẻ vội.' }
+];
+/* SCENE_CH33_TANG_KINH — cửa thư viện trên cao còn khóa + tin bến đò (cảnh 4). */
+var SCENE_CH33_TANG_KINH = [
+  { who: 'narrate', text: 'Tàng Kinh cấp cao của Thanh Vân Tông nằm ở tầng trên cùng của lầu sách: một cánh cửa đá khắc trận văn, không khóa ngoài, không lính gác — trận văn trên cửa tự nhận cảnh giới của người đứng trước nó.' },
+  { who: 'narrate', text: 'Ngươi đứng trước cửa. Trận văn sáng lên một nhịp, đọc tu vi của ngươi, rồi tắt — kèm một dòng chữ hiện trên đá: "Tàng Kinh cấp cao chỉ mở cho người đã qua Nguyên Anh. Cửa này còn đợi ngươi ở phía sau mốc ấy." (Cửa mở sau khi hoàn thành chương 36.)' },
+  { who: 'tham_bao', text: 'Thưa sư huynh, có người của bến đò sông Bạc lên tông gửi tin: kho chìm dưới bến đò — cái kho mà sư huynh mở cửa hôm trước — ở tầng sâu của nó có hai khu vực chưa ai vào được: một điện chìm có lôi tích tụ quanh năm, và một mộ kiếm cổ. Người gác kho cũ nói vọng xuống chỉ nghe tiếng sấm và tiếng kiếm rung.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta ghi lại. Hai khu ấy — chờ ta qua Nguyên Anh rồi tính. Giờ ta còn một món nợ với dòng sông này chưa trả.' },
+  { who: 'narrate', text: 'Tin cuối ngày tới từ bến đò, theo đường trạm: vùng sông Bạc có biến — một đoàn người tị nạn đang bị dồn về phía thung cụt đông bắc. Ngươi gấp lại danh mục đan phù. Việc chuẩn bị cho kiếp của chính mình, từ giờ phải chạy song song với việc cứu người.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 34 ===== */
+/* SCENE_CH34_TIN — tin đoàn tị nạn ở bến đò (34.md cảnh 1). */
+var SCENE_CH34_TIN = [
+  { who: 'narrate', text: 'Bến đò sông Bạc, trưa. Người đưa tin của làng chạy tới, áo còn đẫm mồ hôi đường xa — tin anh ta mang theo làm cả bến lặng đi.' },
+  { who: 'tin_su_lang', text: 'Cậu của tháp… đoàn tị nạn từ phía bắc — mấy chục người, có cả người già trẻ nhỏ — bị một toán quân không rõ cờ hiệu dồn vào thung cụt ở đông bắc vùng sông này. Chúng không đánh vào. Chúng đào rỗng hai sườn đất ở miệng thung, ngày nào cũng đào thêm một ít.' },
+  { who: 'nguoi_lai_do', text: 'Lão nghe là hiểu ngay cái độc của chúng: sườn đất bị đào rỗng, chỉ cần một trận mưa hoặc một tiếng động mạnh là sạt xuống chôn cả miệng thung. Chúng không cần giết người — chúng để đất giết thay, rồi nói là tai trời.' },
+  { who: 'tin_su_lang', text: 'Đoàn tị nạn cử tôi chạy ra cầu cứu. Trưởng đoàn dặn: họ còn cầm cự được ít ngày, lương thực chia nhau từng bữa. Xin cậu — tới xem trước khi trời mưa.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta đi ngay. Vào thung phải đi thấp và lặng: bay thấp vào gần, rồi đi bộ đoạn cuối để không bị phát hiện.' },
+  { who: 'narrate', text: 'Thung cụt nằm ở góc đông bắc bản đồ sông Bạc. Quân vây đóng quanh miệng thung — muốn vào trong, ngươi phải lẻn qua mắt chúng trước khi trời tối.' }
+];
+/* SCENE_CH34_THAM_DO — gặp trưởng đoàn trong thung (cảnh 2, sau thám dò). */
+var SCENE_CH34_THAM_DO = [
+  { who: 'narrate', text: 'Trong thung cụt: mấy chục con người nép dưới những mái lều tạm, trẻ con được giữ ở giữa, người già ngồi quay mặt ra miệng thung như chờ một điều gì đó rơi xuống. Trưởng đoàn — một người đàn ông gầy, mắt sâu vì thiếu ngủ — tiến ra đón ngươi.' },
+  { who: 'dan_nan_truong', text: 'Cậu là người làng cầu được tới phải không? Tôi là trưởng đoàn. Nghe tôi nói nhanh: chúng tôi không phải quân, không phải giặc cướp — chúng tôi là dân của ba thôn phía bắc, chạy khỏi vùng đất mà Huyết Bạc Cung vươn tay tới. Chúng đi tới đâu, thôn cháy tới đó. Chúng tôi chạy tới thung này thì hết đường.' },
+  { who: 'dan_nan_truong', text: 'Toán vây ngoài kia không phải người của cung — chúng là lính thuê của một kẻ chỉ huy giấu mặt. Chúng đào đất chờ sạt, vì sạt lở không để lại dấu vết của kẻ giết người. Cậu nghe được đất nói gì — tôi nghe dân trong đoàn nói thế về cậu. Vậy cậu nói cho tôi: đất này còn giữ chúng tôi được mấy ngày?' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta đã nghe đủ ba lớp: sườn nào rỗng, đường nào bị chặn, lính canh ở đâu. Ta chưa trả lời số ngày — vì ta không định để đoàn ở đây mà đếm ngày. Ta định mở đường cho đoàn ra.' },
+  { who: 'dan_nan_truong', text: '…Mấy chục mạng người, già trẻ đủ cả. Cậu nói câu ấy nhẹ như nói chuyện qua đò. Được — đoàn này giao tính mạng vào tay cậu. Cần gì ở chúng tôi, cậu cứ nói.' },
+  { who: 'narrate', text: 'Việc còn lại hôm nay: đánh trận mở miệng thung — hạ toán lính đào đất ở cửa thung trước khi chúng kịp gây sạt lở để chặn đường.' }
+];
+/* SCENE_CH34_HAI_DUONG — lựa chọn thái độ hai đường (cảnh 3). Lựa chọn
+   ĐƯỢC GHI, không rẽ nhánh dòng chảy. */
+var SCENE_CH34_HAI_DUONG = [
+  { who: 'narrate', text: 'Miệng thung đã mở. Ánh sáng chiều lọt vào thung lần đầu tiên sau nhiều ngày — đoàn tị nạn đứng dậy, nhìn ra khoảng trời vừa mở như nhìn một thứ đã quên mất hình dạng.' },
+  { who: 'dan_nan_truong', text: 'Đường ra có hai lối, tôi đã cho người xem: một đường tắt qua sườn dốc phía đông — nhanh, nhưng sườn ấy đất yếu, đoàn già trẻ đi qua là đánh cược. Một đường vòng men theo bờ sông — xa gấp ba, nhưng đất chắc, đi đêm cũng được. Cậu là người mở đường: cậu chọn, đoàn theo.' },
+  { who: 'choice', text: 'Chọn đường cứu đoàn (lựa chọn được ghi vào sổ — chương sau thi hành đúng đường đã chọn):', options: [
+    { label: 'Đường tắt qua sườn dốc — nhanh, giành thời gian trước khi quân vây quay lại', action: 'arcv_ch34_duong_tat' },
+    { label: 'Đường vòng men sông — chậm mà chắc, không đánh cược mạng người già trẻ nhỏ', action: 'arcv_ch34_duong_vong' }
+  ] },
+  { who: 'narrate', text: 'Ngươi viết lựa chọn của mình lên trang sổ chìa ra cho trưởng đoàn xem. Ông đọc, gật đầu, và truyền lại cho cả đoàn bằng giọng khàn đặc: "Đi theo đường cậu ấy chọn."' }
+];
+/* SCENE_CH34_TRAM_GIU — một đêm giữ thung (cảnh 4). */
+var SCENE_CH34_TRAM_GIU = [
+  { who: 'narrate', text: 'Đêm trong thung cụt. Lửa trại nhỏ được giấu dưới vòm đá để không lộ sáng ra ngoài miệng thung. Xa xa, thỉnh thoảng lại có tiếng đất trượt nhỏ từ những sườn bị đào rỗng — cả thung nằm nghe tiếng ấy mà ngủ chập chờn.' },
+  { who: 'dan_nan_truong', text: 'Cậu chưa ngủ à? …Tôi kể cậu nghe vì sao chúng tôi chạy, để nếu ngày mai có chuyện gì, ít nhất có một người ngoài đoàn biết. Ba thôn của chúng tôi sống yên ổn mấy chục năm. Rồi người của cung tới "mời" các thôn nộp người có linh căn và nộp đường sông. Thôn nào từ chối, thôn ấy cháy trong một đêm — cháy mà không ai thấy kẻ châm lửa.' },
+  { who: 'dan_nan_truong', text: 'Chúng tôi chạy không phải vì sợ chết. Chúng tôi chạy vì muốn con cháu mình lớn lên ở nơi chúng được quyền từ chối. Nghe thì to tát — thực ra chỉ có vậy.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ngày mai đoàn ra khỏi thung này. Ông ngủ đi — đêm nay ta canh.' },
+  { who: 'narrate', text: 'Hai đợt quấy rối ngắn trong đêm bị đánh lui lặng lẽ, không để tiếng động nào đủ lớn chạm vào những sườn đất rỗng. Khi trời sáng, đoàn tị nạn xếp hàng ở miệng thung — sẵn sàng cho ngày mở đường.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 35 ===== */
+/* SCENE_CH35_CUU_PRE — mở đầu ngày cứu đoàn (cảnh 1 mở). */
+var SCENE_CH35_CUU_PRE = [
+  { who: 'narrate', text: 'Sáng ngày cứu đoàn. Đoàn tị nạn xếp thành từng nhóm nhỏ ở miệng thung: người khỏe dìu người già, trẻ con được buộc chặt vào lưng người lớn. Toán lính của kẻ chỉ huy đã quay lại đông hơn — chúng giữ hai bên miệng thung và con đường rút, chờ đoàn tự bước vào thế kẹt.' },
+  { who: 'dan_nan_truong', text: 'Tôi chia đoàn làm ba nhóm như cậu dặn: nhóm đầu toàn người nhanh nhẹn, nhóm giữa là già trẻ, nhóm cuối là người khỏe nhất ở lại sau. Cậu mở đường tới đâu, chúng tôi đi tới đó. Không chen, không la — tôi đã dặn kỹ.' },
+  { who: 'hero', mode: 'write', text: '(viết) Nhóm đầu đi khi ta phá xong hàng chắn ở miệng thung. Nghe hiệu của ta — và dù thấy gì trên sườn đất, không ai được dừng lại giữa đường rút.' },
+  { who: 'narrate', text: 'Trận cứu đoàn bắt đầu: phá hàng chắn miệng thung, giữ hai bên đường rút, và đối mặt với kẻ chỉ huy của toán lính — kẻ mà dân trong vùng gọi bằng cái tên của chính đất dưới chân hắn: Thạch Liệt.' }
+];
+/* SCENE_CH35_LOI — LỜI CỨU NGƯỜI: câu nói thành tiếng DUY NHẤT của cung V
+   (35.md cảnh 2). mode 'say', ctx ch35_cuu_doan_nan, KHÔNG thienDaoMark. */
+var SCENE_CH35_LOI = [
+  { who: 'narrate', text: 'Nhóm cuối vừa qua khỏi miệng thung — nhóm người già và trẻ nhỏ đi chậm nhất — thì sườn đất phía trên họ, vốn đã bị đào rỗng từ nhiều ngày, bắt đầu trôi. Không ầm ầm: nó trôi lặng lẽ và nhanh như nước, một mảng đồi đang chảy xuống con đường mà nhóm cuối vừa đi qua, và họ còn ở ngay dưới chân nó.' },
+  { who: 'narrate', text: 'Kiếm không tới được. Bay cũng không mang người qua được dòng đất đang chảy. Định Âm ở tầm này chỉ giữ được vật đứng yên — mà đất thì đang động. Trong tai ngươi, âm gốc của cả mảng đồi đang tuột xuống như một tiếng thở dài cuối cùng.' },
+  { who: 'narrate', text: 'Và ngươi cất lời.' },
+  { who: 'hero', mode: 'say', text: 'DỪNG LẠI!' },
+  { who: 'narrate', text: 'Hai chữ ấy đi vào lòng đất như một cái cọc đóng xuống dòng nước. Mảng đồi đang trôi khựng lại giữa chừng — đất đá treo lơ lửng trong một khoảnh khắc dài phi lý — rồi dừng hẳn, nặng nề, như một con thú vừa bị gọi đúng tên. Nhóm người cuối cùng chạy qua khỏi vùng đất ấy trong tiếng khóc của trẻ con và tiếng nấc của người già.' },
+  { who: 'narrate', text: 'Khi ngươi hạ tay xuống, một sợi tóc ở thái dương ngươi đã bạc trắng tự lúc nào. Và ở một nơi sâu hơn tai nghe, một cuốn sổ vô hình vừa ghi thêm một dòng: ba năm.' }
+];
+/* SCENE_CH35_HOI_SUC — trưởng đoàn cảm ơn + nhận ra tóc bạc (cảnh 3). */
+var SCENE_CH35_HOI_SUC = [
+  { who: 'narrate', text: 'Cửa thung, nắng chiều. Đoàn tị nạn đã qua hết: mấy chục con người ngồi nghỉ trên bãi cỏ ngoài miệng thung, chia nhau nước và lương khô. Không thiếu một ai.' },
+  { who: 'dan_nan_truong', text: 'Đủ người. Tôi đếm ba lần: đủ người. Cậu… tôi không biết lấy gì cảm ơn. Cả đoàn này nợ cậu một món nợ không trả được bằng tiền, bằng sức — chỉ trả được bằng cách sống cho tử tế ở nơi chúng tôi sắp tới.' },
+  { who: 'dan_nan_truong', text: 'Cậu… tóc cậu. Ban sáng cậu vào thung, tóc chưa có sợi này. Tôi già rồi, mắt tôi không nhầm được: sợi bạc ấy mới có từ lúc cậu cất tiếng gọi đất dừng lại. Tôi không hỏi nó là gì. Tôi chỉ nói để cậu biết: đoàn này thấy, và đoàn này nhớ.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ông giữ cho đoàn đi tiếp an toàn. Chuyện sợi tóc — để nó là chuyện của ta.' },
+  { who: 'narrate', text: 'Từ hôm nay, ô thông tin nhân vật của ngươi có thêm một cuốn sổ mới: sổ thọ nguyên — ghi lại những năm ngươi đã trả, bắt đầu bằng con số của buổi chiều này. Chỉ ngươi và Giang Phàm biết con số ấy. Thiên hạ chỉ thấy một sợi tóc bạc.' }
+];
+
+/* ===== CUNG V — CHƯƠNG 36 ===== */
+/* SCENE_CH36_CHUAN_BI — chuẩn bị kiếp ở tông + thư từ (36.md cảnh 1). */
+var SCENE_CH36_CHUAN_BI = [
+  { who: 'narrate', text: 'Thanh Vân Tông. Tin ngươi sắp độ kiếp Nguyên Anh được giữ kín trong vòng ít người: trưởng lão, quản sự, và những người đã đi cùng ngươi từ bến đò. Việc chuẩn bị làm theo bảng: bảy đạo lôi, vật phẩm dải hai trong túi, người hộ pháp, và điểm độ kiếp ở đầu xa sông Bạc — điểm cao cuối sông mà ngươi đã chọn từ khi còn ở Kim Đan Hậu Kỳ.' },
+  { who: 'truong_lao_tong', text: 'Ta nói lại những con số cần nhớ: bảy đạo lôi, đạo cuối mạnh nhất — thiên uy của nó ở ngưỡng mà chỉ cộng hưởng ở bậc cao nhất mới chạm tới. Đan phù dải hai ngươi mang theo, dùng cho đạo nào là tính toán của ngươi. Người hộ pháp giữ vòng ngoài như lệ: giữ đất yên, không can thiệp vào kiếp.' },
+  { who: 'truong_lao_tong', text: 'Và một lời dặn cuối, từ ta — không phải từ sách: nếu giữa kiếp có khoảnh khắc ngươi muốn cất lời đối trời, hãy nhớ lời ta nói hôm ngươi đầy Hậu Kỳ. Trời ghi sổ. Nhưng quyết định là của ngươi, không phải của ta.' },
+  { who: 'narrate', text: 'Thư từ và người liên lạc qua lại giữa tông và điểm độ kiếp trong mấy ngày chuẩn bị. Trước khi mây kiếp tụ, còn một việc cuối: yêu quái vùng sông bị linh khí động kéo tới điểm cao — phải dẹp yên quanh điểm độ kiếp trước đã.' }
+];
+/* SCENE_CH36_TRUOC_KIEP — ở điểm cao cuối sông, trước mây kiếp (cảnh 2 mở). */
+var SCENE_CH36_TRUOC_KIEP = [
+  { who: 'narrate', text: 'Điểm cao cuối sông Bạc. Bệ đá hoa văn giữa nền đá rộng, gió sông thổi lên không ngừng. Quanh điểm độ kiếp đã yên: đợt quái bị linh khí kéo tới đã bị dẹp, người hộ pháp đã vào vị trí ở vòng ngoài.' },
+  { who: 'narrate', text: 'Sợi tóc bạc ở thái dương ngươi bay trong gió sông. Ngươi đứng giữa bệ, nhìn lên bầu trời đang đổi màu từng lớp — mây kiếp tụ lại theo từng vòng đồng tâm, chậm và nặng như mực đổ vào nước.' },
+  { who: 'hero', mode: 'write', text: '(viết cho người hộ pháp, trước khi bước vào tâm bệ) Ta vào đây. Dù nghe thấy gì — đừng vào vòng.' },
+  { who: 'narrate', text: 'Mây kiếp khép kín trên đầu. Đạo lôi đầu tiên đang hình thành trong lòng mây, sáng lên từng nhịp như một trái tim khổng lồ của trời. Bảy đạo. Bắt đầu.' }
+];
+/* SCENE_CH36_TUYEN_CAO — sau tuyên cáo: ba nhịp phản ứng (cảnh 3). */
+var SCENE_CH36_TUYEN_CAO = [
+  { who: 'narrate', text: 'Tiếng tuyên đọc của Thiên Đạo còn vang trong mây tan khi những người đầu tiên chạy tới điểm cao: người của tông đến trước, mang theo thư của tháp, và sau cùng — đi bộ cả quãng đường dài — là mấy người của đoàn tị nạn được cứu.' },
+  { who: 'tin_su', text: 'Thưa… thưa sư huynh! Chuông ở tông gióng lên tự động lúc tuyên cáo vang qua vùng này — cả tông biết rồi. Trưởng lão gửi lời: "Tông môn có thêm một Nguyên Anh. Về tông, cửa Tàng Kinh cấp cao đã mở cho ngươi."' },
+  { who: 'chap_su_thap', text: '(trong thư gửi từ tháp, đọc lại tại chỗ) "Tháp ghi vào sổ trực: ngày này, Giang Phàm độ kiếp Nguyên Anh thành công tại sông Bạc. Cái tên ấy, từ nay, không hồ sơ nào xóa được nữa." — thư của chấp sự tháp, có đóng triện.' },
+  { who: 'dan_nan_truong', text: 'Đoàn chúng tôi nghe tiếng trời đọc từ xa. Chúng tôi không hiểu hết — chỉ hiểu một điều: người cứu đoàn này vừa bước lên một bậc mà trời phải lên tiếng. Chúng tôi mang tới không có gì quý: một giỏ cá khô của làng bến đò nhờ gửi, và lời này — đi đâu, đoàn này cũng kể lại chuyện ở thung cụt cho người ta nghe.' },
+  { who: 'narrate', text: 'Một Nguyên Anh mới của Thanh Vân Tông, một cái tên không còn xóa được trong sổ của tháp, và một câu chuyện bắt đầu được kể dọc hành lang sông Bạc bằng miệng của những người được cứu. Đó là những gì bảy đạo lôi để lại trên mặt đất.' }
+];
+/* SCENE_CH36_TIN_NIEM_PHONG — hai móc treo cuối cung (cảnh 4). CHỈ hai
+  钩 — không tên cung chủ, không thiết kế cung VI. */
+var SCENE_CH36_TIN_NIEM_PHONG = [
+  { who: 'narrate', text: 'Bến đò sông Bạc, mấy ngày sau. Ngươi quay lại bến trước khi về tông — lão đò vẫn ngồi ở đầu cầu ván, như buổi chiều đầu tiên ngươi tới vùng sông này.' },
+  { who: 'nguoi_lai_do', text: 'Cậu thành Nguyên Anh rồi. Sông này biết trước cả lão — mấy hôm nay nước êm lạ thường, cá về đầy bến. Nhưng có hai tin lão phải nói, một tin nặng một tin chưa nặng: tin nặng là người của trạm vừa cho hay, nhánh hồ sơ về chuyến đò năm xưa ở trạm này vừa bị niêm phong thêm một lớp nữa, từ trên xuống.' },
+  { who: 'nguoi_lai_do', text: 'Người của trạm nói: muốn mở lớp niêm ấy, hoặc phải có một cuộc xung đột bên trong Thiên Cơ Các, hoặc phải có một chiếc chìa khóa mà chỉ Huyết Bạc Cung giữ. Lão nghe mà lạnh gáy — hồ sơ của người ta, sao chìa khóa lại ở tay kẻ thù của người ta?' },
+  { who: 'nguoi_lai_do', text: 'Tin chưa nặng thì là tin đồn — nhưng là tin đồn có chân: dọc hành lang sông này, mấy toán lính thuê bắt đầu đổi cờ hiệu, kho lương được dựng ở hai điểm trên bờ bắc. Dân chài nói với nhau: cung chủ của Huyết Bạc Cung — kẻ mà mấy chục năm không ai thấy mặt — đã bắt đầu điều quân về phía sông Bạc.' },
+  { who: 'hero', mode: 'write', text: '(viết) Ta ghi cả hai tin. Sông này — ta chưa đi khỏi hẳn đâu, lão đò.' },
+  { who: 'nguoi_lai_do', text: 'Lão biết. Người nghe được sông nói như cậu, đi đâu rồi cũng quay lại với sông. Lão ở đây chờ — đò này còn chèo được nhiều năm nữa.' },
+  { who: 'narrate', text: 'Cung V khép lại ở bến đò: một Nguyên Anh mới đứng trên hành lang sông Bạc, phía sau là một cái tên không còn xóa được, phía trước là một lớp niêm phong nữa và một đoàn quân đang tới. Sổ của trời đã mở — và từ nay, nó tính đều đặn.' }
+];
+
+  var SCENE_CH30_NIEM_PHONG_A = SCENE_CH30_NIEM_PHONG.slice(0, 5);
+  var SCENE_CH30_NIEM_PHONG_B = SCENE_CH30_NIEM_PHONG.slice(5);
   var STORY = {
     IDLE_BEFORE: IDLE_BEFORE, IDLE_AFTER: IDLE_AFTER,
     SCENE_TEST: SCENE_TEST, SCENE_WRITE_BRANCH: SCENE_WRITE_BRANCH,
@@ -2346,7 +2864,8 @@
     SCENE_CH24_GIU_BI_MAT: SCENE_CH24_GIU_BI_MAT, SCENE_CH24_THA_MANG: SCENE_CH24_THA_MANG,
     SCENE_CH24_MANH_MOI: SCENE_CH24_MANH_MOI, SCENE_CH24_LEN_DUONG: SCENE_CH24_LEN_DUONG,
     SCENE_CH24_TU_BIET: SCENE_CH24_TU_BIET, SCENE_CH24_DONE: SCENE_CH24_DONE,
-    SCENE_CH24_LEN_DUONG_TIN_B: SCENE_CH24_LEN_DUONG_TIN_B, SCENE_KY_NGO_BON_LOI: SCENE_KY_NGO_BON_LOI
+    SCENE_CH24_LEN_DUONG_TIN_B: SCENE_CH24_LEN_DUONG_TIN_B, SCENE_KY_NGO_BON_LOI: SCENE_KY_NGO_BON_LOI,
+    SCENE_CH25_LEN_DUONG: SCENE_CH25_LEN_DUONG, SCENE_CH25_BEN_DO: SCENE_CH25_BEN_DO, SCENE_CH25_HOI_CHUYEN_XUA: SCENE_CH25_HOI_CHUYEN_XUA, SCENE_CH25_SONG_DEM_PRE: SCENE_CH25_SONG_DEM_PRE, SCENE_CH25_SONG_DEM_END: SCENE_CH25_SONG_DEM_END, SCENE_CH25_TIN_B: SCENE_CH25_TIN_B, SCENE_CH26_TRUY_VET: SCENE_CH26_TRUY_VET, SCENE_CH26_GIU_TRUOC: SCENE_CH26_GIU_TRUOC, SCENE_CH26_BEP_END: SCENE_CH26_BEP_END, SCENE_CH26_BAY_PRE: SCENE_CH26_BAY_PRE, SCENE_CH26_BAY_END: SCENE_CH26_BAY_END, SCENE_CH26_KE_DOC: SCENE_CH26_KE_DOC, SCENE_CH27_THU_NHA: SCENE_CH27_THU_NHA, SCENE_CH27_SONG_GIO_PRE: SCENE_CH27_SONG_GIO_PRE, SCENE_CH27_SONG_GIO_END: SCENE_CH27_SONG_GIO_END, SCENE_CH27_HO_TONG_PRE: SCENE_CH27_HO_TONG_PRE, SCENE_CH27_NHA_XEN: SCENE_CH27_NHA_XEN, SCENE_CH27_TIN_VUI: SCENE_CH27_TIN_VUI, SCENE_CH28_LANG: SCENE_CH28_LANG, SCENE_CH28_NAN_HON: SCENE_CH28_NAN_HON, SCENE_CH28_TRUOC_TRAM: SCENE_CH28_TRUOC_TRAM, SCENE_CH28_AN_DANH: SCENE_CH28_AN_DANH, SCENE_CH29_TRAM: SCENE_CH29_TRAM, SCENE_CH29_DOT_GIAY_PRE: SCENE_CH29_DOT_GIAY_PRE, SCENE_CH29_TRANG: SCENE_CH29_TRANG, SCENE_CH29_DUOI_THEO: SCENE_CH29_DUOI_THEO, SCENE_CH30_TANG_SAU: SCENE_CH30_TANG_SAU, SCENE_CH30_NIEM_PHONG: SCENE_CH30_NIEM_PHONG, SCENE_CH30_NIEM_PHONG_A: SCENE_CH30_NIEM_PHONG_A, SCENE_CH30_NIEM_PHONG_B: SCENE_CH30_NIEM_PHONG_B, SCENE_CH30_QUYET_TAM: SCENE_CH30_QUYET_TAM, SCENE_CH31_TIN: SCENE_CH31_TIN, SCENE_CH31_NHAN_CHUNG: SCENE_CH31_NHAN_CHUNG, SCENE_CH31_PHUC_KICH_PRE: SCENE_CH31_PHUC_KICH_PRE, SCENE_CH31_RONG: SCENE_CH31_RONG, SCENE_CH32_VE_THANH: SCENE_CH32_VE_THANH, SCENE_CH32_HO_PHAP_PRE: SCENE_CH32_HO_PHAP_PRE, SCENE_CH32_THO_NGUYEN: SCENE_CH32_THO_NGUYEN, SCENE_CH33_CANH_BAO_A: SCENE_CH33_CANH_BAO_A, SCENE_CH33_CANH_BAO_B: SCENE_CH33_CANH_BAO_B, SCENE_CH33_CANH_BAO_C: SCENE_CH33_CANH_BAO_C, SCENE_CH33_CHUAN_BI: SCENE_CH33_CHUAN_BI, SCENE_CH33_DOT_PHA: SCENE_CH33_DOT_PHA, SCENE_CH33_TANG_KINH: SCENE_CH33_TANG_KINH, SCENE_CH34_TIN: SCENE_CH34_TIN, SCENE_CH34_THAM_DO: SCENE_CH34_THAM_DO, SCENE_CH34_HAI_DUONG: SCENE_CH34_HAI_DUONG, SCENE_CH34_TRAM_GIU: SCENE_CH34_TRAM_GIU, SCENE_CH35_CUU_PRE: SCENE_CH35_CUU_PRE, SCENE_CH35_LOI: SCENE_CH35_LOI, SCENE_CH35_HOI_SUC: SCENE_CH35_HOI_SUC, SCENE_CH36_CHUAN_BI: SCENE_CH36_CHUAN_BI, SCENE_CH36_TRUOC_KIEP: SCENE_CH36_TRUOC_KIEP, SCENE_CH36_TUYEN_CAO: SCENE_CH36_TUYEN_CAO, SCENE_CH36_TIN_NIEM_PHONG: SCENE_CH36_TIN_NIEM_PHONG
   };
   global.VSLC_STORY = STORY;
   if (typeof module !== 'undefined' && module.exports) module.exports = STORY;
