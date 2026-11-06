@@ -864,6 +864,7 @@
     flyBots = []; skyClouds = []; flySysMap = null; flySpawnT = 0; // bot ngự kiếm bay lượn + mây trời (đợt flybots) cũng là trạng thái phiên — dọn cùng đợt
     pracFight = null; pracStats = { count: 0, wins: 0 }; pracCdUntil = 0; // bot luyện tập: trận + bộ đếm phiên + mốc nghỉ cũng là trạng thái phiên
     guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
+    npcHintFrame = null; // gợi ý chạm NPC vừa vẽ cũng là trạng thái phiên — dọn cùng đợt
     closeGrindBoard();
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
   }
@@ -2437,6 +2438,12 @@
     guideFrame = guideCompute();
     if (guideFrame.bang && guideFrame.display) drawGuideBang(guideFrame.display.ax, guideFrame.display.ay);
     if (guideFrame.arrow && guideFrame.display) drawGuideArrow(guideFrame.display);
+    // Gợi ý chạm NPC (đợt npctap): khi người chơi đang đứng ở ô kề hợp lệ,
+    // vòng sáng + bong bóng chữ ngay tại NPC cho biết chạm vào NPC sẽ mở
+    // trò chuyện. Lớp này thuần trình diễn, không nhận thao tác và không
+    // phụ thuộc cài đặt hiện tên.
+    npcHintFrame = npcHintCompute();
+    if (npcHintFrame && npcHintFrame.id) drawNpcHint(npcHintFrame);
     // vòng sóng âm Ngôn Linh (cài đặt fxRings chỉ tắt phần VẼ, vòng đời vòng vẫn chạy như cũ)
     rings = rings.filter(function (r) { return r.a > 0; });
     if (!SET || SET.current.fxRings) rings.forEach(function (r) {
@@ -3571,6 +3578,7 @@
      hiện khi đang trận. Lớp vẽ này thuần canvas, không nhận thao tác. */
   var GUIDE_HIDE_TILES = 3; // mục tiêu hiển thị đã trong khung hình VÀ cách nhân vật <= 3 ô (Chebyshev) thì ẩn mũi tên
   var guideFrame = null;    // khung dẫn đường vừa vẽ gần nhất (trạng thái phiên — resetPresentationState dọn)
+  var npcHintFrame = null;  // khung gợi ý chạm NPC vừa vẽ gần nhất (trạng thái phiên — resetPresentationState dọn)
   function guidePropById(mapId, propId) {
     var def = L.MAPS[mapId]; if (!def) return null;
     for (var i = 0; i < def.props.length; i++) if (def.props[i].id === propId) return def.props[i];
@@ -3809,6 +3817,71 @@
     ctx.strokeStyle = 'rgba(32,22,4,0.9)'; ctx.lineWidth = 1.6;
     ctx.beginPath(); ctx.moveTo(13, 0); ctx.lineTo(-8, -8.5); ctx.lineTo(-4.5, 0); ctx.lineTo(-8, 8.5); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
+  }
+
+  /* Gợi ý khi người chơi đã vào tầm tương tác của NPC (đợt npctap).
+     Hàm thuần duy nhất mà cả render() lẫn tay nắm VSLC_NPCHINT cùng đọc:
+     chỉ chọn NPC khi ô người chơi đang đứng thuộc đúng tập ô đứng hợp lệ
+     của NPC đó (standTilesFor — cùng neo tương tác mà chạm/E dùng), nên
+     gợi ý không bao giờ hiện sớm từ xa hay lệch khỏi vùng mở được thoại.
+     Nhiệm vụ phụ không có trường NPC-giao-nhiệm-vụ riêng trong dữ kiện
+     hiện tại (việc nhận/trả diễn ra trong panel phụ), nên nhãn nhiệm vụ
+     chỉ suy ra được cho bước chính/phụ đã chọn khi resolveQuestTarget()
+     trỏ đúng NPC này trên bản đồ hiện tại; ngoài trường hợp đó giữ nhãn
+     trò chuyện chung, không suy diễn trạng thái nhận/trả nhiệm vụ. */
+  function npcHintCompute() {
+    var out = { id: null, name: null, label: null, questTarget: false,
+                ax: null, ay: null, top: null, standX: null, standY: null };
+    if (!state || dlg || tlFight || hhtFight || daiFight || arcFig) return out;
+    var pt = playerTile();
+    var best = null, bestD = 1e9;
+    for (var i = 0; i < npcsLive.length; i++) {
+      var n = npcsLive[i];
+      if (n.id === 'de_tu_ho_tong') continue; // đệ tử hộ tống không phải NPC trò chuyện thường trú
+      var stands = L.standTilesFor({ kind: 'npc', id: n.id, name: n.name, x: n.x, y: n.y }, npcsLive);
+      var inRange = false;
+      for (var j = 0; j < stands.length; j++) if (stands[j].x === pt.x && stands[j].y === pt.y) { inRange = true; break; }
+      if (!inRange) continue;
+      var d = Math.abs(n.x - pt.x) + Math.abs(n.y - pt.y);
+      if (d < bestD) { bestD = d; best = n; }
+    }
+    if (!best) return out;
+    var qt = resolveQuestTarget();
+    var isQuest = !!(qt && qt.kind === 'npc' && qt.map === state.map && qt.targetId === best.id);
+    out.id = best.id;
+    out.name = best.name || best.id;
+    out.questTarget = isQuest;
+    out.label = isQuest ? 'Nhiệm vụ: chạm để nói chuyện' : 'Chạm để trò chuyện';
+    out.ax = best.x * TILE + 16;
+    out.ay = (best.y + 1) * TILE - 2;
+    out.top = (best.y + 1) * TILE - 80 + (best.oy || 0);
+    out.standX = pt.x;
+    out.standY = pt.y;
+    return out;
+  }
+  function drawNpcHint(h) {
+    var pulse = 0.55 + 0.3 * Math.sin(tNow / 240);
+    ctx.strokeStyle = 'rgba(255,224,150,' + pulse.toFixed(3) + ')';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.ellipse(h.ax, h.ay, 16, 6, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,224,150,' + (0.10 + 0.06 * pulse).toFixed(3) + ')';
+    ctx.beginPath(); ctx.ellipse(h.ax, h.ay, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    var tw = ctx.measureText(h.label).width;
+    var pw = Math.max(126, tw + 26), ph = 25;
+    var px0 = h.ax - pw / 2;
+    var py0 = h.top - 62 + Math.sin(tNow / 320) * 2.5;
+    ctx.beginPath();
+    ctx.moveTo(px0 + 10, py0);
+    ctx.lineTo(px0 + pw - 10, py0); ctx.quadraticCurveTo(px0 + pw, py0, px0 + pw, py0 + 10);
+    ctx.lineTo(px0 + pw, py0 + ph - 10); ctx.quadraticCurveTo(px0 + pw, py0 + ph, px0 + pw - 10, py0 + ph);
+    ctx.lineTo(px0 + 10, py0 + ph); ctx.quadraticCurveTo(px0, py0 + ph, px0, py0 + ph - 10);
+    ctx.lineTo(px0, py0 + 10); ctx.quadraticCurveTo(px0, py0, px0 + 10, py0);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(20,16,8,0.78)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,233,168,0.55)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = '#ffe9a8';
+    ctx.fillText(h.label, h.ax, py0 + 17);
   }
 
   /* Tu vi sự kiện của phần 3: cộng dồn có trần theo đúng bảng phân bổ đã
@@ -8493,6 +8566,10 @@
   }
   function hurtPlayer(dmg) {
     if (!state || dmg <= 0 || !enc) return;
+    // Giao tranh đã bắt đầu (người chơi bị đánh trúng): hủy lần mở-tự-động
+    // đang chờ của thao tác chạm NPC trước đó. Đường đi không bị xóa ở đây
+    // vì cơ chế trận đấu sở hữu chuyển động trong lúc giao chiến.
+    pendingInteract = null;
     // Pháp bảo Hộ thể (Huyền Quang Kính): giảm sát thương chiến đấu
     // phải chịu — qua phễu hurtPlayer duy nhất của làn chạm trán/bí
     // cảnh, trần cứng 20% nằm ở L.treasureDmgCut. Độ kiếp KHÔNG qua
@@ -12994,6 +13071,10 @@
      nói. Đánh vào cọc gỗ thì nứt như mọi đòn nhưng không làm cọc đổ hẳn —
      cọc gỗ của trấn vẫn là việc của một đòn Phá Âm. */
   function castSword() {
+    // Người chơi chủ động ra đòn kiếm = giao tranh bắt đầu: hủy lần
+    // mở-tự-động đang chờ của thao tác chạm NPC trước đó (đường đi giữ
+    // nguyên để cơ chế chạm-quái/giao chiến hiện tại xử lý như cũ).
+    pendingInteract = null;
     if (tlFight) { tlSwordHeld = true; tlSwordHeldUntil = tNow + 350; tlSwordPress(); return; } // gói phụ 13: nút kiếm cảm ứng trong ải
     if (hhtFight) { if (!dlg) hhtCastSword(); return; } // Mục F: kiếm quyết trong trận đài
     if (daiFight) { if (!dlg) daiCastSword(); return; } // ARCIV: kiếm quyết trong trận đài thách đấu
@@ -14381,7 +14462,13 @@
   cv.addEventListener('mousedown', function (e) {
     if (e.button !== 0) return;
     if (pinch.active) return;
-    if (joy.state === 'pending' || joy.state === 'stick') return; // đang kéo cần bằng chuột (chế độ Luôn bật)
+    if (joy.state === 'stick') return; // đang kéo cần bằng chuột thật (chế độ Luôn bật)
+    // KHÔNG chặn ở 'pending': pointerdown của chính lần bấm này vừa đặt
+    // cần sang 'pending', nên chặn cả 'pending' sẽ nuốt mọi lần chạm
+    // chuột (kể cả chạm NPC) khi joyMode = 'on'. Nếu người chơi thật sự
+    // kéo chuột thành cần, pointermove/joyEnd chuyển 'pending' -> 'stick'
+    // và đã tự hủy clickPath + pendingInteract, nên không có lệnh chạm
+    // ma nào sống sót sau một lần kéo thật.
     // Cả hai cửa sổ nuốt đều được TIÊU THỤ trong cùng lần sự kiện này, để
     // lần chạm thật ngay sau đó không bị nuốt oan bởi cửa sổ còn sót.
     var supJoy = tapSuppressed(), supPinch = pinchTapBlocked();
@@ -16613,6 +16700,19 @@
     display: function () { return guidePublicFrame(guideCompute()); },
     frame: function () { return guidePublicFrame(guideFrame); },
     resolve: resolveQuestTarget
+  };
+
+  /* Tay nắm kiểm chứng cho gợi ý chạm NPC (đợt npctap, chỉ đọc):
+     current() = trạng thái tính bằng CÙNG hàm npcHintCompute mà
+     render() dùng; frame() = bản sao khung gợi ý vừa vẽ thật gần nhất
+     (null ngay sau resetPresentationState). */
+  function npcHintPublic(h) {
+    return h ? { id: h.id, name: h.name, label: h.label, questTarget: !!h.questTarget,
+                 ax: h.ax, ay: h.ay, top: h.top, standX: h.standX, standY: h.standY } : null;
+  }
+  window.VSLC_NPCHINT = {
+    current: function () { return npcHintPublic(npcHintCompute()); },
+    frame: function () { return npcHintPublic(npcHintFrame); }
   };
 
   /* Tay nắm kiểm chứng Mục H (chuỗi phụ quanh Trúc Cơ): đọc trạng thái
