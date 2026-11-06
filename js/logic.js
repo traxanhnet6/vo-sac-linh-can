@@ -2303,6 +2303,7 @@
       journal: defaultJournal(),     // Sổ hành trình (đợt mở rộng bảng nhân vật): mốc đột phá/độ kiếp/hạ boss/hoàn thành chương — ghi từ phiên bản này
       spokeLedger: [],           // Sổ Dư Âm: {ch, ctx, witnesses} — nền cơ chế giá của dư âm
       announceLog: [],           // Sổ Thiên Đạo thông cáo (docs/realm-prep/ mục 9.1): tối đa 20 dòng gần nhất
+      giftCodesUsed: [],         // Giftcode đã đổi của tài khoản này (đợt giftcode 2026-11-06): danh sách mã đã chuẩn hoá, mỗi mã dùng đúng một lần
       linhThach: 0,              // ví Linh Thạch — KHÓA cho tới khi bắt đầu tu tiên
       silver: SILVER_START,      // ví BẠC phàm tục (đợt sửa lỗi nhiệm vụ nấu ăn 2026-11-05): tiền mang theo người, chỉ mua được đồ ăn phàm tục rẻ
       linhUnlocked: false,       // mở tại tryBreakthrough khi đạt Luyện Khí tầng 1
@@ -3259,6 +3260,98 @@
     state.sectMerit = cur + Math.max(0, add);
     return state.sectMerit;
   }
+  /* ---------------- Giftcode (lệnh Bui 06:09 ngày 2026-11-06) ----------------
+     Bảng mã quà + hàm đổi mã TRUNG TÂM duy nhất. Giao diện (mục Giftcode
+     trong panel Cài đặt) chỉ gọi redeemGiftCode qua cầu VSLC_BRIDGE —
+     giai đoạn online chỉ cần thay phần kiểm tra/phát quà trong hàm này
+     bằng kiểm tra phía máy chủ, giao diện không đổi.
+     Luật cứng khi thêm mã vào bảng (kiểm thử §79 khóa):
+     - mỗi mã tối đa GIFT_CODE_MAX_LINH Linh Thạch;
+     - vật phẩm phải có sẵn trong ITEM_DEFS, KHÔNG vật phẩm cốt truyện
+       (storySlot), KHÔNG Trúc Cơ Đan, KHÔNG pháp bảo đeo được.
+     Luật khóa ví: mã có Linh Thạch mà ví chưa mở (chưa đột phá Luyện Khí
+     tầng 1) thì HOÃN — không tiêu mã, người chơi quay lại nhập sau. */
+  var GIFT_CODE_MAX_LINH = 100; // trần Linh Thạch cho MỘT mã quà
+  var GIFT_CODES = {
+    // [ĐỀ XUẤT 2026-11-06] Quà tân thủ thuần phàm tục — nhập được ngay từ chương 1.
+    TANTHU: { linhThach: 0, bac: 20, items: { com_nam: 2 }, note: 'Quà tân thủ: 20 lượng Bạc + 2 Cơm Nắm Lá Sen.' },
+    // [ĐỀ XUẤT 2026-11-06] Mã chào mừng Vô Sắc — có Linh Thạch nên chỉ đổi được sau khi mở ví.
+    VOSAC: { linhThach: 50, bac: 0, items: { hoi_khi_dan: 2 }, note: 'Quà chào mừng: 50 Linh Thạch + 2 Hồi Khí Đan.' },
+    // [ĐỀ XUẤT 2026-11-06] Mã Thanh Vân — lá phù tránh lôi + Linh Thạch, hướng tới mốc Trúc Cơ.
+    THANHVAN: { linhThach: 30, bac: 0, items: { ti_loi_phu: 1 }, note: 'Quà Thanh Vân: 1 Tị Lôi Phù + 30 Linh Thạch.' }
+  };
+  // Chuẩn hoá mã người chơi gõ: cắt khoảng trắng, không phân biệt hoa thường.
+  function giftCodeNormalize(raw) {
+    return String(raw == null ? '' : raw).trim().toUpperCase();
+  }
+  // Save cũ chưa có trường giftCodesUsed -> dựng danh sách rỗng; danh sách
+  // bẩn (không phải mảng / phần tử lạ) được lọc về các mã đã chuẩn hoá.
+  function ensureGiftCodes(state) {
+    if (!state || typeof state !== 'object') return state;
+    if (!Array.isArray(state.giftCodesUsed)) state.giftCodesUsed = [];
+    var clean = [];
+    for (var i = 0; i < state.giftCodesUsed.length; i++) {
+      if (typeof state.giftCodesUsed[i] !== 'string') continue; // phần tử lạ (số/null) không phải mã — bỏ
+      var c = giftCodeNormalize(state.giftCodesUsed[i]);
+      if (c && clean.indexOf(c) < 0) clean.push(c);
+    }
+    state.giftCodesUsed = clean;
+    return state;
+  }
+  function giftCodeAlreadyUsed(state, code) {
+    ensureGiftCodes(state);
+    return !!state && state.giftCodesUsed.indexOf(code) >= 0;
+  }
+  /* Đổi một mã quà. Trả { ok, reason?, code?, got?, text } — text là câu
+     hiển thị cho người chơi. Mọi đường KHÔNG thành công đều không tiêu mã
+     và không cộng dở dang: kiểm tra ví + kiểm tra túi xong mới phát quà
+     qua đúng phễu trung tâm (addLinhThach / ví Bạc state.silver / bagAdd). */
+  function redeemGiftCode(state, rawCode) {
+    if (!state || typeof state !== 'object') return { ok: false, reason: 'no_state', text: 'Chưa có nhân vật.' };
+    ensureGiftCodes(state);
+    var code = giftCodeNormalize(rawCode);
+    if (!code) return { ok: false, reason: 'empty', text: 'Hãy nhập mã quà trước.' };
+    var def = GIFT_CODES[code];
+    if (!def) return { ok: false, reason: 'not_found', code: code, text: 'Mã quà không đúng hoặc không tồn tại.' };
+    if (giftCodeAlreadyUsed(state, code)) return { ok: false, reason: 'used', code: code, text: 'Mã "' + code + '" đã được dùng rồi — mỗi mã chỉ nhận một lần.' };
+    var linh = Math.min(GIFT_CODE_MAX_LINH, Math.max(0, Math.floor(Number(def.linhThach) || 0)));
+    // Luật khóa ví phàm nhân: có Linh Thạch mà ví chưa mở -> hoãn, giữ nguyên mã.
+    if (linh > 0 && !walletOpen(state)) {
+      return { ok: false, reason: 'wallet_locked', code: code, text: 'Mã này có Linh Thạch — đợi bắt đầu tu tiên (đột phá Luyện Khí tầng 1) rồi quay lại nhập mã này. Mã chưa bị dùng.' };
+    }
+    var bac = Math.max(0, Math.floor(Number(def.bac) || 0));
+    var items = (def.items && typeof def.items === 'object') ? def.items : {};
+    var ids = Object.keys(items);
+    // Kiểm túi TRƯỚC cho từng món + tổng sức chứa cộng dồn: đầy thì không
+    // tiêu mã, không nuốt mất phần quà nào.
+    var addUnits = 0;
+    for (var i = 0; i < ids.length; i++) {
+      var n = Math.max(0, Math.floor(Number(items[ids[i]]) || 0));
+      if (n <= 0) continue;
+      var chk = bagCanAdd(state, ids[i], n);
+      if (!chk.ok) return { ok: false, reason: 'bag_full', code: code, text: chk.reason + ' Hãy dọn túi rồi nhập lại mã — mã chưa bị dùng.' };
+      addUnits += n;
+    }
+    if (addUnits > 0 && bagUsed(state) + addUnits > bagCap(state)) {
+      return { ok: false, reason: 'bag_full', code: code, text: 'Túi trữ vật đã đầy (' + bagUsed(state) + '/' + bagCap(state) + '). Hãy dọn túi rồi nhập lại mã — mã chưa bị dùng.' };
+    }
+    // Phát quà qua phễu trung tâm.
+    var got = [];
+    if (linh > 0) {
+      var ra = addLinhThach(state, linh);
+      if (!ra.ok) return { ok: false, reason: 'wallet_locked', code: code, text: ra.reason };
+      got.push(fmtNum(linh) + ' Linh Thạch');
+    }
+    if (bac > 0) { state.silver = silverBalance(state) + bac; got.push(fmtNum(bac) + ' lượng Bạc'); }
+    for (var j = 0; j < ids.length; j++) {
+      var cnt = Math.max(0, Math.floor(Number(items[ids[j]]) || 0));
+      if (cnt <= 0) continue;
+      var rb = bagAdd(state, ids[j], cnt);
+      if (rb.ok) got.push((ITEM_DEFS[ids[j]] ? ITEM_DEFS[ids[j]].name : ids[j]) + ' ×' + cnt);
+    }
+    state.giftCodesUsed.push(code);
+    return { ok: true, code: code, got: got, text: 'Nhận quà thành công từ mã ' + code + ': ' + got.join(', ') + '.' };
+  }
   // Nạp save cũ (trước khi có ví): bổ sung trường còn thiếu, không lỗi.
   // Save đã qua mốc đột phá Luyện Khí tầng 1 (realm >= 1 hoặc đã ghi mốc
   // 'luyenkhi1') thì ví mở sẵn; chưa tới mốc thì ví vẫn khóa.
@@ -3279,6 +3372,7 @@
     ensureGrind(state);
     ensureSecretRealms(state);
     ensureParty(state);
+    ensureGiftCodes(state); // đợt giftcode 2026-11-06: save cũ chưa có danh sách mã đã dùng -> dựng rỗng
     ensureSideQuests(state);
     ensureTechniques(state);
     ensureNguHanh(state);
@@ -6441,7 +6535,9 @@
     normalizeDayMinutes: normalizeDayMinutes, advanceDayClock: advanceDayClock,
     dayPhaseAt: dayPhaseAt, displayDayMinutes: displayDayMinutes, dayPhaseFor: dayPhaseFor, formatDayTime: formatDayTime,
     LINH_GIFT_AMOUNT: LINH_GIFT_AMOUNT, walletOpen: walletOpen, fmtNum: fmtNum,
-    linhBalance: linhBalance, addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, addSectMerit: addSectMerit, normalizeSave: normalizeSave,
+    linhBalance: linhBalance, addLinhThach: addLinhThach, spendLinhThach: spendLinhThach, addSectMerit: addSectMerit,
+    GIFT_CODES: GIFT_CODES, GIFT_CODE_MAX_LINH: GIFT_CODE_MAX_LINH, giftCodeNormalize: giftCodeNormalize, ensureGiftCodes: ensureGiftCodes, giftCodeAlreadyUsed: giftCodeAlreadyUsed, redeemGiftCode: redeemGiftCode,
+    normalizeSave: normalizeSave,
     MAPS: MAPS, activeMap: activeMap, activeMapId: activeMapId, setActiveMap: setActiveMap,
     portalUnlocked: portalUnlocked,
     recordSpeech: recordSpeech,

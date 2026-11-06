@@ -934,7 +934,16 @@
   window.VSLC_BRIDGE = {
     saveNow: saveNow, requestLogout: requestLogout, exitToAuth: exitToAuth,
     resetZoom: resetZoom,
-    getUser: function () { return currentUser; }
+    getUser: function () { return currentUser; },
+    // Đổi giftcode cho mục Giftcode trong panel cài đặt (js/settings.js):
+    // qua đúng hàm trung tâm L.redeemGiftCode — nhận quà xong cập nhật
+    // HUD và lưu ngay để trạng thái "mã đã dùng" bền qua các phiên.
+    redeemGiftCode: function (code) {
+      if (!state) return { ok: false, reason: 'no_state', text: 'Chưa vào nhân vật — hãy đăng nhập và vào game trước.' };
+      var r = L.redeemGiftCode(state, code);
+      if (r.ok) { refreshHUD(); saveNow(); }
+      return r;
+    }
   };
 
   /* ---------- Trạng thái phiên chơi ---------- */

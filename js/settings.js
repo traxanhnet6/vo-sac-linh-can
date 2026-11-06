@@ -370,6 +370,23 @@
       if (r.ok) { if (oldEl) oldEl.value = ''; if (newEl) newEl.value = ''; }
     });
 
+    /* Giftcode (lệnh Bui 06:09 ngày 2026-11-06): đổi mã qua cầu
+       VSLC_BRIDGE về đúng hàm trung tâm L.redeemGiftCode của engine —
+       toàn bộ luật (mỗi mã một lần, khóa ví Linh Thạch, kiểm túi) nằm ở
+       logic.js; giao diện chỉ hiện kết quả. Giai đoạn online thay kiểm
+       tra phía máy chủ ở tầng cầu/logic, giao diện không đổi. */
+    on('set-gift-btn', 'click', function () {
+      var inp = $('set-gift-input');
+      var B = global.VSLC_BRIDGE;
+      var r = (B && B.redeemGiftCode) ? B.redeemGiftCode(inp ? inp.value : '')
+        : { ok: false, text: 'Hãy vào game trước khi nhập mã quà.' };
+      flashMsg('set-gift-msg', r && r.text ? r.text : (r && r.ok ? 'Đã nhận quà.' : 'Không đổi được mã quà.'), !(r && r.ok));
+      if (r && r.ok && inp) inp.value = '';
+    });
+    on('set-gift-input', 'keydown', function (ev) {
+      if (ev && ev.key === 'Enter') { var b = $('set-gift-btn'); if (b) b.click(); }
+    });
+
     /* Xóa dữ liệu tài khoản — hai lớp xác nhận */
     on('set-delete-btn', 'click', function () {
       var g = $('set-del-confirm'); if (g) g.classList.remove('hidden');
