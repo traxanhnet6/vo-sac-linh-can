@@ -6791,6 +6791,16 @@ window.VSLC_VOICE = {
    "k": "narrate",
    "s": "narrate"
   },
+  "34cdbc5a7633": {
+   "f": "v34cdbc5a7633.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "0a731567e14a": {
+   "f": "v0a731567e14a.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
   "efa986ecc65b": {
    "f": "vefa986ecc65b.mp3",
    "k": "narrate",

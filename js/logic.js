@@ -674,7 +674,12 @@
     { id: 'de_tu_a', name: 'Đệ Tử Trần Văn', look: 'villager_m', x: 57, y: 62, dir: 'right' },
     { id: 'de_tu_b', name: 'Đệ Tử Triệu Minh', look: 'player_nam', x: 67, y: 60, dir: 'left' },
     { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' },
-    { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 64, y: 29, dir: 'left' }
+    { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 64, y: 29, dir: 'left' },
+    // Bot đấu pháp luyện tập (đợt 2026-11-05) — bản gương ở khối SECT_NPCS
+    // đầu (khối chết, khối sau thắng); giữ đồng bộ với khối hiệu lực.
+    { id: 'prac_bot_1', name: 'Đệ Tử Sân Luyện', look: 'player_nam', x: 34, y: 58, dir: 'right', prac: 1, tier: 1, requiresQuest: 'q7_done' },
+    { id: 'prac_bot_2', name: 'Đệ Tử Sân Luyện', look: 'player_nu', x: 44, y: 58, dir: 'left', prac: 1, tier: 2, requiresQuest: 'q7_done' },
+    { id: 'prac_bot_3', name: 'Chấp Sự Sân Luyện', look: 'player_nam', x: 39, y: 60, dir: 'up', prac: 1, tier: 3, requiresQuest: 'q7_done' }
   ];
 
   /* ---------------- Bản đồ phần 2 (docs/part2-design.md mục 2) ---------------- */
@@ -1145,7 +1150,13 @@
     { id: 'de_tu_b', name: 'Đệ tử Thanh Vân', look: 'player_nam', x: 67, y: 60, dir: 'left' },
     { id: 'hoa_huong_than', name: 'Hoa Hướng Thần', look: 'player_nam', x: 62, y: 55, dir: 'down' },
     { id: 'tin_su', name: 'Người Đưa Tin Hứa Gia', look: 'villager_m', x: 64, y: 29, dir: 'left' },
-    { id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 57, y: 29, dir: 'right' }
+    { id: 'u_nhan', name: 'Hứa U Nhàn', look: 'u_nhan', x: 57, y: 29, dir: 'right' },
+    // Bot đấu pháp luyện tập (đợt 2026-11-05): đứng ở sân luyện công
+    // (x30–46, y53–62), hiện từ mốc q7_done qua requiresQuest; neo tách
+    // bạch để đợt bố trí lại bản đồ tông môn đối chiếu khi gộp.
+    { id: 'prac_bot_1', name: 'Đệ Tử Sân Luyện', look: 'player_nam', x: 34, y: 58, dir: 'right', prac: 1, tier: 1, requiresQuest: 'q7_done' },
+    { id: 'prac_bot_2', name: 'Đệ Tử Sân Luyện', look: 'player_nu', x: 44, y: 58, dir: 'left', prac: 1, tier: 2, requiresQuest: 'q7_done' },
+    { id: 'prac_bot_3', name: 'Chấp Sự Sân Luyện', look: 'player_nam', x: 39, y: 60, dir: 'up', prac: 1, tier: 3, requiresQuest: 'q7_done' }
   ];
   var SECT_PROPS = (function () {
     var props = [
@@ -3785,6 +3796,12 @@
         if (list[i].quests.indexOf(state.quest) >= 0) return list[i];
       }
     }
+    // Cổng hiện hình theo mốc nhiệm vụ (đợt bot đấu pháp luyện tập
+    // 2026-11-05): NPC khai requiresQuest thì trước mốc đó KHÔNG hiện —
+    // trả điểm neo ẩn ngoài bản đồ kèm cờ hidden để renderer bỏ qua hẳn.
+    if (npc && npc.requiresQuest && !questReached(state, npc.requiresQuest)) {
+      return { x: -20, y: -20, dir: npc.dir, hidden: true };
+    }
     return { x: npc.x, y: npc.y, dir: npc.dir };
   }
   function questReached(state, id) {
@@ -6327,6 +6344,34 @@
     champion: { id: 'vo_dich', name: 'Quán quân đài', open: false, reservedFor: 'chuong_18' }
   };
   function challengeOpen(state) { return questReached(state, 'q13_thinh_cau_dau'); }
+
+  /* ---- Bot đấu pháp LUYỆN TẬP ở sân luyện công Thanh Vân Tông (đợt
+     2026-11-05, lệnh Bui "Bot đấu pháp luyện tập ở sân đấu luyện tông
+     môn") — KHÁC HẲN Đài Thách Đấu ở trên: tỉ thí luyện tay KHÔNG
+     thưởng (không tu vi, không Linh Thạch, không vật phẩm, không điểm
+     kiếm), trận dừng khi một bên xuống 20% máu, máu người chơi hồi về
+     đúng mức trước trận. Số liệu bot lấy khung từ hình người/quái cùng
+     dải đã có trong mã (khai nguồn từng bậc ở docs/practice-bots-report.md):
+       bậc 1 — đệ tử Luyện Khí trung kỳ: khung giữa kiem_linh (115/13)
+         và oan_binh (160/14) nhưng là NGƯỜI luyện tay nên máu dày hơn
+         quái thường cùng dải [SỐ MỚI hp 300, atk 9];
+       bậc 2 — đệ tử cuối Luyện Khí: neo theo boss dải Luyện Khí của bí
+         cảnh thach_tuong_thu_ve (520/12/1.5) [atk 12, interval 1.4];
+       bậc 3 — chấp sự Trúc Cơ Sơ Kỳ: neo theo tướng hình người chương
+         14 (hp 760) và Hoa Hướng Thần (720/11) [hp 760, atk 14]. */
+  var PRACTICE_STOP_PCT = 0.2;
+  var PRACTICE_UNLOCK_QUEST = 'q7_done';
+  var PRACTICE_BOTS = [
+    { npcId: 'prac_bot_1', tier: 1, label: 'Đệ tử Luyện Khí trung kỳ', hp: 300, atk: 9, interval: 1.5, speed: 56 },
+    { npcId: 'prac_bot_2', tier: 2, label: 'Đệ tử cuối Luyện Khí', hp: 520, atk: 12, interval: 1.4, speed: 58 },
+    { npcId: 'prac_bot_3', tier: 3, label: 'Chấp sự Trúc Cơ Sơ Kỳ', hp: 760, atk: 14, interval: 1.4, speed: 60 }
+  ];
+  function practiceOpen(state) { return questReached(state, PRACTICE_UNLOCK_QUEST); }
+  function practiceBotDef(npcId) {
+    for (var i = 0; i < PRACTICE_BOTS.length; i++) if (PRACTICE_BOTS[i].npcId === npcId) return PRACTICE_BOTS[i];
+    return null;
+  }
+  function practiceStopHp(hpMax) { return Math.max(1, Math.floor((hpMax || 0) * PRACTICE_STOP_PCT)); }
   function daiThachDauRank(rankId) {
     for (var i = 0; i < DAI_THACH_DAU_DEFS.ranks.length; i++) if (DAI_THACH_DAU_DEFS.ranks[i].id === rankId) return DAI_THACH_DAU_DEFS.ranks[i];
     return null;
@@ -6508,6 +6553,8 @@
     BC_TRAN_TAM_SAU_GRID: BC_TRAN_TAM_SAU_GRID, BC_TRAN_TAM_SAU_PROPS: BC_TRAN_TAM_SAU_PROPS,
     BC_TRAN_TAM_SAU_BOSS_POS: BC_TRAN_TAM_SAU_BOSS_POS, BC_TRAN_TAM_SAU_PADS: BC_TRAN_TAM_SAU_PADS,
     BC_KIEMTRUNG_SAU_BOSS_POS: BC_KIEMTRUNG_SAU_BOSS_POS, BC_KIEMTRUNG_SAU_EYES: BC_KIEMTRUNG_SAU_EYES,
+    PRACTICE_STOP_PCT: PRACTICE_STOP_PCT, PRACTICE_UNLOCK_QUEST: PRACTICE_UNLOCK_QUEST, PRACTICE_BOTS: PRACTICE_BOTS,
+    practiceOpen: practiceOpen, practiceBotDef: practiceBotDef, practiceStopHp: practiceStopHp,
     learnHuyenTinhKiemPho: learnHuyenTinhKiemPho, availableSwordMoves: availableSwordMoves, bestSwordMoveFor: bestSwordMoveFor,
     bcSauFirstClearRewards: bcSauFirstClearRewards, arcIvResolvePendingSets: arcIvResolvePendingSets,
     DAI_THACH_DAU_DEFS: DAI_THACH_DAU_DEFS, challengeOpen: challengeOpen, daiThachDauRank: daiThachDauRank, daiThachDauRecordWin: daiThachDauRecordWin,

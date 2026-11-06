@@ -862,6 +862,7 @@
     bcSession = null; bcColorSort = null; escortT = 0;
     partyBotsLive = []; bcTelegraphs = []; // bot ghép tổ + vòng báo đòn boss tổ đội cũng là trạng thái phiên
     flyBots = []; skyClouds = []; flySysMap = null; flySpawnT = 0; // bot ngự kiếm bay lượn + mây trời (đợt flybots) cũng là trạng thái phiên — dọn cùng đợt
+    pracFight = null; pracStats = { count: 0, wins: 0 }; pracCdUntil = 0; // bot luyện tập: trận + bộ đếm phiên + mốc nghỉ cũng là trạng thái phiên
     guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
     closeGrindBoard();
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
@@ -1349,6 +1350,8 @@
     tap_dich_truong: 'Quản sự tạp dịch', truong_lao_tong: 'Trưởng lão Thanh Vân Tông',
     lieu_khuynh_tien: 'Con gái tông chủ Thanh Vân Tông', hoa_huong_than: 'Đại đệ tử Thanh Vân Tông',
     de_tu_a: 'Đệ tử Thanh Vân Tông', de_tu_b: 'Đệ tử Thanh Vân Tông',
+    prac_bot_1: 'Sân luyện công · Luyện Khí trung kỳ', prac_bot_2: 'Sân luyện công · Cuối Luyện Khí',
+    prac_bot_3: 'Sân luyện công · Trúc Cơ Sơ Kỳ',
     tin_su: 'Người đưa tin của Hứa gia', gia_nhan: 'Gia nhân Hứa gia',
     /* Cung IV đợt 1: tin_su_b = người đưa tin thứ hai (nhà thế lực còn lại trong vụ tranh đất/hôn sự, ch.14); chi_huy_tran = kẻ chỉ huy đợt thử trận của Huyết Bạc Cung (ch.15) — cả hai là vai phụ dùng diện mạo chung theo tiền lệ mã phụ. */
     tin_su_b: 'Người đưa tin của nhà thế lực thứ hai', chi_huy_tran: 'Chỉ huy đợt thử trận của Huyết Bạc Cung',
@@ -1456,7 +1459,7 @@
     px = state.x * TILE; py = state.y * TILE; facing = state.dir || 'up';
     dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0; resetJoy(); velX = 0; velY = 0;
     resetZoom(); cancelPinch(); questNav = null; // phiên chơi mới luôn bắt đầu ở mức phóng mặc định 1,0×
-    npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; }); // vị trí theo pha nhiệm vụ (gói phụ 5)
+    npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir, hidden: !!pp.hidden, prac: n.prac ? 1 : 0, tier: n.tier || 0 }; }); // vị trí theo pha nhiệm vụ (gói phụ 5)
     spawnMonstersForMap(); // làn chạm trán: sinh quái vùng săn của bản đồ vào game (chỉ khi đã mở khóa săn)
     ghostHp = state.hp; ghostPctShown = -1; setGhostBar();
     setMinimapLabel();
@@ -2046,7 +2049,7 @@
     var draws = [];
     defR.props.forEach(function (p) { if (L.isSessionHidden(state.map, p.id)) return; draws.push({ depth: (p.y + p.h) * TILE, kind: 'prop', p: p }); });
     if (state.map === 'tran') VISUAL_DECOR.forEach(function (d2) { draws.push({ depth: d2.depth, kind: 'decor', dc: d2 }); });
-    npcsLive.forEach(function (n) { draws.push({ depth: (n.y + 1) * TILE, kind: 'npc', n: n }); });
+    npcsLive.forEach(function (n) { if (n.hidden) return; if (pracFight && pracFight.npcId === n.id) return; draws.push({ depth: (n.y + 1) * TILE, kind: 'npc', n: n }); }); // NPC ẩn theo mốc (requiresQuest) không vẽ; bot đang tỉ thí thì hình figure thay chỗ NPC đứng
     mons.forEach(function (mn) { if (mn.state !== 'gone') draws.push({ depth: mn.y + TILE, kind: 'mon', m: mn }); });
     atkFigs.forEach(function (af) { draws.push({ depth: af.py + TILE, kind: 'atkfig', f: af }); }); // kẻ địch đánh đêm (gói phụ 8)
     if (kdFig) draws.push({ depth: kdFig.py + TILE, kind: 'kdbeast', f: kdFig }); // yêu thú giữ dược chương 11 — hình diễn đường A (boss-fx #21+#22)
@@ -2054,6 +2057,7 @@
     if (hhtFight) { draws.push({ depth: hhtFight.boss.y + TILE, kind: 'hhtboss', f: hhtFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // Mục F: Hoa Hướng Thần + vòng đệ tử đứng xem trên đài
     if (daiFight) { draws.push({ depth: daiFight.boss.y + TILE, kind: 'daiboss', f: daiFight.boss }); HHT_AUDIENCE.forEach(function (au, aui) { draws.push({ depth: (au.y + 1) * TILE, kind: 'hhtaud', a: au, i: aui }); }); } // ARCIV ch.13: đài thách đấu dùng chung vòng khán giả quanh đài
     if (arcFig) arcFig.figs.forEach(function (fg) { if (!fg.dead) draws.push({ depth: fg.y + TILE, kind: 'arcfig', f: fg }); }); // ARCIV ch.14/15: figure người của trận kịch bản dã ngoại
+    if (pracFight) draws.push({ depth: pracFight.fig.y + TILE, kind: 'arcfig', f: pracFight.fig }); // bot luyện tập đang tỉ thí: vẽ qua cùng nhánh figure người (thanh máu + nhãn + vòng ĐỊNH/PHONG)
     if (arcFig && arcFig.escorts) arcFig.escorts.forEach(function (es) { draws.push({ depth: es.y + TILE, kind: 'arcfig', f: es }); }); // ARCIV đợt 2 ch.19: nhân chứng hộ tống vẽ qua cùng nhánh arcfig (thanh máu + nhãn tên)
     partyBotsLive.forEach(function (pb2) { draws.push({ depth: pb2.y + TILE, kind: 'partybot', b: pb2 }); }); // bot ghép tổ Trận Tâm: vẽ như figure người, nhánh riêng 'partybot'
     (defR.signs || SIGNS).forEach(function (s) { draws.push({ depth: (s.y + 1) * TILE, kind: 'sign', s: s }); });
@@ -2119,7 +2123,13 @@
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(n.x * TILE + 16, (n.y + 1) * TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
         var nim = ASSETS.chars[n.look], nTop;
-        if (imgReady(nim)) {
+        var pracSw = n.prac ? pracSwingFrame(n) : null;
+        if (pracSw && imgReady(pracSw.im)) {
+          // Bot luyện tập lúc rảnh: múa kiếm tại chỗ bằng sheet tấn công
+          // sẵn có (bộ Trảm của sheet người chơi) — không vẽ sheet mới.
+          ctx.drawImage(pracSw.im, pracSw.col * 96, pracSw.row * 120, 96, 120, n.x * TILE + 16 - 32 + (n.ox || 0), (n.y + 1) * TILE - 80 + (n.oy || 0), 64, 80);
+          nTop = (n.y + 1) * TILE - 80 + (n.oy || 0);
+        } else if (imgReady(nim)) {
           // NPC đứng yên: khung 0; sheet mới dùng hàng chẵn theo hướng 4 chính của NPC.
           var nsrc = charSrc(n.look, nim, n.dir, DIR8_ROW4[n.dir] || 0, 0, 0);
           ctx.drawImage(nim, nsrc.x, nsrc.y, nsrc.w, nsrc.h, n.x * TILE + 16 - 32 + (n.ox || 0), (n.y + 1) * TILE - 80 + (n.oy || 0), 64, 80);
@@ -3060,6 +3070,8 @@
       resolveKyNgoChoice(action); // ARCIV đợt 3: lựa chọn cuối cảnh kỳ ngộ ô 23 (B.9) — choice ở cuối mảng cảnh, không say()
     } else if (action.indexOf('arc_') === 0) {
       resolveArcChoice(action); // ARCIV đợt 1b: đài thách đấu lặp + ghép bí pháp tàng kinh
+    } else if (action.indexOf('prac_') === 0) {
+      pracChoiceAction(action); // bot đấu pháp luyện tập: menu tỉ thí sân luyện công
     } else if (action.indexOf('chi_') === 0) {
       resolveChiAmbush(action);
     } else if (action.indexOf('guard_') === 0) {
@@ -3153,6 +3165,7 @@
     if (dlg) { if (dlgTypeFinish()) return; if (dlg.who !== 'choice') nextLine(); return; }
     if (daiFight) return; // ARCIV ch.13: đang trong trận đài thách đấu — tương tác khóa (sau khối dlg để thoại giữa trận vẫn tiến bằng phím E)
     if (arcFig) return; // ARCIV ch.14/15: đang trong trận kịch bản dã ngoại — tương tác khóa
+    if (pracFight) return; // bot luyện tập: đang tỉ thí ở sân luyện công — tương tác khóa
     var ft = frontTile();
     var pt = playerTile();
     // Chương 1 (gói phụ sau chơi thử live 02/11): khi chưa đo mà đang đứng
@@ -3808,6 +3821,9 @@
         saveNow();
       }
     }
+    // Bot đấu pháp luyện tập (đợt 2026-11-05): mở menu tỉ thí thuần
+    // giao diện (dòng choice không lồng tiếng — tiền lệ Đài Thách Đấu).
+    if (npc.prac) { pracBotTalk(npc); return; }
     // Chương 1 (gói phụ sau chơi thử live 02/11): trưởng lão trắc linh đứng
     // đúng ô kề nam của đế bia đá nên người chơi đứng phía nam chỉ gặp được
     // ông, không chạm được bia. Chưa đo (q_trac/q_voice, cờ tested chưa
@@ -4672,7 +4688,7 @@
       L.setActiveMap(mapId);
       px = tx * TILE; py = ty * TILE; facing = dirName;
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
-      npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; });
+      npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir, hidden: !!pp.hidden, prac: n.prac ? 1 : 0, tier: n.tier || 0 }; });
       spawnMonstersForMap();
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
@@ -5175,7 +5191,7 @@
       if (injectedUNhan && si >= 0) npcsLive.splice(si, 1);
       if (!injectedUNhan && si < 0) {
         var udef = (L.activeMap().npcs || []).filter(function (n) { return n.id === 'u_nhan'; })[0];
-        if (udef) { var upp = L.npcPosFor(state, udef); npcsLive.push({ id: udef.id, name: udef.name, look: udef.look, x: upp.x, y: upp.y, dir: upp.dir }); }
+        if (udef) { var upp = L.npcPosFor(state, udef); npcsLive.push({ id: udef.id, name: udef.name, look: udef.look, x: upp.x, y: upp.y, dir: upp.dir, hidden: !!upp.hidden, prac: udef.prac ? 1 : 0, tier: udef.tier || 0 }); }
       }
     }
   }
@@ -5490,6 +5506,14 @@
      đồ dã ngoại. Mắt trận đi qua hệ arcEyes sẵn có; mắt của các trận
      này mang thêm trường hp (chỉ figure-trận dùng) để KIẾM phá được. */
   var arcFig = null;
+  /* Bot đấu pháp luyện tập (đợt 2026-11-05): trận tỉ thí tại sân luyện
+     công — trạng thái PHIÊN thuần túy (không lưu save): pracFight là
+     trận đang chạy, pracStats đếm số trận trong phiên, pracCdUntil là
+     mốc nghỉ ngắn giữa hai lượt tỉ thí (chống spam, khai ở báo cáo). */
+  var pracFight = null;
+  var pracStats = { count: 0, wins: 0 };
+  var pracCdUntil = 0;
+  var PRAC_CD_MS = 10000; // [SỐ MỚI] nghỉ 10 giây giữa hai lượt tỉ thí
   function arcFigMake(spec) {
     return { x: spec.tx * TILE, y: spec.ty * TILE, look: spec.look, name: spec.name, title: spec.title || '',
       hp: spec.hp, hpMax: spec.hp, atk: spec.atk, interval: spec.interval || 1.5, speed: spec.speed || 55,
@@ -6077,6 +6101,229 @@
     addDmgFloat(tgt.x, tgt.y - 40, wf[0], wf[1], { size: 22, life: 0.9 });
     refreshHUD();
   }
+
+  /* ================= BOT ĐẤU PHÁP LUYỆN TẬP — SÂN LUYỆN CÔNG (đợt 2026-11-05) =================
+     Lệnh Bui: "Bot đấu pháp luyện tập ở sân đấu luyện tông môn". Ba bot
+     đứng ở sân luyện công (rect x30–46, y53–62 trong lưới tông — sân đã
+     có sẵn ba cọc gỗ coc_tong), hiện từ mốc q7_done qua requiresQuest ở
+     logic.js. Luật tỉ thí (KHÁC HẲN đánh thật và Đài Thách Đấu):
+       - Đánh thời gian thực TẠI CHỖ theo khuôn figure người của arcFig
+         (cùng ống ra chiêu kiếm/cộng hưởng của người chơi), KHÔNG màn
+         hình trận riêng, KHÔNG qua hệ chạm trán mons/enc.
+       - Trận DỪNG khi một bên xuống đúng 20% máu (L.practiceStopHp):
+         phía bot thì máu ghì ở ngưỡng, phía người chơi thì đòn của bot
+         bị ghì để máu không bao giờ tụt dưới ngưỡng — KHÔNG chết,
+         KHÔNG hồi sinh, KHÔNG rơi đồ.
+       - Kết thúc (thắng/thua/tan giữa chừng): máu người chơi hồi về
+         ĐÚNG mức trước trận (preHp chụp lúc bắt đầu).
+       - Kinh tế: KHÔNG tu vi, KHÔNG Linh Thạch, KHÔNG vật phẩm, KHÔNG
+         điểm kiếm Thất Tinh (khác khuôn Đài Thách Đấu: pracCastSword
+         không cộng điểm kiếm qua helper điểm công pháp) — sân này chỉ
+         luyện tay/thử chiêu.
+         Ghi nhận duy nhất: bộ đếm trận trong PHIÊN (pracStats, không
+         lưu save). Nghỉ 10 giây giữa hai lượt (PRAC_CD_MS, chống spam).
+       - Tương tác thuần menu choice + toast hệ thống; KHÔNG dòng thoại
+         nhân vật mới (luật lồng tiếng mọi lời thoại).
+     Bot lúc rảnh múa kiếm tại chỗ bằng sheet tấn công sẵn có (bộ Trảm)
+     qua pracSwingFrame ở nhánh vẽ 'npc'. */
+  var PRAC_YARD = { x0: 30, y0: 53, x1: 46, y1: 62 };
+  var pracLastResult = null;
+  function pracSwingFrame(n) {
+    var set = (typeof ATK_SETS !== 'undefined' && ATK_SETS && ATK_SETS.A) ? ATK_SETS.A : null;
+    if (!set || !ASSETS.atk) return null;
+    var t = (tNow + ((n.tier || 1) - 1) * 700) % 2600, acc = 0;
+    for (var i = 0; i < set.cols.length; i++) {
+      if (t < acc + set.durs[i]) return { im: ASSETS.atk[n.look === 'player_nu' ? 'nu' : 'nam'], col: set.cols[i], row: DIR8_ROW4[n.dir] || 0 };
+      acc += set.durs[i];
+    }
+    return null;
+  }
+  function pracBotTalk(npc) {
+    if (pracFight || !state) return;
+    var def = L.practiceBotDef(npc.id); if (!def) return;
+    if (!L.practiceOpen(state)) { toast('Sân luyện công chỉ mở cho đệ tử đã nhập tông — xong chương 7 (nhập tông môn) trước đã.'); return; }
+    if (tNow < pracCdUntil) { toast('Vừa tỉ thí xong — nghỉ ' + Math.ceil((pracCdUntil - tNow) / 1000) + ' giây cho hồi nhịp rồi hãy đấu tiếp.'); return; }
+    var stopHp = L.practiceStopHp(state.hpMax);
+    if (state.hp <= stopHp) { toast('Máu của ngươi đang ở dưới ngưỡng dừng tỉ thí (20% = ' + stopHp + ') — hồi phục trên mức đó rồi hãy vào sân.'); return; }
+    say([{ who: 'choice', text: 'Sân luyện công Thanh Vân Tông — tỉ thí luyện tập: trận dừng khi một bên xuống 20% máu, không chết, không thưởng; kết thúc, máu của ngươi hồi về đúng mức trước trận. Đối thủ trước mặt: ' + def.label + ' (máu ' + def.hp + ', công ' + def.atk + ').', options: [
+      { label: 'Vào tỉ thí luyện tập', action: 'prac_fight:' + npc.id },
+      { label: 'Để lúc khác', action: 'prac_leave' }
+    ] }]);
+  }
+  function pracChoiceAction(action) {
+    if (action === 'prac_leave') { say([]); return; }
+    if (action.indexOf('prac_fight:') === 0) { say([]); startPracFight(action.slice('prac_fight:'.length)); return; }
+  }
+  function startPracFight(npcId) {
+    if (pracFight || !state || state.map !== 'thanh_van_tong') return;
+    var def = L.practiceBotDef(npcId); if (!def || !L.practiceOpen(state)) return;
+    var entry = null;
+    npcsLive.forEach(function (n) { if (n.id === npcId) entry = n; });
+    if (!entry || entry.hidden) return;
+    var fig = arcFigMake({ tx: entry.x, ty: entry.y, look: entry.look, name: entry.name, title: TITLES[npcId] || '', hp: def.hp, atk: def.atk, interval: def.interval, speed: def.speed });
+    fig.atkT = 0.9;
+    pracFight = { npcId: npcId, tier: def.tier, fig: fig, preHp: state.hp, stopHp: L.practiceStopHp(state.hpMax), pendingHits: [] };
+    pracLastResult = null;
+    toast('Tỉ thí luyện tập bắt đầu — ' + def.label + '. Trận dừng ở 20% máu; thắng thua không hậu quả.', 3600);
+  }
+  function pracApplyHit(power, opts) {
+    var f = pracFight; if (!f) return;
+    var fig = f.fig; opts = opts || {};
+    var crit = Math.random() < 0.10;
+    var dmg = Math.max(1, Math.round(power * (crit ? 1.6 : 1) * (0.9 + Math.random() * 0.2)));
+    var stop = L.practiceStopHp(fig.hpMax);
+    var raw = fig.hp - dmg;
+    fig.flashT = 0.18; fig.resVibT = opts.kind === 'word' ? 0.22 : 0;
+    var kb = opts.kind === 'sword' ? 3 : 5;
+    fig.x += Math.sign(fig.x + 16 - (px + 16)) * kb; fig.y += Math.sign(fig.y + 16 - (py + 16)) * kb * 0.6;
+    if (opts.kind === 'sword') presentSwordHit(fig.x + 16, fig.y + 10, Math.atan2(fig.y + 16 - (py + 16), fig.x + 16 - (px + 16)), opts.move || 'tram', crit, opts.hitIdx || 0);
+    addDmgFloat(fig.x + 16, fig.y - 30, '-' + dmg, crit ? '255,210,90' : '255,255,255', { size: crit ? 21 : 17, targetKey: 'pracfig' });
+    sfxHitBlade();
+    if (raw <= stop) { fig.hp = stop; endPracFight('win'); return; }
+    fig.hp = raw;
+  }
+  function pracCastSword() {
+    var f = pracFight; if (!f) return;
+    var fig = f.fig;
+    if (Math.hypot(fig.x - px, fig.y - py) / TILE > 1.9) { toast('Chưa có mục tiêu trong tầm kiếm — lại gần đối thủ.'); return; }
+    var mv = bestSwordMove();
+    var r = L.castSword(state, mv.id);
+    if (!r.ok) { toast(r.reason); return; }
+    arcFaceTo(fig.x, fig.y);
+    sfxSword();
+    // KHÔNG cộng điểm kiếm: tỉ thí luyện tập không phải nguồn cày điểm
+    // công pháp (khác khuôn Đài Thách Đấu có thưởng thật) — khai ở báo cáo.
+    startSwordBody(mv.id, tNow, r.hits > 1 ? tNow + 120 : null);
+    for (var i = 0; i < r.hits; i++) {
+      if (i === 0) pracApplyHit(r.power, { kind: 'sword', move: mv.id, hitIdx: 0 });
+      else f.pendingHits.push({ at: tNow + i * 120, power: r.power, kind: 'sword', move: mv.id, hitIdx: i });
+      if (!pracFight) return;
+    }
+    refreshHUD();
+  }
+  function pracCastWord(skill) {
+    var f = pracFight; if (!f) return;
+    var fig = f.fig;
+    if (Math.hypot(fig.x - px, fig.y - py) / TILE > 3.2) { toast('Chưa có mục tiêu trong tầm sóng 3,2 ô.'); return; }
+    arcFaceTo(fig.x, fig.y);
+    var silenceBefore = state.silence;
+    var r = L.castWord(state, skill);
+    if (!r.ok) { toast(r.reason); return; }
+    startResBody(false);
+    var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
+    if (skill === 'phong') {
+      fig.sealT = fig.interval * 2;
+      spawnPillar(px + 16, py + 30, { dur: 0.9, h: 112 });
+      pracApplyHit(r.power, { kind: 'word', skill: 'phong' });
+    } else if (skill === 'dinh') {
+      fig.holdT = fig.interval;
+      spawnPillar(fig.x + 16, fig.y + 14, { top: 'purple', dur: 0.85, h: 105 });
+      castResonanceFx('dinh', fig.x + 16, fig.y + 14, { silenceBefore: silenceBefore, baseFreq: 300, target: fig });
+    } else {
+      castResonanceFx(skill, fig.x + 16, fig.y + 14, { silenceBefore: silenceBefore, baseFreq: 300, target: fig });
+      shakeWorld(0.3);
+      pracApplyHit(r.power, { kind: 'word', skill: skill });
+    }
+    if (pracFight) addDmgFloat(fig.x + 16, fig.y - 40, wf[0], wf[1], { size: 22, life: 0.9 });
+    refreshHUD();
+  }
+  function pracHurtPlayer(dmg) {
+    var f = pracFight; if (!f || !state || dmg <= 0) return false;
+    if (state.hp - dmg <= f.stopHp) {
+      // Ngưỡng dừng phía người chơi: đòn của bot ghì lại để máu dừng
+      // ĐÚNG 20% — bot thắng điểm, người chơi không gục.
+      var dealt = state.hp - f.stopHp;
+      if (dealt > 0) { state.hp = f.stopHp; addDmgFloat(px + 16, py - 24, '-' + dealt, '255,110,100', { size: 19, targetKey: '__player' }); }
+      playerHurtT = 0.07; sfxHurt(); shakeWorld(0.12); refreshHUD();
+      endPracFight('lose');
+      return true;
+    }
+    state.hp -= dmg;
+    addDmgFloat(px + 16, py - 24, '-' + dmg, '255,110,100', { size: 19, targetKey: '__player' });
+    if (dmg >= state.hpMax * 0.05) hurtT = 0.33;
+    playerHurtT = 0.07; sfxHurt(); shakeWorld(0.12); refreshHUD();
+    return false;
+  }
+  function pracFigStrike(fig) {
+    fig.atkAnimT = 0.35;
+    sfxSword();
+    var fx = fig.x + 16, fy = fig.y + 16, pcx = px + 16, pcy = py + 16;
+    spawnStreak((fx + pcx) / 2, (fy + pcy) / 2, Math.atan2(pcy - fy, pcx - fx), '200,210,220', false);
+    pracHurtPlayer(Math.max(1, Math.round(fig.atk * (0.85 + Math.random() * 0.3))));
+  }
+  function pracFigStep(fig, gx, gy, speed, dt) {
+    // Như arcFigStep nhưng danh sách NPC chặn đường LỌC BỎ chính bot
+    // đang tỉ thí: NPC song sinh vẫn đứng ở ô nhà trong npcsLive, nếu
+    // không lọc thì figure bị chính cái bóng của mình giam tại chỗ.
+    var occ = npcsLive.filter(function (n) { return !pracFight || n.id !== pracFight.npcId; });
+    var cx = fig.x + 16, cy = fig.y + 16;
+    var dx = gx - cx, dy = gy - cy, d = Math.hypot(dx, dy);
+    if (d < 2) return true;
+    var step = Math.min(d, speed * dt);
+    var nx = fig.x + dx / d * step, ny = fig.y + dy / d * step;
+    var moved = false;
+    if (L.isWalkable(Math.floor((nx + 16) / TILE), Math.floor((fig.y + 30) / TILE), occ)) { fig.x = nx; moved = true; }
+    if (L.isWalkable(Math.floor((fig.x + 16) / TILE), Math.floor((ny + 30) / TILE), occ)) { fig.y = ny; moved = true; }
+    if (moved) { fig.walkT += dt; fig.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
+    return false;
+  }
+  function updatePracFight(dt) {
+    var f = pracFight; if (!f) return;
+    if (!state || state.map !== 'thanh_van_tong') { endPracFight('abort'); return; }
+    var fig = f.fig;
+    for (var i = f.pendingHits.length - 1; i >= 0; i--) {
+      if (tNow >= f.pendingHits[i].at) { var ph = f.pendingHits.splice(i, 1)[0]; pracApplyHit(ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx }); if (!pracFight) return; }
+    }
+    if (fig.flashT > 0) fig.flashT = Math.max(0, fig.flashT - dt);
+    if (fig.resVibT > 0) fig.resVibT = Math.max(0, fig.resVibT - dt);
+    if (fig.atkAnimT > 0) fig.atkAnimT = Math.max(0, fig.atkAnimT - dt);
+    var pcx = px + 16, pcy = py + 16;
+    var yardCx = (PRAC_YARD.x0 + PRAC_YARD.x1 + 1) * TILE / 2, yardCy = (PRAC_YARD.y0 + PRAC_YARD.y1 + 1) * TILE / 2;
+    if (Math.hypot(pcx - yardCx, pcy - yardCy) > 11 * TILE) { endPracFight('abort'); return; }
+    if (fig.holdT > 0 || fig.sealT > 0) {
+      if (fig.holdT > 0) fig.holdT = Math.max(0, fig.holdT - dt);
+      if (fig.sealT > 0) fig.sealT = Math.max(0, fig.sealT - dt);
+      return;
+    }
+    var dist = Math.hypot(fig.x + 16 - pcx, fig.y + 16 - pcy);
+    if (dist > 40) {
+      // Bot đuổi theo người chơi nhưng không rời sân luyện công.
+      var gx = Math.max(PRAC_YARD.x0 * TILE + 16, Math.min((PRAC_YARD.x1 + 1) * TILE - 16, pcx));
+      var gy = Math.max(PRAC_YARD.y0 * TILE + 16, Math.min((PRAC_YARD.y1 + 1) * TILE - 16, pcy));
+      pracFigStep(fig, gx, gy, fig.speed, dt);
+    } else {
+      fig.atkT -= dt;
+      if (fig.atkT <= 0) { fig.atkT = fig.interval; pracFigStrike(fig); }
+    }
+  }
+  function endPracFight(result) {
+    var f = pracFight; if (!f) return;
+    pracFight = null;
+    pracLastResult = result;
+    state.hp = f.preHp; // luật không hậu quả: máu về ĐÚNG mức trước trận, mọi kết cục
+    pracCdUntil = tNow + PRAC_CD_MS;
+    if (result === 'win' || result === 'lose') {
+      pracStats.count++;
+      if (result === 'win') pracStats.wins++;
+    }
+    if (result === 'win') toast('Tỉ thí dừng: đối thủ đã xuống 20% máu — ngươi thắng điểm. Máu của ngươi hồi về ' + f.preHp + ' như trước trận. (Trận luyện thứ ' + pracStats.count + ' trong phiên, thắng ' + pracStats.wins + '.)', 4600);
+    else if (result === 'lose') toast('Tỉ thí dừng: ngươi đã xuống 20% máu — đối thủ thắng điểm. Không ai gục cả; máu hồi về ' + f.preHp + ' như trước trận. (Trận luyện thứ ' + pracStats.count + ' trong phiên.)', 4600);
+    else toast('Tỉ thí tan giữa chừng — không tính thắng thua; máu hồi về ' + f.preHp + ' như trước trận.', 4200);
+    refreshHUD(); saveNow();
+  }
+  /* Cầu kiểm chứng bot luyện tập (chỉ đọc + mở trận qua đúng đường
+     startPracFight của menu; theo tiền lệ VSLC_HHT/VSLC_TL). */
+  window.VSLC_PRAC = {
+    active: function () { return !!pracFight; },
+    lastResult: function () { return pracLastResult; },
+    fig: function () { return pracFight ? { hp: pracFight.fig.hp, hpMax: pracFight.fig.hpMax, stopHp: L.practiceStopHp(pracFight.fig.hpMax), x: Math.round(pracFight.fig.x), y: Math.round(pracFight.fig.y), tier: pracFight.tier, atk: pracFight.fig.atk } : null; },
+    preHp: function () { return pracFight ? pracFight.preHp : null; },
+    playerStopHp: function () { return pracFight ? pracFight.stopHp : null; },
+    stats: function () { return { count: pracStats.count, wins: pracStats.wins }; },
+    cooldownLeft: function () { return Math.max(0, pracCdUntil - tNow); },
+    botsVisible: function () { return npcsLive.filter(function (n) { return n.prac && !n.hidden; }).map(function (n) { return n.id; }); },
+    start: function (npcId) { startPracFight(npcId); return !!pracFight; }
+  };
 
   /* ---------- Kịch bản trận chương 14 + 15 ---------- */
   function arcStartCh14SiteFight() {
@@ -7472,6 +7719,7 @@
     if (hhtFight) { if (!dlg) hhtCastWord('dinh'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('dinh'); return; } // ARCIV
     if (arcFig) { if (!dlg) arcFigCastWord('dinh'); return; } // ARCIV
+    if (pracFight) { if (!dlg) pracCastWord('dinh'); return; } // luyện tập
     // ARCIV đợt 2 ch.17 (B.7): Định Âm giữ thước pha lê — sau các đường
     // trận, trước đường tự do. Ngoài vùng gần thước thì chỉ nhắc, KHÔNG
     // trừ gì; trong vùng thì đòn vẫn trừ như khuôn giữ bia chương 12.
@@ -7501,6 +7749,7 @@
     if (hhtFight) { if (!dlg) hhtCastWord('phong'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('phong'); return; } // ARCIV
     if (arcFig) { if (!dlg) arcFigCastWord('phong'); return; } // ARCIV: Phong Âm phong ấn mắt trận ngay giữa trận
+    if (pracFight) { if (!dlg) pracCastWord('phong'); return; } // luyện tập
     if (dlg) return;
     if (enc) { encCastWord('phong'); return; }
     if (startEncounterNear(3.2)) { encCastWord('phong'); return; }
@@ -11719,6 +11968,7 @@
     if (hhtFight) { if (!dlg) hhtCastWord('pha'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('pha'); return; } // ARCIV: cộng hưởng trong trận đài thách đấu
     if (arcFig) { if (!dlg) arcFigCastWord('pha'); return; } // ARCIV: cộng hưởng trong trận kịch bản dã ngoại
+    if (pracFight) { if (!dlg) pracCastWord('pha'); return; } // luyện tập: cộng hưởng trong trận tỉ thí sân luyện công
     if (dlg) return;
     if (enc) { encCastWord('pha'); return; }
     if (startEncounterNear(3.2)) { encCastWord('pha'); return; }
@@ -11757,6 +12007,7 @@
     if (hhtFight) { if (!dlg) hhtCastWord('chan'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('chan'); return; } // ARCIV
     if (arcFig) { if (!dlg) arcFigCastWord('chan'); return; } // ARCIV
+    if (pracFight) { if (!dlg) pracCastWord('chan'); return; } // luyện tập
     if (dlg) return;
     if (enc) { encCastWord('chan'); return; }
     if (startEncounterNear(3.2)) { encCastWord('chan'); return; }
@@ -11776,6 +12027,7 @@
     if (hhtFight) { if (!dlg) hhtCastSword(); return; } // Mục F: kiếm quyết trong trận đài
     if (daiFight) { if (!dlg) daiCastSword(); return; } // ARCIV: kiếm quyết trong trận đài thách đấu
     if (arcFig) { if (!dlg) arcFigCastSword(); return; } // ARCIV: kiếm quyết trong trận kịch bản dã ngoại (gồm phá mắt trận)
+    if (pracFight) { if (!dlg) pracCastSword(); return; } // luyện tập: kiếm quyết trong trận tỉ thí sân luyện công
     if (dlg) return;
     if (enc) { encCastSword(); return; }
     if (startEncounterNear(1.9)) { encCastSword(); return; }
@@ -12530,6 +12782,7 @@
       if (daiFight) updateDaiFight(dtW); // ARCIV ch.13: trận đài thách đấu
       if (daiFight && state && state.map === 'dai_dau_kiem') { px = Math.max(HHT_ARENA.x0 * TILE, Math.min(HHT_ARENA.x1 * TILE, px)); py = Math.max(HHT_ARENA.y0 * TILE, Math.min(HHT_ARENA.y1 * TILE, py)); } // ARCIV: kẹp bệ đấu như HHT
       if (arcFig) updateArcFig(dtW); // ARCIV ch.14/15: trận kịch bản dã ngoại
+      if (pracFight) updatePracFight(dtW); // bot luyện tập: trận tỉ thí sân luyện công
       arcBossTick(dtW); // ARCIV ch.16 + boss Hộ Trận: đồng hồ chiêu boss trong trận chạm trán
       checkPortalsAndZones();
     } else {
@@ -12608,7 +12861,7 @@
       L.setActiveMap(po.to);
       px = po.toX * TILE; py = po.toY * TILE; facing = state.dir;
       dir8 = DIR8_ROW4[facing] || 0; stepPhase = 0; stepTimer = 0; stepAcc = 0;
-      npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; }); // vị trí theo pha nhiệm vụ (gói phụ 5)
+      npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir, hidden: !!pp.hidden, prac: n.prac ? 1 : 0, tier: n.tier || 0 }; }); // vị trí theo pha nhiệm vụ (gói phụ 5)
       spawnMonstersForMap();
       if (prevMap && PARTY_REALMS[prevMap] && PARTY_REALMS[po.to] && partyBotsLive.length) partyPlaceBotsNearPlayer(); // bot giữ qua lại giữa hai tầng Trận Tâm
       if (!isHuntMap(po.to)) maybeShowHuntSummary(); // rời hẳn vùng săn: chốt phiên săn trong bộ nhớ
@@ -14528,7 +14781,7 @@
         L.setActiveMap(po.to);
         px = po.toX * TILE; py = po.toY * TILE; facing = 'down';
         dir8 = DIR8_ROW4.down || 0;
-        npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir }; });
+        npcsLive = L.activeMap().npcs.map(function (n) { var pp = L.npcPosFor(state, n); return { id: n.id, name: n.name, look: n.look, x: pp.x, y: pp.y, dir: pp.dir, hidden: !!pp.hidden, prac: n.prac ? 1 : 0, tier: n.tier || 0 }; });
         spawnMonstersForMap();
         setMinimapLabel();
         refreshHUD(); saveNow();
