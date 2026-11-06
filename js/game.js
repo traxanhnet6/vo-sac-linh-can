@@ -855,6 +855,7 @@
     kdFig = null; // hình diễn yêu thú giữ dược chương 11 (boss-fx #21+#22) cũng là trạng thái phiên
     pillars = []; streaks = []; bossFx = []; // cột sáng + vệt kiếm quang + hiệu ứng boss là trạng thái phiên (gói phụ 10)
     thuPhapFx = []; thuPhapCd = {}; thuPhapCastT = 0; thuPhapChipsOpen = false; // SP-04: trạng thái thư pháp là trạng thái phiên
+    elemFx = []; elemZones = []; // hiệu ứng + vùng đất của bí pháp ngu_hanh là trạng thái phiên (đợt cài dải Thường)
     resFields = []; resWaves = []; resPassiveT = 9; // sân cộng hưởng + sóng khóa + nhịp nghe thụ động cũng là trạng thái phiên (bước 2 Vạn Âm)
     comboN = 0; comboT = 0; hitStopT = 0; hurtT = 0; playerHurtT = 0; ghostHp = -1; ghostPctShown = -1;
     bossPillar = null; encStance = false; zoneDwell = 0;
@@ -981,7 +982,16 @@
       var r = L.redeemGiftCode(state, code);
       if (r.ok) { refreshHUD(); saveNow(); }
       return r;
-    }
+    },
+    // Tung chiêu ngu_hanh trong làn chạm trán (đợt cài dải Thường):
+    // kiểm thử và các lớp ngoài chỉ đi qua đúng đường tung của người chơi.
+    castNguHanh: function (setId, tier) {
+      if (!state || !enc) return { ok: false, reason: 'no_enc' };
+      return encNguHanhCast(setId, tier);
+    },
+    nguHanhCdLeft: function (setId, tier) { return elemCdLeft(setId, tier); },
+    encInfo: function () { return enc && enc.mon ? { active: true, hp: enc.mon.hp, max: enc.mon.maxHp, rank: enc.mon.rank, slowT: enc.mon.slowT || 0, holdT: enc.mon.holdT || 0 } : { active: false }; },
+    elemFxCount: function () { return { fx: elemFx.length, zones: elemZones.length }; }
   };
 
   /* ---------- Trạng thái phiên chơi ---------- */
@@ -2673,6 +2683,7 @@
     drawStreaks();
     drawBossFx(); // lớp hiệu ứng riêng của đòn boss (nứt đất / tàn ảnh / kiếm dựng / gợn nước / điểm tụ) — đặt ngay sau drawStreaks như bản gốc đợt boss
     drawThuPhapFx(); // SP-04: lớp hiệu ứng thư pháp (bút/chữ/bàn cờ/thẻ trúc) — sau lớp boss, trước lớp phủ ngày đêm như mọi hiệu ứng
+    drawElemFx(); // hiệu ứng + vùng đất của bí pháp ngu_hanh (đợt cài dải Thường)
     drawArcFx(); arcDrawEyes(); arcDrawCycle(); drawTechFx(); arcDrawWave2();
     // ARCIV ch.15 (điểm yếu F.6 đã khai, nay bổ sung): vòng nhiễu xám quanh
     // NHÂN VẬT khi cộng hưởng bị khóa bởi trạng thái cảnh.
@@ -5242,6 +5253,13 @@
         sectOpts.push({ label: 'Đổi 150 điểm cống hiến lấy một pháp bảo Trung phẩm', action: 'merit_buy_treasure_2' });
         sectOpts.push({ label: 'Đổi 400 điểm cống hiến lấy một pháp bảo Thượng phẩm', action: 'merit_buy_treasure_3' });
       }
+      // Đợt cài dải Thường (ô 04): đủ 6 lượt việc tông + đã có ô 01 thì
+      // quản sự truyền Cuồng Phong Lốc Xoáy ngay khi thăm — toast báo
+      // lĩnh ngộ, menu việc tông vẫn mở tiếp như thường.
+      if (!L.techniqueOf(state, 'cuong_phong_loc_xoay') && L.thuongTryTeachCuongPhong) {
+        var rcp = L.thuongTryTeachCuongPhong(state);
+        if (rcp && rcp.ok) { sfxQuest(); toast('Quản Sự Tạp Dịch truyền dạy Cuồng Phong Lốc Xoáy (bí pháp ô 04) — sáu lượt việc tông của ngươi không uổng, đã ghi vào sổ công pháp.', 4800); refreshHUD(); saveNow(); }
+      }
       sectOpts.push({ label: 'Trò chuyện', action: 'grind_idle' });
       return say([{ who: 'choice', text: 'Ngươi sẽ…', options: sectOpts }]);
     }
@@ -5252,6 +5270,8 @@
     // SP-04: Trần Chính Đạo ở Tĩnh Quan Lâu tặng mảnh đầu Thư Pháp Chân
     // Kinh đúng một lần (chỉ toast, không thoại — xem thuPhapThienCoExtras).
     if (npc.id === 'tran_chinh_dao' && state.map === 'thien_co_lau' && thuPhapThienCoExtras()) return;
+    if (npc.id === 'truong_lao_tong' && thuongElderExtras()) return;
+    if (npc.id === 'thap_chu' && thuongThapChuExtras()) return;
     var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
     if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
     // Chốt chặn cuối: NPC chưa có thoại riêng vẫn phải đáp lại — ấn E mà im
@@ -5917,8 +5937,21 @@
     var d = L.arcIvFragmentDropFor(state, sourceId);
     if (!d) return;
     var nm = (L.TECHNIQUE_DEFS[d.setId] || {}).name || d.setId;
-    toast('Mảnh bí pháp rơi ra: ' + nm + ' (' + d.count + '/' + d.needed + ')' + (d.complete ? ' — đủ mảnh! Tới tàng kinh các ở đại điện để ghép bộ.' : '.'), 4600);
+    var craftHint = (d.setId === 'lien_nguc_hoa_tran' || d.setId === 'bang_tram_van_tien') ? ' — đủ mảnh! Tới gặp chủ trì Kiểm Trắc Tháp để ghép bộ.' : ' — đủ mảnh! Tới tàng kinh các ở đại điện để ghép bộ.';
+    toast('Mảnh bí pháp rơi ra: ' + nm + ' (' + d.count + '/' + d.needed + ')' + (d.complete ? craftHint : '.'), 4600);
     refreshHUD(); saveNow();
+  }
+  // Thưởng thông quan lần đầu của dải Thường (ô 16/02/25/18): logic tự
+  // quyết theo bí cảnh; engine chỉ thông báo bộ lĩnh ngộ được.
+  function thuongBcFirstClearToast(realmId) {
+    if (!L.thuongBcFirstClear) return;
+    var r = L.thuongBcFirstClear(state, realmId);
+    if (r && r.learned && r.learned.length) {
+      r.learned.forEach(function (id) {
+        toast('Truyền thừa khắc trong bí cảnh! Ngươi lĩnh ngộ được bí pháp ' + ((L.TECHNIQUE_DEFS[id] || {}).name || id) + '!', 5200);
+      });
+      sfxQuest(); refreshHUD(); saveNow();
+    }
   }
   function arcIvBcBossFragment(realmId) {
     var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau', bc_tran_tam_sau: 'boss:bc_tran_tam_sau', bc_tapha: 'boss:bc_tapha' }[realmId];
@@ -5930,15 +5963,19 @@
     var r = L.kyNgoOnAction(state, Math.random(), Math.random(), activity);
     if (!r || !r.triggered) return;
     if (r.setId) {
-      /* ARCIV đợt 3 (B.9): kỳ ngộ ô 23 Bôn Lôi Thiểm Kích có CẢNH riêng —
-         khi thoại đang rảnh, không trong trận nào và cảnh chưa chạy lần
-         nào thì HOÃN học: chạy SCENE_KY_NGO_BON_LOI, lựa chọn cuối cảnh
-         (resolveKyNgoChoice) mới học bộ. Mọi trường hợp còn lại giữ
-         nguyên hành vi học ngay + toast ở dưới — học không bao giờ mất. */
-      if (r.setId === 'bon_loi_thiem_kich' && !state.flags.kyNgoBonLoiSceneDone && !dlg && !arcFig && !enc && !daiFight && !hhtFight && !tlFight) {
-        state.flags.kyNgoBonLoiSceneDone = true;
+      /* ARCIV đợt 3 (B.9) + đợt cài dải Thường: các bộ kỳ ngộ có CẢNH
+         riêng (ô 23 Bôn Lôi, ô 05 Đằng Giao, ô 12 Hỏa Vân) — khi thoại
+         đang rảnh, không trong trận nào và cảnh chưa chạy lần nào thì
+         HOÃN học: chạy cảnh, lựa chọn cuối cảnh (resolveKyNgoChoice)
+         mới học bộ. Mọi trường hợp còn lại giữ nguyên hành vi học ngay
+         + toast ở dưới — học không bao giờ mất. */
+      var KN_SCENE = { bon_loi_thiem_kich: ['SCENE_KY_NGO_BON_LOI', 'kyNgoBonLoiSceneDone'],
+        huyen_moc_dang_giao: ['SCENE_KY_NGO_DANG_GIAO', 'kyNgoDangGiaoSceneDone'],
+        hoa_van_man_thien: ['SCENE_KY_NGO_HOA_VAN', 'kyNgoHoaVanSceneDone'] }[r.setId];
+      if (KN_SCENE && !state.flags[KN_SCENE[1]] && !dlg && !arcFig && !enc && !daiFight && !hhtFight && !tlFight) {
+        state.flags[KN_SCENE[1]] = true;
         refreshHUD(); saveNow();
-        say(ST.SCENE_KY_NGO_BON_LOI);
+        say(ST[KN_SCENE[0]]);
         return;
       }
       var lr = L.nguHanhLearn(state, r.setId);
@@ -7938,6 +7975,41 @@
     return false;
   }
 
+  /* ---------- Đợt cài dải Thường: điểm truyền/g ghép tại chủ trì tháp
+     (ô 01 sau chương 3, ô 11 sau 3 phiếu săn, ghép ô 10/13 tại tháp) và
+     trưởng lão tông (ô 08 sau q8_done). Chỉ toast/lựa chọn như khuôn
+     arcIvElderExtras — không thêm dòng thoại người nói mới. ---------- */
+  function thuongThapChuExtras() {
+    if (!state || !L.thuongTryTeachPhiDiep) return false;
+    var acted = false;
+    if (!L.techniqueOf(state, 'phi_diep_phong_nhan')) {
+      var r1 = L.thuongTryTeachPhiDiep(state);
+      if (r1 && r1.ok) { sfxQuest(); toast('Chủ trì tháp trao ngươi tàn quyển Phi Diệp Phong Nhận (bí pháp ô 01) — truyền thừa Phong hệ nhập môn của tháp, đã ghi vào sổ công pháp.', 4800); acted = true; }
+    }
+    if (!L.techniqueOf(state, 'liet_diem_trao_kich')) {
+      var r2 = L.thuongTryTeachLietDiem(state);
+      if (r2 && r2.ok) { sfxQuest(); toast('Chủ trì tháp gật đầu: ba phiếu săn của ngươi đã trả đủ — ngươi được truyền Liệt Diễm Trảo Kích (bí pháp ô 11), đã ghi vào sổ công pháp.', 4800); acted = true; }
+    }
+    var craftable = ['lien_nguc_hoa_tran', 'bang_tram_van_tien'].filter(function (id) { return L.nguHanhCanCraft(state, id); });
+    if (craftable.length) {
+      if (acted) { refreshHUD(); saveNow(); }
+      var opts = craftable.map(function (id) { return { label: 'Ghép bí pháp: ' + ((L.TECHNIQUE_DEFS[id] || {}).name || id), action: 'thuong_craft:' + id }; });
+      opts.push({ label: 'Để lúc khác', action: 'thuong_craft_leave' });
+      say([{ who: 'choice', text: 'Chủ trì tháp giữ khung ghép bí pháp của dải Luyện Khí và Trúc Cơ — ngươi đã đủ mảnh cho ' + craftable.length + ' bộ. Ngươi sẽ…', options: opts }]);
+      return true;
+    }
+    if (acted) { refreshHUD(); saveNow(); }
+    return false;
+  }
+  function thuongElderExtras() {
+    if (!state || !L.thuongTryTeachViemLong) return false;
+    if (!L.techniqueOf(state, 'viem_long_tho_tuc')) {
+      var r = L.thuongTryTeachViemLong(state);
+      if (r && r.ok) { sfxQuest(); toast('Trưởng lão tông truyền dạy Viêm Long Thổ Tức (bí pháp ô 08) — truyền thừa Hỏa hệ trao khi ngươi đạt Trúc Cơ, đã ghi vào sổ công pháp.', 4800); refreshHUD(); saveNow(); }
+    }
+    return false;
+  }
+
   /* ---------- ARCIV đợt 2: lựa chọn thái độ chương 18 (B.4) ----------
      Cùng điểm dispatch với resolveArcChoice/resolveCh10Choice. Cả hai
      thái độ đều dẫn tới cùng trận quán quân: cảnh thái độ -> DAU_MO ->
@@ -7975,6 +8047,16 @@
      SCENE_KY_NGO_BON_LOI nên nextLine() khép thoại sạch; cả hai lựa
      chọn cùng dẫn tới học bộ qua nguHanhLearn + toast lĩnh ngộ. */
   function resolveKyNgoChoice(action) {
+    if (action === 'kyngo_dang_giao_nhan' || action === 'kyngo_dang_giao_doc') {
+      var lr5 = L.nguHanhLearn(state, 'huyen_moc_dang_giao');
+      if (lr5 && lr5.ok) { sfxQuest(); toast('Kỳ ngộ! Ngươi lĩnh ngộ được bí pháp Huyền Mộc Đằng Giao từ thế đan chéo của đám dây leo!', 5200); }
+      refreshHUD(); saveNow();
+    }
+    if (action === 'kyngo_hoa_van_nghe' || action === 'kyngo_hoa_van_ghi') {
+      var lr12 = L.nguHanhLearn(state, 'hoa_van_man_thien');
+      if (lr12 && lr12.ok) { sfxQuest(); toast('Kỳ ngộ! Ngươi lĩnh ngộ được bí pháp Hỏa Vân Man Thiên từ nhịp khói cuộn của đám cháy hoang!', 5200); }
+      refreshHUD(); saveNow();
+    }
     if (action === 'kyngo_bon_loi_nhan' || action === 'kyngo_bon_loi_doc') {
       var lr = L.nguHanhLearn(state, 'bon_loi_thiem_kich');
       if (lr && lr.ok) { sfxQuest(); toast('Kỳ ngộ! Ngươi lĩnh ngộ được bí pháp ' + ((L.TECHNIQUE_DEFS.bon_loi_thiem_kich || {}).name || 'Bôn Lôi Thiểm Kích') + ' từ trang tàn quyển trong hốc cây cháy!', 5200); }
@@ -8006,6 +8088,16 @@
     }
     if (action === 'arc_dai_open_leave') { say([]); return; }
     if (action === 'arc_craft_leave') { say([]); return; }
+    if (action === 'thuong_craft_leave') { say([]); return; }
+    if (action.indexOf('thuong_craft:') === 0) {
+      var tid2 = action.slice('thuong_craft:'.length);
+      say([]);
+      var rc2 = L.thuongCraftAtTower(state, tid2);
+      if (rc2 && rc2.ok) { sfxQuest(); toast('Đã ghép thành bí pháp: ' + ((L.TECHNIQUE_DEFS[tid2] || {}).name || tid2) + '!', 4600); }
+      else toast('Chưa ghép được bộ này lúc này: ' + ((rc2 && rc2.reason) || 'chưa đủ điều kiện') + '.', 3600);
+      refreshHUD(); saveNow();
+      return;
+    }
     if (action.indexOf('arc_craft:') === 0) {
       var id = action.slice('arc_craft:'.length);
       say([]);
@@ -9159,7 +9251,21 @@
     }
     var pcx = px + 16, pcy = py + 16, mcx = m.x + 16, mcy = m.y + 16;
     var dist = Math.hypot(mcx - pcx, mcy - pcy);
+    // Vùng đất của bí pháp (đợt Thường): trận lửa ô 10 áp nhịp khi quái
+    // còn đứng trong vùng; khói ô 12 giữ chậm khi quái còn trong vùng.
+    for (i = elemZones.length - 1; i >= 0; i--) {
+      var ez = elemZones[i];
+      if (tNow > ez.until) continue;
+      var inZone = Math.hypot(mcx - ez.x, mcy - ez.y) <= ez.r;
+      if (ez.kind === 'fire' && inZone && ez.ticksLeft > 0 && tNow >= ez.nextTick) {
+        ez.nextTick = tNow + ez.tickEvery; ez.ticksLeft -= 1;
+        applyHitToMonster(m, ez.tickPower, { kind: 'elem', move: ez.setId, hitIdx: 0 });
+        if (!enc || m.state !== 'alive') return;
+      }
+      if (ez.kind === 'smoke' && inZone) { m.slowPct = Math.max(m.slowPct || 0, ez.slowPct); m.slowT = Math.max(m.slowT || 0, 0.3); }
+    }
     if (m.holdT > 0) { m.holdT = Math.max(0, m.holdT - dt); if (m.holdT <= 0) state.flags.lenDinhHold = 0; }
+    if (m.slowT > 0) { m.slowT = Math.max(0, m.slowT - dt); if (m.slowT <= 0) m.slowPct = 0; }
     if (m.sealT > 0) { m.sealT = Math.max(0, m.sealT - dt); state.flags.lenPhongSeal = m.sealT > 0 ? Math.ceil(m.sealT / m.atkInterval) : 0; }
     // SP-04 Mặc Trúc: vùng trúc làm chậm — chỉ sửa tốc độ đuổi ở nhánh
     // monStep ngay dưới, không chặn đòn, không giảm sát thương.
@@ -12479,6 +12585,54 @@
     }
     refreshHUD(); saveNow();
   }
+  /* ----- GỘP 2026-11-06: panel BÍ PHÁP CHUNG (đợt gộp dải Thường) -----
+     Cây chính có hai nút riêng cùng vị trí/cùng phím G (BÍ PHÁP của
+     SP-04 Nho Tu và NGŨ HÀNH của dải Thường). Gộp xong chỉ còn MỘT nút
+     #btn-biphap (giữ nguyên phần tử + CSS của SP-04): biPhapUiTick
+     quyết hiển thị (hiện khi đang trong trận và có ÍT NHẤT một thức
+     của một trong hai dòng tung được); bấm nút hoặc phím G thì
+     toggleBiPhapPanels mở panel chung #biphap-panel liệt kê MỌI bộ
+     bí pháp đã học — chip thức Thư Pháp (bản SP-04 giữ nguyên cơ chế)
+     trong #biphap-chips, chip thức dải Thường (renderElemPanel vẽ vào
+     #biphap-panel thay cho #elem-panel đã gỡ); nút #btn-elements bị
+     vô hiệu hoá vĩnh viễn. Chu kỳ tick của SP-04 (thuPhapUiTick) vẫn
+     chạy cho nhãn hồi chiêu trên chip Thư Pháp, chỉ không còn quyền
+     ẩn/hiện nút. */
+  var biPhapChipsOpen = false;
+  function biPhapAnyAvailable() {
+    if (!enc || !state) return false;
+    var tp = !!(L.thuPhapForms && L.thuPhapForms(state).length);
+    var el = !!(L.nguHanhMovesAvailable && L.nguHanhMovesAvailable(state).length);
+    return tp || el;
+  }
+  function biPhapUiTick() {
+    var btn = $('btn-biphap'); if (!btn) return;
+    btn.style.display = biPhapAnyAvailable() ? '' : 'none';
+    var be = $('btn-elements'); if (be) be.classList.add('hidden');
+  }
+  function toggleBiPhapPanels() {
+    var p = $('biphap-panel'); if (!p || !state) return;
+    if (!p.classList.contains('hidden')) {
+      p.classList.add('hidden'); biPhapChipsOpen = false;
+      var bx0 = $('biphap-chips'); if (bx0) bx0.style.display = 'none'; return;
+    }
+    if (!biPhapAnyAvailable()) return;
+    renderElemPanel();
+    var mvN = (L.nguHanhMovesAvailable && L.nguHanhMovesAvailable(state).length) || 0;
+    p.classList.toggle('hidden', !mvN);
+    biPhapChipsOpen = !!(L.thuPhapForms && L.thuPhapForms(state).length);
+    var bx = $('biphap-chips');
+    if (bx) {
+      if (biPhapChipsOpen) {
+        var forms = L.thuPhapForms(state);
+        bx.innerHTML = forms.map(function (f) {
+          return '<button class="biphap-chip" data-form="' + f.form + '">' + f.name + '</button>';
+        }).join('');
+        bx.style.display = 'flex';
+      } else bx.style.display = 'none';
+    }
+  }
+
   /* ================= SP-04 Thư Pháp Chân Kinh: tung thức + hiệu ứng =================
      Đường tung của bộ đặc biệt SP-04 (docs/nho-tu-set-design.md): resolver
      thuần L.castThuPhap tính số, lớp này giữ hồi chiêu theo đồng hồ trận,
@@ -12513,6 +12667,7 @@
       t.slowT = Math.max(t.slowT || 0, control.sec); t.slowPct = control.pct;
     }
   }
+
   function encThuPhapCast(formId) {
     if (!enc || !enc.mon || enc.mon.state !== 'alive') return;
     var m = enc.mon;
@@ -12552,6 +12707,650 @@
     addFloat(cx, cy - 36, r.formName, '240,225,170');
     refreshHUD(); saveNow();
   }
+  /* ================= ĐỢT CÀI DẢI THƯỜNG: TUNG CHIÊU NGU_HANH =================
+     Đường tung cho cả dòng ngu_hanh trong làn chạm trán (khuôn đợt
+     nhotu tổng quát hóa): resolver thuần L.castNguHanh đọc def.moves
+     theo tầng; engine lo hồi chiêu theo đồng hồ trận (tNow, mili giây),
+     hướng mặt, thân pháp quyết, điểm bộ +2, lên lịch đòn con vào
+     enc.pendingHits và áp khống chế (trói qua holdT sẵn có, chậm qua
+     trường mới slowT/slowPct chỉ sửa tốc độ đuổi). Trình diễn là module
+     riêng elemFx/elemZones: cập nhật bằng dtW như bossFx, dọn trong
+     resetPresentationState, tôn trọng fxOn() + ngân sách MAX_PARTS qua
+     spawnParts. Các hệ trận kịch bản (daiFight/arcFig/hhtFight/
+     tlFight) KHÔNG nối đợt này — cùng khai báo phạm vi như đợt nhotu. */
+  var elemFx = [], elemZones = [], elemCds = {};
+  var ELEM_COLORS = { phong: '140,230,170', moc: '115,225,150', hoa: '255,140,60', thuy: '110,190,255', bang: '170,225,255', tho: '215,175,105', loi: '200,170,255', am: '170,120,255', van: '235,225,185', hon_don: '230,200,255' };
+  var ELEM_MELEE = { liet_diem_trao_kich: true }; // ô 11 tầm gần như kiếm (bản đồ mục 2.3)
+  var ELEM_ROW_LABEL = ['Chưởng', 'Liềm', 'Mưa đạn', 'Tuyệt kỹ']; // tên hàng 4–7 của khung chuẩn
+  var ELEM_SFX = { phong: 'Wind', moc: 'Wind', hoa: 'Pha', thuy: 'Chan', bang: 'Chan', tho: 'Crack', loi: 'Bolt' };
+  function elemCdLeft(setId, tier) { return Math.max(0, ((elemCds[setId + ':' + tier] || 0) - tNow) / 1000); }
+  function encNguHanhCast(setId, tierNum) {
+    if (!enc || !enc.mon || enc.mon.state !== 'alive') return { ok: false, reason: 'no_enc' };
+    var m = enc.mon;
+    if (!encTargetInRange(ELEM_MELEE[setId] ? 1.9 : 4.5)) { toast('Quái còn xa — lại gần thêm để tung bí pháp.'); return { ok: false, reason: 'range' }; }
+    if (elemCdLeft(setId, tierNum) > 0) { toast('Thức này còn đang hồi.'); return { ok: false, reason: 'cooldown', left: elemCdLeft(setId, tierNum) }; }
+    var r = L.castNguHanh(state, setId, tierNum);
+    if (!r.ok) {
+      toast(r.reason === 'tier_locked' ? 'Tầng công pháp chưa đủ để tung thức này.' : (r.reason === 'not_learned' ? 'Chưa học bộ bí pháp này.' : 'Chưa tung được thức này.'));
+      return r;
+    }
+    elemCds[setId + ':' + tierNum] = tNow + r.cd * 1000;
+    faceMonster(m);
+    startResBody(false); // bộ PHÁP: khung phóng quyết khóa tại thời điểm áp hiệu ứng
+    var sfxName = ELEM_SFX[r.element];
+    if (sfxName && typeof window !== 'undefined') { try { ({ Wind: sfxWind, Pha: sfxPha, Chan: sfxChan, Crack: sfxCrack, Bolt: sfxBolt })[sfxName](); } catch (e) {} }
+    var gain = L.techniqueGain(state, setId, 2); // luật khung: +2 điểm mỗi lần xuất chiêu của chính bộ trong trận
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp(setId, gain.tier);
+    spawnElemCastFx(r, m);
+    if (r.zone && r.zone.ticks) {
+      // Ô 10 T3/T4: trận lửa — sát thương theo nhịp do updateEncounter áp.
+      elemZones.push({ kind: 'fire', setId: setId, x: m.x + 16, y: m.y + 16, r: r.zone.radiusTiles * 32, until: tNow + r.zone.sec * 1000, tickEvery: r.zone.tickEvery * 1000, nextTick: tNow + 350, tickPower: r.zone.tickPower, ticksLeft: r.zone.ticks, col: ELEM_COLORS[r.element] || '255,140,60' });
+    } else {
+      for (var i = 0; i < r.hits.length; i++) {
+        if (i === 0) applyHitToMonster(m, r.hits[i].power, { kind: 'elem', move: setId, hitIdx: 0 });
+        else enc.pendingHits.push({ at: tNow + i * 160, power: r.hits[i].power, kind: 'elem', move: setId, hitIdx: i });
+        if (!enc) break;
+      }
+      if (r.zone && r.zone.kind === 'smoke' && enc) {
+        elemZones.push({ kind: 'smoke', setId: setId, x: m.x + 16, y: m.y + 16, r: r.zone.radiusTiles * 32, until: tNow + r.zone.sec * 1000, slowPct: (r.zone.slowPct || 0) * 100, col: '255,150,90' }); // GỘP 2026-11-06: đổi phân số -> % tại điểm áp (m.slowPct của cây chính là PHẦN TRĂM như SP-04 pct 20; số của logic.js giữ nguyên)
+      }
+    }
+    if (enc && r.control) {
+      if (r.control.bind > 0) { var dur = r.control.bind * (m.rank === 'boss' ? 0.5 : 1); m.holdT = Math.max(m.holdT || 0, dur); }
+      if (r.control.slowPct) { m.slowPct = Math.max(m.slowPct || 0, r.control.slowPct * 100); m.slowT = Math.max(m.slowT || 0, r.control.slowSec || 0); } // GỘP 2026-11-06: đổi phân số -> % tại điểm áp như khói ô 12 ở trên
+      if (r.control.pull > 0 && m.rank !== 'boss') {
+        var pdx = (px + 16) - (m.x + 16), pdy = (py + 16) - (m.y + 16), plen = Math.hypot(pdx, pdy) || 1;
+        var pd = Math.min(r.control.pull, Math.max(0, plen - 36));
+        if (pd > 0) { m.x += pdx / plen * pd; m.y += pdy / plen * pd; }
+      }
+    }
+    refreshHUD();
+    return { ok: true, setId: setId, tier: tierNum, cd: r.cd };
+  }
+  function spawnElemCastFx(r, m) {
+    if (!fxOn()) return;
+    var col = ELEM_COLORS[r.element] || '220,220,220';
+    var tx = m.x + 16, ty = m.y + 16, hx = px + 16, hy = py + 10;
+    // Nhịp tại điểm phát theo chuẩn đã khóa: vòng chấn động từ chân +
+    // bùng hạt màu hệ, lớn dần theo tầng.
+    if (!SET || SET.current.fxRings) rings.push({ x: px + 16, y: py + 30, r: 6 + r.tier * 2, a: 0.65, col: col });
+    spawnParts(px + 16, py + 12, Math.min(14, 5 + r.tier * 3), col, 26 + r.tier * 8, true);
+    // Lượt CHAU CHUỐT trình diễn (sau đợt cài dải Thường): ô 08 và
+    // ô 01 có hình bay riêng thay cho cầu/liềm/mưa chung — rồng lửa
+    // uốn thân bay tới đích ở MỌI bậc, cụm lá xoáy có vệt ở mọi bậc.
+    // Thuần trình diễn: sát thương/khống chế vẫn áp ở encNguHanhCast
+    // như cũ, không đổi một con số nào của thức.
+    if (r.setId === 'viem_long_tho_tuc') {
+      elemFx.push({ kind: 'dragon', setId: r.setId, tier: r.tier, x0: hx, y0: hy, x1: tx, y1: ty - 4, t: 0, dur: [0, 0.55, 0.65, 0.8, 1.15][r.tier], col: col });
+      spawnParts(tx, ty - 6, r.tier >= 3 ? 10 : 7, col, 34, false);
+      return;
+    }
+    if (r.setId === 'phi_diep_phong_nhan') {
+      if (r.tier === 1) {
+        elemFx.push({ kind: 'leafOrb', setId: r.setId, x0: hx, y0: hy, x1: tx, y1: ty - 6, t: 0, dur: 0.3, col: col });
+        spawnParts(tx, ty - 6, 8, col, 36, false);
+      } else if (r.tier === 2) {
+        elemFx.push({ kind: 'leafArc', setId: r.setId, x0: hx, y0: hy, x1: tx, y1: ty - 6, t: 0, dur: 0.34, col: col });
+        spawnParts(tx, ty - 6, 10, col, 38, false);
+      } else if (r.tier === 3) {
+        for (var li3 = 0; li3 < 9; li3++) elemFx.push({ kind: 'leafRain', setId: r.setId, sd: li3, x1: tx + (Math.random() - 0.5) * 62, y1: ty - 4 + (Math.random() - 0.5) * 22, t: -li3 * 0.08, dur: 0.6, col: col });
+      } else {
+        elemFx.push({ kind: 'grand', setId: r.setId, x1: tx, y1: ty, ang: Math.atan2(ty - hy, tx - hx), t: 0, dur: 1.15, col: col });
+      }
+      return;
+    }
+    if (r.tier === 1) {
+      elemFx.push({ kind: 'orb', setId: r.setId, x0: hx, y0: hy, x1: tx, y1: ty - 6, t: 0, dur: 0.16, col: col });
+      spawnParts(tx, ty - 6, 6, col, 30, false);
+    } else if (r.tier === 2) {
+      elemFx.push({ kind: 'crescent', setId: r.setId, x0: hx, y0: hy, x1: tx, y1: ty - 6, t: 0, dur: 0.24, col: col });
+      spawnParts(tx, ty - 6, 8, col, 34, false);
+    } else if (r.tier === 3) {
+      for (var i = 0; i < 6; i++) elemFx.push({ kind: 'rain', setId: r.setId, x1: tx + (Math.random() - 0.5) * 56, y1: ty - 4 + (Math.random() - 0.5) * 20, t: -i * 0.09, dur: 0.55, col: col });
+    } else {
+      elemFx.push({ kind: 'grand', setId: r.setId, x1: tx, y1: ty, ang: Math.atan2(ty - hy, tx - hx), t: 0, dur: 1.15, col: col });
+    }
+  }
+  /* ---- Lượt CHAU CHUỐT trình diễn: hàm phụ trợ cho ba ô yếu ----
+     elemHash: hạt giống xác định theo vị trí vùng — vị trí cột lửa/
+     mảng sém/tàn lửa đứng yên giữa các khung, chỉ nhấp nháy theo
+     tNow, không nhảy vị trí. drawLeafShape: một chiếc lá hai lớp
+     (viền sẫm + ruột sáng + gân lá) để lá Phong hệ đọc rõ trên nền
+     cỏ xanh. drawFlamePillar: cột lửa hình giọt ba lớp lửa. */
+  function elemHash(i, z) { var v = Math.sin(i * 12.9898 + (z.x * 0.731 + z.y * 1.317)) * 43758.5453; return v - Math.floor(v); }
+  function drawLeafShape(len, wid, fill, edge) {
+    ctx.fillStyle = edge;
+    ctx.beginPath(); ctx.ellipse(0, 0, len / 2 + 1.3, wid / 2 + 1.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = fill;
+    ctx.beginPath(); ctx.ellipse(0, 0, len / 2, wid / 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(25,85,45,0.55)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-len / 2 + 2, 0); ctx.lineTo(len / 2 - 2, 0); ctx.stroke();
+  }
+  function drawFlamePillar(x, yb, h, ph) {
+    var sway = Math.sin(ph) * h * 0.14, w = h * 0.34;
+    function tongue(hh, ww, colF) {
+      ctx.fillStyle = colF;
+      ctx.beginPath();
+      ctx.moveTo(x - ww, yb);
+      ctx.bezierCurveTo(x - ww, yb - hh * 0.55, x - ww * 0.25 + sway * (hh / h), yb - hh * 0.8, x + sway * (hh / h), yb - hh);
+      ctx.bezierCurveTo(x + ww * 0.25 + sway * (hh / h), yb - hh * 0.8, x + ww, yb - hh * 0.55, x + ww, yb);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 0.5; tongue(h, w, 'rgb(255,105,25)');
+    ctx.globalAlpha = 0.75; tongue(h * 0.68, w * 0.62, 'rgb(255,160,50)');
+    ctx.globalAlpha = 0.9; tongue(h * 0.4, w * 0.34, 'rgb(255,220,130)');
+  }
+  /* Rồng lửa của ô 08 (chau chuốt 2, MỌI bậc): giữ nguyên quỹ
+     đạo bay, sóng thân và mọi thời lượng của lượt chau chuốt 1 —
+     chỉ vẽ lại GIẢI PHẪU. Lượt 1 mọi chi tiết đều là khối lửa cam
+     sáng không viền nên ở cỡ cảnh thật đầu + thân quyện thành một
+     khối đặc, đọc như cá chép cam/đuôi sao chổi. Lượt 2: phác
+     hình CỨNG viền sậm trước, lửa chỉ là hào quang phủ NGOÀI —
+       · thân là dải băng thon dần có viền sậm khép kín, vạch
+         phân đốt ngang thân + cung vảy ở nửa lưng, dải bụng sáng
+         phân tầng chạy dọc phía bụng, vây lửa mọc ngoài viền lưng;
+       · đầu là phác sọ thon dài viền sậm tách bạch khỏi thân:
+         mõm dài, hàm dưới mở riêng tông sậm, nanh trắng, sừng
+         chạc vàng viền sậm quét ngược, gờ mày sậm + mắt, râu dài
+         hai lớp (nền sậm, mặt kem) bay từ mõm, bờm lửa sau gáy
+         nằm ngoài phác sọ.
+     Đối chứng mức đọc: rồng vàng khung thật của đợt rồng phượng
+     (assets/vfx/dragon6 ở cây game-vo-sac-dragon) — đầu thon
+     dài, vảy + bụng phân đốt đọc rõ ở cỡ cảnh thật. */
+  function drawElemDragon(fx, k) {
+    var tier = fx.tier || 4;
+    var headR = 7.5 + tier * 1.9;
+    var segs = 8 + tier;
+    var arrive = tier === 4 ? 0.55 : 0.8;
+    var p = Math.min(1, k / arrive);
+    var fade = k < 0.78 ? 1 : Math.max(0, 1 - (k - 0.78) / 0.22);
+    var bdx = fx.x1 - fx.x0, bdy = fx.y1 - fx.y0, bln = Math.hypot(bdx, bdy) || 1;
+    var nx = -bdy / bln, ny = bdx / bln, baseAng = Math.atan2(bdy, bdx);
+    // Đường bay ngắn (quái đã áp sát) thì sóng thân + cung vồng
+    // phình ra như lượt 1 để thân vẫn uốn lượn đọc được.
+    var wobAmp = 5 + Math.max(0, 110 - bln) * 0.1, bowAmp = 14 + Math.max(0, 110 - bln) * 0.08;
+    var headS = p * (tier === 4 ? 0.82 : 1);
+    var OUTL = 'rgb(94,24,4)'; // viền sậm tách phác hình khỏi lửa và nền
+    function pathPt(s) {
+      var wob = Math.sin(s * 9 - tNow / 95) * wobAmp * (0.3 + s);
+      return { x: fx.x0 + bdx * s + nx * wob, y: fx.y0 + bdy * s + ny * wob - Math.sin(s * Math.PI) * bowAmp };
+    }
+    // Điểm dọc thân tại tham số s (đầu ở headS, đuôi ở s nhỏ hơn);
+    // bán kính giữ đúng biên dạng lượt 1: thon dần về đuôi, nén
+    // lại khi vượt điểm phát trên đường bay ngắn.
+    function spinePt(s) {
+      var idx = (headS - s) / 0.05;
+      var sc = s < 0 ? Math.max(0.3, 1 + s * 9) : 1;
+      var pt = pathPt(Math.max(0, s));
+      pt.r = headR * (0.92 - 0.55 * (idx / segs)) * sc;
+      return pt;
+    }
+    // Lấy mẫu thân đầu → đuôi, mịn gấp 3 lần đốt gốc cho dải liền.
+    var tailS = headS - (segs - 1) * 0.05;
+    var spine = [];
+    var NS = (segs - 1) * 3;
+    for (var qi = 0; qi <= NS; qi++) spine.push(spinePt(headS + (tailS - headS) * (qi / NS)));
+    // Pháp tuyến tại mỗi điểm mẫu: (ux,uy) luôn hướng về phía
+    // lưng (lên màn hình), phía bụng là chiều ngược lại.
+    for (var ni = 0; ni < spine.length; ni++) {
+      var pa = spine[Math.max(0, ni - 1)], pb = spine[Math.min(spine.length - 1, ni + 1)];
+      var txv = pb.x - pa.x, tyv = pb.y - pa.y, tl = Math.hypot(txv, tyv) || 1;
+      var ux = -tyv / tl, uy = txv / tl;
+      if (uy > 0) { ux = -ux; uy = -uy; }
+      spine[ni].ux = ux; spine[ni].uy = uy; spine[ni].tx = txv / tl; spine[ni].ty = tyv / tl;
+    }
+    // Đường khép kín của một dải dọc thân: đường tâm lệch theo
+    // pháp tuyến lưng một khoảng off (× bán kính), nửa rộng của
+    // dải là wSc × bán kính tại mỗi điểm.
+    function ribbonPath(off, wSc) {
+      var Lft = [], Rgt = [], i3, q;
+      for (i3 = 0; i3 < spine.length; i3++) { q = spine[i3]; Lft.push({ x: q.x + q.ux * q.r * (off + wSc), y: q.y + q.uy * q.r * (off + wSc) }); }
+      for (i3 = spine.length - 1; i3 >= 0; i3--) { q = spine[i3]; Rgt.push({ x: q.x + q.ux * q.r * (off - wSc), y: q.y + q.uy * q.r * (off - wSc) }); }
+      var all = Lft.concat(Rgt);
+      ctx.beginPath();
+      ctx.moveTo((all[all.length - 1].x + all[0].x) / 2, (all[all.length - 1].y + all[0].y) / 2);
+      for (i3 = 0; i3 < all.length; i3++) {
+        var np2 = all[(i3 + 1) % all.length];
+        ctx.quadraticCurveTo(all[i3].x, all[i3].y, (all[i3].x + np2.x) / 2, (all[i3].y + np2.y) / 2);
+      }
+      ctx.closePath();
+    }
+    var hp0 = spine[0];
+    var hpB = spine[Math.min(3, spine.length - 1)];
+    var hAng = (hp0.x === hpB.x && hp0.y === hpB.y) ? baseAng : Math.atan2(hp0.y - hpB.y, hp0.x - hpB.x);
+    // Bậc 4: chùm phun lửa vẽ TRƯỚC đầu để mõm đè lên gốc chùm;
+    // hình học ba lớp giữ như lượt 1, chỉ dời gốc chùm ra đúng
+    // đầu mõm mới (mõm lượt 2 dài hơn).
+    if (tier === 4 && k > 0.5) {
+      var bk = Math.min(1, (k - 0.5) / 0.14);
+      var gap = Math.hypot(fx.x1 - hp0.x, (fx.y1 + 6) - hp0.y);
+      var bl = gap + (16 + Math.sin(tNow / 55) * 5 + 12 * bk);
+      ctx.save(); ctx.translate(hp0.x, hp0.y); ctx.rotate(Math.atan2((fx.y1 + 6) - hp0.y, fx.x1 - hp0.x));
+      for (var bi3 = 0; bi3 < 3; bi3++) {
+        ctx.globalAlpha = fade * (0.42 - bi3 * 0.1);
+        ctx.fillStyle = 'rgb(255,' + (135 + bi3 * 32) + ',55)';
+        ctx.beginPath(); ctx.moveTo(headR * 1.45, (bi3 - 1) * 4); ctx.lineTo(headR * 1.45 + bl, (bi3 - 1) * 11); ctx.lineTo(headR * 1.45 + bl + 12, 0); ctx.lineTo(headR * 1.45 + bl, -(bi3 - 1) * 11); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+    // --- HÀO QUANG LỬA ngoài phác thân: dải lửa rộng hơn thân,
+    // alpha thấp, tập trung phía lưng; vẽ trước mọi phác cứng.
+    ctx.globalAlpha = fade * 0.30; ctx.fillStyle = 'rgb(255,110,25)';
+    ribbonPath(0, 1.45); ctx.fill();
+    ctx.globalAlpha = fade * 0.55; ctx.fillStyle = 'rgb(255,150,45)';
+    ribbonPath(0.55, 0.85); ctx.fill();
+    // Vây lưng lửa tại các đốt gốc, mọc ra ngoài viền lưng.
+    for (var fi2 = 2; fi2 < segs - 1; fi2 += 2) {
+      var fp = spine[fi2 * 3]; if (!fp) continue;
+      var fh = fp.r * (1.25 + 0.2 * Math.sin(tNow / 90 + fi2 * 1.7));
+      ctx.globalAlpha = fade * 0.85; ctx.fillStyle = fi2 % 4 === 0 ? 'rgb(255,196,80)' : 'rgb(255,150,45)';
+      ctx.beginPath();
+      ctx.moveTo(fp.x + fp.ux * fp.r * 0.6 - fp.tx * fp.r * 0.55, fp.y + fp.uy * fp.r * 0.6 - fp.ty * fp.r * 0.55);
+      ctx.lineTo(fp.x + fp.ux * (fp.r + fh) + fp.tx * fp.r * 0.25, fp.y + fp.uy * (fp.r + fh) + fp.ty * fp.r * 0.25);
+      ctx.lineTo(fp.x + fp.ux * fp.r * 0.6 + fp.tx * fp.r * 0.55, fp.y + fp.uy * fp.r * 0.6 + fp.ty * fp.r * 0.55);
+      ctx.closePath(); ctx.fill();
+    }
+    // Đuôi: chùm lửa vẫy sau đốt cuối, nằm dưới thân cứng.
+    var tp = spine[spine.length - 1], tw = Math.sin(tNow / 60) * 3;
+    ctx.globalAlpha = fade * 0.85; ctx.fillStyle = 'rgb(255,170,60)';
+    ctx.beginPath(); ctx.moveTo(tp.x, tp.y); ctx.lineTo(tp.x - Math.cos(baseAng) * 15 - tw, tp.y - Math.sin(baseAng) * 15 - 5); ctx.lineTo(tp.x - Math.cos(baseAng) * 6, tp.y - Math.sin(baseAng) * 6 + 7); ctx.closePath(); ctx.fill();
+    // --- THÂN CỨNG: dải chính viền sậm + mảng lưng sậm hơn +
+    // dải bụng sáng + vạch phân đốt và cung vảy.
+    ctx.globalAlpha = fade;
+    ribbonPath(0, 1);
+    ctx.fillStyle = 'rgb(238,102,30)'; ctx.fill();
+    ctx.strokeStyle = OUTL; ctx.lineWidth = 1.6; ctx.stroke();
+    ribbonPath(0.48, 0.5);
+    ctx.fillStyle = 'rgba(198,62,16,0.85)'; ctx.fill();
+    ribbonPath(-0.45, 0.5);
+    ctx.fillStyle = 'rgb(255,224,160)'; ctx.fill();
+    ctx.strokeStyle = OUTL; ctx.lineCap = 'round';
+    for (var si2 = 1; si2 < segs; si2++) {
+      var sp2 = spine[si2 * 3]; if (!sp2 || sp2.r < 1.6) continue;
+      ctx.globalAlpha = fade * 0.55; ctx.lineWidth = Math.max(1, sp2.r * 0.13);
+      ctx.beginPath();
+      ctx.moveTo(sp2.x + sp2.ux * sp2.r * 0.95, sp2.y + sp2.uy * sp2.r * 0.95);
+      ctx.quadraticCurveTo(sp2.x - sp2.tx * sp2.r * 0.3, sp2.y - sp2.ty * sp2.r * 0.3, sp2.x - sp2.ux * sp2.r * 0.95, sp2.y - sp2.uy * sp2.r * 0.95);
+      ctx.stroke();
+      ctx.globalAlpha = fade * 0.4; ctx.lineWidth = Math.max(0.9, sp2.r * 0.1);
+      var sang = Math.atan2(sp2.uy, sp2.ux);
+      ctx.beginPath();
+      ctx.arc(sp2.x + sp2.ux * sp2.r * 0.35, sp2.y + sp2.uy * sp2.r * 0.35, sp2.r * 0.42, sang - 0.9, sang + 0.9);
+      ctx.stroke();
+    }
+    // --- ĐẦU RỒNG: phác cứng viền sậm trong khung hướng bay
+    // (+x là hướng tiến). Mọi chi tiết nằm trong tỉ lệ headR.
+    ctx.save(); ctx.translate(hp0.x, hp0.y); ctx.rotate(hAng);
+    ctx.globalAlpha = fade;
+    var R = headR;
+    // Bờm lửa sau gáy: nằm ngoài phác sọ nên vẽ trước sọ.
+    ctx.fillStyle = 'rgb(255,150,45)';
+    for (var mi = 0; mi < 4; mi++) {
+      var my = -R * 0.55 + mi * R * 0.34, ml = R * (1.05 + 0.22 * Math.sin(tNow / 80 + mi * 2.1));
+      ctx.globalAlpha = fade * 0.8;
+      ctx.beginPath(); ctx.moveTo(-R * 0.55, my); ctx.lineTo(-R * 0.55 - ml, my + R * 0.16); ctx.lineTo(-R * 0.3, my + R * 0.3); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = fade;
+    // Sừng xa: nhỏ và sậm hơn, vẽ trước sọ.
+    ctx.fillStyle = 'rgb(216,150,64)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-R * 0.2, -R * 0.5); ctx.quadraticCurveTo(-R * 0.7, -R * 0.85, -R * 1.15, -R * 0.82);
+    ctx.quadraticCurveTo(-R * 0.68, -R * 0.58, -R * 0.32, -R * 0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // SỌ: hộp sọ + mõm dài trong một phác khép kín viền sậm.
+    ctx.fillStyle = 'rgb(233,96,26)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(R * 1.58, -R * 0.14);
+    ctx.quadraticCurveTo(R * 1.1, -R * 0.34, R * 0.55, -R * 0.5);
+    ctx.quadraticCurveTo(R * 0.05, -R * 0.82, -R * 0.5, -R * 0.66);
+    ctx.quadraticCurveTo(-R * 0.95, -R * 0.45, -R * 0.92, R * 0.05);
+    ctx.quadraticCurveTo(-R * 0.9, R * 0.5, -R * 0.35, R * 0.6);
+    ctx.lineTo(R * 0.45, R * 0.4);
+    ctx.quadraticCurveTo(R * 1.05, R * 0.3, R * 1.52, R * 0.14);
+    ctx.quadraticCurveTo(R * 1.62, R * 0.02, R * 1.58, -R * 0.14);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Sống mõm sáng + gò mũi viền sậm + lỗ mũi.
+    ctx.fillStyle = 'rgba(255,196,110,0.85)';
+    ctx.beginPath();
+    ctx.moveTo(R * 1.52, -R * 0.13); ctx.quadraticCurveTo(R * 1.05, -R * 0.3, R * 0.6, -R * 0.42);
+    ctx.quadraticCurveTo(R * 1.0, -R * 0.14, R * 1.46, R * 0.03); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgb(233,96,26)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(R * 1.42, -R * 0.2, R * 0.13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = OUTL;
+    ctx.beginPath(); ctx.arc(R * 1.45, -R * 0.2, R * 0.05, 0, Math.PI * 2); ctx.fill();
+    // HÀM DƯỚI: mở riêng quanh khớp hàm, tông sậm hơn sọ.
+    ctx.save(); ctx.translate(-R * 0.5, R * 0.42); ctx.rotate(0.1);
+    ctx.fillStyle = 'rgb(186,58,14)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(R * 1.7, -R * 0.06);
+    ctx.quadraticCurveTo(R * 1.85, R * 0.02, R * 1.68, R * 0.14);
+    ctx.lineTo(R * 0.25, R * 0.3); ctx.quadraticCurveTo(-R * 0.05, R * 0.18, 0, 0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // NANH trắng viền sậm: ba nanh trên cắm xuống, hai nanh
+    // dưới chĩa lên — răng đọc được là tín hiệu đầu rồng rẻ nhất
+    // ở cỡ nhỏ.
+    ctx.fillStyle = 'rgb(255,250,235)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 0.8;
+    var teeth = [1.28, 0.98, 0.68];
+    for (var ti = 0; ti < teeth.length; ti++) {
+      ctx.beginPath(); ctx.moveTo(R * teeth[ti], R * 0.3); ctx.lineTo(R * (teeth[ti] + 0.13), R * 0.3); ctx.lineTo(R * (teeth[ti] + 0.05), R * 0.55); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    var teeth2 = [1.12, 0.82];
+    for (var tj = 0; tj < teeth2.length; tj++) {
+      ctx.beginPath(); ctx.moveTo(R * teeth2[tj], R * 0.5); ctx.lineTo(R * (teeth2[tj] + 0.11), R * 0.5); ctx.lineTo(R * (teeth2[tj] + 0.05), R * 0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    // SỪNG GẦN: thân chạc vàng viền sậm quét ngược sau mắt +
+    // một nhánh chĩa lên từ giữa thân sừng.
+    ctx.fillStyle = 'rgb(255,213,118)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(-R * 0.28, -R * 0.42);
+    ctx.quadraticCurveTo(-R * 0.85, -R * 0.92, -R * 1.52, -R * 0.9);
+    ctx.quadraticCurveTo(-R * 1.0, -R * 0.62, -R * 0.52, -R * 0.24);
+    ctx.quadraticCurveTo(-R * 0.36, -R * 0.3, -R * 0.28, -R * 0.42);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-R * 0.88, -R * 0.74); ctx.lineTo(-R * 1.02, -R * 1.14); ctx.lineTo(-R * 0.68, -R * 0.82);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // MẮT trắng + ngươi sậm + gờ mày sậm xếch dày phía trên.
+    ctx.fillStyle = 'rgb(255,246,220)'; ctx.strokeStyle = OUTL; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(R * 0.3, -R * 0.26, R * 0.19, R * 0.12, -0.15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = OUTL;
+    ctx.beginPath(); ctx.arc(R * 0.36, -R * 0.26, R * 0.075, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = OUTL; ctx.lineWidth = Math.max(1.8, R * 0.15); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-R * 0.02, -R * 0.5); ctx.quadraticCurveTo(R * 0.32, -R * 0.6, R * 0.66, -R * 0.4); ctx.stroke();
+    // RÂU dài từ mõm: nét nền sậm phủ dưới, nét mặt kem phủ
+    // trên — đọc được trên cả nền cỏ sáng lẫn quầng lửa.
+    var wv = Math.sin(tNow / 110) * R * 0.16;
+    ctx.lineWidth = Math.max(2, R * 0.2); ctx.strokeStyle = 'rgba(120,50,10,0.85)';
+    ctx.beginPath(); ctx.moveTo(R * 1.45, -R * 0.08); ctx.quadraticCurveTo(R * 2.05, -R * 0.45 + wv, R * 2.4, -R * 0.12 + wv); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(R * 1.42, R * 0.22); ctx.quadraticCurveTo(R * 1.95, R * 0.7 + wv, R * 2.25, R * 0.55 + wv); ctx.stroke();
+    ctx.lineWidth = Math.max(1.1, R * 0.1); ctx.strokeStyle = 'rgb(255,236,175)';
+    ctx.beginPath(); ctx.moveTo(R * 1.45, -R * 0.08); ctx.quadraticCurveTo(R * 2.05, -R * 0.45 + wv, R * 2.4, -R * 0.12 + wv); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(R * 1.42, R * 0.22); ctx.quadraticCurveTo(R * 1.95, R * 0.7 + wv, R * 2.25, R * 0.55 + wv); ctx.stroke();
+    // Chùm râu cằm nhỏ dưới hàm.
+    ctx.lineWidth = Math.max(1, R * 0.09);
+    ctx.beginPath(); ctx.moveTo(R * 0.75, R * 0.52); ctx.quadraticCurveTo(R * 0.8, R * 0.85, R * 0.62, R * 1.0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(R * 0.95, R * 0.5); ctx.quadraticCurveTo(R * 1.05, R * 0.8, R * 0.95, R * 0.95); ctx.stroke();
+    ctx.restore();
+    // Vòng chấn động tại đích ngay khi đầu chạm tới (giữ nguyên
+    // lượt 1).
+    if (p >= 1 && k < arrive + 0.18) {
+      ctx.globalAlpha = fade * (1 - (k - arrive) / 0.18) * 0.8;
+      ctx.strokeStyle = 'rgb(255,180,80)'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(fx.x1, fx.y1, 8 + (k - arrive) / 0.18 * 26, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawElemFx() {
+    if (!fxOn()) return;
+    var zi, fx, k;
+    // Vùng đất (ô 10 trận lửa / ô 12 khói): vòng lửa/khói sống liên tục.
+    for (zi = 0; zi < elemZones.length; zi++) {
+      var z = elemZones[zi];
+      var remain = Math.max(0, (z.until - tNow) / 1000);
+      var baseA = Math.min(0.5, remain);
+      ctx.save();
+      if (z.kind === 'fire') {
+        // Lượt CHAU CHUỐT trình diễn: nền vùng đổi từ đĩa phẳng thưa
+        // sang ĐẤT NUNG SÁNG (quầng nóng giữa vùng, sẫm dần ra biên) +
+        // mảng cháy sém có rãnh nung đỏ + cột lửa nhỏ dày khắp vùng +
+        // tàn lửa bay lên, để vùng đọc như biển lửa thật. Vành và 5
+        // đốm lửa vòng quanh GIỮ NGUYÊN như bản cài; bán kính/thời
+        // lượng/nhịp đốt của vùng không đổi một số nào.
+        var zg = ctx.createRadialGradient(z.x, z.y, z.r * 0.08, z.x, z.y, z.r);
+        zg.addColorStop(0, 'rgba(255,150,50,0.36)');
+        zg.addColorStop(0.55, 'rgba(255,105,30,0.22)');
+        zg.addColorStop(1, 'rgba(210,70,18,0.10)');
+        ctx.globalAlpha = 0.9 + 0.1 * Math.sin(tNow / 90);
+        ctx.fillStyle = zg;
+        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
+        for (var sci = 0; sci < 5; sci++) {
+          var sch = elemHash(sci, z), scx = z.x + (sch - 0.5) * 1.3 * z.r, scy = z.y + (elemHash(sci + 31, z) - 0.5) * 1.05 * z.r;
+          ctx.globalAlpha = 0.16; ctx.fillStyle = 'rgb(52,18,4)';
+          ctx.beginPath(); ctx.ellipse(scx, scy, z.r * (0.16 + sch * 0.12), z.r * 0.1, sch * 3, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 0.5 + 0.25 * Math.sin(tNow / 120 + sci * 1.9);
+          ctx.strokeStyle = 'rgb(255,120,35)'; ctx.lineWidth = 1.3;
+          ctx.beginPath(); ctx.moveTo(scx - 6, scy + 2); ctx.lineTo(scx - 1, scy - 2); ctx.lineTo(scx + 5, scy + 1); ctx.stroke();
+        }
+        ctx.globalAlpha = 0.75; ctx.strokeStyle = 'rgba(255,170,70,0.85)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (0.92 + 0.05 * Math.sin(tNow / 130)), 0, Math.PI * 2); ctx.stroke();
+        var nf = Math.max(8, Math.min(14, Math.round(z.r / 5)));
+        for (var fi2 = 0; fi2 < nf; fi2++) {
+          var fh1 = elemHash(fi2 + 7, z), fh2 = elemHash(fi2 + 57, z);
+          drawFlamePillar(z.x + (fh1 - 0.5) * 1.55 * z.r, z.y + (fh2 - 0.5) * 1.25 * z.r + 4,
+            (9 + fh1 * 11) * (0.82 + 0.28 * Math.sin(tNow / 105 + fi2 * 1.71)), tNow / 130 + fi2 * 2.3);
+        }
+        for (var ei = 0; ei < 10; ei++) {
+          var eh = elemHash(ei + 91, z), ecyc = ((tNow / 1000) * (0.22 + eh * 0.25) + eh * 7) % 1;
+          ctx.globalAlpha = (1 - ecyc) * 0.75;
+          ctx.fillStyle = 'rgb(255,195,95)';
+          ctx.beginPath(); ctx.arc(z.x + (elemHash(ei + 131, z) - 0.5) * 1.5 * z.r + Math.sin(ecyc * 6 + ei * 2.0) * 4,
+            z.y + (elemHash(ei + 171, z) - 0.5) * 0.9 * z.r - ecyc * z.r * 0.85, 2.1 - ecyc * 1.1, 0, Math.PI * 2); ctx.fill();
+        }
+        for (var fi = 0; fi < 5; fi++) {
+          var fa = tNow / 300 + fi * 1.256, fr = z.r * (0.35 + 0.45 * ((fi * 37 % 10) / 10));
+          ctx.globalAlpha = 0.5 + 0.3 * Math.sin(tNow / 70 + fi * 2.1);
+          ctx.fillStyle = 'rgb(255,190,90)';
+          ctx.beginPath(); ctx.arc(z.x + Math.cos(fa) * fr, z.y + Math.sin(fa) * fr * 0.8 - 4, 3.2, 0, Math.PI * 2); ctx.fill();
+        }
+      } else { // smoke
+        for (var si2 = 0; si2 < 6; si2++) {
+          var sa = tNow / 700 + si2 * 1.047, sr = z.r * (0.3 + 0.5 * ((si2 * 53 % 10) / 10));
+          ctx.globalAlpha = 0.13 * baseA * 2;
+          ctx.fillStyle = 'rgb(255,160,110)';
+          ctx.beginPath(); ctx.arc(z.x + Math.cos(sa) * sr, z.y + Math.sin(sa) * sr * 0.62 - 6, z.r * 0.42, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 0.5; ctx.strokeStyle = 'rgba(255,170,100,0.5)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    for (var i = 0; i < elemFx.length; i++) {
+      fx = elemFx[i];
+      if (fx.t < 0) continue;
+      k = Math.min(1, fx.t / fx.dur);
+      ctx.save();
+      if (fx.kind === 'orb') {
+        var ox = fx.x0 + (fx.x1 - fx.x0) * k, oy = fx.y0 + (fx.y1 - fx.y0) * k - Math.sin(k * Math.PI) * 10;
+        ctx.globalAlpha = 0.35; ctx.fillStyle = 'rgb(' + fx.col + ')';
+        ctx.beginPath(); ctx.arc(ox, oy, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.95; ctx.beginPath(); ctx.arc(ox, oy, 5, 0, Math.PI * 2); ctx.fill();
+      } else if (fx.kind === 'crescent') {
+        var cx2 = fx.x0 + (fx.x1 - fx.x0) * k, cy2 = fx.y0 + (fx.y1 - fx.y0) * k;
+        var ca = Math.atan2(fx.y1 - fx.y0, fx.x1 - fx.x0);
+        ctx.translate(cx2, cy2); ctx.rotate(ca);
+        ctx.globalAlpha = 0.9 * (1 - k * 0.4); ctx.strokeStyle = 'rgb(' + fx.col + ')'; ctx.lineWidth = 3.4;
+        ctx.beginPath(); ctx.arc(0, 0, 15, -1.15, 1.15); ctx.stroke();
+        ctx.globalAlpha = 0.4; ctx.lineWidth = 7;
+        ctx.beginPath(); ctx.arc(0, 0, 15, -0.8, 0.8); ctx.stroke();
+      } else if (fx.kind === 'rain') {
+        var rx = fx.x1, ry = fx.y1 - (1 - k) * 74;
+        ctx.globalAlpha = 0.9; ctx.strokeStyle = 'rgb(' + fx.col + ')'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.moveTo(rx - 3, ry - 13); ctx.lineTo(rx, ry); ctx.lineTo(rx + 3, ry - 13); ctx.stroke();
+        if (k > 0.82) { ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(fx.x1, fx.y1, (k - 0.82) * 40, 0, Math.PI * 2); ctx.stroke(); }
+      } else if (fx.kind === 'leafOrb') {
+        // Ô 01 T1 (chau chuốt): cụm 7 lá xoáy quanh nhân sáng, bay
+        // theo cung; hai bóng vệt mờ chạy sau để bắt được chuyển
+        // động ở khung tĩnh lẫn khi xem nhanh.
+        for (var gh = 2; gh >= 0; gh--) {
+          var gk = k - gh * 0.16; if (gk < 0) continue;
+          var gx = fx.x0 + (fx.x1 - fx.x0) * gk, gy = fx.y0 + (fx.y1 - fx.y0) * gk - Math.sin(gk * Math.PI) * 12;
+          ctx.globalAlpha = gh === 0 ? 1 : 0.3 - gh * 0.08;
+          ctx.fillStyle = 'rgb(228,255,232)';
+          ctx.beginPath(); ctx.arc(gx, gy, gh === 0 ? 5.5 : 3.5, 0, Math.PI * 2); ctx.fill();
+          var nl = gh === 0 ? 7 : 5;
+          for (var li2 = 0; li2 < nl; li2++) {
+            var la2 = tNow / 45 + li2 * (Math.PI * 2 / nl) + gk * 5;
+            ctx.save(); ctx.translate(gx + Math.cos(la2) * 11, gy + Math.sin(la2) * 8); ctx.rotate(la2 + Math.PI / 2);
+            drawLeafShape(14, 6, 'rgb(140,235,165)', 'rgb(18,105,55)');
+            ctx.restore();
+          }
+        }
+      } else if (fx.kind === 'leafArc') {
+        // Ô 01 T2 (chau chuốt): liềm gió bằng 7 lá xếp dọc cung quét.
+        var ax2 = fx.x0 + (fx.x1 - fx.x0) * k, ay2 = fx.y0 + (fx.y1 - fx.y0) * k;
+        var aa = Math.atan2(fx.y1 - fx.y0, fx.x1 - fx.x0);
+        ctx.translate(ax2, ay2); ctx.rotate(aa);
+        ctx.globalAlpha = 0.32 * (1 - k * 0.35); ctx.strokeStyle = 'rgb(' + fx.col + ')'; ctx.lineWidth = 9;
+        ctx.beginPath(); ctx.arc(0, 0, 17, -1.15, 1.15); ctx.stroke();
+        ctx.globalAlpha = 0.95 * (1 - k * 0.25);
+        for (var li4 = 0; li4 < 7; li4++) {
+          var laa = -1.15 + li4 * (2.3 / 6);
+          ctx.save(); ctx.translate(Math.cos(laa) * 17, Math.sin(laa) * 17); ctx.rotate(laa + Math.PI / 2 + tNow / 300);
+          drawLeafShape(13.5, 5.8, 'rgb(140,235,165)', 'rgb(18,105,55)');
+          ctx.restore();
+        }
+      } else if (fx.kind === 'leafRain') {
+        // Ô 01 T3 (chau chuốt): lá rơi xiên có lắc ngang, chạm đất
+        // thì bung vòng nhỏ + ba lá con.
+        var lx2 = fx.x1 + Math.sin(k * 9 + fx.sd * 1.7) * 4, ly2 = fx.y1 - (1 - k) * 78;
+        ctx.save(); ctx.translate(lx2, ly2); ctx.rotate(0.5 + Math.sin(k * 7 + fx.sd) * 0.45);
+        ctx.globalAlpha = 0.95;
+        drawLeafShape(14, 6, 'rgb(140,235,165)', 'rgb(18,105,55)');
+        ctx.restore();
+        if (k > 0.82) {
+          ctx.globalAlpha = 0.5; ctx.strokeStyle = 'rgb(' + fx.col + ')'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(fx.x1, fx.y1, (k - 0.82) * 42, 0, Math.PI * 2); ctx.stroke();
+        }
+      } else if (fx.kind === 'dragon') {
+        drawElemDragon(fx, k);
+      } else if (fx.kind === 'grand') {
+        drawElemGrand(fx, k);
+      }
+      ctx.restore();
+    }
+  }
+  // Tuyệt kỹ T4: hình riêng theo bộ (vẽ canvas trong engine, không nạp
+  // tài sản ngoài); bộ ngoài đợt này rơi về vụ nổ hệ chung.
+  function drawElemGrand(fx, k) {
+    var x = fx.x1, y = fx.y1, col = fx.col, fade = k < 0.75 ? 1 : Math.max(0, 1 - (k - 0.75) / 0.25);
+    ctx.globalAlpha = fade;
+    var R = 34 + 26 * Math.min(1, k * 1.6);
+    if (fx.setId === 'bich_ngoc_cu_kiem') {
+      // Cự kiếm ngọc khổng lồ đâm xuyên qua mục tiêu theo hướng tung.
+      ctx.translate(x, y); ctx.rotate(fx.ang);
+      var slide = -60 + 120 * Math.min(1, k * 1.8);
+      ctx.fillStyle = 'rgba(120,235,160,0.92)';
+      ctx.beginPath(); ctx.moveTo(slide - 52, -7); ctx.lineTo(slide + 34, -7); ctx.lineTo(slide + 58, 0); ctx.lineTo(slide + 34, 7); ctx.lineTo(slide - 52, 7); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(230,255,240,0.95)'; ctx.fillRect(slide - 50, -2, 84, 4);
+      ctx.fillStyle = 'rgba(90,60,30,0.95)'; ctx.fillRect(slide - 66, -3.4, 15, 6.8);
+    } else if (fx.setId === 'cuong_phong_loc_xoay') {
+      for (var li = 0; li < 4; li++) {
+        ctx.strokeStyle = 'rgba(' + col + ',0.8)'; ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.ellipse(x, y - 8 - li * 13, R * (1 - li * 0.16), 7, tNow / 90 + li * 0.9, 0, Math.PI * 1.55); ctx.stroke();
+      }
+    } else if (fx.setId === 'huyen_moc_dang_giao') {
+      ctx.strokeStyle = 'rgba(' + col + ',0.92)'; ctx.lineWidth = 4;
+      for (var vi = 0; vi < 3; vi++) {
+        ctx.beginPath(); ctx.arc(x, y - 6, 15 + vi * 8, tNow / 160 + vi * 2.1, tNow / 160 + vi * 2.1 + Math.PI * 1.5); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(' + col + ',0.85)';
+      for (var lf = 0; lf < 5; lf++) { var la = lf * 1.256 + 0.5; ctx.beginPath(); ctx.ellipse(x + Math.cos(la) * 22, y - 16 + Math.sin(la) * 8, 6, 3, la, 0, Math.PI * 2); ctx.fill(); }
+    } else if (fx.setId === 'viem_long_tho_tuc') {
+      // Đầu rồng lửa ở phía người tung + chùm lửa phun tới mục tiêu.
+      var hx2 = x - Math.cos(fx.ang) * 66, hy2 = y - Math.sin(fx.ang) * 66;
+      ctx.fillStyle = 'rgba(255,120,50,0.95)';
+      ctx.beginPath(); ctx.ellipse(hx2, hy2, 15, 10, fx.ang, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(hx2 - 8, hy2 - 9); ctx.lineTo(hx2 - 14, hy2 - 17); ctx.lineTo(hx2 - 3, hy2 - 11); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.translate(x, y); ctx.rotate(fx.ang);
+      for (var bi = 0; bi < 3; bi++) {
+        ctx.fillStyle = 'rgba(255,' + (140 + bi * 30) + ',60,' + (0.5 - bi * 0.12) + ')';
+        ctx.beginPath(); ctx.moveTo(-64, (bi - 1) * 5); ctx.lineTo(6, (bi - 1) * 13); ctx.lineTo(16, 0); ctx.lineTo(6, -(bi - 1) * 13); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    } else if (fx.setId === 'liet_diem_trao_kich') {
+      ctx.strokeStyle = 'rgba(' + col + ',0.95)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      for (var ci = 0; ci < 3; ci++) {
+        var ck = Math.max(0, Math.min(1, k * 1.7 - ci * 0.22));
+        if (ck <= 0) continue;
+        ctx.beginPath(); ctx.arc(x + (ci - 1) * 9, y - 8, 24, -2.4 + ck * 1.5, -1.1 + ck * 1.5); ctx.stroke();
+      }
+    } else if (fx.setId === 'bang_tram_van_tien') {
+      ctx.strokeStyle = 'rgba(' + col + ',0.9)'; ctx.lineWidth = 1.8;
+      for (var ii = 0; ii < 12; ii++) {
+        var ix = x + ((ii * 41 % 13) - 6) * 9, iy = y - 46 + ((k * 90 + ii * 17) % 52);
+        ctx.beginPath(); ctx.moveTo(ix, iy - 8); ctx.lineTo(ix, iy + 3); ctx.stroke();
+      }
+    } else if (fx.setId === 'huyen_thuy_xoay_luu') {
+      for (var wi = 0; wi < 3; wi++) {
+        ctx.strokeStyle = 'rgba(' + col + ',0.85)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y - 6, 12 + wi * 10, tNow / 110 + wi * 2.1, tNow / 110 + wi * 2.1 + Math.PI * 1.4); ctx.stroke();
+      }
+    } else if (fx.setId === 'han_bang_xieng_xich') {
+      ctx.strokeStyle = 'rgba(' + col + ',0.95)'; ctx.lineWidth = 3;
+      ctx.setLineDash([7, 4]); ctx.lineDashOffset = -tNow / 24;
+      ctx.beginPath(); ctx.arc(x, y - 6, 24, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      for (var chi = 0; chi < 4; chi++) {
+        var cha = chi * Math.PI / 2 + 0.4;
+        ctx.beginPath(); ctx.moveTo(x + Math.cos(cha) * 24, y - 6 + Math.sin(cha) * 24); ctx.lineTo(x + Math.cos(cha) * 36, y - 6 + Math.sin(cha) * 36); ctx.stroke();
+      }
+    } else if (fx.setId === 'diet_son_dia_chan') {
+      ctx.fillStyle = 'rgba(' + col + ',0.95)';
+      for (var ri = 0; ri < 5; ri++) {
+        var rxx = x + (ri - 2) * 17, rh = (10 + ((ri * 29) % 14)) * Math.min(1, k * 2.2);
+        ctx.beginPath(); ctx.moveTo(rxx - 7, y + 14); ctx.lineTo(rxx, y + 14 - rh); ctx.lineTo(rxx + 7, y + 14); ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(' + col + ',0.7)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x, y + 15, R * 1.25, R * 0.36, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (fx.setId === 'phi_diep_phong_nhan') {
+      // Chau chuốt: vòng lá xoáy nở hai lớp ngược chiều — 9 lá lớn
+      // có viền sẫm bung ra ngoài + 5 lá nhỏ xoay ngược ở trong +
+      // chớp nhân sáng lúc mở đầu, thay 5 lá phẳng nhỏ của bản cài.
+      if (k < 0.4) {
+        ctx.globalAlpha = fade * (0.4 - k) * 1.8; ctx.fillStyle = 'rgb(230,255,235)';
+        ctx.beginPath(); ctx.arc(x, y - 6, 11 * (1 - k * 1.6), 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = fade;
+      }
+      for (var di = 0; di < 9; di++) {
+        var da = fx.ang + (di - 4) * 0.24, dd = 10 + k * 40;
+        ctx.save(); ctx.translate(x + Math.cos(da) * dd, y - 6 + Math.sin(da) * dd * 0.8); ctx.rotate(da + tNow / 240);
+        drawLeafShape(17, 7, 'rgb(140,235,165)', 'rgb(18,105,55)');
+        ctx.restore();
+      }
+      for (var dj = 0; dj < 5; dj++) {
+        var db = -fx.ang + dj * (Math.PI * 2 / 5), dd2 = 6 + k * 21;
+        ctx.save(); ctx.translate(x + Math.cos(db) * dd2, y - 6 + Math.sin(db) * dd2 * 0.8); ctx.rotate(db - tNow / 190);
+        drawLeafShape(11, 5, 'rgb(175,245,195)', 'rgb(18,105,55)');
+        ctx.restore();
+      }
+    } else {
+      // Vụ nổ hệ chung cho bộ ngoài đợt (đường tung dùng chung cả dòng).
+      ctx.strokeStyle = 'rgba(' + col + ',0.9)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y - 6, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(' + col + ',0.85)';
+      for (var gi = 0; gi < 6; gi++) { var ga = gi * 1.047 + tNow / 200; ctx.beginPath(); ctx.ellipse(x + Math.cos(ga) * R * 0.8, y - 6 + Math.sin(ga) * R * 0.8, 7, 3.4, ga, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
+  /* ---------- UI: nút NGŨ HÀNH + cột chip thức ---------- */
+  function elemPanelEl() { return $('biphap-panel'); } // GỘP 2026-11-06: panel chung thay #elem-panel
+  function toggleElemPanel() {
+    var p = elemPanelEl(); if (!p) return;
+    if (p.classList.contains('hidden')) { renderElemPanel(); p.classList.remove('hidden'); }
+    else p.classList.add('hidden');
+  }
+  function renderElemPanel() {
+    var p = elemPanelEl(); if (!p || !state || !L.nguHanhMovesAvailable) return;
+    var moves = L.nguHanhMovesAvailable(state);
+    if (!moves.length) { p.classList.add('hidden'); return; }
+    var html = '';
+    moves.forEach(function (mv) {
+      var left = elemCdLeft(mv.setId, mv.tier);
+      html += '<button type="button" class="elem-chip' + (left > 0 ? ' elem-cd' : '') + '" data-set="' + mv.setId + '" data-tier="' + mv.tier + '">' +
+        '<span class="elem-chip-name">' + mv.name + ' · ' + ELEM_ROW_LABEL[mv.tier - 1] + '</span>' +
+        '<span class="elem-chip-cd">' + (left > 0 ? left.toFixed(1) + 's' : Math.round(mv.totalPct) + '%') + '</span></button>';
+    });
+    p.innerHTML = html;
+    var btns = p.querySelectorAll('.elem-chip');
+    for (var i = 0; i < btns.length; i++) {
+      (function (b) {
+        onTap(b, function () {
+          var rr = encNguHanhCast(b.getAttribute('data-set'), parseInt(b.getAttribute('data-tier'), 10));
+          if (rr && rr.ok) { p.classList.add('hidden'); biPhapChipsOpen = false; var bx9 = $('biphap-chips'); if (bx9) bx9.style.display = 'none'; } else renderElemPanel();
+        });
+      })(btns[i]);
+    }
+  }
+
   /* ----- Vẽ hiệu ứng thư pháp (canvas thuần, theo khung hình video mẫu) ----- */
   function tpGlyph(ch, x, y, size, col, a, rot) {
     ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot);
@@ -14916,6 +15715,16 @@
     setSkillLock('sk-sword', state.unlocked.indexOf('that_tinh') < 0, 'Mở khóa khi nhận Thất Tinh Kiếm Quyết ở Kiểm Trắc Tháp');
     setSkillLock('sk-dinh', state.unlocked.indexOf('kimdan') < 0, 'bậc Hưởng chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
     setSkillLock('sk-phong', state.unlocked.indexOf('kimdan') < 0, 'bậc Hưởng chỉ mở khi Kết Đan — đạt Kim Đan Sơ Kỳ');
+    // Nút NGŨ HÀNH (đợt cài dải Thường): ngoài cụm 9 nút đã khóa, chỉ
+    // hiện khi đang trong làn chạm trán và có ít nhất một thức tung được.
+    // GỘP 2026-11-06: hiển thị nút BÍ PHÁP chung do biPhapUiTick quyết;
+    // panel chung đang mở thì làm mới chip theo nhịp refresh này.
+    biPhapUiTick();
+    var ep2 = $('biphap-panel');
+    if (ep2) {
+      if (!biPhapAnyAvailable()) { ep2.classList.add('hidden'); biPhapChipsOpen = false; var bx8 = $('biphap-chips'); if (bx8) bx8.style.display = 'none'; }
+      else if (!ep2.classList.contains('hidden')) renderElemPanel();
+    }
     // Đế icon mờ lạnh (.cant) khi chiêu ĐÃ mở khóa mà Tĩnh Âm chưa đủ chi
     // phí (chi phí đọc từ L.WORD_SKILLS như castWord vẫn đọc); đang khóa
     // thì không áp .cant — trạng thái khóa thắng.
@@ -15052,7 +15861,9 @@
     bossFx = bossFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; });
     thuPhapFx = thuPhapFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; }); // SP-04: hiệu ứng thư pháp đi theo dtW như mọi lớp trình diễn
     if (thuPhapCastT > 0) thuPhapCastT = Math.max(0, thuPhapCastT - dt);
-    thuPhapUiTick();
+    thuPhapUiTick(); biPhapUiTick(); // GỘP 2026-11-06:.tick. của SP-04 giữ nhãn hồi chiêu; hiển thị nút do biPhapUiTick quyết
+    elemFx = elemFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; });
+    elemZones = elemZones.filter(function (z) { return tNow < z.until; });
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
     updateSealFx(dtW); // ấn quang bắt ấn: hẹn giờ nảy đúng khung phóng quyết của đoạn thân kết ấn (đợt 2026-11-05)
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
@@ -15983,7 +16794,7 @@
     else if (k === '5') castPhong();
     else if (k === 'b') doBreakthrough();
     else if (k === 'r') quickEatFood(); // nút Đồ Ăn (đợt 2026-11-04): ăn nhanh món hợp nhất trong túi
-    else if (k === 'g') { if (enc) toggleThuPhapChips(); } // SP-04 [ĐỀ XUẤT]: phím G mở cột thức Thư Pháp (B đã là phím đột phá)
+    else if (k === 'g') { if (enc) toggleBiPhapPanels(); } // GỘP 2026-11-06: phím G mở panel BÍ PHÁP CHUNG (Nho Tu + dải Thường) — thay hai nhánh riêng của đợt nhotu và đợt dải Thường
     else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; if (e.key === '3') tlSwordHeld = false; });
@@ -16378,14 +17189,15 @@
   // ấn hai cái; thân handler giữ nguyên từng chữ, không số nào đổi.
   onTap($('sk-pha'), function () { castPha(); });
   onTap($('sk-chan'), function () { castChan(); });
-  onTap($('sk-sword'), function () { castSword(); });
+    onTap($('sk-sword'), function () { castSword(); });
+    // GỘP 2026-11-06: nút #btn-elements (NGŨ HÀNH) đã vô hiệu hoá — không gắn tay chạm nữa; panel chung mở bằng #btn-biphap/phím G.
   onTap($('sk-dinh'), function () { castDinh(); });
   onTap($('sk-phong'), function () { castPhong(); });
   onTap($('sk-med'), function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
   onTap($('sk-break'), function () { doBreakthrough(); });
   onTap($('sk-food'), function () { quickEatFood(); }); // nút Đồ Ăn ở vòng cung trong (đợt đồ ăn 2026-11-04; nối qua onTap như mọi nút cụm chiến đấu theo đợt cảm ứng)
   // SP-04: nút BÍ PHÁP độc lập NGOÀI cụm #skillbar (không class .sk) + chip thức.
-  onTap($('btn-biphap'), function () { toggleThuPhapChips(); });
+  onTap($('btn-biphap'), function () { toggleBiPhapPanels(); }); // GỘP 2026-11-06: nút BÍ PHÁP mở panel chung
   (function () {
     var box = $('biphap-chips'); if (!box) return;
     var lastTap = 0;
@@ -16688,6 +17500,7 @@
     }
     ins.status = 'claimed';
     sfxClaimDone();
+    arcKyNgo('gather'); // Đợt Thường (ô 05/SP-01): nộp điểm hái là hành động đủ điều kiện kỳ ngộ thu thập (bản đồ mục 5.2)
     toast('Đã nộp thu thập: ' + grindGrantedText(r) + '.', 4600);
     refreshHUD(); saveNow(); renderGrindBoard();
   }
@@ -16894,6 +17707,9 @@
     refreshHUD(); saveNow();
     // ARCIV A.3: kỳ ngộ cũng tích tại hành động thu thập trên đường mòn.
     if (nd.mapId === 'duong_mon') arcKyNgo('hunt');
+    // Đợt cài dải Thường (ô 05): hái ở mọi điểm hái là hành động kỳ ngộ
+    // thu thập (tập bộ do kyNgoPool tự lọc theo hoạt động).
+    else arcKyNgo('gather');
   }
 
   /* ---------- Bí cảnh (phiên chỉ sống trong bộ nhớ) ----------
@@ -18406,7 +19222,8 @@
         spawnDrop(pbFirst, 1, m.x + 16, m.y + 16);
         toast('Pháp bảo rơi: ' + L.ITEM_DEFS[pbFirst].name + ' — hãy nhặt lấy!', 5200);
       }
-      arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh ô 15/20 (Kiếm Trủng) / ô 14 + SP-01 (Thủy Liêm)
+      arcIvBcBossFragment(realmId); // ARCIV A.3: mảnh ô 15/20 (Kiếm Trủng) / ô 14 + SP-01 (Thủy Liêm) / ô 13 (Thủy Liêm, đợt Thường) / ô 10 (Tàn Tích ngoài, đợt Thường)
+      thuongBcFirstClearToast(realmId); // Đợt Thường: truyền thừa lần đầu ô 16/02/25/18
       refreshHUD(); saveNow();
       return 'claimed';
     }

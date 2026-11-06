@@ -339,6 +339,17 @@ window.VSLC_VOICE = {
    "speed": 98,
    "label": "Đoạn Lưu Phỉ Thủ — đầu lĩnh toán cướp đường (chung giọng Hoa Hướng Thần)"
   }
+ ,
+  "lao_tieu": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3497_v068_28k_g5k",
+   "speed": 94,
+   "label": "Lão tiều vô danh (cảnh kỳ ngộ ô 05) — lão nam phụ (chung giọng trưởng lão, nhanh hơn như dan_c)"
+  },
+  "nguoi_chan_de": {
+   "voice": "avocado_v2:vd2_r8_rep5k_3491_v068_28k_g5k",
+   "speed": 100,
+   "label": "Người chăn dê (cảnh kỳ ngộ ô 12) — nam phụ (chung giọng người dẫn)"
+  }
  },
  "lines": {
   "434a6bbd9e63": {
@@ -8390,6 +8401,57 @@ window.VSLC_VOICE = {
    "f": "v885912e5e924.mp3",
    "k": "say",
    "s": "thien_dao"
+  }
+ ,
+  "cdc7dffb3726": {
+   "f": "vcdc7dffb3726.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "1a1f96f20ccf": {
+   "f": "v1a1f96f20ccf.mp3",
+   "k": "say",
+   "s": "lao_tieu"
+  },
+  "c6745d24eb40": {
+   "f": "vc6745d24eb40.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "1660f2f9f98b": {
+   "f": "v1660f2f9f98b.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b0802527f9cb": {
+   "f": "vb0802527f9cb.mp3",
+   "k": "say",
+   "s": "lao_tieu"
+  },
+  "e799609ad2af": {
+   "f": "ve799609ad2af.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "d0e385bd6eae": {
+   "f": "vd0e385bd6eae.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "e9e0174cacfb": {
+   "f": "ve9e0174cacfb.mp3",
+   "k": "say",
+   "s": "nguoi_chan_de"
+  },
+  "7f13cb37c414": {
+   "f": "v7f13cb37c414.mp3",
+   "k": "narrate",
+   "s": "narrate"
+  },
+  "b6fdffe5afe2": {
+   "f": "vb6fdffe5afe2.mp3",
+   "k": "narrate",
+   "s": "narrate"
   }
  },
  "announce": {

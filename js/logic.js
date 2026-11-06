@@ -5090,38 +5090,38 @@
     // ===== 33 mục của chương trình bí pháp (khung ẩn — cơ chế tích
     // lũy ở khối sau useBiTich; nguồn theo bản đồ mục 4) =====
     // --- Dải Luyện Khí ---
-    phi_diep_phong_nhan: nguHanhDef({ name: 'Phi Diệp Phong Nhận', element: 'phong', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
+    phi_diep_phong_nhan: nguHanhDef({ hidden: false, name: 'Phi Diệp Phong Nhận', element: 'phong', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
       source: 'Chủ trì Kiểm Trắc Tháp trao tàn quyển Phong hệ nhập môn sau q3_cong_phap' }),
-    huyen_thuy_xoay_luu: nguHanhDef({ name: 'Huyền Thủy Xoáy Lưu', element: 'thuy', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
+    huyen_thuy_xoay_luu: nguHanhDef({ hidden: false, name: 'Huyền Thủy Xoáy Lưu', element: 'thuy', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
       source: 'Thông quan lần đầu Thủy Liêm Động (bc_thuyliem) — truyền thừa Thủy hệ khắc trong động' }),
-    huyen_moc_dang_giao: nguHanhDef({ name: 'Huyền Mộc Đằng Giao', element: 'moc', band: 'luyen_khi', rarity: 'thuong', profile: 'khong',
+    huyen_moc_dang_giao: nguHanhDef({ hidden: false, name: 'Huyền Mộc Đằng Giao', element: 'moc', band: 'luyen_khi', rarity: 'thuong', profile: 'khong',
       source: 'Kỳ ngộ khi thu thập — tiền bối hái thuốc vô danh ở điểm hái',
       kyNgo: { activities: ['gather'], weight: 3 }, effect: 'T3/T4 trói chân 1,5 giây' }),
-    liet_diem_trao_kich: nguHanhDef({ name: 'Liệt Diễm Trảo Kích', element: 'hoa', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
+    liet_diem_trao_kich: nguHanhDef({ hidden: false, name: 'Liệt Diễm Trảo Kích', element: 'hoa', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
       source: 'Chủ trì tháp trao sau khi hoàn thành 3 phiếu săn ở bảng treo thưởng', effect: 'Tầm gần; đốt gộp trong hệ số' }),
-    bich_ngoc_cu_kiem: nguHanhDef({ name: 'Bích Ngọc Cự Kiếm', element: 'moc', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
+    bich_ngoc_cu_kiem: nguHanhDef({ hidden: false, name: 'Bích Ngọc Cự Kiếm', element: 'moc', band: 'luyen_khi', rarity: 'thuong', profile: 'don',
       source: 'Thông quan lần đầu Tàn Tích Dưới Tháp — Tầng Ngoài (bc_tapha). Học độc lập: điều kiện có ô 05 chỉ áp ở ô 06 (bản đồ mục 4.1)',
       effect: 'T4 đâm xuyên hàng thẳng' }),
     // --- Dải Trúc Cơ ---
-    cuong_phong_loc_xoay: nguHanhDef({ name: 'Cuồng Phong Lốc Xoáy', element: 'phong', band: 'truc_co', rarity: 'thuong', profile: 'khong',
+    cuong_phong_loc_xoay: nguHanhDef({ hidden: false, name: 'Cuồng Phong Lốc Xoáy', element: 'phong', band: 'truc_co', rarity: 'thuong', profile: 'khong',
       source: 'Quản Sự Tạp Dịch truyền sau 6 lượt việc tông hoàn thành', requires: ['phi_diep_phong_nhan'],
       effect: 'Cột lốc hút nhẹ về tâm' }),
-    viem_long_tho_tuc: nguHanhDef({ name: 'Viêm Long Thổ Tức', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
+    viem_long_tho_tuc: nguHanhDef({ hidden: false, name: 'Viêm Long Thổ Tức', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Trưởng lão tông trao khi đạt Trúc Cơ (sau q8_done)', requires: ['liet_diem_trao_kich'],
       effect: 'Chùm thẳng, đốt gộp trong hệ số' }),
-    lien_nguc_hoa_tran: nguHanhDef({ name: 'Liên Ngục Hỏa Trận', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
+    lien_nguc_hoa_tran: nguHanhDef({ hidden: false, name: 'Liên Ngục Hỏa Trận', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Mảnh từ boss Thạch Tượng Thủ Vệ (bc_tapha), ghép tại chủ trì tháp', requires: ['liet_diem_trao_kich'],
       fragments: 3, fragmentSource: 'boss:bc_tapha', effect: 'Trận tồn 5 giây, tổng chia theo nhịp' }),
-    bang_tram_van_tien: nguHanhDef({ name: 'Băng Trâm Vạn Tiễn', element: 'bang', band: 'truc_co', rarity: 'thuong', profile: 'dien',
+    bang_tram_van_tien: nguHanhDef({ hidden: false, name: 'Băng Trâm Vạn Tiễn', element: 'bang', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Mảnh từ boss Thủy Xà Tinh (bc_thuyliem), ghép tại chủ trì tháp', requires: ['huyen_thuy_xoay_luu'],
       fragments: 3, fragmentSource: 'boss:bc_thuyliem', effect: 'Làm chậm 20% trong 3 giây' }),
-    han_bang_xieng_xich: nguHanhDef({ name: 'Hàn Băng Xiềng Xích', element: 'bang', band: 'truc_co', rarity: 'thuong', profile: 'khong',
+    han_bang_xieng_xich: nguHanhDef({ hidden: false, name: 'Hàn Băng Xiềng Xích', element: 'bang', band: 'truc_co', rarity: 'thuong', profile: 'khong',
       source: 'Thông quan lần đầu một trong hai bí cảnh Trúc Cơ (bc_tapsau hoặc bc_kiemtrung)', requires: ['huyen_thuy_xoay_luu'],
       effect: 'T2 khóa 1,5 giây; T4 khóa 2 giây (boss giảm nửa)' }),
-    hoa_van_man_thien: nguHanhDef({ name: 'Hỏa Vân Man Thiên', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
+    hoa_van_man_thien: nguHanhDef({ hidden: false, name: 'Hỏa Vân Man Thiên', element: 'hoa', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Kỳ ngộ khi săn/thu thập ở Thung Lũng Hồi Phong', requires: ['liet_diem_trao_kich'],
       kyNgo: { activities: ['hunt', 'gather'], weight: 3 }, effect: 'Khói làm địch chậm 15% trong vùng' }),
-    diet_son_dia_chan: nguHanhDef({ name: 'Điệt Sơn Địa Chấn', element: 'tho', band: 'truc_co', rarity: 'thuong', profile: 'dien',
+    diet_son_dia_chan: nguHanhDef({ hidden: false, name: 'Điệt Sơn Địa Chấn', element: 'tho', band: 'truc_co', rarity: 'thuong', profile: 'dien',
       source: 'Thông quan lần đầu Tàn Tích Tầng Sâu (bc_tapsau)', effect: 'Mỏm đá trồi theo hàng' }),
     // --- Dải Kim Đan (đợt cài đi cùng cung IV — ở khung này chỉ đăng ký) ---
     tu_dien_kich: nguHanhDef({ hidden: false, name: 'Tử Điện Kích', element: 'loi', band: 'kim_dan', rarity: 'hiem', profile: 'don',
@@ -7685,12 +7685,19 @@
     'boss:bc_kiemtrung_sau': ['tuyet_hoa_cu_kiem'],
     'boss:ho_tran_kiem_linh': ['thai_bach_kim_kiem'],
     'boss:bc_tran_tam_sau': ['thai_bach_kim_kiem'],
+    'boss:bc_tapha': ['lien_nguc_hoa_tran', 'thu_phap_chan_kinh'],
     'boss:bc_kiemtrung': ['han_bang_bao_lien', 'loi_quang_than_kiem'],
-    'boss:bc_thuyliem': ['thuong_hai_cuong_dao', 'thanh_hoa_lien_tran'],
+    'boss:bc_thuyliem': ['bang_tram_van_tien', 'thuong_hai_cuong_dao', 'thanh_hoa_lien_tran'],
     /* SP-04 (đợt Nho Tu 2026-11-05): Thạch Tượng Thủ Vệ của Tàn Tích
        dưới tháp giữ mảnh Thư Pháp Chân Kinh — nguồn mảnh duy nhất của
-       bộ ngoài mảnh đầu Thiên Cơ Các tặng (xem docs/nho-tu-set-design.md). */
-    'boss:bc_tapha': ['thu_phap_chan_kinh']
+       bộ ngoài mảnh đầu Thiên Cơ Các tặng (xem docs/nho-tu-set-design.md).
+       GỘP 2026-11-06 (đợt gộp bí pháp dải Thường): khóa 'boss:bc_tapha'
+       từng bị khai TRÙNG hai lần trong cùng bảng (dòng của đợt Thường
+       ở trên + dòng SP-04 ở đây) — theo luật đối tượng của JS, dòng
+       SAU thắng nên ô 10 thực tế bị mất nguồn trên cây chính. Nay hợp
+       thành MỘT khóa duy nhất mang cả hai bộ; phân bổ mảnh do hàm
+       trọng tài arcIvFragmentDropFor quyết (tỉ lệ hoàn thành cao hơn
+       thắng, hòa thì bộ cần ít mảnh hơn thắng). */
   };
   function arcIvFragmentEligible(state, setId, sourceId) {
     var def = TECHNIQUE_DEFS[setId];
@@ -7759,6 +7766,173 @@
     return nguHanhCraft(state, id);
   }
 
+  /* ================= ĐỢT CÀI DẢI THƯỜNG (12 bộ) =================
+     Theo docs/bi-phap-thuong-design.md: mở nguồn lấy (bản đồ mục
+     4.1/4.2) + resolver tung chiêu cho CẢ dòng ngu_hanh (báo cáo giai
+     đoạn 2 mục 3.1 đã định khuôn: một resolver đọc TECHNIQUE_DEFS[id]
+     .moves theo tầng, điểm +2 do engine gọi techniqueGain như kiếm
+     quyết). Số lấy nguyên từ hồ sơ của bản đồ mục 2.2 đã đăng ký trong
+     def.moves; đòn con của T3/T4 mà khung để hits:null được chia đều
+     tại đây, không đòn con nào vượt 60% (luật khung). Chiêu không tốn
+     Tĩnh Âm, không có giá — giới hạn duy nhất là hồi chiêu của hồ sơ. */
+  // Chia tổng % thành các đòn con gần bằng nhau, mỗi đòn <= 60%.
+  function nguHanhSplitHits(totalPct) {
+    var total = Math.max(0, Math.round(totalPct || 0));
+    if (total <= 60) return [total];
+    var n = Math.ceil(total / 60);
+    var base = Math.floor(total / n), rem = total - base * n, out = [];
+    for (var i = 0; i < n; i++) out.push(base + (i < rem ? 1 : 0));
+    return out;
+  }
+  /* Bảng khống chế kèm theo đúng cột "hiệu ứng kèm" của bản đồ mục
+     2.3 (chỉ 4 bộ có khống chế cơ học; các bộ còn lại hiệu ứng đã gộp
+     trong hệ số hoặc thuần trình diễn ở engine):
+     - cuong_phong (ô 04): hút nhẹ — engine kéo quái thường về phía
+       người tung theo pull[tầng-1] px, boss không bị kéo.
+     - huyen_moc (ô 05): T3/T4 trói 1,5s (mảng bind theo tầng).
+     - han_bang (ô 18): T2 khóa 1,5s, T4 khóa 2s (mảng bind).
+     - bang_tram (ô 13): mọi đòn trúng làm chậm 20% trong 3 giây.
+     Boss chịu nửa thời lượng trói/khóa (tiền lệ ô 18 của bản đồ). */
+  var NGU_HANH_CONTROL = {
+    cuong_phong_loc_xoay: { pull: [8, 12, 16, 20] },
+    huyen_moc_dang_giao: { bind: [0, 0, 1.5, 1.5] },
+    han_bang_xieng_xich: { bind: [0, 1.5, 0, 2] },
+    bang_tram_van_tien: { slowPct: 0.20, slowSec: 3 }
+  };
+  /* Vùng đất theo bộ (bản đồ mục 2.3): ô 10 trận tồn 5 giây, tổng
+     chia theo nhịp 1 giây (T3/T4 — engine dựng vùng và áp nhịp); ô 12
+     T3/T4 để lại vùng khói 3 giây [ĐỀ XUẤT thời lượng] làm chậm 15%
+     quái đứng trong vùng, sát thương vẫn theo đòn con thường. */
+  function nguHanhZoneFor(setId, tier, move) {
+    if (setId === 'lien_nguc_hoa_tran' && tier >= 3) {
+      var ticks = 5;
+      return { kind: 'fire', sec: 5, tickEvery: 1, ticks: ticks, tickPct: Math.round((move.totalPct / ticks) * 10) / 10, radiusTiles: 1.6 };
+    }
+    if (setId === 'hoa_van_man_thien' && tier >= 3) {
+      return { kind: 'smoke', sec: 3, tickEvery: 0, ticks: 0, tickPct: 0, radiusTiles: 1.8, slowPct: 0.15 };
+    }
+    return null;
+  }
+  function castNguHanh(state, setId, tier) {
+    var def = TECHNIQUE_DEFS[setId];
+    if (!def || !def.nguHanh) return { ok: false, reason: 'unknown' };
+    var tech = techniqueOf(state, setId);
+    if (!tech) return { ok: false, reason: 'not_learned' };
+    tier = Math.floor(tier || 1);
+    if (tier < 1 || tier > 4) return { ok: false, reason: 'bad_tier' };
+    if ((tech.tier || 1) < tier) return { ok: false, reason: 'tier_locked', have: tech.tier || 1, need: tier };
+    var move = (def.moves || [])[tier - 1];
+    if (!move) return { ok: false, reason: 'no_move' };
+    var zone = nguHanhZoneFor(setId, tier, move);
+    var pcts = zone && zone.ticks ? [] : (move.hits ? move.hits.slice() : nguHanhSplitHits(move.totalPct));
+    var sp = swordPower(state);
+    var hits = pcts.map(function (pct) { return { pct: pct, power: Math.round(sp * pct / 100) }; });
+    var ctl = NGU_HANH_CONTROL[setId] || null;
+    var control = null;
+    if (ctl) {
+      control = {};
+      if (ctl.bind) control.bind = ctl.bind[tier - 1] || 0;
+      if (ctl.pull) control.pull = ctl.pull[tier - 1] || 0;
+      if (ctl.slowPct) { control.slowPct = ctl.slowPct; control.slowSec = ctl.slowSec || 0; }
+    }
+    var zoneOut = null;
+    if (zone) {
+      zoneOut = { kind: zone.kind, sec: zone.sec, tickEvery: zone.tickEvery, ticks: zone.ticks,
+        tickPct: zone.tickPct, tickPower: zone.ticks ? Math.round(sp * zone.tickPct / 100) : 0,
+        radiusTiles: zone.radiusTiles, slowPct: zone.slowPct || 0 };
+    }
+    return { ok: true, setId: setId, tier: tier, name: def.name, element: def.element, profile: def.profile,
+      cd: move.cd, totalPct: move.totalPct, hits: hits, control: control, zone: zoneOut };
+  }
+  // Mọi thức tung được lúc này của mọi bộ ngu_hanh đã học (cho UI).
+  function nguHanhMovesAvailable(state) {
+    var out = [];
+    nguHanhIds().forEach(function (id) {
+      var def = TECHNIQUE_DEFS[id];
+      var tech = techniqueOf(state, id);
+      if (!def || !tech || !def.moves) return;
+      def.moves.forEach(function (mv) {
+        if ((tech.tier || 1) >= mv.tier) out.push({ setId: id, tier: mv.tier, name: def.name, element: def.element, profile: def.profile, totalPct: mv.totalPct, cd: mv.cd });
+      });
+    });
+    return out;
+  }
+  /* ---- Đường lấy dải Thường (bản đồ mục 4.1/4.2) ---- */
+  function thuongClaimedCount(state, kind) {
+    var g = ensureGrind(state), n = 0;
+    Object.keys(g.instances || {}).forEach(function (k) {
+      var ins = g.instances[k];
+      if (ins && ins.kind === kind && ins.status === 'claimed') n += 1;
+    });
+    return n;
+  }
+  function thuongHuntTicketsDone(state) { return thuongClaimedCount(state, 'hunt'); }
+  function thuongSectJobsDone(state) { return thuongClaimedCount(state, 'sect'); }
+  // Ô 01: chủ trì tháp trao SAU khi chương 3 đã qua mốc nhận công pháp
+  // (người chơi quay lại sảnh tháp — đúng nguồn của bản đồ).
+  function thuongTryTeachPhiDiep(state) {
+    if (!(questIndexOf(state.quest) > questIndexOf('q3_cong_phap'))) return { ok: false, reason: 'quest' };
+    return nguHanhLearn(state, 'phi_diep_phong_nhan');
+  }
+  // Ô 11: đủ 3 phiếu săn đã trả thì chủ trì tháp trao.
+  function thuongTryTeachLietDiem(state) {
+    if (thuongHuntTicketsDone(state) < 3) return { ok: false, reason: 'tickets', tickets: thuongHuntTicketsDone(state) };
+    return nguHanhLearn(state, 'liet_diem_trao_kich');
+  }
+  // Ô 04: đủ 6 lượt việc tông; chuỗi (đã có ô 01) do nguHanhLearn kiểm.
+  function thuongTryTeachCuongPhong(state) {
+    if (thuongSectJobsDone(state) < 6) return { ok: false, reason: 'jobs', jobs: thuongSectJobsDone(state) };
+    return nguHanhLearn(state, 'cuong_phong_loc_xoay');
+  }
+  // Ô 08: sau q8_done; chuỗi (đã có ô 11) do nguHanhLearn kiểm.
+  function thuongTryTeachViemLong(state) {
+    if (!questReached(state, 'q8_done')) return { ok: false, reason: 'quest' };
+    return nguHanhLearn(state, 'viem_long_tho_tuc');
+  }
+  /* Thưởng thông quan lần đầu của dải Thường — engine gọi đúng một
+     lần tại nhánh first-clear của bcBossKillRewards (cờ firstClear là
+     khóa chống trùng). Ô 18 có hai đường vào độc lập (bc_tapsau hoặc
+     bc_kiemtrung) và cần ô 16: thiếu chuỗi thì treo cờ chờ, học bù ở
+     thuongResolvePendingSets ngay khi ô 16 về (khuôn thanhLongPending
+     của cung IV). */
+  function thuongTryHanBang(state, learned) {
+    if (techniqueOf(state, 'han_bang_xieng_xich')) return;
+    var r = nguHanhLearn(state, 'han_bang_xieng_xich');
+    if (r.ok) { learned.push('han_bang_xieng_xich'); if (state.flags) state.flags.hanBangPending = false; }
+    else if (r.reason === 'chain') { if (!state.flags) state.flags = {}; state.flags.hanBangPending = true; }
+  }
+  function thuongBcFirstClear(state, realmId) {
+    var learned = [];
+    if (realmId === 'bc_thuyliem') {
+      var r16 = nguHanhLearn(state, 'huyen_thuy_xoay_luu');
+      if (r16.ok) learned.push('huyen_thuy_xoay_luu');
+      thuongResolvePendingSets(state).forEach(function (id) { learned.push(id); });
+    } else if (realmId === 'bc_tapha') {
+      var r02 = nguHanhLearn(state, 'bich_ngoc_cu_kiem');
+      if (r02.ok) learned.push('bich_ngoc_cu_kiem');
+    } else if (realmId === 'bc_tapsau') {
+      var r25 = nguHanhLearn(state, 'diet_son_dia_chan');
+      if (r25.ok) learned.push('diet_son_dia_chan');
+      thuongTryHanBang(state, learned);
+    } else if (realmId === 'bc_kiemtrung') {
+      thuongTryHanBang(state, learned);
+    }
+    return { ok: true, learned: learned };
+  }
+  function thuongResolvePendingSets(state) {
+    var out = [];
+    if (state && state.flags && state.flags.hanBangPending && !techniqueOf(state, 'han_bang_xieng_xich')) {
+      var r = nguHanhLearn(state, 'han_bang_xieng_xich');
+      if (r.ok) { state.flags.hanBangPending = false; out.push('han_bang_xieng_xich'); }
+    }
+    return out;
+  }
+  // Điểm ghép dải Luyện Khí/Trúc Cơ là chủ trì tháp (bản đồ mục 4.2 —
+  // tàng kinh chưa mở ở dải này), KHÔNG qua cổng q16_linh_ngo.
+  function thuongCraftAtTower(state, id) {
+    return nguHanhCraft(state, id);
+  }
+
   var VSLC = {
     REALMS: REALMS, realmName: realmName,
     SILENCE_MAX: SILENCE_MAX, SILENCE_RATES: SILENCE_RATES, WORD_SKILLS: WORD_SKILLS,
@@ -7782,6 +7956,12 @@
     NGU_HANH_TAN_THIEN_GUARANTEE: NGU_HANH_TAN_THIEN_GUARANTEE,
     KY_NGO_BASE: KY_NGO_BASE, KY_NGO_STEP: KY_NGO_STEP, KY_NGO_CAP: KY_NGO_CAP, KY_NGO_HARD: KY_NGO_HARD, KY_NGO_LOCK: KY_NGO_LOCK,
     kyNgoChance: kyNgoChance, kyNgoPool: kyNgoPool, kyNgoOnAction: kyNgoOnAction,
+    nguHanhSplitHits: nguHanhSplitHits, castNguHanh: castNguHanh, nguHanhMovesAvailable: nguHanhMovesAvailable,
+    thuongHuntTicketsDone: thuongHuntTicketsDone, thuongSectJobsDone: thuongSectJobsDone,
+    thuongTryTeachPhiDiep: thuongTryTeachPhiDiep, thuongTryTeachLietDiem: thuongTryTeachLietDiem,
+    thuongTryTeachCuongPhong: thuongTryTeachCuongPhong, thuongTryTeachViemLong: thuongTryTeachViemLong,
+    thuongBcFirstClear: thuongBcFirstClear, thuongResolvePendingSets: thuongResolvePendingSets,
+    thuongCraftAtTower: thuongCraftAtTower,
     GRIND_LEDGER_MAX: GRIND_LEDGER_MAX, defaultGrind: defaultGrind, ensureGrind: ensureGrind,
     realmOrdinal: realmOrdinal, questIndexOf: questIndexOf, questReached: questReached, npcPosFor: npcPosFor,
     grindHash32: grindHash32, grindRng: grindRng, grindPoolBase: grindPoolBase, grindSoftCapAmount: grindSoftCapAmount,

@@ -745,4 +745,28 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 @media (max-width: 640px) {
   #btn-biphap { right: 12px; bottom: 258px; }
   #biphap-chips { right: 12px; bottom: 312px; }
+  #biphap-panel { right: 104px; bottom: 258px; }
 }
+/* ===== Cột chip thức dải Thường trong panel BÍ PHÁP CHUNG (đợt cài dải
+   Thường + GỘP 2026-11-06): nút #btn-elements của đợt gốc đã bị loại ở
+   đợt gộp (chỉ còn nút #btn-biphap duy nhất); cột chip nay là #biphap-panel
+   đặt cạnh nút BÍ PHÁP, cùng cột với #biphap-chips của SP-04. ===== */
+#biphap-panel {
+  position: absolute; right: 112px; bottom: 266px; z-index: 26;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 46vh; overflow-y: auto; padding: 6px;
+  background: rgba(10, 16, 14, .82); border: 1px solid rgba(201,168,106,.6);
+  border-radius: 10px; backdrop-filter: blur(2px);
+}
+#biphap-panel.hidden { display: none; }
+.elem-chip {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  min-width: 210px; padding: 7px 10px; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(46,74,58,.92), rgba(20,35,27,.92));
+  border: 1px solid rgba(201,168,106,.55); color: #f3e9cf;
+  font-family: inherit; font-size: 12.5px; cursor: pointer; touch-action: manipulation;
+}
+.elem-chip:active { transform: scale(.97); }
+.elem-chip .elem-chip-cd { color: #ffd98a; font-weight: 700; white-space: nowrap; }
+.elem-chip.elem-cd { opacity: .55; }
+.elem-chip.elem-cd .elem-chip-cd { color: #b9c4bb; }

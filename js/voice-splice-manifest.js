@@ -699,6 +699,31 @@ window.VSLC_VOICE_SPLICE = {
    "s": "thien_dao",
    "k": "say"
   }
+ ,
+  "c6745d24eb40": {
+   "parts": [
+    null,
+    "v474c9b38bee9.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
+  "e799609ad2af": {
+   "parts": [
+    "v2dee4a91cc3a.mp3",
+    "v8ed04d2f2065.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
+  "7f13cb37c414": {
+   "parts": [
+    null,
+    "v3531883f9716.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  }
  },
  "announce": {
   "truc_co": "ae81e8ccb32c",
