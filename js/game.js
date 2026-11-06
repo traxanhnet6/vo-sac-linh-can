@@ -4437,8 +4437,8 @@
     sfxThuoc();
     rings.push({ x: px + 16, y: py - 10, r: 8, a: 0.9 });
     spawnParts(px + 16, py - 20, 20, '200,240,255', 36, true);
-    var finishMeasure = function () {
-      say(ST.SCENE_MEASURE, function () {
+    var finishMeasure = function (measureLines) {
+      say(measureLines, function () {
         state.flags.measured = true;
         var cap = L.REALMS[state.realm].tuviNext;
         if (cap) state.tuvi = cap; // chấn động thông kinh mạch: tu vi đầy tầng
@@ -4458,9 +4458,19 @@
         L.recordSpeech(state, 3, 'ep-mo-mieng-tai-thap', 'ca-thap');
         if (state.unlocked.indexOf('voice') < 0) state.unlocked.push('voice');
         shakeT = 1.6; flashA = 0.5; rumble();
-        finishMeasure();
+        // Vá thoại lặp (Bui báo trên live 2026-11-05): cảnh ép mở miệng mở
+        // đầu bằng việc Lục Tranh ĐÃ ĐO XONG cửu phẩm ("vừa đo xong cửu
+        // phẩm") và khép bằng lệnh "Đặt tay lên thước đi. Ngay bây giờ." —
+        // nối tiếp bằng BẢN ĐO ĐẦY ĐỦ là ba dòng đầu của SCENE_MEASURE diễn
+        // LẠI đúng nhịp đó (Lục Tranh đặt tay lên thước, công bố cửu phẩm,
+        // lời khoe khoang), thành ra cùng một nhịp truyện phát hai lần liên
+        // tiếp quanh khoảnh khắc tuyên Vô Cực. Nhánh này chỉ diễn từ dòng
+        // người chơi đặt tay lên thước (SCENE_MEASURE[3]) — tiếp nối nguyên
+        // văn, không sửa một chữ thoại nào; ba dòng đầu vẫn diễn nguyên ở
+        // nhánh thường (người chơi đã cất tiếng) và giữ đủ trong dữ kiện.
+        finishMeasure(ST.SCENE_MEASURE.slice(3));
       });
-    } else finishMeasure();
+    } else finishMeasure(ST.SCENE_MEASURE);
   }
   /* Đối chất Lục Tranh (chương 4): đủ bằng chứng thì lật vụ việc tại chỗ.
      Bằng chứng chương 2 (cờ evidence) cho bản đối chất mạnh, khép kín hơn. */
