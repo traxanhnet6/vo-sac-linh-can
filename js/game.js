@@ -14411,7 +14411,7 @@
       var cell = document.createElement('div');
       cell.className = 'bag-cell';
       cell.innerHTML = itemGlyphHtml(def) + '<span class="bag-name">' + def.name + '</span>' +
-        (def.stack ? '<span class="bag-count">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">' + (def.worn ? 'Đang đeo' : 'Pháp khí') + '</span>');
+        (def.stack ? '<span class="bag-count badge">× ' + L.bagCount(state, id) + '</span>' : '<span class="bag-count">' + (def.worn ? 'Đang đeo' : 'Pháp khí') + '</span>');
       // Vật phẩm dùng được ngay trong túi (làn chạm trán): bí tịch thì
       // Đọc để lấy điểm tu luyện; yêu đan thì Đổi thành tu vi qua cửa cày.
       if (def.teaches || id.indexOf('yeu_dan_') === 0 || def.type === 'do_an') {
@@ -14424,6 +14424,25 @@
       }
       grid.appendChild(cell);
     });
+    // Ô trống lấp kín hàng cuối của lưới (đợt làm đẹp khung ô chứa đồ
+    // 2026-11-06): thuần trình diễn — ô không bấm được, không chứa vật
+    // phẩm, không tính sức chứa; chỉ để khay chứa đọc trọn hàng. Số cột
+    // đo từ bề rộng thật của lưới; môi trường không có layout (harness
+    // kiểm thử) thì dùng 6 cột như panel trên màn hình máy tính.
+    if (ids.length) {
+      var perRow = 6;
+      try {
+        var gw = grid.clientWidth || 0;
+        if (gw > 40) perRow = Math.max(1, Math.floor((gw - 20) / 72));
+      } catch (e) { /* giữ mặc định 6 cột */ }
+      var fillN = (perRow - (ids.length % perRow)) % perRow;
+      for (var fi = 0; fi < fillN; fi++) {
+        var slotEl = document.createElement('div');
+        slotEl.className = 'bag-cell slot-empty';
+        slotEl.setAttribute('aria-hidden', 'true');
+        grid.appendChild(slotEl);
+      }
+    }
     // Ngăn riêng cốt truyện: liệt kê kinh thư/kiếm quyết ĐÃ SỞ HỮU (ghi
     // nhận qua state.unlocked, không tính sức chứa) — đợt nóng 3B sửa lỗi
     // nhận công pháp ở tháp xong mở túi vẫn trống vì panel không liệt kê
