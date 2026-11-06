@@ -832,6 +832,8 @@
     floats = []; rings = []; parts = [];      // chữ bay/vòng sóng/hạt của phiên cũ
     pillarT = 0; shakeT = 0; flashA = 0;
     clickPath = null; clickTarget = null; pendingInteract = null; questNav = null;
+    clickRun = false; runIntent = false;      // ĐỢT CHẠY NHANH: cờ chạy của phiên cũ không kéo sang phiên mới
+    if (runBtnOn) { runBtnOn = false; var rbReset = $('btn-run'); if (rbReset) { rbReset.classList.remove('on'); rbReset.setAttribute('aria-pressed', 'false'); } }
     medLatch = false; keys = {};              // phím đang giữ của phiên cũ không kéo sang phiên mới
     resetJoy(); cancelPinch();
     hideConfirm();
@@ -1028,6 +1030,10 @@
     if (document.hidden || document.visibilityState === 'hidden') resetAllInput();
   });
   var clickPath = null, clickTarget = null; // đường đi khi bấm chuột
+  var clickRun = false;   // ĐỢT CHẠY NHANH: lệnh chạm-để-đi hiện tại có phải lệnh CHẠY (chạm đúp / nút CHẠY đang bật)
+  var lastTapMoveAt = 0;  // ĐỢT CHẠY NHANH: mốc Date.now() của lệnh chạm-để-đi gần nhất — nhận diện chạm đúp 300ms
+  var runBtnOn = false;   // ĐỢT CHẠY NHANH: chốt của nút CHẠY cạnh cần điều khiển (bật = mọi di chuyển mặt đất đều chạy)
+  var runIntent = false;  // ĐỢT CHẠY NHANH: khung hiện tại có đầu vào yêu cầu chạy (chỉ đọc — kiểm thử + trình diễn)
   var clickLegFrom = null; // gốc sprite tại thời điểm phát lệnh chặng hiện tại — neo HƯỚNG CẢ CHẶNG cho lái hiển thị (đợt vá lắc 2026-11-03)
   var clickPathRaw = false;   // true khi đang đi theo đường ô THÔ (đường cứu hộ sau khi đường vuốt kẹt)
   var clickSegAnchor = null;  // gốc sprite tại điểm bắt đầu nhịp vuốt hiện tại (cho bám đuổi thuần túy)
@@ -1331,6 +1337,23 @@
   }
   /* ---------- Cần điều khiển cảm ứng (floating joystick) ---------- */
   var JOY_R = 37; // bán kính vòng cần (px, hệ tọa độ màn hình) — Mục G đợt vá 2026-11-02: giảm ~1/3 từ 56 theo lệnh Bui (joystick bé lại)
+  /* ĐỢT CHẠY NHANH 2026-11-05 (lệnh Bui: "Thêm chức năng chạy cho nhân
+     vật đi nhanh hơn"). [SỐ MỚI] của đợt này:
+     - RUN_SPEED 176 px/giây = 4/3 tốc độ đi bộ 132 — vẫn dưới tốc độ
+       bay ngự kiếm 198 (docs/ngukiem-prep) nên bay luôn nhanh nhất.
+     - JOY_RUN_MIN 0,92: độ lớn kéo cần SAU khi áp độ nhạy đạt mức này
+       (đẩy cần sát vành) thì vào trạng thái chạy.
+     - DBL_TAP_MS 300: lệnh chạm-để-đi thứ hai tới trong 300ms sau lệnh
+       trước thì là lệnh CHẠY tới điểm đó.
+     Không thể lực, không tiêu hao tài nguyên nào. Chạy chỉ áp cho đi
+     bộ trên mặt đất: đang cưỡi kiếm bay (flyRiding) thì mọi đầu vào
+     chạy bị bỏ qua — tốc độ bay thuộc đợt tích hợp ngự kiếm riêng,
+     chạy không ghi đè. Pha bước + tiếng bước chân vốn khóa theo quãng
+     đường thật nên tự tăng nhịp theo tốc độ, không cần số riêng. */
+  var WALK_SPEED = 132;   // tốc độ đi bộ — giữ nguyên số cũ của vòng lặp
+  var RUN_SPEED = 176;    // [SỐ MỚI] tốc độ chạy = 4/3 đi bộ
+  var JOY_RUN_MIN = 0.92; // [SỐ MỚI] ngưỡng độ lớn cần (sau độ nhạy) để chạy
+  var DBL_TAP_MS = 300;   // [SỐ MỚI] cửa sổ chạm đúp (mili-giây)
   var JOY_KNOB_R = 17; // bán kính núm cần (px) — Mục G: giảm ~1/3 từ 26, cùng tỉ lệ với đế
   var JOY_BASE_MARGIN = 26; // lề vùng an toàn của đế cố định (px) ở chế độ Luôn hiện sẵn
   // Chế độ hiển thị cần (cài đặt joyMode): 'on' = Luôn hiện sẵn — có đế cố
@@ -3522,6 +3545,7 @@
     if (!path) return false;
     if (!path.length) return true; // đã đứng ngay đích
     clickPath = smoothPath(path); clickTarget = dest; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py };
+    clickRun = false; // ĐỢT CHẠY NHANH: tự tìm đường nhiệm vụ luôn ĐI BỘ — cờ chạy chỉ do lệnh tay của người chơi đặt
     pathStuckT = 0;
     return true;
   }
@@ -14666,14 +14690,21 @@
         var n0 = L.joyNormalize(joy.cx - joy.sx, joy.cy - joy.sy, JOY_R);
         joy.active = n0.active; joy.ux = n0.ux; joy.uy = n0.uy; joy.speed = n0.speed;
       }
-      var sp = 132, dx = 0, dy = 0, smoothDrive = false;
+      // ĐỢT CHẠY NHANH 2026-11-05: tốc độ của khung này — giữ Shift
+      // (bàn phím) hoặc chốt nút CHẠY đang bật thì chạy 176, còn lại đi
+      // bộ 132. Đang cưỡi kiếm bay thì chạy KHÔNG áp dụng (flyNow chặn
+      // mọi đầu vào chạy; tốc độ bay thuộc đợt ngự kiếm riêng).
+      var flyNow = flyRiding();
+      runIntent = !flyNow && (!!keys['shift'] || runBtnOn);
+      var sp = runIntent ? RUN_SPEED : WALK_SPEED, dx = 0, dy = 0, smoothDrive = false;
+      var spMove = sp; // tốc độ cho đường chạm-để-đi: nhánh đường đi tự quyết lại theo cờ clickRun
       var manual = false;
       if (keys['arrowleft'] || keys['a']) { dx = -sp; facing = 'left'; manual = true; }
       else if (keys['arrowright'] || keys['d']) { dx = sp; facing = 'right'; manual = true; }
       if (keys['arrowup'] || keys['w']) { dy = -sp; facing = 'up'; manual = true; }
       else if (keys['arrowdown'] || keys['s']) { dy = sp; facing = 'down'; manual = true; }
       if (manual) {
-        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; questNav = null;
+        clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; questNav = null; clickRun = false;
         resetJoy(); // phím di chuyển hủy trạng thái cần ngay
         // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục D): chuẩn hóa tốc độ mặt
         // đất — hai trục cùng active thì co mỗi trục theo 1/sqrt(2) để
@@ -14690,7 +14721,19 @@
         joy.active = jn.active; joy.ux = jn.ux; joy.uy = jn.uy; joy.speed = jn.speed;
         if (jn.active) {
           questNav = null; // người chơi cầm cần là hủy tự tìm đường ngay
-          dx = jn.ux * sp * jn.speed; dy = jn.uy * sp * jn.speed;
+          // ĐỢT CHẠY NHANH: đẩy cần tới sát vành — độ lớn kéo SAU độ
+          // nhạy >= JOY_RUN_MIN (0,92) — thì CHẠY: nền tốc độ đổi sang
+          // 176 và hệ số độ lớn kẹp ở 1, để tốc độ chạy không bao giờ
+          // vượt 176 kể cả khi độ nhạy cần > 1 (bay 198 vẫn nhanh
+          // nhất). Dưới ngưỡng giữ nguyên công thức tỉ lệ cũ.
+          var joyRun = !flyNow && jn.speed >= JOY_RUN_MIN;
+          if (joyRun) {
+            runIntent = true;
+            var jm = Math.min(jn.speed, 1);
+            dx = jn.ux * RUN_SPEED * jm; dy = jn.uy * RUN_SPEED * jm;
+          } else {
+            dx = jn.ux * sp * jn.speed; dy = jn.uy * sp * jn.speed;
+          }
           dir8 = L.dir8FromVector(dx, dy, dir8);
           if (Math.abs(jn.ux) >= Math.abs(jn.uy)) facing = jn.ux > 0 ? 'right' : 'left';
           else facing = jn.uy > 0 ? 'down' : 'up';
@@ -14709,11 +14752,19 @@
       //   đường ô nguyên bản và đi theo logic tâm-ô trục-chính-trước của
       //   bản cũ (đã kiểm chứng qua toàn bộ suite) cho tới đích.
       if (!manual && joy.state !== 'stick' && clickPath && clickPath.length) {
+        // ĐỢT CHẠY NHANH: chặng này là lệnh CHẠY (cờ clickRun từ chạm
+        // đúp, hoặc chốt nút CHẠY đang bật) thì toàn chặng đi ở 176 —
+        // cửa sổ tới nơi và đường cong hãm áp sát đích ở dưới đều tính
+        // theo spMove nên giữ đúng tỉ lệ như khi đi bộ. Đang bay thì
+        // không áp (đường chạm-để-đi trên mặt đất vốn không chạy khi
+        // cưỡi kiếm — cùng luật với phím/cần).
+        spMove = (!flyNow && (clickRun || runBtnOn)) ? RUN_SPEED : WALK_SPEED;
+        if (spMove === RUN_SPEED) runIntent = true;
         var wp = clickPath[0];
         var mdx = wp.x * TILE - px, mdy = wp.y * TILE - py;
         var distWp = Math.hypot(mdx, mdy);
         var isFinalWp = clickPath.length === 1;
-        var stepW = sp * dt + 0.6;
+        var stepW = spMove * dt + 0.6;
         // Cửa sổ khớp ô đích cuối tính theo tốc độ THẬT (vòng chỉnh cảm
         // giác 2): bản cũ luôn lấy tốc độ tối đa 132 nên ở khung chậm
         // nhân vật có thể "nhảy" tới ~7px vào ô đích ở nhịp cuối; khi đã
@@ -14736,11 +14787,11 @@
             clickPath.shift();
             if (!clickPath.length) { clickPath = null; clickTarget = null; }
           } else if (Math.abs(mdx) >= Math.abs(mdy) && mdx !== 0) {
-            dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+            dx = mdx > 0 ? spMove : -spMove; facing = mdx > 0 ? 'right' : 'left';
           } else if (mdy !== 0) {
-            dy = mdy > 0 ? sp : -sp; facing = mdy > 0 ? 'down' : 'up';
+            dy = mdy > 0 ? spMove : -spMove; facing = mdy > 0 ? 'down' : 'up';
           } else if (mdx !== 0) {
-            dx = mdx > 0 ? sp : -sp; facing = mdx > 0 ? 'right' : 'left';
+            dx = mdx > 0 ? spMove : -spMove; facing = mdx > 0 ? 'right' : 'left';
           }
         } else {
           var axS = clickSegAnchor ? clickSegAnchor.x : px, ayS = clickSegAnchor ? clickSegAnchor.y : py;
@@ -14764,13 +14815,13 @@
                steerDir8Display (bám vận tốc + chờ bền ở tốc chậm) sở
                hữu ở cuối khung. Ngoài vùng hãm giữ nguyên như cũ. */
             if (!(isFinalWp && distWp < 78)) dir8 = L.dir8FromVector(aimX, aimY, dir8);
-            var spdWp = sp;
+            var spdWp = spMove;
             // Giảm tốc áp sát đích (gói E tăng cường): vùng hãm nới từ
             // 30px lên 78px và sàn tốc hạ xuống 24px/giây — người chơi
             // thật báo "dừng đột ngột đúng điểm chạm" vì vùng hãm cũ chỉ
             // dài chưa tới một ô và bị cửa sổ khớp ô đích nuốt mất; nay
             // nhân vật lướt chậm dần suốt hơn hai ô cuối rồi mới dừng.
-            if (isFinalWp && distWp < 78) spdWp = Math.max(24, sp * distWp / 78);
+            if (isFinalWp && distWp < 78) spdWp = Math.max(24, spMove * distWp / 78);
             smoothDrive = true;
             dx = aimX / aimLen * spdWp; dy = aimY / aimLen * spdWp;
             if (Math.abs(aimX) >= Math.abs(aimY)) facing = aimX > 0 ? 'right' : 'left';
@@ -14904,8 +14955,8 @@
       if (clickPath && clickPathRaw && px === prevPx && py === prevPy && (dx || dy)) {
         var wpB = clickPath[0];
         var mdxB = (wpB.x * TILE + 16) - (px + 16), mdyB = (wpB.y * TILE + 16) - (py + 16);
-        if (dx !== 0 && mdyB !== 0) tryMove(0, (mdyB > 0 ? sp : -sp) * dt);
-        else if (dy !== 0 && mdxB !== 0) tryMove((mdxB > 0 ? sp : -sp) * dt, 0);
+        if (dx !== 0 && mdyB !== 0) tryMove(0, (mdyB > 0 ? spMove : -spMove) * dt);
+        else if (dy !== 0 && mdxB !== 0) tryMove((mdxB > 0 ? spMove : -spMove) * dt, 0);
       }
       // Đồng hồ kẹt cho chạm-để-đi: còn nhích được thì giữ đường. Đường
       // VUỐT đứng im hẳn quá 0,45 giây thì TỰ TÌM LẠI đường ô thô về đúng
@@ -15595,6 +15646,14 @@
     // 'pending' (cần nổi) hoặc 'idle', chưa bao giờ là 'stick'.
     if (joy.state === 'stick') return;
     if (SET && !SET.current.clickMove) return; // cài đặt tắt di chuyển bằng bấm chuột/chạm đất
+    // ĐỢT CHẠY NHANH: chạm đúp — lệnh chạm-để-đi này tới trong vòng
+    // DBL_TAP_MS (300ms) sau lệnh chạm-để-đi trước thì là lệnh CHẠY
+    // tới điểm mới. Mốc chỉ cập nhật tại đây (mọi lệnh chạm-để-đi thật
+    // đều đi qua hàm này sau đủ các cổng chặn) nên kéo cần, chụm zoom
+    // hay chạm giao diện không tạo chạm đúp giả.
+    var tapNow = Date.now();
+    var dblTap = (tapNow - lastTapMoveAt) <= DBL_TAP_MS;
+    lastTapMoveAt = tapNow;
     var rect = cv.getBoundingClientRect();
     // MÀN HÌNH -> THẾ GIỚI qua đúng một hàm dùng chung (screenToWorld), đã
     // gồm cả hệ số phóng: chạm ở mọi mức zoom vẫn trúng đúng ô thế giới.
@@ -15606,7 +15665,14 @@
     // cũng đã bị chặn ở đầu hàm nên chạm lúc thoại giữ nguyên tiến thoại.)
     cancelQuestNav(); // chạm mới là lệnh tay — hủy tự tìm đường
     var tapTgt = L.tapTargetAt(tx, ty, npcsLive);
-    if (tapTgt) { tapInteract(tapTgt); return; }
+    if (tapTgt) {
+      var pathBefore = clickPath;
+      tapInteract(tapTgt);
+      // ĐỢT CHẠY NHANH: chạm đúp vào người/vật cũng là lệnh chạy tới
+      // chỗ đứng hẹn (chỉ khi tapInteract thật sự sinh đường mới).
+      if (clickPath && clickPath !== pathBefore) clickRun = dblTap || runBtnOn;
+      return;
+    }
     pendingInteract = null;
     var dest = null;
     if (L.isWalkable(tx, ty, npcsLive)) {
@@ -15622,11 +15688,11 @@
         }
       }
     }
-    if (!dest) return;
+    if (!dest) { clickRun = false; return; }
     var from = { x: Math.floor((px + 16) / TILE), y: Math.floor((py + 16) / TILE) };
     var path = L.findPath(from, dest, npcsLive);
-    if (path && path.length) { clickPath = smoothPath(path); clickTarget = dest; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py }; }
-    else { clickPath = null; clickTarget = null; }
+    if (path && path.length) { clickPath = smoothPath(path); clickTarget = dest; clickLegFrom = { x: px, y: py }; medLatch = false; clickPathRaw = false; clickSegAnchor = { x: px, y: py }; clickRun = dblTap || runBtnOn; }
+    else { clickPath = null; clickTarget = null; clickRun = false; }
   }
   // Sau một lần kéo cần, trình duyệt có thể phát thêm 1 sự kiện chuột tổng hợp nối tiếp:
   // chặn đúng lần đó (trong cửa sổ ngắn), các lần chạm thật sau vẫn bình thường.
@@ -15899,6 +15965,20 @@
   // thường duy nhất của game: kiếm quyết vật lý, tự rẽ nhánh chạm trán /
   // trận đài / Thăng Long trong chính castSword như nút Kiếm quyết).
   onTap($('sk-attack'), function () { castSword(); });
+  // ĐỢT CHẠY NHANH 2026-11-05: nút CHẠY cạnh cần điều khiển — KHÔNG
+  // thuộc cụm 9 nút chiến đấu đã khóa (nút riêng, lớp run-btn). Bấm để
+  // BẬT/TẮT chốt chạy: đang bật thì mọi di chuyển trên mặt đất (phím,
+  // cần, chạm-để-đi) chạy ở 176; bật/tắt giữa một chặng chạm-để-đi thì
+  // chặng đó đổi tốc độ ngay theo chốt. Trạng thái chỉ sống trong
+  // phiên chơi (resetPresentationState dọn về tắt khi đổi phiên).
+  var runBtnEl = $('btn-run');
+  if (runBtnEl) onTap(runBtnEl, function () {
+    runBtnOn = !runBtnOn;
+    runBtnEl.classList.toggle('on', runBtnOn);
+    runBtnEl.setAttribute('aria-pressed', runBtnOn ? 'true' : 'false');
+    if (clickPath) clickRun = runBtnOn;
+    sfxUi();
+  });
 
   /* ================= LÀN C — HỆ CÀY + BÍ CẢNH =================
      Hợp đồng làn A (js/logic.js, qua VSLC) được dùng đúng tên; số đã
@@ -17858,6 +17938,15 @@
     setFlyLearned: function (on) { state.flags = state.flags || {}; state.flags.flyLearned = !!on; if (!on) state.flags.flyStage = 0; },
     setFlyRiding: function (on) { state.flags = state.flags || {}; state.flags.flyRiding = !!on; },
     stepSfxCount: function () { return stepSfxN; },
+    // Tay nắm kiểm chứng ĐỢT CHẠY NHANH 2026-11-05: hằng số tốc độ của
+    // đợt + trạng thái chạy/cờ lệnh của khung hiện tại (chỉ đọc).
+    runInfo: function () {
+      return {
+        walk: WALK_SPEED, run: RUN_SPEED, joyRunMin: JOY_RUN_MIN, dblTapMs: DBL_TAP_MS,
+        intent: runIntent, clickRun: clickRun, btnOn: runBtnOn,
+        speedNow: Math.hypot(velX, velY)
+      };
+    },
     stepSurface: function () { return stepSurface(); }
   };
 

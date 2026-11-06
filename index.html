@@ -159,6 +159,13 @@
          thường hiện có (castSword — đòn kiếm vật lý không tốn Tĩnh
          Âm, cùng đường của nút Kiếm quyết / phím 3) và có thêm phím
          tắt phụ J; không một hành vi chiến đấu nào thay đổi. -->
+    <!-- Nút CHẠY (đợt chạy nhanh 2026-11-05): nút chốt bật/tắt đặt cạnh
+         cần điều khiển ở góc dưới trái, CỐ Ý nằm ngoài #skillbar và
+         không mang lớp .sk — cụm 9 nút chiến đấu đã khóa giữ nguyên
+         không chen thêm nút nào. Bật thì mọi di chuyển trên mặt đất
+         chạy ở 176 px/giây thay vì đi bộ 132. -->
+    <button id="btn-run" class="run-btn" type="button" aria-pressed="false"><span class="run-btn-name">CHẠY</span></button>
+
     <div id="skillbar">
       <button class="sk" id="sk-pha" type="button"><span class="sk-key">1</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M2 12c1.8-6.5 3.7-6.5 5.5 0 1.5 5.4 3 6.2 5 1.4"/><path d="M16.6 8.4l2.1-1.9M17.3 12h3.4M16.6 15.6l2.1 1.9"/></svg></span><span class="sk-name">Phá Âm</span></button>
       <button class="sk" id="sk-chan" type="button"><span class="sk-key">2</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="3.1"/><circle cx="12" cy="12" r="7.1"/><path d="M12 1.9v2.1M12 20v2.1M1.9 12h2.1M20 12h2.1M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/></svg></span><span class="sk-name">Chấn Âm</span></button>

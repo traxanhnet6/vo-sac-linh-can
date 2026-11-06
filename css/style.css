@@ -183,6 +183,8 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
      luôn thắng (đã kiểm bằng git blame tới commit gốc của cụm vòng cung);
      điện thoại trước đợt này vẫn hiện kích thước tự nhiên 78/46/40px. */
   #skillbar { transform: scale(1); transform-origin: bottom right; }
+  /* Nút CHẠY thu cùng tỉ lệ 88% quanh góc dưới trái của chính nó. */
+  .run-btn { transform: scale(0.88); transform-origin: bottom left; }
   /* Màn hẹp: hàng Lưu/Thoát ở giữa-trên sẽ đè khung nhân vật (QA đợt 60×45 bắt được
      trên mô phỏng 390px) — dạt xuống góc dưới-trái, đối diện thanh kỹ năng. */
   #func-row { top: auto; bottom: 10px; left: 10px; transform: none; }
@@ -365,6 +367,25 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
 .sk-ico svg { width: 20px; height: 20px; display: block; }
 .sk-name { position: relative; z-index: 1; font-size: 11px; font-weight: bold; text-align: center;
   line-height: 1.05; padding: 0 2px; margin-top: 1px; }
+/* Nút CHẠY (đợt chạy nhanh 2026-11-05): đế tròn riêng cạnh cần điều
+   khiển ở góc dưới trái — tâm nút thẳng trên tâm đế cần (cần có tâm ở
+   63px từ trái, 63px từ đáy; nút đặt đáy 110px nên không đè lên đế),
+   cùng ngôn ngữ đế tối vành vàng đồng của cụm kỹ năng nhưng KHÔNG
+   dùng lớp .sk (cụm 9 nút chiến đấu đã khóa không đổi). Trạng thái
+   .on (chốt đang bật): vành + quầng phát sáng lam ngọc của họ cộng
+   hưởng để nhìn một cái là biết đang chạy. */
+.run-btn { position: absolute; left: 36px; bottom: 110px; width: 54px; height: 54px; padding: 0;
+  cursor: pointer; pointer-events: auto; z-index: 4; border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #1e302c 0%, #16211f 54%, #0d1316 100%);
+  border: 2px solid #c9a227; color: #f7ead0; font-family: inherit;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 2px rgba(18, 12, 3, 0.65),
+    inset 0 0 10px rgba(127, 232, 224, 0.12), inset 0 1px 2px rgba(255, 240, 190, 0.16);
+  display: flex; align-items: center; justify-content: center; }
+.run-btn-name { font-size: 11px; font-weight: bold; letter-spacing: 0.4px; }
+.run-btn.on { border-color: #7fe8e0; color: #d9fffa;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 2px rgba(18, 12, 3, 0.65),
+    0 0 14px rgba(127, 232, 224, 0.55), inset 0 0 12px rgba(127, 232, 224, 0.35),
+    inset 0 1px 2px rgba(255, 240, 190, 0.2); }
 /* Màu nét biểu tượng theo họ màu của từng đòn trong game. */
 #sk-pha .sk-ico { color: #ff9a5c; }
 #sk-chan .sk-ico { color: #7db8ff; }
