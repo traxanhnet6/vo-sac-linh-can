@@ -848,6 +848,60 @@
     { who: 'narrate', text: 'Từ một phàm nhân bị cả trấn phán là phế căn câm điếc, tới tu sĩ Trúc Cơ đứng giữa cột sáng của Thanh Vân Tông — quãng đường ấy đúng một năm, mà nhìn lại dài như một đời người. Và ngươi biết, đây mới chỉ là bậc thềm thứ hai của con đường dài phía trước.' }
   ];
 
+  var SCENE_FLY_START = [
+    { who: 'narrate', text: 'Thanh Vân Đại Điện, sau giờ điểm danh. Trưởng lão tông không ngồi ở án trên như mọi khi — ông đứng bên cửa sổ phía bắc, nhìn ra khoảng trời trên Đài Trúc Cơ, nơi ngươi vừa bước qua mốc Trúc Cơ cách đây không lâu.' },
+    { who: 'truong_lao_tong', text: 'Giang Phàm. Ngươi nay đã là Trúc Cơ. Có những việc, Luyện Khí làm không được — không phải vì yếu, mà vì thân thể chưa đủ tư cách để thiên địa cho phép.' },
+    { who: 'truong_lao_tong', text: 'Ngự kiếm phi hành là việc đầu tiên trong số đó. Kiếm tu tới Trúc Cơ, kiếm ý đủ nặng để nâng chính thanh kiếm của mình — và đứng trên thanh kiếm ấy mà đi. Tông môn không tặng không kỹ năng này cho ai. Nó phải học, phải tập, phải thi.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử xin học. Cần làm những gì, xin trưởng lão cứ nói rõ."' },
+    { who: 'truong_lao_tong', text: 'Ba việc. Một: lên Thăng Long Đài, gặp Liễu Khuynh Tiên — kiếm ý phải học từ người giữ thước đo kiếm của tông này, ta không dạy thay được. Hai: tập ở sân luyện công cho tới khi cất và hạ thành thói quen. Ba: bay một vòng qua quảng trường và Đài Trúc Cơ cho cả tông nhìn thấy, rồi về đây báo lại với ta.' },
+    { who: 'truong_lao_tong', text: 'Và nhớ lấy điều quan trọng nhất, nghe cho kỹ: kiếm bay qua được nước, qua được rào thấp — nhưng không qua được cổng chưa mở. Cổng nào tông chưa cho phép, thành nào chưa tới lúc vào, thì dù ngươi có bay cao tới đâu cũng phải dừng lại như người đi bộ. Bay là nhanh hơn, không phải là đứng ngoài luật của tông môn và của thiên địa.' },
+    { who: 'narrate', text: 'Trưởng lão quay lại án, chấm bút ghi thêm một dòng vào cuốn sổ đệ tử Trúc Cơ. Tên của ngươi, từ hôm nay, nằm trong danh sách những người được phép học bay của Thanh Vân Tông.' }
+  ];
+
+  var SCENE_FLY_NO_SWORD = [
+    { who: 'truong_lao_tong', text: 'Ngự kiếm phải có kiếm quyết làm gốc. Ngươi chưa học Thất Tinh Kiếm Quyết — hãy về Kiểm Trắc Tháp hoàn thành việc ở đó trước, rồi quay lại đây, ta sẽ nói chuyện học bay sau.' }
+  ];
+
+  var SCENE_FLY_SWORD = [
+    { who: 'narrate', text: 'Đài Thăng Long, gió cao như mọi ngày. Liễu Khuynh Tiên đứng ở mép đài, thanh kiếm rời vỏ nằm ngang trên hai ngón tay của nàng — mũi kiếm không chạm tay, lưỡi kiếm lơ lửng và rung rất khẽ, như có một sợi dây vô hình đang giữ nó lại giữa trời.' },
+    { who: 'lieu_khuynh_tien', text: 'Trưởng lão đã cho người báo trước. Ngươi tới học ngự kiếm. …Cũng phải thôi. Kiếm của ngươi ở đài này, ta là người nhìn rõ nhất — hình chiếu của ta thua nó trong ba chiêu, chuyện đó ta chưa quên.' },
+    { who: 'lieu_khuynh_tien', text: 'Nghe đây, vì ta chỉ nói một lần. Ngự kiếm không phải là đứng lên một thanh kiếm rồi bắt nó bay. Kiếm không chở người. Kiếm ý của ngươi mới là thứ nâng cả hai lên: ý tới đâu, kiếm tới đó; ý loạn, kiếm rơi. Người mới học rơi là vì ý loạn, không phải vì kiếm yếu.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Ý tới đâu, kiếm tới đó. Đệ tử nhớ rồi."' },
+    { who: 'lieu_khuynh_tien', text: 'Nhớ bằng đầu chưa đủ, phải nhớ bằng chân. Ra sân luyện công phía tây quảng trường. Cất lên, hạ xuống, ba lượt trọn không chạm ngã — rồi bay lướt qua cả ba cọc gỗ trong sân, thấp thôi, ngay trên đầu cọc. Làm xong hai việc đó, quay lại đây… không, không cần quay lại. Bay thẳng một vòng qua tâm quảng trường, lên Đài Trúc Cơ, rồi hạ xuống đúng bãi đáp của sân luyện. Cả tông sẽ nhìn thấy vòng bay đó — ta cũng sẽ nhìn.' },
+    { who: 'lieu_khuynh_tien', text: 'Một điều cuối. Trong lúc còn đang tập, kiếm ý của ngươi chỉ đủ vững trong phạm vi Thanh Vân Tông — đừng cất cánh ở nơi khác, và đừng tìm cách bay qua sơn môn. Qua được vòng thi, trưởng lão sẽ gỡ giới hạn đó cho ngươi. Bay là việc của người giữ được kỷ luật — nhớ lấy.' },
+    { who: 'narrate', text: 'Nàng thu kiếm. Lưỡi kiếm quay một vòng nhỏ giữa không trung rồi mới tra vào vỏ — nhẹ nhàng như một lời chào. Trong tay ngươi, thanh kiếm khí của Thất Tinh Kiếm Quyết khẽ rung lên lần đầu tiên, như vừa nhận ra nó có thêm một việc mới để làm.' }
+  ];
+
+  var SCENE_FLY_DRILLS_DONE = [
+    { who: 'narrate', text: 'Ba lượt cất và hạ đã thành thói quen của đôi chân; một lượt lướt qua cả ba cọc gỗ, đầu cọc chỉ cách lưỡi kiếm một gang tay. Kiếm ý trong tay ngươi không còn rung nữa. Đã tới lúc bay vòng thi.' }
+  ];
+
+  var SCENE_FLY_TRIAL_HALF = [
+    { who: 'narrate', text: 'Ba điểm mốc đã qua: cọc gỗ giữa sân, tâm quảng trường, Đài Trúc Cơ. Chỉ còn một việc — hạ xuống đúng bãi đáp của sân luyện công, như lúc bắt đầu.' }
+  ];
+
+  var SCENE_FLY_TRIAL_DONE = [
+    { who: 'narrate', text: 'Vòng bay khép lại đúng nơi nó mở ra. Trên Đài Thăng Long phía xa, có một bóng áo trắng vừa thu kiếm và quay đi — nàng đã nhìn thấy, và không cần nói thêm lời nào nữa.' }
+  ];
+
+  var SCENE_FLY_DONE_FAST = [
+    { who: 'narrate', text: 'Ngươi về đại điện. Trưởng lão chưa đợi ngươi kịp viết, đã gật đầu trước — tin về một vòng bay qua quảng trường và Đài Trúc Cơ đi nhanh hơn cả người bay, trong một buổi sáng cả tông đều đã biết.' },
+    { who: 'truong_lao_tong', text: 'Vòng bay của ngươi, người của tông đã thấy. Cất ở sân luyện, qua cọc gỗ, qua quảng trường, lên Đài Trúc Cơ, hạ đúng bãi đáp. Đủ cả.' },
+    { who: 'truong_lao_tong', text: 'Mà bay gọn lắm. Từ sân luyện lên Đài Trúc Cơ rồi quay về, chưa hết một tuần trà. Kiếm ý của ngươi vững hơn nhiều đệ tử Trúc Cơ năm thứ hai của tông này.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử cảm ơn trưởng lão. Từ nay đệ tử được bay ở những đâu?"' },
+    { who: 'truong_lao_tong', text: 'Mọi nơi ngoài trời mà chân ngươi vốn được phép tới — và chỉ những nơi ấy. Ta nói lại lần cuối, vì đây là điều quan trọng nhất của buổi học hôm nay: bay không mở cổng. Cổng chưa tới lúc mở thì kiếm của ngươi cũng dừng lại trước cổng như đôi chân của ngươi vậy. Còn trong phạm vi được phép — trời là đường của ngươi.' },
+    { who: 'narrate', text: 'Trưởng lão ghi thêm một dòng nữa vào cuốn sổ đệ tử Trúc Cơ, cạnh dòng ghi hôm ngươi mới tới học: đã học ngự kiếm. Ngoài cửa sổ phía bắc, khoảng trời trên Đài Trúc Cơ từ nay không còn là khoảng trời ngươi chỉ được đứng dưới đất mà nhìn lên nữa.' }
+  ];
+
+  var SCENE_FLY_DONE_SLOW = [
+    { who: 'narrate', text: 'Ngươi về đại điện. Trưởng lão chưa đợi ngươi kịp viết, đã gật đầu trước — tin về một vòng bay qua quảng trường và Đài Trúc Cơ đi nhanh hơn cả người bay, trong một buổi sáng cả tông đều đã biết.' },
+    { who: 'truong_lao_tong', text: 'Vòng bay của ngươi, người của tông đã thấy. Cất ở sân luyện, qua cọc gỗ, qua quảng trường, lên Đài Trúc Cơ, hạ đúng bãi đáp. Đủ cả.' },
+    { who: 'truong_lao_tong', text: 'Bay chậm mà chắc — thế là tốt. Ngự kiếm cả đời người, thứ giữ mạng không phải tốc độ, mà là hạ được xuống đúng chỗ mình muốn hạ.' },
+    { who: 'hero', mode: 'write', text: '(viết) "Đệ tử cảm ơn trưởng lão. Từ nay đệ tử được bay ở những đâu?"' },
+    { who: 'truong_lao_tong', text: 'Mọi nơi ngoài trời mà chân ngươi vốn được phép tới — và chỉ những nơi ấy. Ta nói lại lần cuối, vì đây là điều quan trọng nhất của buổi học hôm nay: bay không mở cổng. Cổng chưa tới lúc mở thì kiếm của ngươi cũng dừng lại trước cổng như đôi chân của ngươi vậy. Còn trong phạm vi được phép — trời là đường của ngươi.' },
+    { who: 'narrate', text: 'Trưởng lão ghi thêm một dòng nữa vào cuốn sổ đệ tử Trúc Cơ, cạnh dòng ghi hôm ngươi mới tới học: đã học ngự kiếm. Ngoài cửa sổ phía bắc, khoảng trời trên Đài Trúc Cơ từ nay không còn là khoảng trời ngươi chỉ được đứng dưới đất mà nhìn lên nữa.' }
+  ];
+
   var SCENE_THU_TIENG = [
     { who: 'narrate', text: 'Đại điện Thanh Vân Tông, ba ngày sau kỳ đột phá. Trưởng lão cho gọi ngươi lên, và trước mặt các đệ tử đang đứng chầu, ông tự tay mở cuốn hồ sơ nhập môn của ngươi — trang đầu vẫn còn ba chữ viết ngay ngắn từ ngày ngươi mới tới: vô linh căn.' },
     { who: 'truong_lao_tong', text: 'Hôm nay, trước mặt cả điện, ta sửa lại cuốn hồ sơ này. (Ông cầm bút, gạch một nét thẳng qua hai chữ "vô linh căn", rồi viết lại bên dưới, từng chữ rõ ràng:) "Vô Cực Linh Căn — đệ tử Trúc Cơ." Từ nay, hồ sơ của Thanh Vân Tông ghi về ngươi như thế.' },
@@ -2811,6 +2865,10 @@ var SCENE_CH36_TIN_NIEM_PHONG = [
     SCENE_GUARD_INTRO: SCENE_GUARD_INTRO, SCENE_GUARD1: SCENE_GUARD1, SCENE_GUARD2: SCENE_GUARD2, SCENE_GUARD3: SCENE_GUARD3,
     SCENE_GUARD_VOICE: SCENE_GUARD_VOICE, SCENE_GUARD_END: SCENE_GUARD_END,
     SCENE_TRUC_CO: SCENE_TRUC_CO, SCENE_THU_TIENG: SCENE_THU_TIENG, SCENE_END_P2: SCENE_END_P2,
+    SCENE_FLY_START: SCENE_FLY_START, SCENE_FLY_NO_SWORD: SCENE_FLY_NO_SWORD,
+    SCENE_FLY_SWORD: SCENE_FLY_SWORD, SCENE_FLY_DRILLS_DONE: SCENE_FLY_DRILLS_DONE,
+    SCENE_FLY_TRIAL_HALF: SCENE_FLY_TRIAL_HALF, SCENE_FLY_TRIAL_DONE: SCENE_FLY_TRIAL_DONE,
+    SCENE_FLY_DONE_FAST: SCENE_FLY_DONE_FAST, SCENE_FLY_DONE_SLOW: SCENE_FLY_DONE_SLOW,
     SCENE_CHUAN_BI_2_OK: SCENE_CHUAN_BI_2_OK,
     SCENE_CH9_TIN_DU: SCENE_CH9_TIN_DU, SCENE_CH9_UNHAN_PLAN: SCENE_CH9_UNHAN_PLAN,
     SCENE_CH9_TRUY_VET: SCENE_CH9_TRUY_VET, SCENE_CH9_PHUC_KICH: SCENE_CH9_PHUC_KICH,

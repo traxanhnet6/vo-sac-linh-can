@@ -386,6 +386,15 @@ html, body { margin: 0; padding: 0; background: #141a16; color: #e8e2d0;
   box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 2px rgba(18, 12, 3, 0.65),
     0 0 14px rgba(127, 232, 224, 0.55), inset 0 0 12px rgba(127, 232, 224, 0.35),
     inset 0 1px 2px rgba(255, 240, 190, 0.2); }
+/* Đợt ngự kiếm: nút BAY/HẠ — cùng họ nút riêng NGOÀI cụm 9 nút chiến đấu
+   với nút CHẠY, xếp ngay TRÊN nút CHẠY (bottom 110 + 54 + 8 khoảng hở),
+   đế icon tròn viền vàng như nút CHẠY nhưng quầng sáng thiên thanh của
+   ngự kiếm; chỉ hiện khi người chơi đã có quyền bay. */
+.fly-btn { bottom: 172px; }
+.fly-btn[aria-pressed="true"] { border-color: #aee6ff; color: #eaf7ff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 2px rgba(18, 12, 3, 0.65),
+    0 0 14px rgba(170, 225, 255, 0.55), inset 0 0 12px rgba(170, 225, 255, 0.3),
+    inset 0 1px 2px rgba(255, 240, 190, 0.2); }
 /* Màu nét biểu tượng theo họ màu của từng đòn trong game. */
 #sk-pha .sk-ico { color: #ff9a5c; }
 #sk-chan .sk-ico { color: #7db8ff; }

@@ -270,6 +270,14 @@ window.VSLC_VOICE_SPLICE = {
    "s": "hoa_huong_than",
    "k": "say"
   },
+  "049cc3d0d488": {
+   "parts": [
+    null,
+    "vefd626d1ae9d.mp3"
+   ],
+   "s": "truong_lao_tong",
+   "k": "say"
+  },
   "02182a347e5b": {
    "parts": [
     null,
@@ -632,6 +640,30 @@ window.VSLC_VOICE_SPLICE = {
    "s": "mo_cuu_u",
    "k": "say"
   },
+  "c6745d24eb40": {
+   "parts": [
+    null,
+    "v474c9b38bee9.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
+  "e799609ad2af": {
+   "parts": [
+    "v2dee4a91cc3a.mp3",
+    "v8ed04d2f2065.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
+  "7f13cb37c414": {
+   "parts": [
+    null,
+    "v3531883f9716.mp3"
+   ],
+   "s": "narrate",
+   "k": "narrate"
+  },
   "5731f7229d36": {
    "parts": [
     null,
@@ -698,31 +730,6 @@ window.VSLC_VOICE_SPLICE = {
    ],
    "s": "thien_dao",
    "k": "say"
-  }
- ,
-  "c6745d24eb40": {
-   "parts": [
-    null,
-    "v474c9b38bee9.mp3"
-   ],
-   "s": "narrate",
-   "k": "narrate"
-  },
-  "e799609ad2af": {
-   "parts": [
-    "v2dee4a91cc3a.mp3",
-    "v8ed04d2f2065.mp3"
-   ],
-   "s": "narrate",
-   "k": "narrate"
-  },
-  "7f13cb37c414": {
-   "parts": [
-    null,
-    "v3531883f9716.mp3"
-   ],
-   "s": "narrate",
-   "k": "narrate"
   }
  },
  "announce": {

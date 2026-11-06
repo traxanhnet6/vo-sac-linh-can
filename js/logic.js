@@ -297,6 +297,43 @@
     if (npcs && npcAt(tx, ty, npcs)) return false;
     return true;
   }
+  /* ---------- Ngự kiếm (đợt tích hợp 2026-11-06 — docs/ngukiem-prep) ----------
+     Luật bay là dữ kiện thuần đặt cạnh isWalkable: isFlyable xét ô ĐÍCH của
+     hộp chân khi bay (qua được nước + vật cản thấp; không qua tường, nhà,
+     cây, bia đài, NPC). Loại vật thể không có trong FLY_LOW_TYPES thì mặc
+     định CHẶN (thà chặn nhầm vật trang trí mới còn hơn để bay xuyên nó). */
+  var FLY_LOW_TYPES = { dummy: 1, dummy_broken: 1, well: 1, lantern: 1, lantern2: 1, stall: 1, jars: 1, sacks: 1, woodpile: 1, rack: 1,
+    fence_seg: 1, fence_post: 1, railing: 1, barrel: 1, basket: 1, basket_goods: 1, jar_big: 1, bench_stone: 1, table_stone: 1,
+    flower_pot: 1, flower_bush: 1, bush1: 1, bush2: 1, stake_cluster: 1, rock_m: 1, rock_l_a: 1, rock_l_b: 1, lantern_low: 1,
+    reeds: 1, bones: 1, porch_steps: 1, stone_platform: 1, fabric_rack: 1, stall_cloth: 1 };
+  function isFlyable(tx, ty, npcs) {
+    var t = tileAt(tx, ty);
+    if (t === 'X') return false;
+    if (npcs && npcAt(tx, ty, npcs)) return false;
+    var p = propAt(tx, ty);
+    if (p && !FLY_LOW_TYPES[p.type]) return false;
+    return true;
+  }
+  // Điều kiện mở / tiếp tục chuỗi học ngự kiếm (thiết kế mục 1.2): đã Trúc Cơ,
+  // chưa tốt nghiệp, đã có Thất Tinh Kiếm Quyết. Đúng cho cả người đang giữa
+  // chuỗi (các điểm móc tương tác dùng chung một điều kiện).
+  function flyQuestAvailable(state) {
+    if (!state || !state.flags) return false;
+    return (state.realm || 0) >= 2 && state.flags.flyLearned !== true && (state.unlocked || []).indexOf('that_tinh') >= 0;
+  }
+  // Mọi điều kiện cất cánh ở tầng dữ kiện (thiết kế mục 3.1/3.6 trừ trạng thái
+  // phiên do game.js gác): nội thất cấm tuyệt đối; đã tốt nghiệp thì mọi bản
+  // đồ ngoài trời; đang bay tập (flyStage >= 2) thì chỉ trong Thanh Vân Tông.
+  function flyCanTakeoff(state, mapDef) {
+    if (!state || !state.flags) return { ok: false, reason: 'Chưa có nhân vật.' };
+    if (mapDef && mapDef.indoor) return { ok: false, reason: 'Trong nhà không ngự kiếm được.' };
+    if (state.flags.flyLearned) return { ok: true };
+    if ((state.flags.flyStage | 0) >= 2) {
+      if (mapDef && mapDef === MAPS.thanh_van_tong) return { ok: true };
+      return { ok: false, reason: 'Kiếm ý chưa đủ vững ngoài phạm vi tông — hãy hoàn thành vòng bay Thăng Vân trước.' };
+    }
+    return { ok: false, reason: 'Ngươi chưa học ngự kiếm.' };
+  }
   // BFS kiểm tra tới được (dùng trong test và chỉ đường nhiệm vụ).
   function reachable(from, to, npcs) {
     var key = function (x, y) { return x + ',' + y; };
@@ -2534,7 +2571,7 @@
         ,{ x: 40, y: 0, w: 4, h: 2, to: 'song_bac_thuong', toX: 13, toY: 70, label: 'Đường Ra Sông Bạc', cond: 'quest:q25_len_duong', lockMsg: 'Đường ra sông Bạc chỉ mở khi tháp giao việc ở chương 25.' }
       ]
     },
-    thap_noi: {
+    thap_noi: { indoor: true,
       name: 'Sảnh Kiểm Trắc Tháp', w: 40, h: 30, grid: HALL_GRID, props: HALL_PROPS, npcs: HALL_NPCS,
       meditate: null,
       signs: [{ x: 19, y: 27, text: 'Ra Sân Tháp' }],
@@ -3197,7 +3234,7 @@
       soulRank: 0,               // phẩm Hồn Sư — TRỤC THỨ HAI, giấu kín (mở ở chương 5 khi chữa hồn)
       soulPower: 0,              // hồn lực tích lũy — không hiển thị công khai trong cốt truyện
 
-      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, ch13Reward: false, ch14Reward: false, ch15Reward: false, ch16Reward: false, ch15ResonanceLock: false, thanhLongPending: false, challengeWinsNoiMon: 0, challengeWinsTinhAnh: 0, bcSauFirstPaid: false, ch17Reward: false, ch18Reward: false, ch19Reward: false, ch20Reward: false, ch21Reward: false, ch22Reward: false, ch23Reward: false, ch24Reward: false, ch18Insight: false, ch19Insight: false, ch20SoulRecognized: false, challengeWinsVoDich: 0, soulGrandPaidFor: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false, foodBought: false, foodGathered: false, foodCooked: false, foodEaten: false, foodGiftInn: false, foodHintSeen: false, foodPatchDayTran: -1, foodPatchDayDuongMon: -1 },
+      flags: { tested: false, voiced: false, dummyBroken: false, metUNhan: false, ltGift: false, starterWeaponGift: true, wroteFirst: false, evidence: false, ltLetter: false, innWork: 0, thuocReward: false, invited: false, queueSeen: false, measured: false, thienCoSeen: false, clueKho: false, clueWitness: false, usedChanCh4: false, daoNoticedVoice: false, thienCoPaid: false, soulSecret: false, soulPaidFor: 0, uNhanSupported: false, duelSeen: false, dowrySeen: false, atkWave: 0, atkFallback: false, hbcPaid: false, bagUnlocked: false, sectSeen: false, choreGo: false, choreNuoc: false, choreBao: false, choresPaid: false, tlRound: 0, tlHits: 0, hhtHits: 0, chuanBiSeen: false, chiGathered: false, pillGranted: false, guardWave: 0, guardBroken: 0, sectReward: false, herbGathered: false, pillMeritPaid: false, ch9TinDu: false, ch9SayRescue: false, ch9SilentRoute: false, ch9DoiDau: false, ch9HonDau: false, ch9BreakReady: false, ch9Reward: false, hbDone: false, soulRevealed: false, soulPublic: false, soulExposed: false, soulClinicPaidFor: 0, soulSectPaidFor: 0, sectJobPaidFor: 0, thienCoFeePaid: false, ch11HeQua: false, uNhanChoice: false, uNhanGift2: false, ketDanHerb: false, ketDanCoreGot: false, ketDanCoreExtra: 0, ketDanRefined: false, ketDanGuardWave: 0, ketDanGuardBroken: 0, ketDanGuardDone: false, ketDanSpokeSave: false, lenDinhHold: 0, lenPhongSeal: 0, lenUsedDinh: 0, lenUsedPhong: 0, kimDanReward: false, sectJobRound: 0, ch10BreakReady: false, ch10RumorPending: false, uNhanCityMet: false, giaNhanHealed: false, lenDinhDone: false, lenPhongDone: false, benhSeen: false, ch9PlanSeen: false, kdBeastWave: 0, ch13Reward: false, ch14Reward: false, ch15Reward: false, ch16Reward: false, ch15ResonanceLock: false, thanhLongPending: false, challengeWinsNoiMon: 0, challengeWinsTinhAnh: 0, bcSauFirstPaid: false, ch17Reward: false, ch18Reward: false, ch19Reward: false, ch20Reward: false, ch21Reward: false, ch22Reward: false, ch23Reward: false, ch24Reward: false, ch18Insight: false, ch19Insight: false, ch20SoulRecognized: false, challengeWinsVoDich: 0, soulGrandPaidFor: 0, thienDaoMark: 0, trongThuong: false, ttPillCount: 0, hoTheDanGifted: false, ttElderSeen: false, foodBought: false, foodGathered: false, foodCooked: false, foodEaten: false, foodGiftInn: false, foodHintSeen: false, foodPatchDayTran: -1, foodPatchDayDuongMon: -1, flyLearned: false, flyStage: 0, flyDrills: 0, flyDummyPass: 0, flyTrialCp: 0, flyTrialBest: 0, flyRiding: false },
 
       hp: 100, hpMax: 100
     };
@@ -4328,6 +4365,16 @@
     if (typeof state.flags.foodHintSeen !== 'boolean') state.flags.foodHintSeen = false;
     if (typeof state.flags.foodPatchDayTran !== 'number') state.flags.foodPatchDayTran = -1;
     if (typeof state.flags.foodPatchDayDuongMon !== 'number') state.flags.foodPatchDayDuongMon = -1;
+    // Đợt tích hợp ngự kiếm 2026-11-06: năm trường bền của chuỗi học bay +
+    // cờ đang cưỡi kiếm. flyRiding là trạng thái PHIÊN (chỉ sống trong
+    // game.js): nạp save luôn bắt đầu trên mặt đất nên chuẩn hóa ép về false.
+    if (typeof state.flags.flyLearned !== 'boolean') state.flags.flyLearned = false;
+    if (typeof state.flags.flyStage !== 'number') state.flags.flyStage = 0;
+    if (typeof state.flags.flyDrills !== 'number') state.flags.flyDrills = 0;
+    if (typeof state.flags.flyDummyPass !== 'number') state.flags.flyDummyPass = 0;
+    if (typeof state.flags.flyTrialCp !== 'number') state.flags.flyTrialCp = 0;
+    if (typeof state.flags.flyTrialBest !== 'number') state.flags.flyTrialBest = 0;
+    state.flags.flyRiding = false;
     if (typeof state.sectMerit !== 'number' || !isFinite(state.sectMerit) || state.sectMerit < 0) state.sectMerit = 0;
     else state.sectMerit = Math.floor(state.sectMerit);
     // Đợt bảng nhân vật (2026-11-06): bộ đếm thống kê — save cũ thiếu thì dựng 0 (bắt đầu tính từ phiên bản này).
@@ -7939,7 +7986,7 @@
     silenceGain: silenceGain, wordPower: wordPower, castWord: castWord,
     MAP_W: MAP_W, MAP_H: MAP_H, MAP_GRID: MAP_GRID, PROPS: PROPS, NPCS: NPCS,
     SPAWN: SPAWN, WELL_MEDITATE: WELL_MEDITATE,
-    tileAt: tileAt, propAt: propAt, tapTargetAt: tapTargetAt, standTilesFor: standTilesFor, isWalkable: isWalkable, reachable: reachable, findPath: findPath,
+    tileAt: tileAt, propAt: propAt, tapTargetAt: tapTargetAt, standTilesFor: standTilesFor, isWalkable: isWalkable, isFlyable: isFlyable, isLandingTile: isWalkable, flyQuestAvailable: flyQuestAvailable, flyCanTakeoff: flyCanTakeoff, FLY_LOW_TYPES: FLY_LOW_TYPES, reachable: reachable, findPath: findPath,
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, meditateRate: meditateRate, tryBreakthrough: tryBreakthrough,
     swordPower: swordPower, castSword: castSword, SWORD_MOVES: SWORD_MOVES, swordMoveById: swordMoveById,

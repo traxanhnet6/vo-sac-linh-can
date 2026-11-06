@@ -375,6 +375,54 @@
       src.start(t0); src.stop(t0 + dur + 0.03);
     } catch (e) { /* im lặng */ }
   }
+  /* ----- ĐỢT NGỰ KIẾM 2026-11-06: hai âm thanh của hệ bay (design mục 4.3,
+     ghi sổ tại docs/effects-catalog.md) ----- */
+  // Cất cánh: chuông kiếm reo 1568 Hz (0,35s) rồi 2093 Hz trễ 60 ms (0,50s),
+  // khớp nhịp tiếng kiếm rút (sfxSword) làm lớp gầm — đặt gain nhỏ để không
+  // át tiếng kiếm (mẫu chuẩn: đợt life-anim dùng 0,035/0,020).
+  function sfxFlyTakeoff() {
+    beep(1568, 0.35, 'sine', 0.040, 'skill');
+    setTimeout(function () { beep(2093, 0.50, 'sine', 0.025, 'skill'); }, 60);
+    sfxSword();
+  }
+  // Gió bay: nhiễu trắng LẶP qua bandpass — tần số 400 -> 900 Hz và độ lớn
+  // 0 -> 0,045 tỉ lệ theo tốc độ bay (cùng kỹ thuật sfxFlyBy phía trên).
+  // Bắt đầu khi vào pha air, dừng ở đầu pha hạ + tiếng gió trượt xuống
+  // (sfxWind) khép lại. Danh mục 'skill' như mọi âm vận động có chủ đích.
+  function flyWindStart() {
+    if (flyWindNodes) return;
+    if (SET && SET.sfxAllowed && !SET.sfxAllowed('skill')) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (!AC.createBuffer || !AC.createBufferSource || !AC.createBiquadFilter) return;
+      var len = Math.max(1, Math.floor(AC.sampleRate * 1.5));
+      var buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+      var src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+      var bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 400; bp.Q.value = 1.2;
+      var g = AC.createGain(); g.gain.value = 0;
+      src.connect(bp); bp.connect(g); g.connect(AC.destination);
+      src.start();
+      flyWindNodes = { src: src, bp: bp, g: g };
+    } catch (e) { flyWindNodes = null; }
+  }
+  function flyWindUpdate(ratio) {
+    if (!flyWindNodes || !AC) return;
+    try {
+      var scale = (SET && SET.gainScale) ? SET.gainScale() : 1;
+      var t = AC.currentTime;
+      flyWindNodes.bp.frequency.setTargetAtTime(400 + 500 * ratio, t, 0.15);
+      flyWindNodes.g.gain.setTargetAtTime(0.045 * ratio * scale, t, 0.15);
+    } catch (e) { /* im lặng */ }
+  }
+  function flyWindStop(silentStop) {
+    if (flyWindNodes) {
+      try { flyWindNodes.src.stop(); } catch (e) { /* đã dừng */ }
+      try { flyWindNodes.src.disconnect(); flyWindNodes.bp.disconnect(); flyWindNodes.g.disconnect(); } catch (e) { /* im lặng */ }
+      flyWindNodes = null;
+    }
+    if (!silentStop) sfxWind(); // tiếng gió trượt xuống khép lại pha bay
+  }
   // Chuông lớn Trúc Cơ (chương 8): chuông trầm 523/784 Hz ngân dài + tiếng
   // rền trầm dưới đáy (rumble) — nặng hơn hẳn sfxBell của đột phá thường.
   function sfxBigBell() {
@@ -834,6 +882,7 @@
     pillarT = 0; shakeT = 0; flashA = 0;
     clickPath = null; clickTarget = null; pendingInteract = null; questNav = null;
     clickRun = false; runIntent = false;      // ĐỢT CHẠY NHANH: cờ chạy của phiên cũ không kéo sang phiên mới
+    flyResetFlight(); flyNoticeShown = false; // ĐỢT NGỰ KIẾM: phiên mới luôn bắt đầu ở mặt đất; thông báo ưu tiên học bay được phép hiện lại
     if (runBtnOn) { runBtnOn = false; var rbReset = $('btn-run'); if (rbReset) { rbReset.classList.remove('on'); rbReset.setAttribute('aria-pressed', 'false'); } }
     medLatch = false; keys = {};              // phím đang giữ của phiên cũ không kéo sang phiên mới
     resetJoy(); cancelPinch();
@@ -1055,7 +1104,32 @@
   var tapMenu = null;
   var shopAffKey = null;
   var questNav = null; // tự tìm đường làm nhiệm vụ: { targetMap, hx, hy, leg, replans, lastMap, lockMsg }
-  var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
+  var medLatch = false;
+  /* ----- ĐỢT TÍCH HỢP NGỰ KIẾM 2026-11-06: trạng thái bay của PHIÊN -----
+     Trạng thái bay chỉ sống trong phiên (thiết kế mục 3.6): không biến nào
+     dưới đây được ghi vào save; thứ duy nhất bền là các cờ học tập trong
+     state.flags (flyLearned/flyStage/flyDrills/flyDummyPass/flyTrialCp/
+     flyTrialBest) — và state.flags.flyRiding chỉ là cầu nối cho lớp vẽ cũ,
+     do máy pha này điều khiển, normalizeSave luôn ép về false khi nạp. */
+  var FLY_SPEED = 198;      // tốc độ bay px/giây (design mục 3.2)
+  var FLY_LIFT = 28;        // độ cao hiển thị khi ở pha air, px (chỉ lớp vẽ)
+  var FLY_RISE_S = 0.6;     // thời lượng pha cất cánh, giây
+  var FLY_LAND_S = 0.5;     // thời lượng pha hạ cánh, giây
+  var flyPhase = 'ground';  // 'ground' | 'rising' | 'air' | 'landing'
+  var flyLiftPx = 0;        // độ cao hiển thị hiện tại (0 mặt đất -> 28 trên không)
+  var flyPhaseT = 0;        // đồng hồ của pha cất/hạ
+  var flyTakeoffTile = null; // ô lúc cất cánh (điểm neo khi cần tìm ô đáp an toàn)
+  var flyDest = null;       // đích bay thẳng {x, y} theo pixel (trung tâm ô đích)
+  var flyDestStallT = 0;    // thời gian bị chặn hẳn trước vật cản khi đang bay tới đích
+  var flyTrialStartMs = 0;  // mốc giờ bắt đầu một lượt vòng Thăng Vân (0 = chưa chạy)
+  var flyBlockToastAt = 0;  // chống spam thông báo "phải hạ cánh"
+  var flyTrailT = 0;        // đồng hồ vệt linh khí khi bay
+  var flyNoticeShown = false; // thông báo ưu tiên sau Trúc Cơ: tối đa một lần mỗi phiên
+  var flyTalkCtx = null;    // id NPC của lần tương tác đang chạy (điểm nối tiếp chuỗi)
+  var flyChained = false;   // chuỗi đã nối tiếp trong lần tương tác hiện tại chưa
+  var flySayQueue = [];     // cảnh thoại bị hoãn vì bắt hạ cánh trước (xả khi chạm đất)
+  var flyForcedLand = false; // lượt hạ hiện tại là hạ BẮT BUỘC (không tính tập/vòng thi)
+  var flyWindNodes = null;  // nút WebAudio của tiếng gió bay (src/bp/g)                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old', 'mac_cuu_u']; // ARCIV A.3: mac_cuu_u (chỉ huy trận, sheet đã chép)
   var PROP_TYPES = ['house_big', 'house', 'house_b', 'house_c', 'inn', 'stele', 'well', 'lantern', 'tree', 'pine', 'dummy', 'dummy_broken', 'stall', 'gate', 'jars', 'woodpile', 'rack', 'sacks',
     /* Thư viện vật thể chi tiết (đợt chi tiết bản đồ + đợt cây cỏ phần 3):
@@ -1563,6 +1637,10 @@
       toast('Hứa gia phát bù thanh Thiết Kiếm Hứa Gia — vũ khí khởi đầu của ngươi (+3 kiếm / +3 lời). Từ nay nó luôn đeo bên hông; kiếm tốt hơn về sau sẽ thay thế nó.', 5200);
       saveNow();
     }
+    // Đợt ngự kiếm: phiên mới luôn bắt đầu ở mặt đất; save hồi tố đã qua
+    // Trúc Cơ mà chưa học bay thì hiện việc học bay ngay khi vào game.
+    flyResetFlight();
+    flyChainNotice();
     requestAnimationFrame(loop);
   }
   // Khoản Linh Thạch đầu tiên của người chơi: trưởng lão tặng lộ phí lên đường
@@ -1585,7 +1663,12 @@
   // này biết, phiên này đã cũ — KHÔNG ghi, trả false để nơi gọi báo thật.
   function saveNow() {
     if (!state || !currentUser) return false;
-    state.x = Math.round(px / TILE); state.y = Math.round(py / TILE); state.dir = facing;
+    // ĐỢT NGỰ KIẾM: lưu giữa lúc đang bay thì điểm lưu lùi về ô hạ cánh
+    // hợp lệ gần nhất (thiết kế mục 5.2) — vị trí hiển thị trong phiên giữ
+    // nguyên; nạp lại không bao giờ đứng trên mặt nước hay vật cao.
+    if (flyPhase !== 'ground') { var svT = flySafeTileNear(playerTile().x, playerTile().y); state.x = svT.x; state.y = svT.y; }
+    else { state.x = Math.round(px / TILE); state.y = Math.round(py / TILE); }
+    state.dir = facing;
     var stored = L.loadGame(localStorage, currentUser);
     if (stored && (stored.saveSeq || 0) > sessionSaveSeq) {
       // Mốc trong kho cao hơn mốc phiên này biết. Nếu bản lưu đó mang
@@ -2424,8 +2507,17 @@
         // 2026-11-04). Khi cưỡi kiếm bay bóng nhỏ và nhạt đi nhưng vẫn
         // giữ đúng điểm đất dưới chân.
         if (swState === 'ride') {
-          ctx.fillStyle = 'rgba(24,34,18,0.16)';
-          ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 11, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+          // ĐỢT NGỰ KIẾM: bóng của người đang bay = ~70% bán kính và ~55%
+          // độ đậm của bóng đất (thiết kế mục 4.2); bay trên mặt nước thì
+          // thêm một gợn sóng mờ ngay dưới bóng — dấu hiệu thị giác là
+          // không hạ cánh xuống nước được.
+          ctx.fillStyle = 'rgba(24,34,18,0.15)';
+          ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 9, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+          var fptR = playerTile();
+          if (L.tileAt(fptR.x, fptR.y) === 'W') {
+            ctx.strokeStyle = 'rgba(205,238,255,0.35)'; ctx.lineWidth = 1.4;
+            ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 13 + Math.sin(tNow / 300) * 2, 4.4, 0, 0, Math.PI * 2); ctx.stroke();
+          }
         } else {
           ctx.fillStyle = 'rgba(24,34,18,0.28)';
           ctx.beginPath(); ctx.ellipse(px + 16, py + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
@@ -2433,11 +2525,14 @@
         var plim = ASSETS.chars[look], pTop;
         var flyIm = ASSETS.fly && ASSETS.fly[state.gender === 'nu' ? 'nu' : 'nam'];
         if (swState === 'ride' && imgReady(flyIm)) {
-          // Cưỡi kiếm: sheet bay riêng (kiếm dưới chân trong sheet),
-          // thân nâng khỏi mặt đất, bóng đất giữ nguyên ở dưới.
-          var flyCol = moving ? Math.floor(tNow / 110) % 5 : 0;
-          ctx.drawImage(flyIm, flyCol * 96, dir8 * 120, 96, 120, px + 16 - 32, py + 32 - 80 - 20, 64, 80);
-          pTop = py + 32 - 80 - 20;
+          // Cưỡi kiếm: sheet bay riêng (kiếm dưới chân trong sheet), thân
+          // nâng theo flyLiftPx (0 ở mặt đất -> 28px ở pha air, nội suy
+          // qua hai pha cất/hạ), bóng đất giữ nguyên ở dưới.
+          // Chu kỳ khung: cột 0 = lơ lửng tĩnh (đứng yên trên không và hai
+          // pha cất/hạ); đang bay di chuyển thì cột 1-4, mỗi khung 0,18s.
+          var flyCol = (flyPhase === 'air' && moving) ? 1 + Math.floor(tNow / 180) % 4 : 0;
+          ctx.drawImage(flyIm, flyCol * 96, dir8 * 120, 96, 120, px + 16 - 32, py + 32 - 80 - flyLiftPx, 64, 80);
+          pTop = py + 32 - 80 - flyLiftPx;
           arcvDrawSilverStreak(pTop);
           labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
           return;
@@ -2843,7 +2938,16 @@
   function trimFloats() { while (floats.length > 24) floats.shift(); }
 
   /* ---------- Thoại ---------- */
-  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; questNav = null; resetJoy(); closeTapMenu(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  function say(lines, cb) {
+    // ĐỢT NGỰ KIẾM: điểm móc DUY NHẤT của luật "mọi thoại đều phải hạ cánh
+    // trước" (thiết kế mục 3.7) — mọi đường mở thoại trong game đều qua
+    // say() này, nên chỉ cần chặn ở đây: đang bay thì hạ cánh bắt buộc
+    // xuống ô đáp an toàn gần nhất, cảnh bị hoãn vào hàng đợi và được xả
+    // ngay khi chạm đất (flyTick) hoặc khi hộp thoại đang chạy khép lại
+    // (flyAfterDialogue). Hạ cánh bắt buộc KHÔNG tính là lượt tập hạ cánh.
+    if (flyPhase !== 'ground') { flySayQueue.push({ lines: lines, cb: cb }); flyForceLand(); return; }
+    clickPath = null; clickTarget = null; pendingInteract = null; questNav = null; resetJoy(); closeTapMenu(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine();
+  }
   /* Gói I (đợt nóng 3) — cảnh đo phải phân rõ AI ĐANG ĐO: dữ kiện cảnh
      (story.js) ghim trên từng dòng: spot = id nhân vật đang đứng tại đá
      đo/thước ('hero' = người chơi), spotAt = ô đứng trước đá đo cho NPC,
@@ -2893,7 +2997,7 @@
   }
   function nextLine() {
     if (dlgTypeTimer) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; dlgTypeFull = null; }
-    if (!dlgQueue.length) { stopVoice(); dlg = null; restoreSceneSpot(); updateDlgResult(null); hideAtkPanel(); atkPanelShown = false; $('dialogue').classList.add('hidden'); $('dlg-choices').innerHTML = ''; if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } return; } // dọn luôn nút lựa chọn: nút của dòng lựa chọn cuối không được sống sót sau khi thoại đóng (bấm lại qua nút ma từng làm trận tỉ thí kẹt ở pha kết thúc)
+    if (!dlgQueue.length) { stopVoice(); dlg = null; restoreSceneSpot(); updateDlgResult(null); hideAtkPanel(); atkPanelShown = false; $('dialogue').classList.add('hidden'); $('dlg-choices').innerHTML = ''; if (dlgCb) { var cb = dlgCb; dlgCb = null; cb(); } flyAfterDialogue(); return; } // dọn luôn nút lựa chọn: nút của dòng lựa chọn cuối không được sống sót sau khi thoại đóng (bấm lại qua nút ma từng làm trận tỉ thí kẹt ở pha kết thúc) — flyAfterDialogue (đợt ngự kiếm): thoại vừa khép thì nối tiếp bước chuỗi bay của chính lần tương tác này, sau mọi cảnh nhiệm vụ chính
     dlg = dlgQueue.shift();
     updateDlgPortrait(dlg); // gói phụ 4: chân dung đổi theo đúng người nói của dòng này
     // Tranh phân cảnh (gói phụ 8): hiện cùng dòng DẪN của đợt một chuỗi
@@ -3270,6 +3374,7 @@
     if (daiFight) return; // ARCIV ch.13: đang trong trận đài thách đấu — tương tác khóa (sau khối dlg để thoại giữa trận vẫn tiến bằng phím E)
     if (arcFig) return; // ARCIV ch.14/15: đang trong trận kịch bản dã ngoại — tương tác khóa
     if (pracFight) return; // bot luyện tập: đang tỉ thí ở sân luyện công — tương tác khóa
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: phải hạ cánh xuống đất mới tương tác được
     var ft = frontTile();
     var pt = playerTile();
     // Chương 1 (gói phụ sau chơi thử live 02/11): khi chưa đo mà đang đứng
@@ -3695,6 +3800,7 @@
   }
   function startQuestNav() {
     if (!state || dlg) return;
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: tự tìm đường là đường mặt đất — phải hạ cánh trước
     var side = selectedSideTargetQuest();
     var q = side || L.questById(state.quest);
     if (!q || !q.hint) { toast('Nhiệm vụ này chưa có điểm đến cố định — hãy làm theo phần mô tả của nhiệm vụ.'); return; }
@@ -3987,9 +4093,15 @@
     if (!state) return out;
     var t = resolveQuestTarget();
     var pinT = tapPinTarget(); // đợt tapmenu: ghim dẫn đường của người chơi ưu tiên hơn đích nhiệm vụ
+    // Đợt ngự kiếm (lệnh Bui 17:20 ngày 2026-11-06): chuỗi học bay đang mở
+    // thì bước hiện tại THẮNG đích nhiệm vụ chính tại tông (kể cả cảnh mở
+    // chương 9); ghim tay của người chơi vẫn thắng chuỗi.
+    var flyT = pinT ? null : flyGuideTarget();
     if (pinT) t = pinT;
+    else if (flyT) t = flyT;
     out.target = t;
     out.pinned = !!pinT;
+    out.fly = !!flyT;
     if (!t) return out;
     var d = guideDisplayTarget(t);
     out.display = d;
@@ -4422,6 +4534,10 @@
   }
 
   function talkTo(npc) {
+    // Đợt ngự kiếm: ghi NPC của lần tương tác này — khi MỌI cảnh của lần
+    // tương tác khép lại, flyAfterDialogue sẽ nối tiếp bước chuỗi bay của
+    // đúng NPC này (chuỗi luôn chạy SAU cảnh nhiệm vụ chính).
+    flyTalkCtx = npc ? npc.id : null; flyChained = false;
     // Đợt tapmenu: ghi khóa hảo cảm của thương nhân để đường mua trong
     // thoại áp giảm giá 5% khi đã đạt Thân thiết (số [ĐỀ XUẤT]).
     if (npc && (npc.id === 'phap_khi_chu' || npc.id === 'duoc_su')) shopAffKey = affKeyFor(npc);
@@ -5567,6 +5683,7 @@
       spawnMonstersForMap();
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
+      flyResetFlight(); // đợt ngự kiếm: chuyển bản đồ luôn đặt trạng thái bay về mặt đất (thiết kế mục 3.6)
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       refreshHUD(); saveNow();
       if (cb) cb();
@@ -8686,6 +8803,7 @@
     refreshHUD(); saveNow();
   }
   function castDinh() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: không tung chiêu trên không
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('dinh'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('dinh'); return; } // ARCIV
@@ -8718,6 +8836,7 @@
     refreshHUD(); saveNow();
   }
   function castPhong() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: không tung chiêu trên không
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('phong'); return; } // Mục F: LỆNH dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('phong'); return; } // ARCIV
@@ -10103,6 +10222,265 @@
      chỉ ĐỌC cờ mở khóa hiện có, không tự đặt cờ. */
   function flyUnlocked() { return !!(state && state.flags && (state.flags.flyLearned || (state.flags.flyStage | 0) >= 2)); }
   function flyRiding() { return flyUnlocked() && !!(state.flags && state.flags.flyRiding); }
+  /* ================= ĐỢT TÍCH HỢP NGỰ KIẾM 2026-11-06 =================
+     Toàn bộ phần chơi được của ngự kiếm: máy pha bay (cất/hạ/trên không),
+     luật bay, chuỗi học 5 bước với trưởng lão + Liễu Khuynh Tiên, ưu tiên
+     dẫn đường/hiển thị sau Trúc Cơ (lệnh Bui 17:20 ngày 2026-11-06), móc
+     hạ-cánh-trước-thoại và cầu kiểm chứng VSLC_FLY. Thiết kế gốc:
+     docs/ngukiem-prep/ngukiem-design.md + parent-decisions.md. */
+  // Chuỗi đang mở và chưa học xong (dùng cho dẫn đường + danh sách việc).
+  function flyChainOpen() { return !!(state && L.flyQuestAvailable(state)); }
+  // Câu chỉ việc của từng giai đoạn (nguyên văn bảng bước của thiết kế).
+  function flyStepText(st) {
+    if (st === 1) return 'Tới Đài Thăng Long ở tây bắc tông, gặp Liễu Khuynh Tiên — kiếm ý phải học từ người giữ thước đo kiếm của tông.';
+    if (st === 2) return 'Ra sân luyện công phía tây quảng trường tông: tập cất cánh và hạ cánh ba lượt trọn, rồi bay lướt qua cả ba cọc gỗ trong một chuyến bay.';
+    if (st === 3) return 'Bay trọn vòng thi Thăng Vân: cất cánh ở bãi đáp sân luyện công, qua cọc gỗ giữa sân, qua tâm quảng trường tông, lên Đài Trúc Cơ, rồi về hạ cánh đúng bãi đáp.';
+    if (st === 4) return 'Về Thanh Vân Đại Điện báo lại trưởng lão tông: vòng bay đã trọn.';
+    return 'Tới Thanh Vân Đại Điện gặp trưởng lão tông: Trúc Cơ rồi, có một việc của cảnh giới này cần làm.';
+  }
+  // Đích dẫn đường của bước hiện tại (qua cùng máy hint của nhiệm vụ).
+  function flyGuideTarget() {
+    if (!flyChainOpen()) return null;
+    var st = state.flags.flyStage | 0;
+    var hint = st === 1 ? { map: 'thanh_van_tong', x: 17, y: 12 }
+      : (st === 2 || st === 3) ? { map: 'thanh_van_tong', x: 38, y: 58 }
+      : { map: 'thanh_van_tong', x: 60, y: 27 };
+    return resolveHintTarget('fly_chain', 'Ngự Kiếm Phi Hành', hint, null);
+  }
+  // Dữ liệu cho khối việc phụ "Ngự Kiếm Phi Hành" ở đầu danh sách việc phụ.
+  function flySideItemData() {
+    if (!flyChainOpen()) return null;
+    var f = state.flags, st = f.flyStage | 0, sub = '';
+    if (st === 2) sub = 'Lượt cất–hạ trọn: ' + Math.min(3, f.flyDrills | 0) + '/3 · Cọc gỗ đã lướt qua trong một chuyến: ' + ((f.flyDummyPass & 1 ? 1 : 0) + (f.flyDummyPass & 2 ? 1 : 0) + (f.flyDummyPass & 4 ? 1 : 0)) + '/3';
+    else if (st === 3) sub = 'Điểm mốc đã qua: ' + Math.min(3, f.flyTrialCp | 0) + '/3 — khép vòng bằng cách hạ cánh đúng bãi đáp của sân luyện công.';
+    return { stage: st, text: flyStepText(st), sub: sub };
+  }
+  // Thông báo chặn hành động khi đang bay (một câu duy nhất, chống spam 3s).
+  function flyBlockToast() {
+    var now = Date.now();
+    if (now - flyBlockToastAt < 3000) return;
+    flyBlockToastAt = now;
+    toast('Hãy hạ cánh xuống đất trước đã.', 2600);
+  }
+  // Chuyển pha bay: đồng bộ cầu nối lớp vẽ (state.flags.flyRiding) và nút BAY.
+  function flySetPhase(p) {
+    flyPhase = p; flyPhaseT = 0;
+    if (state && state.flags) state.flags.flyRiding = (p !== 'ground');
+    if (p === 'ground') { flyLiftPx = 0; flyDest = null; flyWindStop(false); }
+    updateFlyBtn();
+  }
+  // Ô đáp an toàn gần nhất: ô hiện tại -> vòng Chebyshev 1..3 quét bắc->nam,
+  // tây->đông -> ô cất cánh (thiết kế mục 3.7).
+  function flySafeTileNear(tx, ty) {
+    if (L.isWalkable(tx, ty, npcsLive)) return { x: tx, y: ty };
+    for (var r = 1; r <= 3; r++) {
+      for (var dy = -r; dy <= r; dy++) {
+        for (var dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          if (L.isWalkable(tx + dx, ty + dy, npcsLive)) return { x: tx + dx, y: ty + dy };
+        }
+      }
+    }
+    if (flyTakeoffTile) return { x: flyTakeoffTile.x, y: flyTakeoffTile.y };
+    return { x: tx, y: ty };
+  }
+  function flyTryTakeoff() {
+    if (!state || dlg || fade.phase !== 'idle') return;
+    if (tlFight || hhtFight || daiFight || arcFig || pracFight || enc) return;
+    if (flyPhase !== 'ground') return;
+    if (keys['t'] || medLatch) { toast('Đang thổ nạp — hãy thôi thổ nạp trước khi cất cánh.', 3200); return; }
+    var r = L.flyCanTakeoff(state, L.activeMap());
+    if (!r.ok) { toast(r.reason, 3800); return; }
+    flyTakeoffTile = playerTile();
+    flyForcedLand = false;
+    clickPath = null; clickTarget = null; pendingInteract = null; questNav = null;
+    // Bước 3: mỗi chuyến bay là một lượt tính cọc riêng (thiết kế mục 5.1).
+    if ((state.flags.flyStage | 0) === 2) state.flags.flyDummyPass = 0;
+    // Bước 4: cất cánh từ bãi đáp thì đồng hồ vòng thi bắt đầu chạy.
+    if ((state.flags.flyStage | 0) === 3 && state.map === 'thanh_van_tong' &&
+        flyTakeoffTile.x >= 36 && flyTakeoffTile.x <= 40 && flyTakeoffTile.y >= 57 && flyTakeoffTile.y <= 60) {
+      flyTrialStartMs = Date.now();
+    }
+    sfxFlyTakeoff();
+    rings.push({ x: px + 16, y: py + 28, r: 6, a: 0.8 }); // vòng sóng tỏa từ chân
+    spawnParts(px + 16, py + 28, 10, '170,225,255', 30, true); // hạt linh khí (spawnParts tự giữ trần MAX_PARTS)
+    flySetPhase('rising');
+  }
+  function flyTryLand() {
+    if (flyPhase !== 'air' || !state) return;
+    var pt = playerTile();
+    if (!L.isWalkable(pt.x, pt.y, npcsLive)) { toast('Không hạ cánh được ở đây — hãy bay tới một khoảng đất trống.', 3400); return; }
+    flySetPhase('landing');
+  }
+  function flyToggle() {
+    if (flyPhase === 'ground') flyTryTakeoff();
+    else if (flyPhase === 'air') flyTryLand();
+  }
+  // Hạ cánh bắt buộc (khi một cảnh thoại sắp mở): dịch tới ô đáp an toàn
+  // gần nhất rồi vào pha hạ; lượt này KHÔNG tính vào flyDrills hay vòng thi
+  // (cờ flyForcedLand — flyOnLanded bỏ qua toàn bộ đếm số cho lượt này).
+  function flyForceLand() {
+    if (flyPhase === 'ground') return;
+    var pt = playerTile();
+    var dest = flySafeTileNear(pt.x, pt.y);
+    px = dest.x * TILE; py = dest.y * TILE - 16; velX = 0; velY = 0;
+    flyForcedLand = true; // lượt hạ bắt buộc: flyOnLanded bỏ qua mọi đếm số
+    flySetPhase('landing');
+  }
+  // Chốt duy nhất khi một pha hạ kết thúc: đếm lượt tập / khép vòng thi.
+  function flyOnLanded() {
+    if (!state) return;
+    if (flyForcedLand) { flyForcedLand = false; return; }
+    var pt = playerTile(), st = state.flags.flyStage | 0;
+    var inYard = function (t) { return t && t.x >= 30 && t.x <= 46 && t.y >= 53 && t.y <= 62; };
+    if (state.map === 'thanh_van_tong' && st === 2) {
+      if (inYard(flyTakeoffTile) && inYard(pt) && (state.flags.flyDrills | 0) < 3) {
+        state.flags.flyDrills = (state.flags.flyDrills | 0) + 1;
+        toast('Lượt cất–hạ trọn: ' + state.flags.flyDrills + '/3.', 2600);
+      }
+      if ((state.flags.flyDrills | 0) >= 3 && state.flags.flyDummyPass === 7) {
+        state.flags.flyStage = 3; sfxQuest(); refreshHUD(); saveNow();
+        say(ST.SCENE_FLY_DRILLS_DONE);
+        return;
+      }
+      refreshHUD();
+    }
+    if (state.map === 'thanh_van_tong' && st === 3 && (state.flags.flyTrialCp | 0) === 3 &&
+        pt.x >= 36 && pt.x <= 40 && pt.y >= 57 && pt.y <= 60) {
+      state.flags.flyStage = 4;
+      if (flyTrialStartMs > 0) { state.flags.flyTrialBest = Math.max(1, Math.round((Date.now() - flyTrialStartMs) / 1000)); flyTrialStartMs = 0; }
+      sfxQuest(); refreshHUD(); saveNow();
+      say(ST.SCENE_FLY_TRIAL_DONE);
+    }
+  }
+  // Theo dõi mốc thi + chân cọc trong lúc bay (gọi mỗi khung ở pha air).
+  function flyTrackFlightProgress() {
+    if (!state || state.map !== 'thanh_van_tong') return;
+    var st = state.flags.flyStage | 0, pt = playerTile();
+    if (st === 2) {
+      if (pt.y === 56) {
+        var bit = pt.x === 33 ? 1 : pt.x === 38 ? 2 : pt.x === 43 ? 4 : 0;
+        if (bit && !(state.flags.flyDummyPass & bit)) {
+          state.flags.flyDummyPass |= bit;
+          if (state.flags.flyDummyPass === 7) toast('Đã lướt qua cả ba cọc gỗ trong một chuyến bay — hạ cánh trong sân để trọn phần tập.', 3400);
+        }
+      }
+    } else if (st === 3) {
+      var cp = state.flags.flyTrialCp | 0;
+      if (cp === 0 && pt.x === 38 && pt.y === 56) { state.flags.flyTrialCp = 1; toast('Mốc 1/3: cọc gỗ giữa sân.', 2400); }
+      else if (cp === 1 && Math.abs(pt.x - 61) <= 1 && Math.abs(pt.y - 61) <= 1) { state.flags.flyTrialCp = 2; toast('Mốc 2/3: tâm quảng trường tông.', 2400); }
+      else if (cp === 2 && Math.abs(pt.x - 61) <= 1 && Math.abs(pt.y - 8) <= 1) {
+        state.flags.flyTrialCp = 3; sfxQuest();
+        // Dòng dẫn của thiết kế: TRÌNH BẰNG THÔNG BÁO + TIẾNG TRỰC TIẾP,
+        // không mở hộp thoại giữa chuyến bay (mở thoại sẽ kích hoạt hạ
+        // cánh bắt buộc và phá vòng thi) — chệch trình diễn đã khai báo.
+        toast(ST.SCENE_FLY_TRIAL_HALF[0].text, 5200);
+        playVoiceFor(ST.SCENE_FLY_TRIAL_HALF[0]);
+      }
+    }
+  }
+  // Máy pha bay, gọi mỗi khung từ vòng lặp chính (khi thoại đã đóng).
+  function flyTick(dt) {
+    if (flyPhase === 'rising') {
+      flyPhaseT += dt;
+      flyLiftPx = FLY_LIFT * Math.min(1, flyPhaseT / FLY_RISE_S);
+      if (flyPhaseT >= FLY_RISE_S) { flySetPhase('air'); flyWindStart(); }
+      return;
+    }
+    if (flyPhase === 'landing') {
+      flyPhaseT += dt;
+      flyLiftPx = FLY_LIFT * Math.max(0, 1 - flyPhaseT / FLY_LAND_S);
+      if (flyPhaseT >= FLY_LAND_S) {
+        flySetPhase('ground');
+        spawnParts(px + 16, py + 28, 8, '200,190,160', 22, false); // bụi đất ở điểm chạm
+        flyOnLanded();
+        if (!dlg && flySayQueue.length) { var fs = flySayQueue.shift(); say(fs.lines, fs.cb); }
+      }
+      return;
+    }
+    if (flyPhase === 'air') {
+      flyWindUpdate(Math.min(1, Math.hypot(velX, velY) / FLY_SPEED));
+      flyTrackFlightProgress();
+      flyTrailT += dt;
+      if (flyTrailT >= 0.05) {
+        flyTrailT = 0;
+        var spdN = Math.hypot(velX, velY);
+        if (spdN >= FLY_SPEED * 0.9 && fxOn()) spawnParts(px + 16 - velX / spdN * 18, py + 30 - velY / spdN * 10, 1, '170,225,255', 10, false);
+      }
+    }
+  }
+  // Thông báo ưu tiên ngay khi vừa Trúc Cơ / nạp save hồi tố (một lần/phiên).
+  function flyChainNotice() {
+    if (!state || flyNoticeShown || !flyChainOpen()) return;
+    if ((state.flags.flyStage | 0) !== 0) return;
+    flyNoticeShown = true;
+    sfxQuest();
+    toast('Việc đầu tiên của một tu sĩ Trúc Cơ: học NGỰ KIẾM PHI HÀNH. Tới Thanh Vân Đại Điện gặp trưởng lão tông — dẫn đường và danh sách việc phụ đã ưu tiên việc này trên mọi việc khác.', 6000);
+    refreshHUD();
+  }
+  function flyOpenStart() {
+    say(ST.SCENE_FLY_START, function () {
+      state.flags.flyStage = 1; sfxQuest(); refreshHUD(); saveNow();
+      toast('Việc riêng — Ngự Kiếm Phi Hành: tới Đài Thăng Long gặp Liễu Khuynh Tiên.', 4600);
+    });
+  }
+  function flyGraduate() {
+    var fast = (state.flags.flyTrialBest | 0) > 0 && (state.flags.flyTrialBest | 0) <= 90;
+    say(fast ? ST.SCENE_FLY_DONE_FAST : ST.SCENE_FLY_DONE_SLOW, function () {
+      state.flags.flyLearned = true; // PHÉP GÁN DUY NHẤT của cờ này trong luồng chơi thật (đường nghiệm thu)
+      L.addSectMerit(state, 20);
+      addTuvi(50);
+      sfxBell();
+      refreshHUD(); saveNow(); updateFlyBtn();
+      toast('Đã học NGỰ KIẾM! +20 điểm cống hiến tông môn, +50 tu vi. Từ nay cất cánh ở mọi bản đồ ngoài trời bằng phím F hoặc nút BAY.', 6000);
+    });
+  }
+  // Bước chuỗi tại trưởng lão: trả true nếu đã mở một cảnh của chuỗi.
+  function flyElderStep() {
+    if (!state || state.flags.flyLearned) return false;
+    var st = state.flags.flyStage | 0;
+    if (st === 4) { flyGraduate(); return true; }
+    if (st === 0 && flyChainOpen()) { flyOpenStart(); return true; }
+    if (st === 0 && (state.realm | 0) >= 2 && (state.unlocked || []).indexOf('that_tinh') < 0) { say(ST.SCENE_FLY_NO_SWORD); return true; }
+    return false;
+  }
+  // Bước chuỗi tại Liễu Khuynh Tiên: truyền bản bay tập.
+  function flyLieuStep() {
+    if (!state || (state.flags.flyStage | 0) !== 1) return false;
+    say(ST.SCENE_FLY_SWORD, function () {
+      state.flags.flyStage = 2; sfxQuest(); refreshHUD(); saveNow(); updateFlyBtn();
+      toast('Đã nhận kiếm ý: từ nay cất cánh được trong phạm vi Thanh Vân Tông (phím F hoặc nút BAY). Ra sân luyện công tập cất và hạ.', 5200);
+    });
+    return true;
+  }
+  // Nối tiếp chuỗi SAU khi hộp thoại của lần tương tác vừa khép (điểm móc
+  // duy nhất ở nhánh đóng thoại của nextLine): cảnh nhiệm vụ chính của
+  // chính lần tương tác đó luôn chạy trước; hàng đợi cảnh bị hoãn vì hạ
+  // cánh bắt buộc xả trước cả bước chuỗi.
+  function flyAfterDialogue() {
+    if (!state || dlg || (dlgQueue && dlgQueue.length)) return;
+    if (flySayQueue.length) { var fs = flySayQueue.shift(); say(fs.lines, fs.cb); return; }
+    if (flyChained) return;
+    if (flyTalkCtx === 'truong_lao_tong' && flyElderStep()) flyChained = true;
+    else if (flyTalkCtx === 'lieu_khuynh_tien' && flyLieuStep()) flyChained = true;
+  }
+  // Đặt lại trạng thái bay khi chuyển bản đồ / đổi phiên: luôn về mặt đất.
+  function flyResetFlight() {
+    flyPhase = 'ground'; flyLiftPx = 0; flyPhaseT = 0; flyDest = null; flyTakeoffTile = null;
+    flySayQueue.length = 0; flyTalkCtx = null; flyChained = false; flyTrialStartMs = 0; flyForcedLand = false;
+    flyWindStop(true);
+    if (state && state.flags) state.flags.flyRiding = false;
+    updateFlyBtn();
+  }
+  // Nút BAY/HẠ: hiện khi đã có quyền bay (học xong hoặc đang bay tập),
+  // nằm NGOÀI cụm 9 nút chiến đấu, ngay trên nút CHẠY (tiền lệ nút CHẠY).
+  function updateFlyBtn() {
+    var b = $('btn-fly'); if (!b) return;
+    var show = !!state && !!state.flags && ((state.flags.flyStage | 0) >= 2 || !!state.flags.flyLearned);
+    b.classList.toggle('hidden', !show);
+    if (b.querySelector) { var nm = b.querySelector('.run-btn-name'); if (nm) nm.textContent = flyPhase === 'ground' ? 'BAY' : 'HẠ'; }
+    if (b.setAttribute) b.setAttribute('aria-pressed', flyPhase !== 'ground' ? 'true' : 'false'); // guard: vài harness kiểm thử tối thiểu không có setAttribute
+  }
   function swordStateNow(bf) {
     if (bf && bf.sheet !== 'namPq' && bf.sheet !== 'nuPq') return 'hand';
     if (flyRiding()) return 'ride';
@@ -12611,6 +12989,7 @@
     var be = $('btn-elements'); if (be) be.classList.add('hidden');
   }
   function toggleBiPhapPanels() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: mở bảng bí pháp phải đứng trên mặt đất
     var p = $('biphap-panel'); if (!p || !state) return;
     if (!p.classList.contains('hidden')) {
       p.classList.add('hidden'); biPhapChipsOpen = false;
@@ -14558,6 +14937,7 @@
   }
   function quickEatFood() {
     if (!state) return;
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: ăn uống phải đứng trên mặt đất
     var id = L.bestFoodId(state);
     if (!id) { toast('Không có đồ ăn trong túi — mua ở Vọng Tiên Tửu Điếm tại trấn hoặc sạp chợ Cô Châu Thành; hái Nấm Rừng về nấu canh, săn thú rừng lấy thịt nướng.', 5000); return; }
     eatFoodFlow(id);
@@ -15279,6 +15659,7 @@
           state.quest = 'q8_thu_tieng';
           refreshHUD(); saveNow();
           toast('Nghi lễ Trúc Cơ đã hoàn tất tại đài. Về đại điện gặp trưởng lão tông.', 4600);
+          flyChainNotice(); // đợt ngự kiếm: vừa Trúc Cơ xong là hiện việc học bay NGAY (lệnh Bui 17:20 ngày 2026-11-06)
         });
         refreshHUD();
         return;
@@ -15323,6 +15704,7 @@
           fireAnnounce(); // tuyên cáo Thiên Đạo: biểu ngữ + sổ + tiếng tuyên đọc (mục 9)
           refreshHUD(); saveNow();
           toast('Đột phá thành công: ' + r.label + '! Về đại điện gặp trưởng lão tông.', 4600);
+          flyChainNotice(); // đợt ngự kiếm: vừa Trúc Cơ xong là hiện việc học bay NGAY (lệnh Bui 17:20 ngày 2026-11-06)
         });
         refreshHUD();
       }
@@ -15377,6 +15759,7 @@
 
   /* ---------- Hành động ---------- */
   function castPha() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: không tung chiêu trên không
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long — bấm là phát hưởng, ải đặt lại
     if (hhtFight) { if (!dlg) hhtCastWord('pha'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('pha'); return; } // ARCIV: cộng hưởng trong trận đài thách đấu
@@ -15417,6 +15800,7 @@
     refreshHUD(); saveNow();
   }
   function castChan() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: không tung chiêu trên không
     if (tlFight) { tlVoiceReset(); return; } // gói phụ 13: Vạn Âm Cộng Hưởng bị khóa ở ải Thăng Long
     if (hhtFight) { if (!dlg) hhtCastWord('chan'); return; } // Mục F: Ngôn Linh dùng được trong trận đài
     if (daiFight) { if (!dlg) daiCastWord('chan'); return; } // ARCIV
@@ -15438,6 +15822,7 @@
      nói. Đánh vào cọc gỗ thì nứt như mọi đòn nhưng không làm cọc đổ hẳn —
      cọc gỗ của trấn vẫn là việc của một đòn Phá Âm. */
   function castSword() {
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: không tung chiêu trên không
     // Người chơi chủ động ra đòn kiếm = giao tranh bắt đầu: hủy lần
     // mở-tự-động đang chờ của thao tác chạm NPC trước đó (đường đi giữ
     // nguyên để cơ chế chạm-quái/giao chiến hiện tại xử lý như cũ).
@@ -15474,6 +15859,7 @@
   }
   function doBreakthrough() {
     if (dlg) return;
+    if (flyPhase !== 'ground') { flyBlockToast(); return; } // đợt ngự kiếm: đột phá phải đứng trên mặt đất (độ kiếp và bay không tương tác nhau)
     // Chặn ở nguồn tại biên đại cảnh giới Luyện Khí tầng 9 -> Trúc Cơ: nâng
     // đại cảnh giới là sự kiện truyện tại Đài Trúc Cơ (docs/realm-prep/),
     // không phải nút bấm thường. Chuỗi chương 8 chưa khép (chưa tới
@@ -15577,11 +15963,32 @@
     if (!list || !state || !L.sideQuestList) return;
     var items = L.sideQuestList(state).filter(function (it) { return it.status !== 'locked'; });
     var sq = L.ensureSideQuests(state);
-    var sig = items.map(function (it) { return it.def.id + ':' + it.status + ':' + it.progress.cur + '/' + it.progress.target; }).join('|') + '#sel=' + (sq.selected || '');
+    // Đợt ngự kiếm: khối việc chuỗi bay đứng ĐẦU danh sách khi chuỗi đang
+    // mở (lệnh ưu tiên sau Trúc Cơ) — vẽ bằng cùng khuôn .side-item nhưng
+    // KHÔNG thuộc mảng nhiệm vụ phụ (không chọn dẫn đường: dẫn đường của
+    // chuỗi đã thắng sẵn trong guideCompute).
+    var flyItem = flySideItemData();
+    var sig = items.map(function (it) { return it.def.id + ':' + it.status + ':' + it.progress.cur + '/' + it.progress.target; }).join('|') + '#sel=' + (sq.selected || '')
+      + '#fly=' + (flyItem ? flyItem.stage + ':' + flyItem.text + ':' + flyItem.sub : '');
     if (sig === sidePanelSig) return;
     sidePanelSig = sig;
     list.innerHTML = '';
+    if (flyItem) {
+      var fb = document.createElement('div');
+      fb.className = 'side-item fly-item'; if (fb.setAttribute) fb.setAttribute('data-side-id', 'fly_chain');
+      fb.style.cssText = 'margin:6px 0;padding:6px 8px;border:1px solid #b98a2f;border-radius:8px;background:rgba(46,32,8,0.6)';
+      var fnm = document.createElement('div');
+      fnm.className = 'quest-name'; fnm.style.fontSize = '13px';
+      fnm.textContent = 'Ngự Kiếm Phi Hành — việc ưu tiên sau Trúc Cơ';
+      fb.appendChild(fnm);
+      var fpr = document.createElement('div');
+      fpr.className = 'quest-desc';
+      fpr.textContent = flyItem.text + (flyItem.sub ? ' (' + flyItem.sub + ')' : '');
+      fb.appendChild(fpr);
+      list.appendChild(fb);
+    }
     if (!items.length) {
+      if (flyItem) return;
       var d0 = document.createElement('div');
       d0.className = 'quest-desc'; d0.textContent = 'Chưa mở — nhiệm vụ phụ mở dần theo hành trình: nhiệm vụ hướng dẫn đồ ăn ngay ở chương đầu, chuỗi phụ quanh Trúc Cơ mở ở chương 8.';
       list.appendChild(d0);
@@ -15645,6 +16052,7 @@
   function refreshHUD() {
     if (!state) return;
     renderSidePanel();
+    updateFlyBtn(); // đợt ngự kiếm: nút BAY hiện/đổi nhãn theo quyền bay + pha bay
     $('hud-realm').textContent = L.realmName(state.realm, state.stage);
     $('hud-hp').textContent = Math.floor(state.hp) + ' / ' + state.hpMax;
     $('hud-hp-bar').style.width = Math.max(0, Math.min(100, state.hp / state.hpMax * 100)) + '%';
@@ -15900,6 +16308,9 @@
       var flyNow = flyRiding();
       runIntent = !flyNow && (!!keys['shift'] || runBtnOn);
       var sp = runIntent ? RUN_SPEED : WALK_SPEED, dx = 0, dy = 0, smoothDrive = false;
+      // ĐỢT NGỰ KIẾM: đang ở pha air thì tốc độ là tốc độ bay 198 px/giây —
+      // chạy nhanh KHÔNG cộng vào (runIntent đã bị flyNow chặn ở trên).
+      if (flyPhase === 'air') sp = FLY_SPEED;
       var spMove = sp; // tốc độ cho đường chạm-để-đi: nhánh đường đi tự quyết lại theo cờ clickRun
       var manual = false;
       if (keys['arrowleft'] || keys['a']) { dx = -sp; facing = 'left'; manual = true; }
@@ -15908,6 +16319,7 @@
       else if (keys['arrowdown'] || keys['s']) { dy = sp; facing = 'down'; manual = true; }
       if (manual) {
         clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; questNav = null; clickRun = false;
+        flyDest = null; // đợt ngự kiếm: lái tay bằng phím là hủy đích bay thẳng ngay
         resetJoy(); // phím di chuyển hủy trạng thái cần ngay
         // ĐỢT LÀM LẠI DI CHUYỂN 2026-11-03 (mục D): chuẩn hóa tốc độ mặt
         // đất — hai trục cùng active thì co mỗi trục theo 1/sqrt(2) để
@@ -15924,6 +16336,7 @@
         joy.active = jn.active; joy.ux = jn.ux; joy.uy = jn.uy; joy.speed = jn.speed;
         if (jn.active) {
           questNav = null; // người chơi cầm cần là hủy tự tìm đường ngay
+          flyDest = null; // đợt ngự kiếm: cầm cần lái là hủy đích bay thẳng ngay
           // ĐỢT CHẠY NHANH: đẩy cần tới sát vành — độ lớn kéo SAU độ
           // nhạy >= JOY_RUN_MIN (0,92) — thì CHẠY: nền tốc độ đổi sang
           // 176 và hệ số độ lớn kẹp ở 1, để tốc độ chạy không bao giờ
@@ -15940,6 +16353,24 @@
           dir8 = L.dir8FromVector(dx, dy, dir8);
           if (Math.abs(jn.ux) >= Math.abs(jn.uy)) facing = jn.ux > 0 ? 'right' : 'left';
           else facing = jn.uy > 0 ? 'down' : 'up';
+        }
+      }
+      // ĐỢT NGỰ KIẾM: đang bay thì lệnh chạm-để-đi là BAY THẲNG tới một
+      // điểm đích duy nhất (không tìm đường ô — bay cắt thẳng qua mặt
+      // nước và vật cản thấp); đường thẳng bị vật cao chặn hẳn thì hủy
+      // đích, người chơi tự lái vòng qua (thiết kế mục 3.8).
+      if (flyPhase === 'air' && flyDest && !manual && joy.state !== 'stick') {
+        var fdx = flyDest.x - (px + 16), fdy = flyDest.y - (py + 16);
+        var fDist = Math.hypot(fdx, fdy);
+        var fStep = FLY_SPEED * dt + 0.6; // cửa sổ tới nơi của một khung, như ô đích cuối của đường chạm-để-đi
+        if (Math.abs(fdx) <= fStep && Math.abs(fdy) <= fStep) {
+          px = flyDest.x - 16; py = flyDest.y - 16; velX = 0; velY = 0; flyDest = null; flyDestStallT = 0;
+        } else if (fDist > 0.001) {
+          dx = fdx / fDist * FLY_SPEED; dy = fdy / fDist * FLY_SPEED;
+          dir8 = L.dir8FromVector(dx, dy, dir8);
+          if (Math.abs(fdx) >= Math.abs(fdy)) facing = fdx > 0 ? 'right' : 'left'; else facing = fdy > 0 ? 'down' : 'up';
+          if (Math.hypot(velX, velY) < 12) { flyDestStallT += dt; if (flyDestStallT > 0.6) { flyDest = null; flyDestStallT = 0; } }
+          else flyDestStallT = 0;
         }
       }
       // Di chuyển bằng chạm, hai chế độ:
@@ -16064,7 +16495,9 @@
       }
       // Tự tìm đường làm nhiệm vụ: lập chặng khi không còn đường đi dở
       // (đầu phiên, vừa sang bản đồ mới, hoặc đường cũ vừa kết thúc).
-      questNavTick();
+      // Đợt ngự kiếm: đang bay thì tự tìm đường MẶT ĐẤT đứng yên (người
+      // chơi tự lái trên không; hạ cánh xuống là đường tự chạy tiếp).
+      if (flyPhase === 'ground') questNavTick();
       // Rẽ cong khi đi theo đường chạm (gói E tăng cường): vector vận
       // tốc mong muốn được XOAY về hướng mới với tốc độ góc hữu hạn
       // (~430 độ/giây) thay vì lật tức thì — ở góc cua, thân nhân vật đi
@@ -16098,6 +16531,7 @@
       // Tăng cường gói E: gia tốc 1150 -> 1000, giảm tốc 800 -> 620 để
       // dốc khởi hành/dừng dài ra rõ rệt khi kết hợp vùng hãm đích 78px.
       if (duel) { dx = 0; dy = 0; clickPath = null; clickTarget = null; } // trận tỉ thí kịch bản (gói phụ 7): người chơi đứng xem và tiếp sức, không đi lại giữa trận
+      if (flyPhase === 'rising' || flyPhase === 'landing') { dx = 0; dy = 0; } // đợt ngự kiếm: hai pha cất/hạ khóa đầu vào di chuyển
       var ACCEL = 1000, DECEL = 620;
       velX = approachVel(velX, dx, dx !== 0 ? ACCEL : DECEL, dt);
       velY = approachVel(velY, dy, dy !== 0 ? ACCEL : DECEL, dt);
@@ -16230,7 +16664,7 @@
       var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
       var medPt = L.activeMap().meditate;
       var nearWell = !!medPt && Math.abs(cx - medPt.x) + Math.abs(cy - medPt.y) <= 2;
-      if ((keys['t'] || medLatch) && nearWell && state.unlocked.indexOf('voice') >= 0) {
+      if (flyPhase === 'ground' && (keys['t'] || medLatch) && nearWell && state.unlocked.indexOf('voice') >= 0) {
         meditating = true;
         // Âm linh khí xoay khi thổ nạp: nốt êm luân phiên mỗi ~0,9 giây + hạt tụ về người.
         medSfxT += dt;
@@ -16277,6 +16711,7 @@
       if (pracFight) updatePracFight(dtW); // bot luyện tập: trận tỉ thí sân luyện công
       arcvTick(dtW); // CUNG V: bộ điều khiển chiêu boss, thuyền hộ tống, nhịp giữ Định Âm
       arcBossTick(dtW); // ARCIV ch.16 + boss Hộ Trận: đồng hồ chiêu boss trong trận chạm trán
+      flyTick(dtW); // đợt ngự kiếm: máy pha bay chạy cùng nhịp thế giới (thoại mở thì cả khối này đứng yên — mà thoại mở luôn đồng nghĩa đã hạ cánh)
       checkPortalsAndZones();
     } else {
       // Mở thoại thì hủy đường đi bằng chuột và hủy cần cảm ứng.
@@ -16360,6 +16795,7 @@
       if (!isHuntMap(po.to)) maybeShowHuntSummary(); // rời hẳn vùng săn: chốt phiên săn trong bộ nhớ
       setMinimapLabel();
       clickPath = null; clickTarget = null; pendingInteract = null; medLatch = false; resetJoy(); cancelPinch(); zoomAnchor = null; velX = 0; velY = 0;
+      flyResetFlight(); // đợt ngự kiếm: chuyển bản đồ luôn đặt trạng thái bay về mặt đất (thiết kế mục 3.6)
       var dcS = desiredCam(); camX = dcS.x; camY = dcS.y;
       saveNow(); refreshHUD();
       toast('Đã tới: ' + L.activeMap().name + '.', 2600);
@@ -16378,6 +16814,24 @@
     if (!state || dlg || fade.phase !== 'idle') return; // đang mờ chuyển cảnh thì không kích lại
     if (hhtFight) return; // Mục F: đang tỉ thí trên đài — cổng ra khóa cho tới khi trận khép (thắng/thua đều có đường ra riêng)
     if (daiFight || arcFig) return; // ARCIV: đang trong trận kịch bản — cổng/vùng khóa cho tới khi trận khép
+    // ĐỢT NGỰ KIẾM: cổng dịch chuyển KHÔNG BAO GIỜ kích hoạt khi đang bay —
+    // kể cả cổng không điều kiện, kể cả khi hạ cánh ngay trên ô cổng ở
+    // khung trước (pha bay chỉ kết thúc ở flyTick, cổng chỉ được xét khi
+    // đã ở mặt đất hẳn). Bay qua dải cổng CHƯA MỞ thì vẫn hiện đúng thông
+    // báo khóa của cổng như đi bộ (chống spam dùng chung mốc portalToastAt).
+    // Các cảnh vùng (zones) cũng không kích hoạt trên không: nhân vật phải
+    // đứng trên mặt đất của vùng mới tính là "đang ở" trong vùng đó.
+    if (flyPhase !== 'ground') {
+      var fpt = playerTile(), fdef = L.activeMap();
+      for (var fi = 0; fi < fdef.portals.length; fi++) {
+        var fpo = fdef.portals[fi];
+        if (fpt.x >= fpo.x && fpt.x < fpo.x + fpo.w && fpt.y >= fpo.y && fpt.y < fpo.y + fpo.h && !L.portalUnlocked(state, fpo)) {
+          if (Date.now() - portalToastAt > 3000) { portalToastAt = Date.now(); toast(fpo.cond === 'dummy' ? 'Hãy hoàn thành chương 1 (phá cọc gỗ) trước khi rời trấn.' : (fpo.lockMsg || 'Chưa thể qua cổng này lúc này.')); }
+          break;
+        }
+      }
+      return;
+    }
     arcIvMaybeInjectWitness(); // ARCIV q14: tiêm nhân chứng giữ đất theo pha (hàm tự kiểm điều kiện + chống trùng)
     arcIvMaybeInjectWave2(); // ARCIV đợt 2 (ch.17–20): tiêm NPC theo quest/cờ + gỡ khi điều kiện hết
     arcvMaybeInject(); // CUNG V: Hứa U Nhàn ở thung lũng trong mạch chương 32
@@ -16685,7 +17139,12 @@
   function footBoxFreePad(nx, ny, pad) {
     var box = { x0: nx + 6 - pad, x1: nx + 26 + pad, y0: ny + 22 - pad, y1: ny + 31 + pad };
     var tiles = [[Math.floor(box.x0 / TILE), Math.floor(box.y0 / TILE)], [Math.floor(box.x1 / TILE), Math.floor(box.y0 / TILE)], [Math.floor(box.x0 / TILE), Math.floor(box.y1 / TILE)], [Math.floor(box.x1 / TILE), Math.floor(box.y1 / TILE)]];
-    for (var i = 0; i < 4; i++) if (!L.isWalkable(tiles[i][0], tiles[i][1], npcsLive)) return false;
+    // ĐỢT NGỰ KIẾM: đang ở pha air thì hộp chân xét theo LUẬT BAY
+    // (isFlyable: qua nước + vật cản thấp, vẫn chặn tường/nhà/cây/NPC);
+    // cất/hạ và mặt đất giữ luật đi bộ như cũ. Đây là điểm chuyển luật
+    // DUY NHẤT của đường di chuyển — tryMove và dò đoạn thẳng cùng dùng.
+    var stepChk = (flyPhase === 'air') ? L.isFlyable : L.isWalkable;
+    for (var i = 0; i < 4; i++) if (!stepChk(tiles[i][0], tiles[i][1], npcsLive)) return false;
     return true;
   }
   // Di chuyển MỘT trục (người gọi luôn truyền đúng một trục khác 0) theo
@@ -16782,7 +17241,16 @@
       if (k === '3') { tlSwordHeld = true; tlSwordHeldUntil = 0; tlSwordPress(); return; }
       if (k === '1' || k === '2' || k === '4' || k === '5') { tlVoiceReset(); return; }
     }
+    // ĐỢT NGỰ KIẾM: đang bay (mọi pha khác mặt đất) thì các phím hành
+    // động — tương tác, chiêu thức, đột phá, ăn nhanh, bảng bí pháp —
+    // đều bị chặn bằng MỘT thông báo duy nhất; phím F là đường hạ cánh.
+    // Phím di chuyển/cần cảm ứng vẫn lái bay bình thường ở vòng lặp.
+    if (flyPhase !== 'ground') {
+      if (k === 'f') { flyToggle(); e.preventDefault(); return; }
+      if (['e', ' ', '1', '2', '3', '4', '5', 'j', 'b', 'r', 'g'].indexOf(k) >= 0) { flyBlockToast(); e.preventDefault(); return; }
+    }
     if (k === 'e' || k === ' ') { cancelQuestNav(); interact(); }
+    else if (k === 'f') flyToggle(); // đợt ngự kiếm: phím F cất cánh (hạ cánh xử ở khối chặn phía trên)
     else if (dlg && dlg.who === 'choice' && (k === '1' || k === '2' || k === '3' || k === '4')) {
       var idx = parseInt(k, 10) - 1;
       if (dlg.options[idx]) chooseOption(dlg.options[idx].action);
@@ -16916,6 +17384,15 @@
     // (Cổng clickMove ở đầu hàm đã chặn cả hai khi cài đặt tắt; thoại đang mở
     // cũng đã bị chặn ở đầu hàm nên chạm lúc thoại giữ nguyên tiến thoại.)
     cancelQuestNav(); // chạm mới là lệnh tay — hủy tự tìm đường
+    // ĐỢT NGỰ KIẾM: đang bay — chạm vào một đối tượng tương tác được thì
+    // bị chặn (phải hạ cánh mới tương tác), chạm đất trống thì đặt đích
+    // BAY THẲNG một điểm; đang trong pha cất/hạ thì chạm không sinh lệnh.
+    if (flyPhase === 'air') {
+      if (L.tapTargetAt(tx, ty, npcsLive)) { flyBlockToast(); return; }
+      flyDest = { x: tx * TILE + 16, y: ty * TILE + 16 };
+      return;
+    }
+    if (flyPhase !== 'ground') return;
     var tapTgt = L.tapTargetAt(tx, ty, npcsLive);
     if (tapTgt) {
       var pathBefore = clickPath;
@@ -17193,7 +17670,7 @@
     // GỘP 2026-11-06: nút #btn-elements (NGŨ HÀNH) đã vô hiệu hoá — không gắn tay chạm nữa; panel chung mở bằng #btn-biphap/phím G.
   onTap($('sk-dinh'), function () { castDinh(); });
   onTap($('sk-phong'), function () { castPhong(); });
-  onTap($('sk-med'), function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
+  onTap($('sk-med'), function () { if (flyPhase !== 'ground') { flyBlockToast(); return; } sfxUi(); medLatch = !medLatch; refreshHUD(); }); // đợt ngự kiếm: thổ nạp phải đứng trên mặt đất
   onTap($('sk-break'), function () { doBreakthrough(); });
   onTap($('sk-food'), function () { quickEatFood(); }); // nút Đồ Ăn ở vòng cung trong (đợt đồ ăn 2026-11-04; nối qua onTap như mọi nút cụm chiến đấu theo đợt cảm ứng)
   // SP-04: nút BÍ PHÁP độc lập NGOÀI cụm #skillbar (không class .sk) + chip thức.
@@ -17232,6 +17709,11 @@
     if (clickPath) clickRun = runBtnOn;
     sfxUi();
   });
+  // ĐỢT NGỰ KIẾM: nút BAY/HẠ — cùng họ nút riêng ngoài cụm chiến đấu với
+  // nút CHẠY (lớp run-btn + lớp fly-btn định vị ngay trên nút CHẠY), gọi
+  // đúng đường cất/hạ của phím F. Nút chỉ hiện khi đã có quyền bay.
+  var flyBtnEl = $('btn-fly');
+  if (flyBtnEl) onTap(flyBtnEl, function () { flyToggle(); });
 
   /* ================= LÀN C — HỆ CÀY + BÍ CẢNH =================
      Hợp đồng làn A (js/logic.js, qua VSLC) được dùng đúng tên; số đã
@@ -20342,6 +20824,25 @@
   /* Tay nắm kiểm chứng cho cảnh đo (gói I): người đang được ghim tại đá
      đo, kết quả đang công bố, và vị trí sống của NPC — để bài kiểm tra
      khẳng định bộ ba (người tại đá, tên hiển thị, phẩm cấp) khớp nhau. */
+  /* Tay nắm kiểm chứng ĐỢT TÍCH HỢP NGỰ KIẾM 2026-11-06: đọc pha bay +
+     tiến độ chuỗi từ đúng các biến/cờ engine đang dùng; toggle() đi qua
+     đúng đường phím F / nút BAY của người chơi (không đường tắt riêng). */
+  window.VSLC_FLY = {
+    phase: function () { return flyPhase; },
+    lift: function () { return flyLiftPx; },
+    map: function () { return state ? state.map : null; },
+    toggle: function () { flyToggle(); },
+    tile: function () { return playerTile(); },
+    info: function () {
+      if (!state) return null;
+      var f = state.flags;
+      return { stage: f.flyStage | 0, learned: !!f.flyLearned, riding: !!f.flyRiding,
+               drills: f.flyDrills | 0, dummy: f.flyDummyPass | 0, cp: f.flyTrialCp | 0, best: f.flyTrialBest | 0,
+               merit: state.sectMerit || 0, tuvi: state.tuvi || 0, realm: state.realm | 0 };
+    },
+    btnVisible: function () { var b = $('btn-fly'); return !!b && !b.classList.contains('hidden'); },
+    guide: function () { var g = guideCompute(); return g ? { target: g.target || null, fly: !!g.fly, pinned: !!g.pinned } : null; }
+  };
   window.VSLC_SCENE = {
     spot: function () { return dlg ? (dlg.spot || null) : null; },
     result: function () { return dlg ? (dlg.result || null) : null; },
