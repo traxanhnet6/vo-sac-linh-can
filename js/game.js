@@ -344,6 +344,36 @@
       });
     } catch (e) { /* im lặng */ }
   }
+  /* Tiếng bot ngự kiếm bay ngang (đợt flybots): gió rít rất khẽ qua bộ
+     lọc thông dải quét 500 -> 1500 -> 420 Hz trong 0,7 giây, gain đỉnh
+     kẹp cứng ở FLYBY_MAX_GAIN (0,02 — thấp hơn mọi lớp hiệu ứng khác và
+     thấp xa trần tổng môi trường 0,35 của music.js, không át nhạc nền);
+     chỉ phát khi bot ở trong FLYBY_RANGE quanh người chơi (updateFlyBots
+     quyết định), mỗi chuyến bay ngang kêu đúng một lần. */
+  function sfxFlyBy(k) {
+    if (SET && SET.sfxAllowed && !SET.sfxAllowed('skill')) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (!AC.createBuffer || !AC.createBufferSource || !AC.createBiquadFilter) return;
+      var scale = SET && SET.gainScale ? SET.gainScale() : 1;
+      var dur = 0.7, t0 = AC.currentTime;
+      var len = Math.max(1, Math.floor(AC.sampleRate * dur));
+      var buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+      var src = AC.createBufferSource(); src.buffer = buf;
+      var bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+      bp.frequency.setValueAtTime(500, t0);
+      bp.frequency.exponentialRampToValueAtTime(1500, t0 + dur * 0.45);
+      bp.frequency.exponentialRampToValueAtTime(420, t0 + dur);
+      var g = AC.createGain();
+      var peak = Math.min(FLYBY_MAX_GAIN, FLYBY_MAX_GAIN * (0.35 + 0.65 * Math.max(0, Math.min(1, k || 0)))) * scale;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + dur * 0.4);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(bp); bp.connect(g); g.connect(AC.destination);
+      src.start(t0); src.stop(t0 + dur + 0.03);
+    } catch (e) { /* im lặng */ }
+  }
   // Chuông lớn Trúc Cơ (chương 8): chuông trầm 523/784 Hz ngân dài + tiếng
   // rền trầm dưới đáy (rumble) — nặng hơn hẳn sfxBell của đột phá thường.
   function sfxBigBell() {
@@ -831,6 +861,7 @@
     // tài khoản kế tiếp; vật thể ẩn theo phiên cũng xóa hết.
     bcSession = null; bcColorSort = null; escortT = 0;
     partyBotsLive = []; bcTelegraphs = []; // bot ghép tổ + vòng báo đòn boss tổ đội cũng là trạng thái phiên
+    flyBots = []; skyClouds = []; flySysMap = null; flySpawnT = 0; // bot ngự kiếm bay lượn + mây trời (đợt flybots) cũng là trạng thái phiên — dọn cùng đợt
     guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
     closeGrindBoard();
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
@@ -1837,6 +1868,10 @@
       }
       ctx.restore();
     }
+    // Bóng đất của bot ngự kiếm (đợt flybots): elip mềm ngay trên nền tại
+    // điểm đất dưới bot — bóng nhỏ và nhạt dần theo cao độ, neo thị giác
+    // cho cảm giác bay cao như bóng của người chơi khi cưỡi kiếm.
+    drawFlyBotShadows();
     // DẤU HIỆU BÁO TRƯỚC của ải Thăng Long (gói phụ 13): đường chém dọc
     // hiệp 1 hiện thành dải sáng đứng nhấp nháy trên mặt đài; vòng kiếm
     // vũ hiệp 2 hiện thành vòng sáng khóa tại vị trí người chơi.
@@ -2364,6 +2399,10 @@
         labels.push({ key: '__player', name: state.name, title: L.realmName(state.realm, state.stage), cx: px + 16, wantY: pTop - 6 - 24, color: '#ffe9a8' });
       }
     });
+    // Tầng trời (đợt flybots): mây sau -> bot ngự kiếm -> mây trước, vẽ
+    // sau mọi thực thể mặt đất (bot bay trên đầu) và trước lớp nhãn tên
+    // để nhãn NPC/người chơi không bị mây che.
+    drawSkyPass();
     // Lớp nhãn riêng (sau mọi vật thể) + bong bóng thoại trên đầu người nói.
     // Cài đặt showNames tắt nhãn tên + danh hiệu thì bong bóng cũng không có neo để bám.
     var placedLabels = (!SET || SET.current.showNames) ? drawLabels(labels) : [];
@@ -8293,6 +8332,193 @@
   // tây, sườn đông, chân nam dưới thềm vào và vành bắc sau chỏm — mây
   // trôi ở tầng thấp bao quanh đỉnh, không phủ mặt đài hay trục thang.
   var TL_CLOUD_SEA = [[1, 12], [2, 26], [46, 14], [45, 27], [6, 33], [40, 33], [16, 33], [24, 0], [8, 0]];
+  /* ================= BOT NGỰ KIẾM BAY LƯỢN + MÂY TRÔI TẦNG TRỜI =================
+     Đợt flybots (lệnh Bui 07:35 ngày 2026-11-05): đồng môn ngự kiếm bay
+     lượn qua bầu trời Thanh Vân Tông và sân Kiểm Trắc Tháp cho thế giới
+     có sinh khí. THUẦN TRÌNH DIỄN như bossFx/resFields: không va chạm,
+     không tương tác, không chặn đường, không ghi gì vào save — trạng
+     thái chỉ sống trong phiên, dọn ở resetPresentationState và tự xóa
+     khi rời hai bản đồ có bot. Toàn hệ thống qua cổng fxOn() như mọi
+     lớp hạt: cài đặt tắt hiệu ứng hạt thì bot + mây tắt hẳn.
+     KIẾN TRÚC HAI LỚP (ghi chú cho giai đoạn online): flyBots là LỚP DỮ
+     KIỆN bay thuần — mỗi phần tử chỉ gồm số liệu đường bay {x, gy, vx,
+     vy, alt, altPh, altAmp, wobPh, wobAmp, wobF, t, gender, tint,
+     streak, whooshArmed}; updateFlyBots(dt) tiến triển dữ kiện, còn
+     drawFlyBot/drawSkyPass chỉ ĐỌC dữ kiện để vẽ. Khi online, dữ kiện
+     bay của người chơi khác đổ vào cùng hình dạng này là lớp vẽ chở
+     được ngay, không phải làm lại đường vẽ.
+     Hình bot tái dùng đúng ngôn ngữ ngự kiếm của người chơi: sheet bay
+     player_nam/nu-fly (người đứng trên kiếm đã nướng trong sheet) qua
+     các biến thể nhuộm màu áo nhẹ để đồng môn không trùng hình người
+     chơi, vệt kiếm quang tông riêng từng bot. Mây trôi tầng trời có hai
+     lớp (sau/trước bot): bot bay sau lớp trước thì bị mây che khuất một
+     phần; trần mờ của cả hai lớp bị kẹp cứng (SKY_CLOUD_*_ALPHA) nên
+     mây không bao giờ che khuất mặt đất/gameplay. */
+  var FLYBOT_MAPS = {
+    thanh_van_tong: { max: 3, spawnMin: 6, spawnVar: 7 },
+    kiem_trac_thap: { max: 2, spawnMin: 8, spawnVar: 8 }
+  };
+  var FLYBOT_SPEED_MIN = 46, FLYBOT_SPEED_MAX = 82;   // px/giây — thong thả, chậm hơn hẳn người chơi đi bộ (132)
+  var FLYBOT_ALT_MIN = 52, FLYBOT_ALT_MAX = 118;      // px cao độ danh nghĩa trên điểm đất của bot
+  var SKY_CLOUD_BACK_ALPHA = 0.13, SKY_CLOUD_FRONT_ALPHA = 0.22; // trần mờ hai lớp mây trời
+  var FLYBY_RANGE = 7 * TILE;                          // chỉ nghe tiếng bay ngang khi bot trong 7 ô
+  var FLYBY_MAX_GAIN = 0.02;                           // trần gain tiếng bay ngang (tương đối, trước bus)
+  var FLYBOT_TINTS = [null, 'rgb(168,216,205)', 'rgb(196,182,230)', 'rgb(170,202,238)', 'rgb(238,208,178)'];
+  var FLYBOT_STREAKS = ['170,225,255', '255,214,150', '190,255,214', '226,196,255'];
+  var flyBots = [], skyClouds = [], flySysMap = null, flySpawnT = 0, flyBySfxN = 0;
+  var flyTintCache = null;
+  function flyAltNow(b) { return b.alt + Math.sin(b.t * 0.7 + b.altPh) * b.altAmp; }
+  function flyGroundY(b) { return b.gy + Math.sin(b.t * b.wobF + b.wobPh) * b.wobAmp; }
+  function buildFlyTints() {
+    flyTintCache = { nam: [], nu: [] };
+    ['nam', 'nu'].forEach(function (g) {
+      var src = ASSETS.fly && ASSETS.fly[g];
+      for (var i = 0; i < FLYBOT_TINTS.length; i++) {
+        if (!src || !imgReady(src) || !FLYBOT_TINTS[i]) { flyTintCache[g].push(src || null); continue; }
+        try {
+          var cv = document.createElement('canvas');
+          cv.width = src.naturalWidth; cv.height = src.naturalHeight;
+          var cx2 = cv.getContext('2d');
+          cx2.drawImage(src, 0, 0);
+          cx2.globalCompositeOperation = 'multiply';
+          cx2.fillStyle = FLYBOT_TINTS[i]; cx2.fillRect(0, 0, cv.width, cv.height);
+          cx2.globalCompositeOperation = 'destination-in';
+          cx2.drawImage(src, 0, 0);
+          flyTintCache[g].push(cv);
+        } catch (e) { flyTintCache[g].push(src); }
+      }
+    });
+  }
+  function flySheetFor(b) {
+    var raw = ASSETS.fly && ASSETS.fly[b.gender];
+    if (!raw) return null;
+    if (!flyTintCache && ASSETS.fly && (imgReady(ASSETS.fly.nam) || imgReady(ASSETS.fly.nu))) buildFlyTints();
+    if (flyTintCache && flyTintCache[b.gender] && flyTintCache[b.gender][b.tint]) return flyTintCache[b.gender][b.tint];
+    return raw;
+  }
+  function buildSkyClouds() {
+    skyClouds = [];
+    var m = (L.MAPS && state && L.MAPS[state.map]) || L.activeMap();
+    if (!m) return;
+    var W = m.w * TILE, H = m.h * TILE;
+    var n = Math.max(6, Math.round(W / 330));
+    for (var i = 0; i < n; i++) {
+      var front = i % 3 === 2;
+      skyClouds.push({
+        x: Math.random() * (W + 480) - 240, y: Math.random() * H,
+        s: front ? 1.25 + Math.random() * 0.9 : 0.6 + Math.random() * 0.55,
+        v: 3 + Math.random() * 4.5, front: front, seed: Math.random() * 6.28
+      });
+    }
+  }
+  function spawnFlyBot() {
+    var m = (L.MAPS && state && L.MAPS[state.map]) || L.activeMap();
+    if (!m) return;
+    var W = m.w * TILE, H = m.h * TILE;
+    var dirSign = Math.random() < 0.5 ? 1 : -1;
+    flyBots.push({
+      x: dirSign > 0 ? -90 : W + 90,
+      gy: H * (0.14 + Math.random() * 0.62),
+      vx: dirSign * (FLYBOT_SPEED_MIN + Math.random() * (FLYBOT_SPEED_MAX - FLYBOT_SPEED_MIN)),
+      vy: (Math.random() - 0.5) * 9,
+      alt: FLYBOT_ALT_MIN + Math.random() * (FLYBOT_ALT_MAX - FLYBOT_ALT_MIN),
+      altPh: Math.random() * 6.28, altAmp: 6 + Math.random() * 8,
+      wobPh: Math.random() * 6.28, wobAmp: 9 + Math.random() * 13, wobF: 0.45 + Math.random() * 0.5,
+      t: 0, gender: Math.random() < 0.5 ? 'nu' : 'nam',
+      tint: Math.floor(Math.random() * FLYBOT_TINTS.length),
+      streak: FLYBOT_STREAKS[Math.floor(Math.random() * FLYBOT_STREAKS.length)],
+      whooshArmed: true
+    });
+  }
+  function updateFlyBots(dt) {
+    var def = (state && FLYBOT_MAPS[state.map]) || null;
+    if (!state || !def || !fxOn()) {
+      if (flyBots.length || skyClouds.length) { flyBots = []; skyClouds = []; }
+      flySysMap = null;
+      return;
+    }
+    if (flySysMap !== state.map) { flySysMap = state.map; flyBots = []; buildSkyClouds(); flySpawnT = 1.2; }
+    var m = (L.MAPS && L.MAPS[state.map]) || L.activeMap();
+    if (!m) return;
+    var W = m.w * TILE, H = m.h * TILE;
+    for (var ci = 0; ci < skyClouds.length; ci++) {
+      var c = skyClouds[ci];
+      c.x += c.v * dt;
+      if (c.x - 200 * c.s > W + 60) { c.x = -200 * c.s - 40; c.y = Math.random() * H; }
+    }
+    flySpawnT -= dt;
+    if (flyBots.length < def.max && flySpawnT <= 0) { spawnFlyBot(); flySpawnT = def.spawnMin + Math.random() * def.spawnVar; }
+    var pcx = px + 16, pcy = py + 16;
+    flyBots = flyBots.filter(function (b) {
+      b.t += dt;
+      b.x += b.vx * dt;
+      b.gy += b.vy * dt;
+      if (b.gy < 46) { b.gy = 46; b.vy = Math.abs(b.vy); }
+      if (b.gy > H - 46) { b.gy = H - 46; b.vy = -Math.abs(b.vy); }
+      if ((b.vx > 0 && b.x > W + 130) || (b.vx < 0 && b.x < -130)) return false; // ra khỏi mép đối diện: tan biến
+      // Tiếng bay ngang theo khoảng cách như tiếng suối: chỉ kêu khi bot
+      // lọt vào vùng nghe, mỗi chuyến đúng một lần, nhả cò khi đã ra xa.
+      var dxp = b.x - pcx, dyp = flyGroundY(b) - pcy;
+      var distP = Math.sqrt(dxp * dxp + dyp * dyp);
+      if (b.whooshArmed && distP < FLYBY_RANGE) { b.whooshArmed = false; flyBySfxN++; sfxFlyBy(1 - distP / FLYBY_RANGE); }
+      else if (!b.whooshArmed && distP > FLYBY_RANGE * 1.5) b.whooshArmed = true;
+      return true;
+    });
+  }
+  function drawFlyBotShadows() {
+    for (var i = 0; i < flyBots.length; i++) {
+      var b = flyBots[i], alt = flyAltNow(b);
+      var k = Math.max(0.3, 1 - alt / 300);
+      ctx.fillStyle = 'rgba(24,34,18,' + (0.20 * k).toFixed(3) + ')';
+      ctx.beginPath(); ctx.ellipse(b.x, flyGroundY(b), 16 * k + 4, 5.5 * k + 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  var SKY_PUFFS = [[-48, 4, 54, 17], [0, -9, 62, 20], [50, 2, 52, 16], [-20, -17, 40, 13], [26, -18, 42, 13], [0, 8, 58, 14]];
+  function drawSkyCloud(c) {
+    var baseA = c.front ? SKY_CLOUD_FRONT_ALPHA : SKY_CLOUD_BACK_ALPHA;
+    for (var i = 0; i < SKY_PUFFS.length; i++) {
+      var p = SKY_PUFFS[i];
+      var wob = Math.sin(tNow / 7000 + c.seed + i * 1.3) * 3;
+      ctx.fillStyle = 'rgba(255,255,255,' + (baseA * (0.75 + 0.25 * Math.sin(c.seed + i * 2.1))).toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.ellipse(c.x + p[0] * c.s, c.y + p[1] * c.s + wob, p[2] * c.s, p[3] * c.s, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function drawFlyBot(b) {
+    var alt = flyAltNow(b), gy = flyGroundY(b);
+    // Hướng sheet: suy từ vận tốc hiệu dụng (gồm độ dốc của sóng lượn) để
+    // bot nghiêng lên/xuống đúng nhịp lượn thay vì khóa một hàng.
+    var vyEff = b.vy + Math.cos(b.t * b.wobF + b.wobPh) * b.wobAmp * b.wobF;
+    var row = ((2 - Math.round(Math.atan2(vyEff, b.vx) / (Math.PI / 4))) % 8 + 8) % 8;
+    var col = Math.floor(tNow / 110) % 5;
+    // Vệt kiếm quang: ba đoạn mờ dần kéo sau kiếm, tông riêng từng bot.
+    var hx = b.vx >= 0 ? -1 : 1, sy = gy - alt + 2;
+    for (var sgi = 0; sgi < 3; sgi++) {
+      ctx.strokeStyle = 'rgba(' + b.streak + ',' + (0.20 - sgi * 0.055).toFixed(3) + ')';
+      ctx.lineWidth = 3.4 - sgi * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(b.x + hx * (12 + sgi * 13), sy + sgi * 1.6);
+      ctx.lineTo(b.x + hx * (12 + sgi * 13 + 34 - sgi * 9), sy + 3 + sgi * 2.2);
+      ctx.stroke();
+    }
+    var im = flySheetFor(b);
+    if (im && (im.naturalWidth > 0 || im.width > 0)) {
+      // Khung 96x120 -> 64x80 như người chơi cưỡi kiếm; đáy khung (đường
+      // kiếm, y~114/120) được đặt tại cao độ bay gy - alt.
+      ctx.drawImage(im, col * 96, row * 120, 96, 120, b.x - 32, gy - alt - 72, 64, 80);
+    }
+  }
+  /* Lượt vẽ tầng trời: mây sau -> bot -> mây trước (che khuất một phần),
+     vẽ sau mọi thực thể mặt đất và trước lớp nhãn tên. */
+  function drawSkyPass() {
+    if (!flyBots.length && !skyClouds.length) return;
+    var i;
+    for (i = 0; i < skyClouds.length; i++) if (!skyClouds[i].front) drawSkyCloud(skyClouds[i]);
+    for (i = 0; i < flyBots.length; i++) drawFlyBot(flyBots[i]);
+    for (i = 0; i < skyClouds.length; i++) if (skyClouds[i].front) drawSkyCloud(skyClouds[i]);
+  }
+
   function spawnPillar(x, y, opts) {
     opts = opts || {};
     pillars.push({ x: x, y: y, t: 0, dur: opts.dur || 0.9, h: opts.h || 120, top: opts.top || null, big: !!opts.big });
@@ -11946,6 +12172,7 @@
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
     updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
     updateAmbScenery(dtW); // đợt cảnh vật map boss: hạt môi trường theo bản đồ (tôn trọng dừng hình như mọi hạt)
+    updateFlyBots(dtW); // đợt flybots: bot ngự kiếm + mây trôi tầng trời (trình diễn thuần, tôn trọng dừng hình như mọi lớp thế giới)
     // Mờ chuyển cảnh: out -> chạy callback ở điểm tối nhất -> in.
     if (fade.phase === 'out') {
       fade.t = Math.min(1, fade.t + dt / 0.3);
@@ -15230,6 +15457,15 @@
   window.VSLC_FX = {
     pillars: function () { return pillars.length; },
     cloudSea: function () { if (!state) return 0; if (state.map === 'thang_long_dai') return TL_CLOUD_SEA.length; return state.map === 'thanh_van_tong' ? CLOUD_SEA.length : 0; },
+    // Cầu bot ngự kiếm bay lượn (đợt flybots, chỉ đọc): dữ kiện bay sống
+    // (điểm đất + cao độ + vận tốc), mây trời hai lớp, trần bot từng bản
+    // đồ, trần mờ mây và số tiếng bay ngang đã phát.
+    flyBots: function () { return flyBots.map(function (b) { return { x: Math.round(b.x), gy: Math.round(flyGroundY(b)), alt: Math.round(flyAltNow(b)), vx: Math.round(b.vx), t: +b.t.toFixed(1), gender: b.gender, tint: b.tint }; }); },
+    skyClouds: function () { return skyClouds.map(function (c) { return { x: Math.round(c.x), y: Math.round(c.y), s: +c.s.toFixed(2), front: c.front }; }); },
+    flyBotCaps: function () { var o = {}; for (var k in FLYBOT_MAPS) o[k] = FLYBOT_MAPS[k].max; return o; },
+    skyAlpha: function () { return { back: SKY_CLOUD_BACK_ALPHA, front: SKY_CLOUD_FRONT_ALPHA }; },
+    flyBy: function () { return { range: FLYBY_RANGE, maxGain: FLYBY_MAX_GAIN, count: flyBySfxN }; },
+
     streaks: function () { return streaks.length; },
     parts: function () { return parts.length; },
     kind: function (k) { return parts.filter(function (pp) { return pp.kind === k; }).length; },
