@@ -865,6 +865,7 @@
     pracFight = null; pracStats = { count: 0, wins: 0 }; pracCdUntil = 0; // bot luyện tập: trận + bộ đếm phiên + mốc nghỉ cũng là trạng thái phiên
     guideFrame = null; // gói phụ H: khung dẫn đường vừa vẽ là trạng thái phiên — dọn cùng đợt
     npcHintFrame = null; // gợi ý chạm NPC vừa vẽ cũng là trạng thái phiên — dọn cùng đợt
+    tapMenu = null; shopAffKey = null; hideTapMenuDom(); // thanh module chạm + khóa giảm giá hảo cảm cũng là trạng thái phiên
     closeGrindBoard();
     if (L.clearSessionHiddenProps) L.clearSessionHiddenProps();
   }
@@ -1030,6 +1031,11 @@
   var clickPathRaw = false;   // true khi đang đi theo đường ô THÔ (đường cứu hộ sau khi đường vuốt kẹt)
   var clickSegAnchor = null;  // gốc sprite tại điểm bắt đầu nhịp vuốt hiện tại (cho bám đuổi thuần túy)
   var pendingInteract = null; // chạm-để-tương-tác: mục tiêu đang hẹn mở tương tác khi tới nơi
+  /* Đợt THANH MODULE CHẠM + HẢO CẢM (Bui duyệt 00:41 ngày 2026-11-06):
+     thanh module đang mở cho NPC nào ({id, key, name, map}) và khóa hảo
+     cảm của thương nhân vừa mở tiệm (áp giảm giá 5% khi mua). */
+  var tapMenu = null;
+  var shopAffKey = null;
   var questNav = null; // tự tìm đường làm nhiệm vụ: { targetMap, hx, hy, leg, replans, lastMap, lockMsg }
   var medLatch = false;                    // chốt thổ nạp từ nút kỹ năng
   var CHAR_LOOKS = ['player_nam', 'player_nu', 'u_nhan', 'di_ninh', 'luc_tranh', 'anh_phung', 'chinh_ngon', 'elder', 'villager_m', 'villager_f', 'villager_old', 'mac_cuu_u']; // ARCIV A.3: mac_cuu_u (chỉ huy trận, sheet đã chép)
@@ -2444,6 +2450,7 @@
     // phụ thuộc cài đặt hiện tên.
     npcHintFrame = npcHintCompute();
     if (npcHintFrame && npcHintFrame.id) drawNpcHint(npcHintFrame);
+    tapMenuLayout(); // đợt tapmenu: giữ thanh module bám trên đầu NPC / tự đóng khi rời ô đứng
     // vòng sóng âm Ngôn Linh (cài đặt fxRings chỉ tắt phần VẼ, vòng đời vòng vẫn chạy như cũ)
     rings = rings.filter(function (r) { return r.a > 0; });
     if (!SET || SET.current.fxRings) rings.forEach(function (r) {
@@ -2769,7 +2776,7 @@
   function trimFloats() { while (floats.length > 24) floats.shift(); }
 
   /* ---------- Thoại ---------- */
-  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; questNav = null; resetJoy(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
+  function say(lines, cb) { clickPath = null; clickTarget = null; pendingInteract = null; questNav = null; resetJoy(); closeTapMenu(); dlgQueue = lines.slice(); dlgCb = cb || null; nextLine(); }
   /* Gói I (đợt nóng 3) — cảnh đo phải phân rõ AI ĐANG ĐO: dữ kiện cảnh
      (story.js) ghim trên từng dòng: spot = id nhân vật đang đứng tại đá
      đo/thước ('hero' = người chơi), spotAt = ô đứng trước đá đo cho NPC,
@@ -2893,12 +2900,16 @@
      Dẫn Lôi Pháp từ khâu chuẩn bị chương 8. Kiếm/Ngọc giữ nguyên
      nhãn và giá gốc. */
   function buildFaShopScene() {
+    // Đợt tapmenu: nhãn giá đi qua affPrice — hảo cảm với chính chủ tiệm
+    // đạt Thân thiết thì nhãn hiện giá đã giảm 5% (đúng số sẽ trừ).
+    var affK = affKeyFor({ id: 'phap_khi_chu' });
+    var dsc = affPts(affK) >= AFF_DISCOUNT_MIN;
     var opts = [
-      { label: 'Mua {{item:kiem_phong}} — 150 Linh Thạch', action: 'buy_kiem', price: 150 },
-      { label: 'Mua {{item:ngoc_tu_linh}} — 260 Linh Thạch', action: 'buy_ngoc', price: 260 }
+      { label: 'Mua {{item:kiem_phong}} — ' + affPrice(affK, 150) + ' Linh Thạch' + (dsc ? ' (đã giảm 5% hảo cảm)' : ''), action: 'buy_kiem', price: affPrice(affK, 150) },
+      { label: 'Mua {{item:ngoc_tu_linh}} — ' + affPrice(affK, 260) + ' Linh Thạch' + (dsc ? ' (đã giảm 5% hảo cảm)' : ''), action: 'buy_ngoc', price: affPrice(affK, 260) }
     ];
-    if (state.linhUnlocked) opts.push({ label: 'Mua một lá Tị Lôi Phù — 40 Linh Thạch (chống lôi kiếp, giảm 85% sát thương một đạo)', action: 'buy_ti_loi_phu', price: 40 });
-    if (L.questReached(state, 'q8_chuan_bi') && !L.bagHas(state, 'dan_loi_phap')) opts.push({ label: 'Mua Dẫn Lôi Pháp — 240 Linh Thạch (giảm 25% sát thương mọi đạo lôi kiếp)', action: 'buy_dan_loi_phap', price: 240 });
+    if (state.linhUnlocked) opts.push({ label: 'Mua một lá Tị Lôi Phù — ' + affPrice(affK, 40) + ' Linh Thạch (chống lôi kiếp, giảm 85% sát thương một đạo)', action: 'buy_ti_loi_phu', price: affPrice(affK, 40) });
+    if (L.questReached(state, 'q8_chuan_bi') && !L.bagHas(state, 'dan_loi_phap')) opts.push({ label: 'Mua Dẫn Lôi Pháp — ' + affPrice(affK, 240) + ' Linh Thạch (giảm 25% sát thương mọi đạo lôi kiếp)', action: 'buy_dan_loi_phap', price: affPrice(affK, 240) });
     opts.push({ label: 'Rời tiệm', action: 'shop_leave' });
     return [ST.SCENE_FASHOP[0], { who: 'choice', text: 'Ngươi muốn mua gì?', options: opts }];
   }
@@ -2932,8 +2943,9 @@
       // Vật phẩm mua vào phải qua Túi Trữ Vật: kiểm sức chứa TRƯỚC khi trừ tiền.
       var chkD = L.bagCanAdd(state, 'hoi_khi_dan', 1);
       if (!chkD.ok) { toast(chkD.reason); say(ST.SCENE_PHARMACY); return; }
-      var rb = L.spendLinhThach(state, 12);
-      if (rb.ok) { L.bagAdd(state, 'hoi_khi_dan', 1); sfxUi(); toast('Đã mua một viên Hồi Khí Đan (−12 Linh Thạch). Trong túi: ' + L.bagCount(state, 'hoi_khi_dan') + ' viên.', 3200); }
+      var prD = affPrice(affKeyFor({ id: 'duoc_su' }), 12); // đợt tapmenu: giảm 5% khi hảo cảm với dược sư của bản đồ này đạt Thân thiết (khóa tính tại chỗ, không lệ thuộc phiên)
+      var rb = L.spendLinhThach(state, prD);
+      if (rb.ok) { L.bagAdd(state, 'hoi_khi_dan', 1); sfxUi(); toast('Đã mua một viên Hồi Khí Đan (−' + prD + ' Linh Thạch). Trong túi: ' + L.bagCount(state, 'hoi_khi_dan') + ' viên.', 3200); }
       else toast(rb.reason);
       refreshHUD(); saveNow();
       say(ST.SCENE_PHARMACY);
@@ -2952,7 +2964,7 @@
       say(ST.SCENE_PHARMACY);
     } else if (action === 'buy_kiem' || action === 'buy_ngoc') {
       var gid = action === 'buy_kiem' ? 'kiem_phong' : 'ngoc_tu_linh';
-      var price = action === 'buy_kiem' ? 150 : 260;
+      var price = affPrice(shopAffKey, action === 'buy_kiem' ? 150 : 260); // đợt tapmenu: giảm 5% hảo cảm Thân thiết
       var gname = action === 'buy_kiem' ? 'Thanh Phong Kiếm' : 'Tụ Linh Ngọc';
       if (L.bagHas(state, gid)) { toast('Ngươi đã có ' + gname + ' trong túi rồi.'); }
       else {
@@ -2968,8 +2980,9 @@
       // Hộ Thể Đan ở hiệu thuốc thành (docs/realm-prep/ mục 5.1): 25 LT.
       var chkH = L.bagCanAdd(state, 'ho_the_dan', 1);
       if (!chkH.ok) { toast(chkH.reason); say(ST.SCENE_PHARMACY); return; }
-      var rh2 = L.spendLinhThach(state, 25);
-      if (rh2.ok) { L.bagAdd(state, 'ho_the_dan', 1); sfxUi(); toast('Đã mua một viên Hộ Thể Đan (−25 Linh Thạch). Trong túi: ' + L.bagCount(state, 'ho_the_dan') + ' viên.', 3200); }
+      var prH = affPrice(affKeyFor({ id: 'duoc_su' }), 25); // đợt tapmenu: giảm 5% khi hảo cảm với dược sư của bản đồ này đạt Thân thiết
+      var rh2 = L.spendLinhThach(state, prH);
+      if (rh2.ok) { L.bagAdd(state, 'ho_the_dan', 1); sfxUi(); toast('Đã mua một viên Hộ Thể Đan (−' + prH + ' Linh Thạch). Trong túi: ' + L.bagCount(state, 'ho_the_dan') + ' viên.', 3200); }
       else toast(rh2.reason);
       refreshHUD(); saveNow();
       say(ST.SCENE_PHARMACY);
@@ -2977,8 +2990,9 @@
       // Tị Lôi Phù bán bằng Linh Thạch: 40 LT/lá (mục 5.1).
       var chkP = L.bagCanAdd(state, 'ti_loi_phu', 1);
       if (!chkP.ok) { toast(chkP.reason); say(buildFaShopScene()); return; }
-      var rp2 = L.spendLinhThach(state, 40);
-      if (rp2.ok) { L.bagAdd(state, 'ti_loi_phu', 1); sfxUi(); toast('Đã mua một lá Tị Lôi Phù (−40 Linh Thạch). Trong túi: ' + L.bagCount(state, 'ti_loi_phu') + ' lá.', 3200); }
+      var prP = affPrice(shopAffKey, 40); // đợt tapmenu: giảm 5% khi hảo cảm với chủ tiệm đạt Thân thiết
+      var rp2 = L.spendLinhThach(state, prP);
+      if (rp2.ok) { L.bagAdd(state, 'ti_loi_phu', 1); sfxUi(); toast('Đã mua một lá Tị Lôi Phù (−' + prP + ' Linh Thạch). Trong túi: ' + L.bagCount(state, 'ti_loi_phu') + ' lá.', 3200); }
       else toast(rp2.reason);
       refreshHUD(); saveNow();
       say(buildFaShopScene());
@@ -2989,8 +3003,9 @@
       else {
         var chkF = L.bagCanAdd(state, 'dan_loi_phap', 1);
         if (!chkF.ok) { toast(chkF.reason); say(buildFaShopScene()); return; }
-        var rf2 = L.spendLinhThach(state, 240);
-        if (rf2.ok) { L.bagAdd(state, 'dan_loi_phap', 1); sfxQuest(); toast('Đã mua Dẫn Lôi Pháp (−240 Linh Thạch): từ nay mọi đạo lôi kiếp đều giảm 25% sát thương.', 4000); }
+        var prF = affPrice(shopAffKey, 240); // đợt tapmenu: giảm 5% khi hảo cảm với chủ tiệm đạt Thân thiết
+        var rf2 = L.spendLinhThach(state, prF);
+        if (rf2.ok) { L.bagAdd(state, 'dan_loi_phap', 1); sfxQuest(); toast('Đã mua Dẫn Lôi Pháp (−' + prF + ' Linh Thạch): từ nay mọi đạo lôi kiếp đều giảm 25% sát thương.', 4000); }
         else toast(rf2.reason);
       }
       refreshHUD(); saveNow();
@@ -3388,7 +3403,12 @@
         var f0 = targetFocusTile(target, pt);
         faceTowardTile(f0.x, f0.y);
         pendingInteract = null;
-        interact();
+        /* Đợt tapmenu (Bui duyệt 00:41 ngày 2026-11-06): chạm NPC đứng kề
+           hiện THANH MODULE thay cho mở thẳng thoại; vật thể giữ đường cũ. */
+        if (target.kind === 'npc' && target.id) {
+          var lvN = liveNpcById(target.id);
+          openTapMenu(lvN || { id: target.id, name: target.name || target.id, x: target.x, y: target.y });
+        } else interact();
         return;
       }
     }
@@ -3780,7 +3800,10 @@
                 arrow: false, bang: false, angle: null, distTiles: null, inView: false, dlgHidden: !!dlg };
     if (!state) return out;
     var t = resolveQuestTarget();
+    var pinT = tapPinTarget(); // đợt tapmenu: ghim dẫn đường của người chơi ưu tiên hơn đích nhiệm vụ
+    if (pinT) t = pinT;
     out.target = t;
+    out.pinned = !!pinT;
     if (!t) return out;
     var d = guideDisplayTarget(t);
     out.display = d;
@@ -3833,6 +3856,7 @@
     var out = { id: null, name: null, label: null, questTarget: false,
                 ax: null, ay: null, top: null, standX: null, standY: null };
     if (!state || dlg || tlFight || hhtFight || daiFight || arcFig) return out;
+    if (tapMenu) return out; // đợt tapmenu: thanh module đang mở thì bong bóng gợi ý ẩn (tránh chồng hình)
     var pt = playerTile();
     var best = null, bestD = 1e9;
     for (var i = 0; i < npcsLive.length; i++) {
@@ -3891,7 +3915,330 @@
     if (cap) state.tuvi = Math.min(cap, (state.tuvi || 0) + n);
     else state.tuvi = (state.tuvi || 0) + n;
   }
+  /* ================= ĐỢT THANH MODULE CHẠM NHÂN VẬT + TẶNG QUÀ + HẢO CẢM =================
+   * (Bui duyệt phương án 00:41 ngày 2026-11-06: "Làm cả Tặng quà và hảo cảm".)
+   * Chạm NPC (đứng kề, hoặc tự đi tới nơi theo đường chạm của đợt npctap)
+   * nay hiện THANH MODULE nổi phía trên NPC thay cho mở thẳng thoại; nút
+   * Trò chuyện vẫn mở đúng đường thoại hiện hành (nhận/trả nhiệm vụ vẫn là
+   * lựa chọn trong thoại). Chữ giao diện của đợt này (nhãn nút, bảng thông
+   * tin, thông báo nổi) KHÔNG lồng tiếng và đợt này không thêm/sửa bất kỳ
+   * dòng thoại nào. Mọi số liệu hảo cảm đều là [ĐỀ XUẤT] — tập trung ở
+   * docs/tap-modules-report.md để Bui chỉnh sau. */
+  var AFF_GIFT_PER_DAY = 3;      // [ĐỀ XUẤT] mỗi NPC nhận tối đa 3 món quà / ngày trong game
+  var AFF_DISCOUNT_MIN = 50;     // [ĐỀ XUẤT] hảo cảm đạt Thân thiết (>= 50) -> giảm giá mua
+  var AFF_DISCOUNT_PCT = 5;      // [ĐỀ XUẤT] mức giảm giá: 5%
+  var AFF_REWARD_POOL = ['com_nam', 'banh_hap', 'nam_rung', 'thanh_tam_thao', 'hoi_khi_dan', 'thit_thu']; // [ĐỀ XUẤT] bể quà tặng lại ở mốc 50/100
+  var AFF_RARE_MATS = { linh_chi: 1, yeu_dan_1: 1, yeu_dan_2: 1, yeu_dan_3: 1, yeu_dan_4: 1, ket_dan_duoc: 1 }; // [ĐỀ XUẤT] nguyên liệu quý +5
+  /* Cảnh giới/linh căn của NPC chỉ hiện khi có ghi nhận chắc chắn trong
+     dữ kiện truyện — mã hiện hành không có trường cảnh giới cho NPC. */
+  var NPC_REALM = { luc_tranh: 'Linh căn cửu phẩm (đo tại Kiểm Trắc Tháp)' };
+  var AFF_AMBIG = null;
+  /* Khóa hảo cảm: phần lớn NPC khóa theo id; riêng các id dùng CHUNG cho
+     nhiều người khác nhau ở các bản đồ khác nhau (chủ quán hai nơi, hai
+     chủ sạp...) thì khóa theo id@map để không nhập nhằng hai người. */
+  function affAmbigIds() {
+    if (AFF_AMBIG) return AFF_AMBIG;
+    AFF_AMBIG = {}; var seen = {};
+    Object.keys(L.MAPS || {}).forEach(function (mid) {
+      (L.MAPS[mid].npcs || []).forEach(function (d) {
+        if (seen[d.id] && seen[d.id] !== d.name) AFF_AMBIG[d.id] = true;
+        seen[d.id] = d.name;
+      });
+    });
+    return AFF_AMBIG;
+  }
+  function affKeyFor(npc) {
+    if (!npc || !npc.id) return '';
+    return affAmbigIds()[npc.id] ? npc.id + '@' + state.map : npc.id;
+  }
+  function affRec(key) {
+    if (!state.affinity || typeof state.affinity !== 'object') state.affinity = {};
+    var r = state.affinity[key];
+    if (!r || typeof r !== 'object') r = state.affinity[key] = { pts: 0, day: -1, n: 0, g50: false, g100: false };
+    if (typeof r.pts !== 'number' || !isFinite(r.pts)) r.pts = 0;
+    if (typeof r.n !== 'number' || !isFinite(r.n)) r.n = 0;
+    return r;
+  }
+  function affPts(key) {
+    var a = state && state.affinity, r = key && a ? a[key] : null;
+    return r && typeof r.pts === 'number' && isFinite(r.pts) ? Math.floor(r.pts) : 0;
+  }
+  function affTitleFor(pts) {
+    if (pts >= 100) return 'Tri kỷ';
+    if (pts >= 50) return 'Thân thiết';
+    if (pts >= 20) return 'Thân quen';
+    return 'Xa lạ';
+  }
+  /* Giá mua sau giảm giá hảo cảm: chỉ áp cho các đường mua bằng Linh
+     Thạch của thương nhân mà người chơi đã đạt Thân thiết trở lên. */
+  function affPrice(key, base) {
+    if (key && affPts(key) >= AFF_DISCOUNT_MIN) return Math.max(1, Math.floor(base * (100 - AFF_DISCOUNT_PCT) / 100));
+    return base;
+  }
+  function affGiftPoints(itemId) { // [ĐỀ XUẤT] điểm theo hạng vật phẩm
+    var def = L.ITEM_DEFS[itemId] || null; if (!def) return 0;
+    if (AFF_RARE_MATS[itemId]) return 5;
+    if (def.type === 'do_an') return 3;
+    if (def.type === 'dan' || def.type === 'phu') return 5;
+    return 2;
+  }
+  function affGiftBlockReason(itemId) {
+    var def = L.ITEM_DEFS[itemId] || null; if (!def) return 'vật phẩm';
+    if (def.storySlot) return 'story';       // vật cốt truyện: không tặng
+    if (def.worn || def.swordBonus) return 'weapon'; // vũ khí / đồ đang đeo: không tặng
+    if (L.bagCount(state, itemId) <= 0) return 'empty';
+    return null;
+  }
+  function affGiftable(itemId) { return affGiftBlockReason(itemId) === null; }
+  /* Quà tặng lại khi lần đầu chạm mốc Thân thiết (50) / Tri kỷ (100):
+     chọn tất định từ bể quà theo khóa NPC; túi đầy thì chưa ghi nhận mốc,
+     lần tặng quà hoặc mở bảng thông tin sau sẽ thử lại. */
+  function tryAffReward(npc, key) {
+    var rec = affRec(key), got = null;
+    var marks = [[50, 'g50'], [100, 'g100']];
+    for (var i = 0; i < marks.length; i++) {
+      if (rec.pts >= marks[i][0] && !rec[marks[i][1]]) {
+        var h = 0; for (var j = 0; j < key.length; j++) h = (h * 31 + key.charCodeAt(j)) | 0;
+        var pick = AFF_REWARD_POOL[Math.abs(h + marks[i][0]) % AFF_REWARD_POOL.length];
+        var ad = L.bagAdd(state, pick, 1);
+        if (ad && ad.ok) {
+          rec[marks[i][1]] = true; got = pick;
+          toast(npc.name + ' rất quý ngươi, mỉm cười tặng lại một món: ' + (L.ITEM_DEFS[pick] ? L.ITEM_DEFS[pick].name : pick) + '.', 4200);
+        }
+      }
+    }
+    return got;
+  }
+  function liveNpcById(id) { return npcsLive.filter(function (x) { return x.id === id; })[0] || null; }
+  function npcCraftReady() { // trưởng lão tông có cơ chế luyện Trúc Cơ Đan ở hai trạng thái hiện hành
+    var f = state.flags;
+    return !!((state.quest === 'q8_chuan_bi' && f.chiGathered && !f.pillGranted) ||
+      ((state.quest === 'q8_ho_phap' || state.quest === 'q8_truc_co') && f.pillGranted && !L.bagHas(state, 'truc_co_dan') && state.realm < 2));
+  }
+  function tapMenuModules(npc) {
+    var mods = [{ key: 'talk', label: 'Trò chuyện' }];
+    var qt = resolveQuestTarget();
+    if (qt && qt.kind === 'npc' && qt.map === state.map && qt.targetId === npc.id)
+      mods.push({ key: 'quest', label: 'Nhiệm vụ', badge: '!' });
+    if (npc.id === 'phap_khi_chu' || npc.id === 'duoc_su' ||
+        ((npc.id === 'cho_a' || npc.id === 'cho_b') && state.map === 'co_chau'))
+      mods.push({ key: 'shop', label: 'Mua bán' });
+    if (npc.id === 'truong_lao_tong' && npcCraftReady())
+      mods.push({ key: 'craft', label: 'Nhờ chế tạo' });
+    /* Tỉ thí — NỐI TẠI ĐỢT GỘP tapmenu lên cây chính (practice đã live
+       ở commit 4c26016, npctap đã live ở 6924b54): nút chỉ hiện cho bot
+       sân luyện công Thanh Vân Tông; bấm vào đi đúng đường pracBotTalk
+       của đợt practice (mở menu chọn vào trận, trận thời gian thực tại
+       chỗ, dừng ở 20% máu, không thưởng) — cùng điểm vào mà talkTo vẫn
+       dùng cho NPC có cờ prac. */
+    if (npc.prac || (L.practiceBotDef && L.practiceBotDef(npc.id)))
+      mods.push({ key: 'spar', label: 'Tỉ thí' });
+    mods.push({ key: 'info', label: 'Xem thông tin' });
+    if (state.flags.bagUnlocked) mods.push({ key: 'gift', label: 'Tặng quà' });
+    var pinned = !!(state.tapPin && state.tapPin.id === npc.id && state.tapPin.map === state.map);
+    mods.push({ key: 'pin', label: pinned ? 'Bỏ ghim' : 'Ghim dẫn đường' });
+    return mods;
+  }
+  function hideTapMenuDom() {
+    var m = $('npc-menu'), i2 = $('npc-info'), g = $('gift-panel');
+    if (m) m.classList.add('hidden');
+    if (i2) i2.classList.add('hidden');
+    if (g) g.classList.add('hidden');
+  }
+  function closeTapMenu() { tapMenu = null; hideTapMenuDom(); }
+  function openTapMenu(npc) {
+    if (!state || dlg || !npc) return false;
+    if (tlFight || hhtFight || daiFight || duel || enc) { talkTo(npc); return false; } // đang trong trận/trình diễn: giữ đường thoại cũ
+    tapMenu = { id: npc.id, key: affKeyFor(npc), name: npc.name, map: state.map };
+    var el = $('npc-menu'); if (!el) return true;
+    el.textContent = '';
+    tapMenuModules(npc).forEach(function (md) {
+      var b = document.createElement('button');
+      b.textContent = md.label + (md.badge ? ' ' + md.badge : '');
+      b.addEventListener('click', function () { tapMenuAct(md.key); });
+      el.appendChild(b);
+    });
+    $('npc-info').classList.add('hidden');
+    $('gift-panel').classList.add('hidden');
+    el.classList.remove('hidden');
+    tapMenuLayout();
+    return true;
+  }
+  function tapMenuAct(key) {
+    if (!tapMenu) return false;
+    var npc = liveNpcById(tapMenu.id);
+    if (!npc) { closeTapMenu(); return false; }
+    if (key === 'talk' || key === 'quest' || key === 'craft') { closeTapMenu(); talkTo(npc); return true; }
+    if (key === 'shop') { closeTapMenu(); openNpcShop(npc); return true; }
+    if (key === 'info') { openNpcInfo(npc); return true; }
+    if (key === 'gift') { openGiftPanel(npc); return true; }
+    if (key === 'spar') { closeTapMenu(); pracBotTalk(npc); return true; } // nối tại đợt gộp: đúng đường tỉ thí practice
+    if (key === 'pin') { toggleTapPin(npc); closeTapMenu(); return true; }
+    return false;
+  }
+  function openNpcShop(npc) {
+    if (state.flags.ambushReturn) { talkTo(npc); return; } // cảnh phục kích đang chờ: không đi vòng qua đường tiệm
+    shopAffKey = affKeyFor(npc);
+    if (npc.id === 'phap_khi_chu') { say(buildFaShopScene()); return; }
+    if (npc.id === 'duoc_su') {
+      if (grindDeliveryForNpc('duoc_su')) { talkTo(npc); return; } // có hàng giao đích danh: qua thoại để nhận
+      say(ST.SCENE_PHARMACY); return;
+    }
+    say(foodBuyScene()); // sạp chợ Cô Châu: đúng cảnh mua đồ ăn hiện hành
+  }
+  function affSectFor(npc) {
+    var t = TITLES[npc.id] || '';
+    var pairs = [['Thanh Vân', 'Thanh Vân Tông'], ['Thiên Cơ', 'Thiên Cơ Các'], ['Huyết Bạc', 'Huyết Bạc Cung'],
+      ['Hứa gia', 'Hứa gia'], ['Trần gia', 'Trần gia'], ['Lục gia', 'Lục gia'], ['Chu gia', 'Chu gia'],
+      ['Tạ gia', 'Tạ Gia'], ['Đỗ gia', 'Đỗ Gia'], ['Quan phủ', 'Quan phủ Cô Châu Thành']];
+    for (var i = 0; i < pairs.length; i++) if (t.indexOf(pairs[i][0]) >= 0) return pairs[i][1];
+    if (state.map === 'thanh_van_tong') return 'Thanh Vân Tông';
+    if (state.map === 'kiem_trac_thap' || state.map === 'thap_noi') return 'Kiểm Trắc Tháp';
+    if (state.map === 'thien_co_lau') return 'Thiên Cơ Các';
+    return null;
+  }
+  function tapNpcInfo(npc) {
+    var key = affKeyFor(npc), pts = affPts(key), quests = [];
+    var qt = resolveQuestTarget();
+    if (qt && qt.kind === 'npc' && qt.map === state.map && qt.targetId === npc.id) {
+      var qd = L.questById(qt.quest); if (qd) quests.push('Nhiệm vụ chính: ' + qd.name);
+    }
+    var list = L.sideQuestList ? L.sideQuestList(state) : [];
+    for (var i = 0; i < list.length; i++) {
+      var sq = list[i];
+      if (!sq || (sq.status !== 'active' && sq.status !== 'ready')) continue;
+      var hint = null, t2 = null;
+      try { hint = L.sideQuestGuideHint(state, sq.def); } catch (e) { hint = null; }
+      if (!hint) continue;
+      try { t2 = resolveHintTarget(sq.def.id, sq.def.name, hint, null); } catch (e) { t2 = null; }
+      if (t2 && t2.kind === 'npc' && t2.map === state.map && t2.targetId === npc.id)
+        quests.push('Nhiệm vụ phụ: ' + sq.def.name);
+    }
+    return { name: npc.name, title: TITLES[npc.id] || 'Người dân trong vùng', sect: affSectFor(npc),
+      realm: NPC_REALM[npc.id] || null, pts: pts, affTitle: affTitleFor(pts), quests: quests };
+  }
+  function panelRow(parent, label, value) {
+    var r = document.createElement('div'); r.className = 'npc-info-row';
+    var a = document.createElement('span'); a.className = 'npc-info-k'; a.textContent = label;
+    var b = document.createElement('span'); b.className = 'npc-info-v'; b.textContent = value;
+    r.appendChild(a); r.appendChild(b); parent.appendChild(r); return r;
+  }
+  function openNpcInfo(npc) {
+    tryAffReward(npc, affKeyFor(npc)); // mốc quà tặng lại còn nợ (túi đầy lần trước) thử lại khi mở bảng
+    var info = tapNpcInfo(npc), el = $('npc-info'); if (!el) return;
+    el.textContent = '';
+    var h = document.createElement('div'); h.className = 'npc-info-name'; h.textContent = info.name; el.appendChild(h);
+    panelRow(el, 'Thân phận', info.title);
+    if (info.sect) panelRow(el, 'Tông môn / thế lực', info.sect);
+    if (info.realm) panelRow(el, 'Linh căn / cảnh giới', info.realm);
+    panelRow(el, 'Hảo cảm', info.pts + ' điểm — ' + info.affTitle);
+    panelRow(el, 'Nhiệm vụ liên quan', info.quests.length ? '' : 'Không có nhiệm vụ đang liên quan.');
+    info.quests.forEach(function (q) { var d = document.createElement('div'); d.className = 'npc-info-q'; d.textContent = '• ' + q; el.appendChild(d); });
+    var c = document.createElement('button'); c.className = 'npc-panel-close'; c.textContent = 'Đóng';
+    c.addEventListener('click', function () { el.classList.add('hidden'); });
+    el.appendChild(c);
+    $('gift-panel').classList.add('hidden');
+    el.classList.remove('hidden');
+  }
+  function openGiftPanel(npc) {
+    var el = $('gift-panel'); if (!el) return;
+    el.textContent = '';
+    var key = affKeyFor(npc), rec = affRec(key);
+    if (rec.day !== state.dayCount) { rec.day = state.dayCount; rec.n = 0; }
+    var h = document.createElement('div'); h.className = 'npc-info-name'; h.textContent = 'Tặng quà cho ' + npc.name; el.appendChild(h);
+    panelRow(el, 'Hảo cảm', rec.pts + ' điểm — ' + affTitleFor(rec.pts));
+    panelRow(el, 'Quà hôm nay', rec.n + ' / ' + AFF_GIFT_PER_DAY + ' món');
+    var any = false;
+    Object.keys(state.bag.items || {}).forEach(function (id) {
+      if (L.bagCount(state, id) <= 0 || !affGiftable(id)) return;
+      any = true;
+      var def = L.ITEM_DEFS[id] || null;
+      var row = document.createElement('div'); row.className = 'gift-row';
+      var nm = document.createElement('span'); nm.className = 'gift-name';
+      nm.textContent = def.name + ' ×' + L.bagCount(state, id) + '  (+' + affGiftPoints(id) + ' điểm)';
+      var btn = document.createElement('button'); btn.textContent = 'Tặng';
+      if (rec.n >= AFF_GIFT_PER_DAY) btn.disabled = true;
+      btn.addEventListener('click', function () { giveGift(tapMenu, id); openGiftPanel(npc); });
+      row.appendChild(nm); row.appendChild(btn); el.appendChild(row);
+    });
+    if (!any) { var d = document.createElement('div'); d.className = 'npc-info-q'; d.textContent = 'Trong túi không có món thường nào tặng được (vật cốt truyện và vũ khí không tặng được).'; el.appendChild(d); }
+    var c = document.createElement('button'); c.className = 'npc-panel-close'; c.textContent = 'Đóng';
+    c.addEventListener('click', function () { el.classList.add('hidden'); });
+    el.appendChild(c);
+    $('npc-info').classList.add('hidden');
+    el.classList.remove('hidden');
+  }
+  function giveGift(tm, itemId) {
+    if (!tm) return { ok: false, reason: 'menu' };
+    var npc = liveNpcById(tm.id); if (!npc) return { ok: false, reason: 'npc' };
+    var def = L.ITEM_DEFS[itemId] || null; if (!def) return { ok: false, reason: 'item' };
+    var blocked = affGiftBlockReason(itemId);
+    if (blocked === 'story') { toast('Vật phẩm cốt truyện không thể đem tặng.', 3000); return { ok: false, reason: 'story' }; }
+    if (blocked === 'weapon') { toast('Vũ khí và đồ đang đeo không thể đem tặng.', 3000); return { ok: false, reason: 'weapon' }; }
+    if (blocked) return { ok: false, reason: blocked };
+    var rec = affRec(tm.key);
+    if (rec.day !== state.dayCount) { rec.day = state.dayCount; rec.n = 0; }
+    if (rec.n >= AFF_GIFT_PER_DAY) {
+      toast(npc.name + ' hôm nay đã nhận đủ quà của ngươi rồi (tối đa ' + AFF_GIFT_PER_DAY + ' món mỗi ngày). Mai hãy quay lại.', 3600);
+      return { ok: false, reason: 'limit' };
+    }
+    var rm = L.bagRemove(state, itemId, 1);
+    if (!rm || !rm.ok) { toast(rm && rm.reason ? rm.reason : 'Không lấy được món đó khỏi túi.'); return { ok: false, reason: 'remove' }; }
+    var gain = affGiftPoints(itemId);
+    rec.pts += gain; rec.n += 1;
+    if (typeof sfxUi === 'function') sfxUi();
+    toast('Đã tặng ' + def.name + ' cho ' + npc.name + ': hảo cảm +' + gain + ' điểm (đang ' + rec.pts + ' — ' + affTitleFor(rec.pts) + ').', 3600);
+    var reward = tryAffReward(npc, tm.key);
+    refreshHUD(); saveNow();
+    return { ok: true, gain: gain, pts: rec.pts, reward: reward };
+  }
+  /* Ghim dẫn đường: state.tapPin {map, id, name} — guideCompute ưu tiên
+     ghim hơn đích nhiệm vụ; tới ô đứng của NPC thì tự bỏ ghim. */
+  function toggleTapPin(npc) {
+    if (state.tapPin && state.tapPin.id === npc.id && state.tapPin.map === state.map) {
+      state.tapPin = null;
+      toast('Đã bỏ ghim dẫn đường tới ' + npc.name + '.', 2600);
+    } else {
+      state.tapPin = { map: state.map, id: npc.id, name: npc.name };
+      toast('Đã ghim dẫn đường tới ' + npc.name + ' — mũi tên sẽ chỉ đường cho tới khi ngươi tới nơi hoặc bỏ ghim.', 3400);
+    }
+    saveNow();
+  }
+  function tapPinTarget() {
+    var pin = state && state.tapPin;
+    if (!pin || !pin.map || !pin.id) return null;
+    var def = L.MAPS[pin.map]; if (!def) { state.tapPin = null; return null; }
+    var nd = null;
+    if (pin.map === state.map) nd = liveNpcById(pin.id);
+    if (!nd) { var dl = def.npcs || []; for (var i = 0; i < dl.length; i++) if (dl[i].id === pin.id) { nd = dl[i]; break; } }
+    if (!nd) { state.tapPin = null; return null; } // NPC không còn tồn tại: ghim tự hết
+    var t = guideMkNpcTarget(pin.map, nd);
+    t.quest = null; t.pinned = true;
+    return t;
+  }
+  /* Đặt thanh module ngay trên đầu NPC mỗi khung hình; người chơi rời ô
+     đứng / đổi bản đồ / NPC biến mất thì thanh tự đóng. */
+  function tapMenuLayout() {
+    if (!tapMenu || !state) return;
+    var el = $('npc-menu'); if (!el) return;
+    var npc = liveNpcById(tapMenu.id);
+    if (!npc || state.map !== tapMenu.map) { closeTapMenu(); return; }
+    var stands = L.standTilesFor({ kind: 'npc', id: npc.id, x: npc.x, y: npc.y }, npcsLive);
+    var pt = playerTile(), onStand = false;
+    for (var i = 0; i < stands.length; i++) if (stands[i].x === pt.x && stands[i].y === pt.y) { onStand = true; break; }
+    if (!onStand) { closeTapMenu(); return; }
+    var wx = (npc.x + 0.5) * TILE, wy = (npc.y + 1) * TILE - 88;
+    var sx = (wx - camX) * zoom, sy = (wy - camY) * zoom;
+    var mw = el.offsetWidth || 220, mh = el.offsetHeight || 44;
+    var lx = Math.max(4, Math.min(viewW - mw - 4, sx - mw / 2));
+    var ly = Math.max(4, sy - mh);
+    el.style.left = lx + 'px'; el.style.top = ly + 'px';
+  }
+
   function talkTo(npc) {
+    // Đợt tapmenu: ghi khóa hảo cảm của thương nhân để đường mua trong
+    // thoại áp giảm giá 5% khi đã đạt Thân thiết (số [ĐỀ XUẤT]).
+    if (npc && (npc.id === 'phap_khi_chu' || npc.id === 'duoc_su')) shopAffKey = affKeyFor(npc);
     // ARCIV đợt 2: NPC tiêm chỉ-đứng-nhìn (nhân chứng phố nam + người
     // theo dõi Thiên Cơ Các) — một câu lảng tránh qua toast (arcIvNpcLine).
     var arcLine2 = arcIvNpcLine(npc.id);
@@ -8570,6 +8917,7 @@
     // đang chờ của thao tác chạm NPC trước đó. Đường đi không bị xóa ở đây
     // vì cơ chế trận đấu sở hữu chuyển động trong lúc giao chiến.
     pendingInteract = null;
+    closeTapMenu(); // đợt tapmenu: giao tranh bắt đầu thì thanh module đóng
     // Pháp bảo Hộ thể (Huyền Quang Kính): giảm sát thương chiến đấu
     // phải chịu — qua phễu hurtPlayer duy nhất của làn chạm trán/bí
     // cảnh, trần cứng 20% nằm ở L.treasureDmgCut. Độ kiếp KHÔNG qua
@@ -13075,6 +13423,7 @@
     // mở-tự-động đang chờ của thao tác chạm NPC trước đó (đường đi giữ
     // nguyên để cơ chế chạm-quái/giao chiến hiện tại xử lý như cũ).
     pendingInteract = null;
+    closeTapMenu(); // đợt tapmenu: ra đòn thì thanh module đóng
     if (tlFight) { tlSwordHeld = true; tlSwordHeldUntil = tNow + 350; tlSwordPress(); return; } // gói phụ 13: nút kiếm cảm ứng trong ải
     if (hhtFight) { if (!dlg) hhtCastSword(); return; } // Mục F: kiếm quyết trong trận đài
     if (daiFight) { if (!dlg) daiCastSword(); return; } // ARCIV: kiếm quyết trong trận đài thách đấu
@@ -13621,7 +13970,27 @@
         if (ptA.x === pendingInteract.standX && ptA.y === pendingInteract.standY) {
           var tgtA = pendingInteract; pendingInteract = null;
           faceTowardTile(tgtA.focusX, tgtA.focusY);
-          interact();
+          /* Đợt tapmenu: tới nơi cạnh NPC thì hiện THANH MODULE đúng một
+             lần (thay cho mở thẳng thoại); vật thể giữ đường cũ. */
+          if (tgtA.kind === 'npc' && tgtA.id) {
+            var lvA = liveNpcById(tgtA.id);
+            if (lvA) openTapMenu(lvA); else interact();
+          } else interact();
+        }
+      }
+      // Đợt tapmenu: tới ô đứng của NPC đang GHIM dẫn đường -> tự bỏ ghim.
+      if (state.tapPin && state.tapPin.map === state.map) {
+        var pinNpc = liveNpcById(state.tapPin.id);
+        if (pinNpc) {
+          var pinStands = L.standTilesFor({ kind: 'npc', id: pinNpc.id, x: pinNpc.x, y: pinNpc.y }, npcsLive);
+          var ptP = playerTile();
+          for (var pi = 0; pi < pinStands.length; pi++) {
+            if (pinStands[pi].x === ptP.x && pinStands[pi].y === ptP.y) {
+              toast('Đã tới chỗ ' + pinNpc.name + ' — ghim dẫn đường tự bỏ.', 2600);
+              state.tapPin = null; saveNow();
+              break;
+            }
+          }
         }
       }
       // Tự tìm đường làm nhiệm vụ: lập chặng khi không còn đường đi dở
@@ -14396,6 +14765,7 @@
   /* ---------- Bấm chuột để di chuyển + nút thanh kỹ năng ---------- */
   function handleCanvasPoint(clientX, clientY) {
     if (!state || dlg) return;
+    closeTapMenu(); // đợt tapmenu: chạm ra ngoài / chạm đi chỗ khác thì thanh module đóng
     if (pinch.active) return; // đang chụm hai ngón: không sinh lệnh đi/tương tác nào
     // Cần đang cầm quyền điều khiển thì chạm này THUỘC VỀ hệ cần, tuyệt đối
     // không sinh lệnh đi/tương tác. Đây là cửa sự kiện thứ hai chạy SAU
@@ -16713,6 +17083,33 @@
   window.VSLC_NPCHINT = {
     current: function () { return npcHintPublic(npcHintCompute()); },
     frame: function () { return npcHintPublic(npcHintFrame); }
+  };
+
+  /* Tay nắm kiểm chứng đợt THANH MODULE CHẠM + HẢO CẢM: mọi thao tác đi
+     qua ĐÚNG các hàm thanh module dùng (mở/đóng/chọn nút/tặng quà/ghim),
+     không có đường tắt nào khác. */
+  window.VSLC_TAPMENU = {
+    current: function () {
+      if (!tapMenu) return null;
+      var npc = liveNpcById(tapMenu.id);
+      return { id: tapMenu.id, key: tapMenu.key, map: tapMenu.map, name: tapMenu.name,
+        modules: npc ? tapMenuModules(npc).map(function (m) { return m.key; }) : [] };
+    },
+    open: function (id) { var n = liveNpcById(id); if (!n) return false; return openTapMenu(n); },
+    act: function (key) { return tapMenuAct(key); },
+    close: function () { closeTapMenu(); },
+    info: function () { var n = tapMenu ? liveNpcById(tapMenu.id) : null; return n ? tapNpcInfo(n) : null; },
+    give: function (itemId) { return giveGift(tapMenu, itemId); },
+    giftable: function (itemId) { return state ? affGiftable(itemId) : false; },
+    giftPoints: function (itemId) { return affGiftPoints(itemId); },
+    aff: function (key) { return state ? { pts: affPts(key), title: affTitleFor(affPts(key)) } : null; },
+    affKey: function (id) { return state ? affKeyFor({ id: id }) : null; },
+    price: function (key, base) { return affPrice(key, base); },
+    pin: function () { return state && state.tapPin ? { map: state.tapPin.map, id: state.tapPin.id, name: state.tapPin.name } : null; },
+    panels: function () {
+      return { info: !$('npc-info').classList.contains('hidden'), gift: !$('gift-panel').classList.contains('hidden'),
+        menu: !$('npc-menu').classList.contains('hidden') };
+    }
   };
 
   /* Tay nắm kiểm chứng Mục H (chuỗi phụ quanh Trúc Cơ): đọc trạng thái
