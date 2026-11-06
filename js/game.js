@@ -2231,8 +2231,11 @@
         var hvx = hf.resVibT > 0 ? Math.sin(tNow / 16) * 2.6 * Math.min(1, hf.resVibT / 0.2) : 0; // rung chấn khi trúng đòn cộng hưởng (thuần vẽ)
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(hf.x + 16, hf.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var haf = figAtkFrame(hf, 'player_nam'); // đợt vũ khí 2026-11-05: Hoa vung kiếm thật khi ra đòn, hết đứng yên vung vệt
         var hfim = ASSETS.chars['player_nam'];
-        if (imgReady(hfim)) {
+        if (haf) {
+          ctx.drawImage(haf.im, haf.x, haf.y, 96, 120, hf.x - 16 + hvx, hf.y - 48, 64, 80);
+        } else if (imgReady(hfim)) {
           var hsrc = charSrc('player_nam', hfim, hf.dir, DIR8_ROW4[hf.dir] || 0, (hf.phase === 'chase' || hf.phase === 'lunge') && (Math.abs(hf.x - (hf._lx || hf.x)) > 0.1 || Math.abs(hf.y - (hf._ly || hf.y)) > 0.1) ? (Math.floor(hf.walkT * 8) % charCycleFrames('player_nam')) : 0, 0);
           ctx.drawImage(hfim, hsrc.x, hsrc.y, hsrc.w, hsrc.h, hf.x - 16 + hvx, hf.y - 48, 64, 80);
         } else {
@@ -2265,8 +2268,11 @@
         var dvx = df.resVibT > 0 ? Math.sin(tNow / 16) * 2.6 * Math.min(1, df.resVibT / 0.2) : 0;
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(df.x + 16, df.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var daf = figAtkFrame(df); // đợt vũ khí 2026-11-05: đấu thủ/figure người vung kiếm khi ra đòn (chỉ khi ngoại hình có sheet tấn công)
         var dfim = ASSETS.chars[df.look];
-        if (imgReady(dfim)) {
+        if (daf) {
+          ctx.drawImage(daf.im, daf.x, daf.y, 96, 120, df.x - 16 + dvx, df.y - 48, 64, 80);
+        } else if (imgReady(dfim)) {
           var dfMoving = Math.abs(df.x - (df._lx || df.x)) > 0.1 || Math.abs(df.y - (df._ly || df.y)) > 0.1;
           var dfsrc = charSrc(df.look, dfim, df.dir, DIR8_ROW4[df.dir] || 0, dfMoving ? (Math.floor(df.walkT * 8) % charCycleFrames(df.look)) : 0, 0);
           ctx.drawImage(dfim, dfsrc.x, dfsrc.y, dfsrc.w, dfsrc.h, df.x - 16 + dvx, df.y - 48, 64, 80);
@@ -2292,8 +2298,11 @@
         if (bDown) ctx.globalAlpha = 0.45;
         ctx.fillStyle = 'rgba(24,34,18,0.28)';
         ctx.beginPath(); ctx.ellipse(bot.x + 16, bot.y + TILE - 2, 13, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        var baf = bDown ? null : figAtkFrame(bot); // đợt vũ khí 2026-11-05: bot dps/support (sheet player_nam/nu) vung kiếm khi đánh; tank villager_m chưa có sheet tấn công -> giữ nguyên
         var bim = ASSETS.chars[bot.sprite];
-        if (imgReady(bim)) {
+        if (baf) {
+          ctx.drawImage(baf.im, baf.x, baf.y, 96, 120, bot.x - 16, bot.y - 48, 64, 80);
+        } else if (imgReady(bim)) {
           var bsrc = charSrc(bot.sprite, bim, bot.dir, DIR8_ROW4[bot.dir] || 0, (!bDown && bot.movingNow) ? (Math.floor(bot.walkT * 8) % charCycleFrames(bot.sprite)) : 0, 0);
           if (bDown) ctx.filter = 'grayscale(1)';
           ctx.drawImage(bim, bsrc.x, bsrc.y, bsrc.w, bsrc.h, bot.x - 16, bot.y - 48, 64, 80);
@@ -2438,6 +2447,11 @@
     drawBcTelegraphs(); // vòng báo đòn diện rộng của boss tổ đội (Trận Văn Phá)
     drawResWaves(); // đường sóng khóa Vạn Âm (bước 2 mục 3) — cổng fxRings bên trong hàm
     drawResFields(); // sân cộng hưởng Vạn Âm (bước 2 mục 1–2) — cổng fxRings/fxParticles bên trong hàm
+    drawSealFx(); // ấn quang quanh hai tay người tung tại khoảnh khắc ấn thành (đợt bắt ấn 2026-11-05) — cổng fxRings bên trong hàm
+    drawPhaChars(); // chữ 破 thư pháp bay của Phá Âm (lệnh Bui 00:36 2026-11-06) — cổng fxRings bên trong hàm
+    drawChanChars(); // chữ 震 thư pháp bay của Chấn Âm (lệnh Bui 03:48 2026-11-06) — cổng fxRings bên trong hàm
+    drawDinhChars(); // chữ 定 thư pháp bay của Định Âm (lệnh Bui 03:50 2026-11-06) — cổng fxRings bên trong hàm
+    drawPhongChars(); // chữ 封 thư pháp bay của Phong Âm (lệnh Bui 03:50 2026-11-06) — cổng fxRings bên trong hàm
     // chữ bay (sát thương, thông báo nhỏ): cỡ chữ theo hạng đòn; chí mạng
     // phóng 1,0 -> 1,3 trong 70ms rồi về trong 110ms (hiệu ứng "pop").
     floats = floats.filter(function (f) { return f.a > 0; });
@@ -4815,7 +4829,7 @@
     if (!r.ok) { toast(r.reason); return; }
     L.recordSpeech(state, 7, skill + '-ti-thi-hoa-huong-than-dai-dau-kiem', 'dai-dau-kiem');
     var bc = hhtBossCenter();
-    startResBody(false);
+    startResBodyLive(false, { tier: resTierFor(silenceBefore) }); // đợt bắt ấn 2026-11-05: kết ấn thấy trọn + ấn quang tại khung phóng
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
     // Hoa Hướng Thần không có dòng MONSTER_DEFS: âm gốc lấy 340 Hz —
     // đúng cao độ gầm boss mà hhtBossStrike đã dùng cho tiếng của hắn.
@@ -5338,7 +5352,7 @@
     if (!r.ok) { toast(r.reason); return; }
     L.recordSpeech(state, L.chapterOfQuest(state), skill + '-dai-thach-dau', 'dai-dau-kiem');
     var bc = daiCenter();
-    startResBody(false);
+    startResBodyLive(false, { tier: resTierFor(silenceBefore) }); // đợt bắt ấn 2026-11-05: kết ấn thấy trọn + ấn quang tại khung phóng
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
     if (skill === 'pha') { castResonanceFx('pha', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); shakeWorld(0.35); }
     else if (skill === 'chan') { castResonanceFx('chan', bc.x, bc.y + 14, { silenceBefore: silenceBefore, baseFreq: 340, target: b }); shakeWorld(0.35); }
@@ -5984,7 +5998,7 @@
       var rc = L.castWord(state, 'dinh');
       if (!rc.ok) { toast(rc.reason); return; }
       f.usedDinh++;
-      startResBody(false);
+      startResBodyLive(false, { tier: resTierFor(cartSilenceBefore) }); // đợt bắt ấn 2026-11-05
       spawnPillar(f.cart.x, f.cart.y + 14, { top: 'purple', dur: 0.85, h: 105 });
       castResonanceFx('dinh', f.cart.x, f.cart.y, { silenceBefore: cartSilenceBefore, baseFreq: 300, target: null });
       f.cart.state = 'saved';
@@ -6005,7 +6019,7 @@
         var rc3 = L.castWord(state, 'dinh');
         if (!rc3.ok) { toast(rc3.reason); return; }
         f.usedDinh++;
-        startResBody(false);
+        startResBodyLive(false, { tier: resTierFor(cartSilenceBefore3) }); // đợt bắt ấn 2026-11-05
         spawnPillar(tiltCart.x, tiltCart.y + 14, { top: 'purple', dur: 0.85, h: 105 });
         castResonanceFx('dinh', tiltCart.x, tiltCart.y, { silenceBefore: cartSilenceBefore3, baseFreq: 300, target: null });
         tiltCart.state = 'saved';
@@ -6028,7 +6042,7 @@
         var rrh = L.castWord(state, 'dinh');
         if (!rrh.ok) { toast(rrh.reason); return; }
         f.usedDinh++;
-        startResBody(false);
+        startResBodyLive(false, { tier: resTierFor(rhSilenceBefore) }); // đợt bắt ấn 2026-11-05
         spawnPillar(rhX, rhY + 14, { top: 'purple', dur: 0.85, h: 105 });
         castResonanceFx('dinh', rhX, rhY, { silenceBefore: rhSilenceBefore, baseFreq: 300, target: null });
         f.rescueHolds++;
@@ -6051,7 +6065,7 @@
         var rfe = L.castWord(state, 'dinh');
         if (!rfe.ok) { toast(rfe.reason); return; }
         f.usedDinh++;
-        startResBody(false);
+        startResBodyLive(false, { tier: resTierFor(eyeSilenceBefore) }); // đợt bắt ấn 2026-11-05
         spawnPillar(eyeFr.x, eyeFr.y + 14, { top: 'purple', dur: 0.85, h: 105 });
         castResonanceFx('dinh', eyeFr.x, eyeFr.y, { silenceBefore: eyeSilenceBefore, baseFreq: 300, target: null });
         eyeFr.eye.frozenT = 4;
@@ -6074,7 +6088,7 @@
     var silenceBefore = state.silence;
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
-    startResBody(false);
+    startResBodyLive(false, { tier: resTierFor(silenceBefore) }); // đợt bắt ấn 2026-11-05
     var wf = WORD_FLOAT[skill] || ['!', '255,255,255'];
     if (skill === 'phong') {
       f.usedPhong++;
@@ -7730,6 +7744,7 @@
     var beforeD = state.silence;
     var r = L.castWord(state, 'dinh');
     if (!r.ok) { toast(r.reason); return; }
+    startResBodyLive(false, { tier: resTierFor(beforeD) }); // đợt bắt ấn 2026-11-05: thân hết đứng yên khi ra chiêu tự do
     castResonanceFx('dinh', px + 16, py + 30, { silenceBefore: beforeD, baseFreq: 220, noWave: true }); // thử bia: âm gốc cơ quan/bia 220 Hz, sân ĐỨNG YÊN
     addFloat(px + 16, py - 20, 'ĐỊNH!', '170,220,255');
     if (state.quest === 'q12_lenh_dau_tien' && !state.flags.lenDinhDone) {
@@ -7756,6 +7771,7 @@
     var beforeP = state.silence;
     var r = L.castWord(state, 'phong');
     if (!r.ok) { toast(r.reason); return; }
+    startResBodyLive(false, { tier: resTierFor(beforeP) }); // đợt bắt ấn 2026-11-05: thân hết đứng yên khi ra chiêu tự do
     castResonanceFx('phong', px + 16, py + 30, { silenceBefore: beforeP, baseFreq: 220, noWave: true }); // thử trận văn: sân xoay ngược chiều
     addFloat(px + 16, py - 20, 'PHONG!', '255,214,120');
     if (state.quest === 'q12_lenh_dau_tien' && state.flags.lenDinhDone && !state.flags.lenPhongDone) {
@@ -9015,7 +9031,26 @@
     D: { cols: [22,23,24,25,26,27,28], durs: [90,120,150,150,70,130,160], hit: 4 },
     PHAP: { cols: [0,1,2,3,4,5,6,7,8], durs: [90,90,120,120,120,120,70,110,150], hit: 6 },
     MOT: { cols: [9,10,11,12,13,14], durs: [80,80,110,110,110,60], hit: 5 },
-    E: { cols: [29,30,31,32,33,34], durs: [90,100,130,70,90,140], hit: 3 }
+    E: { cols: [29,30,31,32,33,34], durs: [90,100,130,70,90,140], hit: 3 },
+    /* Đợt ĐỘNG TÁC VŨ KHÍ + BẮT ẤN (lệnh Bui 07:26 ngày 2026-11-05):
+       SEAL/SEALF dùng lại ĐÚNG các khung vẽ của PHAP/MOT trên sheet pháp
+       quyết nhưng NHỊP MỚI: đoạn thân bắt đầu ngay tại khoảnh khắc bấm
+       chiêu (startResBodyLive đặt hitAt = tNow + phần trước khung phóng)
+       nên người chơi THẤY TRỌN chuỗi kết ấn nhiều ấn nối nhau trước khi
+       khung phóng quyết (cột 6 / cột 14) tới — bộ PHAP/MOT cũ nén phần
+       lấy đà vào "quá khứ" nên mắt chỉ kịp thấy khung phóng + thu thế.
+       SEAL: phần kết ấn 280ms (6 khung), khung phóng giữ 60ms, thu thế
+       như cũ. SEALF (ấn nhanh cho bí pháp bộ MOT): kết ấn 205ms.
+       HT: Huyền Tinh Trảm có đoạn vung RIÊNG (trước dùng chung bộ A với
+       Trảm — xấp xỉ đã khai): cùng dải khung của sheet kiếm chỉ nhưng
+       NHỊP RIÊNG nặng hẳn — nâng kiếm hai nhịp chậm (110ms + dừng tích
+       lực 170ms ở đỉnh cột 2) rồi mới bổ xuống ở cột 3, thu thế kéo dài
+       190ms; tổng đoạn 690ms so với 540ms của Trảm. Không vẽ thêm điểm
+       ảnh nào — khác biệt nằm ở nhịp và điểm dừng, cộng hiệu ứng sao
+       rơi riêng của chiêu đã có sẵn. */
+    SEAL: { cols: [0,1,2,3,4,5,6,7,8], durs: [40,40,50,50,50,50,60,110,150], hit: 6 },
+    SEALF: { cols: [9,10,11,12,13,14], durs: [35,35,45,45,45,55], hit: 5 },
+    HT: { cols: [0,1,2,3,4,5], durs: [50,110,170,60,110,190], hit: 3 }
   };
   function startBodySegment(sheet, setName, hitAtAbs) {
     var set = ATK_SETS[setName]; if (!set || !ASSETS.atk) return;
@@ -9034,6 +9069,33 @@
       return { im: im, x: col * 96, y: sg.row * 120, sheet: sg.sheet };
     }
     return null;
+  }
+  /* --- Động tác VUNG KIẾM cho figure NGƯỜI của đối thủ (đợt ĐỘNG TÁC
+     VŨ KHÍ + BẮT ẤN, lệnh Bui 07:26 ngày 2026-11-05) ---
+     Hoa Hướng Thần (trận đài + tỉ thí tông) và các đấu thủ/figure kịch
+     bản mang ngoại hình người trước đây chỉ vẽ bằng sheet ĐI BỘ: lúc ra
+     đòn (atkAnimT được đặt đúng khoảnh khắc đòn rơi ở logic đấu) thân
+     vẫn đứng/đi như thường, chỉ có vệt kiếm bay — nay khi atkAnimT bật,
+     thân chạy đoạn vung bộ A của sheet tấn công theo ngoại hình
+     (player_nam -> namKc, player_nu -> nuKc), khung trúng đích (cột 3)
+     khóa tại đúng khoảnh khắc atkAnimT được đặt, cùng hợp đồng t=0 với
+     đòn của người chơi. Figure mang ngoại hình NPC chưa có sheet tấn
+     công riêng (lục_tranh, elder...) giữ nguyên vệt kiếm + lao thân như
+     cũ — khai yếu trong báo cáo đợt. Hàm thuần theo (fig, tNow): test
+     gọi trực tiếp được qua window.VSLC_ACTIONS. */
+  var FIG_ATK_SHEET = { player_nam: 'namKc', player_nu: 'nuKc' };
+  function figAtkFrame(fig, lookOverride) {
+    if (!fig) return null;
+    var sheet = FIG_ATK_SHEET[lookOverride || fig.look || fig.sprite];
+    if (!sheet) return null;
+    if (fig.atkAnimT > 0 && !fig._segOn) { fig._segOn = true; fig._segStart = tNow - 240; } // 240 = tổng dur trước khung trúng của bộ A
+    if (!fig._segOn) return null;
+    var set = ATK_SETS.A, el = tNow - fig._segStart;
+    if (el >= 540) { if (!(fig.atkAnimT > 0)) fig._segOn = false; return null; } // 540 = tổng dur bộ A
+    var acc = 0, col = set.cols[set.cols.length - 1];
+    for (var j = 0; j < set.cols.length; j++) { if (el < acc + set.durs[j]) { col = set.cols[j]; break; } acc += set.durs[j]; }
+    var im = ASSETS.atk[sheet]; if (!imgReady(im)) return null;
+    return { im: im, x: col * 96, y: (DIR8_ROW4[fig.dir] || 0) * 120, col: col };
   }
   /* Lớp trình diễn KIẾM của người chơi (đợt sửa walk2 tiếp — lệnh Bui
      16:13 2026-11-04): ba trạng thái chuyển sạch — không bao giờ hai
@@ -9107,11 +9169,904 @@
     if (move === 'lien_hoan') { startBodySegment(kc, 'B1', hitAtAbs); if (secondHitAtAbs) startBodySegment(kc, 'B2', secondHitAtAbs); }
     else if (move === 'pha_quan') startBodySegment(kc, 'C', hitAtAbs);
     else if (move === 'quy_nhat') startBodySegment(kc, 'D', hitAtAbs);
-    else startBodySegment(kc, 'A', hitAtAbs); // tram + huyen_tinh_tram (bộ A — xấp xỉ đã ghi hợp đồng)
+    else if (move === 'huyen_tinh_tram') startBodySegment(kc, 'HT', hitAtAbs); // đợt bắt ấn/vũ khí 2026-11-05: Huyền Tinh Trảm có bộ vung riêng HT, hết dùng chung bộ A với Trảm
+    else startBodySegment(kc, 'A', hitAtAbs); // tram
   }
   function startResBody(fast) {
     var pq = state && state.gender === 'nu' ? 'nuPq' : 'namPq';
     startBodySegment(pq, fast ? 'MOT' : 'PHAP', tNow);
+  }
+  /* --- HIỆU ỨNG ẤN QUANG tại điểm phát chiêu (đợt ĐỘNG TÁC VŨ KHÍ +
+     BẮT ẤN, lệnh Bui 07:26 ngày 2026-11-05) ---
+     startResBodyLive dành cho MỌI đường ra chiêu do người chơi bấm
+     (cộng hưởng bốn chiêu ở mọi đấu trường + bí pháp bộ phap/mot qua
+     castTechFx + ra chiêu tự do ngoài trận): đoạn thân dùng bộ SEAL/
+     SEALF bắt đầu ngay tại tNow để chuỗi kết ấn HIỆN TRỌN trước mắt,
+     và một ấn quang được HẸN GIỜ nảy đúng khoảnh khắc khung phóng
+     quyết của đoạn thân bắt đầu (tNow + tổng dur các khung kết ấn) —
+     ấn quang nằm quanh hai tay người tung, hai vòng phù văn xoay
+     ngược chiều nhau, lõi sáng, to và rõ dần theo bậc thức. Các cảnh
+     kịch bản dựng sẵn (giữ thước chương 17, thử bia chương 12 qua
+     arcRulerDinh và các cảnh tương tự) vẫn dùng startResBody cũ để
+     giữ nguyên nhịp cảnh đã khóa. Số sát thương/thời điểm áp hiệu ứng
+     của chiêu KHÔNG đổi: hiệu ứng chiêu vẫn áp tại tNow như cũ, sóng
+     bay 0,12s + sân mở 0,18s của nó bung đúng vào cửa sổ ấn hoàn thành.
+     Màu: cộng hưởng = ngôn ngữ vô sắc (trắng lõi, viền lam ngọc nhạt);
+     bí pháp = màu hệ của chính bộ đó (TECH_FX_DEFS.col), truyền qua
+     opts.col. */
+  var sealFx = [];
+  var pendingSeal = null;
+  var RES_SEAL_COL = '190,250,244';
+  function sealPreMs(setName) {
+    var set = ATK_SETS[setName]; if (!set) return 0;
+    var pre = 0; for (var i = 0; i < set.hit; i++) pre += set.durs[i];
+    return pre;
+  }
+  function startResBodyLive(fast, opts) {
+    opts = opts || {};
+    var pq = state && state.gender === 'nu' ? 'nuPq' : 'namPq';
+    var setName = fast ? 'SEALF' : 'SEAL';
+    var pre = sealPreMs(setName);
+    startBodySegment(pq, setName, tNow + pre);
+    pendingSeal = { at: tNow + pre, col: opts.col || RES_SEAL_COL, tier: Math.max(1, Math.min(4, opts.tier || 1)), fast: !!fast };
+  }
+  function spawnSealFx(x, y, opts) {
+    opts = opts || {};
+    if (!fxOn()) return;
+    sealFx.push({ x: x, y: y, t: 0, dur: opts.fast ? 0.42 : 0.55, col: opts.col || RES_SEAL_COL, tier: Math.max(1, Math.min(4, opts.tier || 1)), seed: Math.random() * 6.28 });
+    if (sealFx.length > 6) sealFx.shift();
+    FXC.sealFx = (FXC.sealFx || 0) + 1;
+  }
+  function updateSealFx(dt) {
+    if (pendingSeal && tNow >= pendingSeal.at) {
+      spawnSealFx(px + 16, py - 4, pendingSeal); // vị trí tay tại đúng khoảnh khắc ấn thành (người tung có thể đã nhích bước)
+      pendingSeal = null;
+    }
+    for (var i = sealFx.length - 1; i >= 0; i--) { sealFx[i].t += dt; if (sealFx[i].t >= sealFx[i].dur) sealFx.splice(i, 1); }
+  }
+  function drawSealFx() {
+    if (SET && SET.current && !SET.current.fxRings) return; // cùng cổng vòng hiệu ứng với sân cộng hưởng
+    sealFx.forEach(function (s) {
+      var k = s.t / s.dur;
+      var open = Math.min(1, s.t / 0.09);
+      var fade = k > 0.55 ? Math.max(0, 1 - (k - 0.55) / 0.45) : 1;
+      var env = open * fade; if (env <= 0) return;
+      var R = (23 + s.tier * 3.5) * (0.72 + 0.28 * open);
+      ctx.save(); ctx.translate(s.x, s.y);
+      // quầng lõi mềm sau ấn
+      var grd = null; try { grd = ctx.createRadialGradient(0, 0, 1, 0, 0, R * 1.25); } catch (e) { grd = null; }
+      if (grd) { grd.addColorStop(0, 'rgba(255,255,255,' + (0.34 * env) + ')'); grd.addColorStop(0.5, 'rgba(' + s.col + ',' + (0.16 * env) + ')'); grd.addColorStop(1, 'rgba(' + s.col + ',0)'); ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, R * 1.25, 0, Math.PI * 2); ctx.fill(); }
+      // vòng ngoài: 12 vạch phù văn hướng tâm, xoay thuận
+      var rot1 = s.seed + s.t * 1.5;
+      ctx.strokeStyle = 'rgba(' + s.col + ',' + (0.85 * env) + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 2.4;
+      for (var i = 0; i < 12; i++) {
+        var a1 = rot1 + i * Math.PI / 6, r0 = R - 3.5, r1 = R + 3.5;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a1) * r0, Math.sin(a1) * r0); ctx.lineTo(Math.cos(a1) * r1, Math.sin(a1) * r1); ctx.stroke();
+      }
+      // vòng trong: 8 vạch xoay ngược + lõi ấn (thoi xoay chậm)
+      var rot2 = s.seed - s.t * 2.1;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.75 * env) + ')'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, 0, R * 0.6, 0, Math.PI * 2); ctx.stroke();
+      for (var j = 0; j < 8; j++) {
+        var a2 = rot2 + j * Math.PI / 4, q0 = R * 0.6 - 2.6, q1 = R * 0.6 + 2.6;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a2) * q0, Math.sin(a2) * q0); ctx.lineTo(Math.cos(a2) * q1, Math.sin(a2) * q1); ctx.stroke();
+      }
+      ctx.save(); ctx.rotate(s.seed + s.t * 0.9);
+      var dc = R * 0.30;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.9 * env) + ')';
+      ctx.beginPath(); ctx.moveTo(0, -dc); ctx.lineTo(dc * 0.62, 0); ctx.lineTo(0, dc); ctx.lineTo(-dc * 0.62, 0); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.restore();
+    });
+  }
+  /* --- CHỮ "PHÁ" THƯ PHÁP BAY của Phá Âm (lệnh Bui 00:36 ngày
+     2026-11-06, nối tiếp đợt động tác vũ khí + bắt ấn) ---
+     Khi người chơi tung Phá Âm qua castResonanceFx (mọi đường có mục
+     tiêu: chạm trán, tỉ thí Hoa Hướng Thần, đài chương 12, trận kịch
+     bản cung; và các đường không mục tiêu: castPha tự do, đối hưởng
+     thiên lôi), một chữ 破 theo lối thư pháp nảy tại hai tay người
+     tung (px+16, py-4 — cùng điểm ấn quang), bay về đúng điểm đích
+     của đường sóng (gx, gy-14) vừa lớn dần nhẹ, kéo theo vệt mực
+     tung tóe mỏng phía sau; chạm đích thì VỠ TAN: bốn mảnh chữ tách
+     ra phai dần cùng hạt mực văng, tan hết sau 0,5 giây. Không có
+     mục tiêu: chữ bay theo hướng mặt của nhân vật ~2,4 ô rồi vỡ ở
+     cuối đường bay. Thuần trình diễn: sát thương của Phá Âm vẫn áp
+     tại tNow như cũ — không đổi số, nhịp trúng, hồi chiêu, cơ chế.
+     Chất liệu mực (cùng kỹ thuật bù mực của đợt Nho Tu): glyph kết
+     xuất một lần theo cỡ bậc vào sprite — thân nét phình nhẹ như bút
+     lông đè, sợi khô sáng trong thân nét và mép ăn khô theo hạt giống
+     cố định, hạt mực văng quanh chữ; nền nét vẫn là font serif hệ
+     thống (giới hạn font đã khai ở đợt Nho Tu). Tông VÔ SẮC như luật
+     cộng hưởng: mực xám đen trên quầng lam ngọc nhạt/trắng. Cỡ chữ,
+     số hạt vỡ và bề dày vệt tăng theo bậc hưởng như ấn quang. Cổng
+     cài đặt: fxOn() tắt HOẶC fxRings tắt -> không sinh. Đếm kiểm
+     chứng: __VSLC_FX_COUNT.phaChar (khi sinh) và .phaBurst (khi vỡ).
+     (Ba chiêu còn lại lần lượt có chữ bay theo lệnh Bui 03:48 và
+     03:50 ngày 2026-11-06 — xem các khối 震/定/封 ngay dưới đây.) */
+  var phaChars = [];
+  var PHA_GLYPH = '破';
+  var phaSprites = {};
+  function phaCharSize(tier) { return 30 + Math.max(1, Math.min(4, tier || 1)) * 7; }
+  function phaRand(seed, i) { var v = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453; return v - Math.floor(v); }
+  function phaGlyphSprite(size) {
+    if (phaSprites[size]) return phaSprites[size];
+    var spr = null;
+    try {
+      var pad = Math.ceil(size * 0.45);
+      var cv = document.createElement('canvas');
+      cv.width = size + pad * 2; cv.height = size + pad * 2;
+      var c = cv.getContext('2d');
+      var cx = cv.width / 2, cy = cv.height / 2 + size * 0.03;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif';
+      // thân nét: nhiều lượt lệch nửa điểm cho mép phình ướt như bút lông đè
+      c.fillStyle = 'rgba(16,20,26,0.95)';
+      var offs = [[0, 0], [0.8, 0], [-0.8, 0], [0, 0.8], [0, -0.8], [0.4, 0.4], [-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4]];
+      for (var o = 0; o < offs.length; o++) c.fillText(PHA_GLYPH, cx + offs[o][0], cy + offs[o][1]);
+      c.fillStyle = 'rgba(30,36,44,0.9)'; c.fillText(PHA_GLYPH, cx, cy);
+      // sợi khô sáng trong thân nét (chỉ hiện nơi đã có mực nhờ source-atop)
+      c.globalCompositeOperation = 'source-atop';
+      c.strokeStyle = 'rgba(235,242,244,0.20)'; c.lineCap = 'round';
+      for (var f = 0; f < 9; f++) {
+        var fx0 = cx + (phaRand(size, f) - 0.5) * size * 0.72, fy0 = cy + (phaRand(size, f + 30) - 0.5) * size * 0.72;
+        c.lineWidth = 0.8 + phaRand(size, f + 60) * 1.1;
+        c.beginPath(); c.moveTo(fx0, fy0); c.lineTo(fx0 + (phaRand(size, f + 90) - 0.3) * size * 0.3, fy0 + (phaRand(size, f + 120) - 0.5) * size * 0.16); c.stroke();
+      }
+      // ăn khô ở mép nét: chấm destination-out nhỏ theo hạt giống cố định
+      c.globalCompositeOperation = 'destination-out';
+      var dots = Math.round(size * 1.5);
+      for (var d = 0; d < dots; d++) {
+        c.globalAlpha = 0.25 + phaRand(size, d + 200) * 0.4;
+        c.beginPath(); c.arc(cx + (phaRand(size, d + 300) - 0.5) * size * 1.02, cy + (phaRand(size, d + 400) - 0.5) * size * 1.02, 0.5 + phaRand(size, d + 500) * 1.3, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      // hạt mực văng quanh chữ (ngoài thân nét)
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = 'rgba(16,20,26,0.75)';
+      for (var s = 0; s < 12; s++) {
+        var sa = phaRand(size, s + 600) * Math.PI * 2, sr = size * (0.52 + phaRand(size, s + 700) * 0.3);
+        c.beginPath(); c.arc(cx + Math.cos(sa) * sr, cy + Math.sin(sa) * sr * 0.9, 0.6 + phaRand(size, s + 800) * 1.5, 0, Math.PI * 2); c.fill();
+      }
+      spr = cv;
+    } catch (e) { spr = null; }
+    phaSprites[size] = spr;
+    return spr;
+  }
+  function spawnPhaChar(x0, y0, x1, y1, tier) {
+    if (!fxOn()) return null;
+    if (SET && SET.current && !SET.current.fxRings) return null; // cùng cổng đường sóng/sân/ấn quang
+    tier = Math.max(1, Math.min(4, tier || 1));
+    var dist = Math.hypot(x1 - x0, y1 - y0);
+    var ch = {
+      x0: x0, y0: y0, x1: x1, y1: y1, x: x0, y: y0, t: 0,
+      dur: Math.min(0.38, Math.max(0.18, dist / 480)),
+      tier: tier, size: phaCharSize(tier), seed: 1 + Math.random() * 9,
+      state: 'fly', bt: 0, trail: [], drops: []
+    };
+    phaChars.push(ch);
+    if (phaChars.length > 5) phaChars.shift();
+    FXC.phaChar = (FXC.phaChar || 0) + 1;
+    return ch;
+  }
+  function spawnPhaCharFromCast(gx, gy, tier, opts) {
+    var hx = px + 16, hy = py - 4; // hai tay người tung — cùng điểm ấn quang
+    if (opts && opts.target) { spawnPhaChar(hx, hy, gx, gy - 14, tier); return; }
+    // không mục tiêu (castPha tự do, đối hưởng thiên lôi): bay theo hướng mặt ~2,4 ô
+    var vx = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
+    var vy = facing === 'up' ? -1 : facing === 'down' ? 1 : 0;
+    spawnPhaChar(hx, hy, hx + vx * 78, hy + vy * 78, tier);
+  }
+  function phaCharPos(ch) {
+    var p = Math.min(1, ch.t / ch.dur);
+    return { x: ch.x0 + (ch.x1 - ch.x0) * p, y: ch.y0 + (ch.y1 - ch.y0) * p - Math.sin(p * Math.PI) * 11, p: p };
+  }
+  function burstPhaChar(ch) {
+    ch.state = 'burst'; ch.bt = 0; ch.x = ch.x1; ch.y = ch.y1;
+    var n = 9 + ch.tier * 3;
+    for (var i = 0; i < n; i++) {
+      var a = phaRand(ch.seed, i) * Math.PI * 2, sp = 24 + phaRand(ch.seed, i + 40) * (44 + ch.tier * 9);
+      ch.drops.push({ x: ch.x1, y: ch.y1, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 16, t: 0, life: 0.32 + phaRand(ch.seed, i + 80) * 0.24, r: 0.9 + phaRand(ch.seed, i + 120) * (1.5 + ch.tier * 0.4) });
+    }
+    FXC.phaBurst = (FXC.phaBurst || 0) + 1;
+  }
+  function updatePhaChars(dt) {
+    for (var i = phaChars.length - 1; i >= 0; i--) {
+      var ch = phaChars[i], j;
+      for (j = ch.trail.length - 1; j >= 0; j--) { ch.trail[j].t += dt; if (ch.trail[j].t > 0.26) ch.trail.splice(j, 1); }
+      if (ch.state === 'fly') {
+        ch.t += dt;
+        var pos = phaCharPos(ch);
+        ch.x = pos.x; ch.y = pos.y;
+        ch.trail.push({ x: pos.x, y: pos.y, t: 0 });
+        if (ch.trail.length > 16) ch.trail.shift();
+        if (ch.t >= ch.dur) burstPhaChar(ch);
+      } else {
+        ch.bt += dt;
+        for (j = 0; j < ch.drops.length; j++) { var dr = ch.drops[j]; dr.t += dt; dr.x += dr.vx * dt; dr.y += dr.vy * dt; dr.vy += 66 * dt; }
+        if (ch.bt >= 0.5) phaChars.splice(i, 1);
+      }
+    }
+  }
+  function drawPhaGlyphFull(x, y, size, alpha, rot, spr) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    // quầng vô sắc sau chữ — neo mắt trên nền sáng như đường sóng
+    var R = size * 0.95, grd = null;
+    try { grd = ctx.createRadialGradient(0, 0, 1, 0, 0, R); } catch (e) { grd = null; }
+    if (grd) { grd.addColorStop(0, 'rgba(255,255,255,0.30)'); grd.addColorStop(0.55, 'rgba(190,250,244,0.13)'); grd.addColorStop(1, 'rgba(190,250,244,0)'); ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); }
+    if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
+    else { ctx.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(16,20,26,0.95)'; ctx.fillText(PHA_GLYPH, 0, size * 0.03); }
+    ctx.restore();
+  }
+  function drawPhaChars() {
+    if (SET && SET.current && !SET.current.fxRings) return; // cùng cổng vòng hiệu ứng với sân cộng hưởng
+    phaChars.forEach(function (ch) {
+      var spr = phaGlyphSprite(ch.size), j;
+      // vệt mực tung tóe mỏng chạy sau đường bay (sống 0,26 giây)
+      if (ch.trail.length > 1) {
+        ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (j = 1; j < ch.trail.length; j++) {
+          var a0 = ch.trail[j - 1], a1 = ch.trail[j];
+          var ageK = 1 - a1.t / 0.26; if (ageK <= 0) continue;
+          ctx.strokeStyle = 'rgba(20,26,33,' + (0.34 * ageK) + ')';
+          ctx.lineWidth = Math.max(0.6, ch.size * 0.15 * ageK);
+          ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+          if (j % 3 === 0) { // hạt mực văng lệch khỏi thân vệt
+            ctx.fillStyle = 'rgba(20,26,33,' + (0.5 * ageK) + ')';
+            ctx.beginPath(); ctx.arc(a1.x + (phaRand(ch.seed, j) - 0.5) * 13, a1.y + (phaRand(ch.seed, j + 50) - 0.5) * 13, 0.8 + phaRand(ch.seed, j + 90) * 1.3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+      if (ch.state === 'fly') {
+        var p = Math.min(1, ch.t / ch.dur);
+        var sc = 0.82 + 0.30 * p; // vừa bay vừa lớn dần nhẹ
+        ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(sc, sc); ctx.translate(-ch.x, -ch.y);
+        drawPhaGlyphFull(ch.x, ch.y, ch.size, Math.min(1, ch.t / 0.05), Math.sin(ch.seed * 3 + ch.t * 7) * 0.06, spr);
+        ctx.restore();
+      } else {
+        // vỡ tan: bốn mảnh chữ (bốn góc sprite) tách ra phai dần + hạt mực văng
+        var bk = Math.min(1, ch.bt / 0.5), sep = bk * (10 + ch.tier * 3), fade = Math.max(0, 1 - bk);
+        if (spr && spr.width) {
+          var hw = spr.width / 2, hh = spr.height / 2;
+          var quads = [[0, 0, -1, -1], [hw, 0, 1, -1], [0, hh, -1, 1], [hw, hh, 1, 1]];
+          ctx.save(); ctx.globalAlpha = fade;
+          for (var q = 0; q < 4; q++) {
+            var relx = quads[q][0] + hw / 2 - hw, rely = quads[q][1] + hh / 2 - hh;
+            ctx.save();
+            ctx.translate(ch.x + relx + quads[q][2] * sep, ch.y + rely + quads[q][3] * sep * 0.7);
+            ctx.rotate(quads[q][2] * bk * 0.38);
+            ctx.drawImage(spr, quads[q][0], quads[q][1], hw, hh, -hw / 2, -hh / 2, hw, hh);
+            ctx.restore();
+          }
+          ctx.restore();
+        } else {
+          drawPhaGlyphFull(ch.x, ch.y, ch.size, fade, bk * 0.2, null);
+        }
+        ch.drops.forEach(function (dr) {
+          var da = 1 - dr.t / dr.life; if (da <= 0) return;
+          ctx.fillStyle = 'rgba(18,23,30,' + (0.85 * da) + ')';
+          ctx.beginPath(); ctx.arc(dr.x, dr.y, dr.r * da + 0.3, 0, Math.PI * 2); ctx.fill();
+        });
+      }
+    });
+  }
+  /* --- CHỮ "CHẤN" THƯ PHÁP BAY của Chấn Âm (lệnh Bui 03:48 ngày
+     2026-11-06, nối tiếp chữ 破 của Phá Âm ở mục trên) ---
+     Khi người chơi tung Chấn Âm qua castResonanceFx (cùng điểm nối
+     duy nhất với chữ 破), một chữ 震 theo lối thư pháp nảy tại hai
+     tay người tung (px+16, py-4 — cùng điểm ấn quang), bay về TÂM
+     SÓNG CHẤN (gx, gy — đúng tâm của sân cộng hưởng Chấn Âm vừa nở,
+     nơi ba vòng gợn đất lan ra), kéo theo vệt mực tung tóe mỏng như
+     chữ 破. Khác hẳn phá ở nhịp vỡ — đúng chất CHẤN ĐỘNG: chạm đích,
+     chữ không vỡ vụn ngay mà PHÌNH LỚN NHANH trong 0,11 giây kèm
+     rung lắc rất nhẹ (thân chữ "chấn"), rồi NỔ thành MỘT VÒNG XUNG
+     CHẤN MỰC: vòng elip mực (nén 0,42 như vòng sân chấn) lan rộng
+     khớp nhịp vòng sóng chấn hiện hành, mép vòng tan dần trong 0,5
+     giây, kèm 12 + bậc×4 hạt mực văng tỏa tròn. Khoảnh khắc nổ là
+     đúng khung trúng đích của sóng. Không có mục tiêu: bay theo
+     hướng mặt ~2,4 ô rồi nổ ở cuối đường bay (như phá). Thuần trình
+     diễn: sát thương của Chấn Âm vẫn áp tại tNow như cũ — không đổi
+     số, nhịp trúng, hồi chiêu, cơ chế. Chất liệu mực y hệt chữ 破
+     (sprite dựng một lần theo cỡ: mép phình nhiều lượt tô lệch, sợi
+     khô source-atop, ăn khô mép destination-out, hạt mực văng quanh;
+     nền nét là font serif hệ thống — giới hạn font đã khai ở đợt
+     Nho Tu). Tông VÔ SẮC như luật cộng hưởng. Cỡ chữ theo bậc hưởng
+     như phá/ấn quang (37/44/51/58px), bán kính vòng nổ và số hạt
+     tăng theo bậc. Cổng cài đặt kép fxOn() + fxRings như đường sóng.
+     Đếm kiểm chứng: __VSLC_FX_COUNT.chanChar (khi sinh) và
+     .chanBurst (khi nổ). Định/Phong Âm có chữ bay riêng ở khối dưới
+     (lệnh Bui 03:50 ngày 2026-11-06). */
+  var chanChars = [];
+  var CHAN_GLYPH = '震';
+  var chanSprites = {};
+  var CHAN_SWELL_DUR = 0.11; // nhịp phình trước khi nổ — rất nhanh, đúng chất chấn
+  var CHAN_BOOM_DUR = 0.5;   // tổng nhịp vòng nổ + hạt tan
+  function chanCharSize(tier) { return phaCharSize(tier); } // cùng thang cỡ với chữ 破 và ấn quang
+  function chanGlyphSprite(size) {
+    if (chanSprites[size]) return chanSprites[size];
+    var spr = null;
+    try {
+      var pad = Math.ceil(size * 0.45);
+      var cv = document.createElement('canvas');
+      cv.width = size + pad * 2; cv.height = size + pad * 2;
+      var c = cv.getContext('2d');
+      var cx = cv.width / 2, cy = cv.height / 2 + size * 0.03;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif';
+      // thân nét: nhiều lượt lệch nửa điểm cho mép phình ướt như bút lông đè (như phá)
+      c.fillStyle = 'rgba(16,20,26,0.95)';
+      var offs = [[0, 0], [0.8, 0], [-0.8, 0], [0, 0.8], [0, -0.8], [0.4, 0.4], [-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4]];
+      for (var o = 0; o < offs.length; o++) c.fillText(CHAN_GLYPH, cx + offs[o][0], cy + offs[o][1]);
+      c.fillStyle = 'rgba(30,36,44,0.9)'; c.fillText(CHAN_GLYPH, cx, cy);
+      // sợi khô sáng trong thân nét (source-atop — chỉ hiện nơi đã có mực)
+      c.globalCompositeOperation = 'source-atop';
+      c.strokeStyle = 'rgba(235,242,244,0.20)'; c.lineCap = 'round';
+      for (var f = 0; f < 9; f++) {
+        var fx0 = cx + (phaRand(size + 5000, f) - 0.5) * size * 0.72, fy0 = cy + (phaRand(size + 5000, f + 30) - 0.5) * size * 0.72;
+        c.lineWidth = 0.8 + phaRand(size + 5000, f + 60) * 1.1;
+        c.beginPath(); c.moveTo(fx0, fy0); c.lineTo(fx0 + (phaRand(size + 5000, f + 90) - 0.3) * size * 0.3, fy0 + (phaRand(size + 5000, f + 120) - 0.5) * size * 0.16); c.stroke();
+      }
+      // ăn khô ở mép nét: chấm destination-out nhỏ theo hạt giống cố định
+      c.globalCompositeOperation = 'destination-out';
+      var dots = Math.round(size * 1.5);
+      for (var d = 0; d < dots; d++) {
+        c.globalAlpha = 0.25 + phaRand(size + 5000, d + 200) * 0.4;
+        c.beginPath(); c.arc(cx + (phaRand(size + 5000, d + 300) - 0.5) * size * 1.02, cy + (phaRand(size + 5000, d + 400) - 0.5) * size * 1.02, 0.5 + phaRand(size + 5000, d + 500) * 1.3, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      // hạt mực văng quanh chữ (ngoài thân nét)
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = 'rgba(16,20,26,0.75)';
+      for (var s = 0; s < 12; s++) {
+        var sa = phaRand(size + 5000, s + 600) * Math.PI * 2, sr = size * (0.52 + phaRand(size + 5000, s + 700) * 0.3);
+        c.beginPath(); c.arc(cx + Math.cos(sa) * sr, cy + Math.sin(sa) * sr * 0.9, 0.6 + phaRand(size + 5000, s + 800) * 1.5, 0, Math.PI * 2); c.fill();
+      }
+      spr = cv;
+    } catch (e) { spr = null; }
+    chanSprites[size] = spr;
+    return spr;
+  }
+  function spawnChanChar(x0, y0, x1, y1, tier) {
+    if (!fxOn()) return null;
+    if (SET && SET.current && !SET.current.fxRings) return null; // cùng cổng đường sóng/sân/ấn quang
+    tier = Math.max(1, Math.min(4, tier || 1));
+    var dist = Math.hypot(x1 - x0, y1 - y0);
+    var ch = {
+      x0: x0, y0: y0, x1: x1, y1: y1, x: x0, y: y0, t: 0,
+      dur: Math.min(0.38, Math.max(0.18, dist / 480)),
+      tier: tier, size: chanCharSize(tier), seed: 1 + Math.random() * 9,
+      state: 'fly', st: 0, bt: 0, ringR: 0, ringMax: 0, trail: [], drops: []
+    };
+    chanChars.push(ch);
+    if (chanChars.length > 5) chanChars.shift();
+    FXC.chanChar = (FXC.chanChar || 0) + 1;
+    return ch;
+  }
+  function spawnChanCharFromCast(gx, gy, tier, opts) {
+    var hx = px + 16, hy = py - 4; // hai tay người tung — cùng điểm ấn quang
+    if (opts && opts.target) { spawnChanChar(hx, hy, gx, gy, tier); return; } // đích = tâm sóng chấn (gx, gy)
+    // không mục tiêu: bay theo hướng mặt ~2,4 ô như chữ phá
+    var vx = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
+    var vy = facing === 'up' ? -1 : facing === 'down' ? 1 : 0;
+    spawnChanChar(hx, hy, hx + vx * 78, hy + vy * 78, tier);
+  }
+  function chanCharPos(ch) {
+    var p = Math.min(1, ch.t / ch.dur);
+    return { x: ch.x0 + (ch.x1 - ch.x0) * p, y: ch.y0 + (ch.y1 - ch.y0) * p - Math.sin(p * Math.PI) * 11, p: p };
+  }
+  function detonateChanChar(ch) {
+    ch.state = 'boom'; ch.bt = 0; ch.x = ch.x1; ch.y = ch.y1;
+    ch.ringMax = Math.round(ch.size * (1.3 + ch.tier * 0.12)); // vòng nổ ôm trọn sân chấn theo bậc
+    ch.ringR = 0;
+    var n = 12 + ch.tier * 4;
+    for (var i = 0; i < n; i++) {
+      var a = phaRand(ch.seed, i + 7) * Math.PI * 2, sp = 55 + phaRand(ch.seed, i + 47) * (70 + ch.tier * 16);
+      ch.drops.push({ x: ch.x1, y: ch.y1, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6, t: 0, life: 0.36 + phaRand(ch.seed, i + 87) * 0.24, r: 1.0 + phaRand(ch.seed, i + 127) * (1.6 + ch.tier * 0.4) });
+    }
+    FXC.chanBurst = (FXC.chanBurst || 0) + 1;
+  }
+  function updateChanChars(dt) {
+    for (var i = chanChars.length - 1; i >= 0; i--) {
+      var ch = chanChars[i], j;
+      for (j = ch.trail.length - 1; j >= 0; j--) { ch.trail[j].t += dt; if (ch.trail[j].t > 0.26) ch.trail.splice(j, 1); }
+      if (ch.state === 'fly') {
+        ch.t += dt;
+        var pos = chanCharPos(ch);
+        ch.x = pos.x; ch.y = pos.y;
+        ch.trail.push({ x: pos.x, y: pos.y, t: 0 });
+        if (ch.trail.length > 16) ch.trail.shift();
+        if (ch.t >= ch.dur) { ch.state = 'swell'; ch.st = 0; ch.x = ch.x1; ch.y = ch.y1; }
+      } else if (ch.state === 'swell') {
+        ch.st += dt;
+        if (ch.st >= CHAN_SWELL_DUR) detonateChanChar(ch);
+      } else {
+        ch.bt += dt;
+        var rp = Math.min(1, ch.bt / 0.34);
+        ch.ringR = ch.ringMax * (1 - Math.pow(1 - rp, 3)); // vòng lan nhanh đầu, chậm cuối — khớp nhịp gợn sân
+        for (j = 0; j < ch.drops.length; j++) { var dr = ch.drops[j]; dr.t += dt; dr.x += dr.vx * dt; dr.y += dr.vy * dt; dr.vx *= (1 - 1.6 * dt); dr.vy = dr.vy * (1 - 1.6 * dt) + 26 * dt; }
+        if (ch.bt >= CHAN_BOOM_DUR) chanChars.splice(i, 1);
+      }
+    }
+  }
+  function drawChanGlyphFull(x, y, size, alpha, rot, spr) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    // quầng vô sắc sau chữ — neo mắt trên nền sáng như đường sóng (như phá)
+    var R = size * 0.95, grd = null;
+    try { grd = ctx.createRadialGradient(0, 0, 1, 0, 0, R); } catch (e) { grd = null; }
+    if (grd) { grd.addColorStop(0, 'rgba(255,255,255,0.30)'); grd.addColorStop(0.55, 'rgba(190,250,244,0.13)'); grd.addColorStop(1, 'rgba(190,250,244,0)'); ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); }
+    if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
+    else { ctx.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(16,20,26,0.95)'; ctx.fillText(CHAN_GLYPH, 0, size * 0.03); }
+    ctx.restore();
+  }
+  function drawChanChars() {
+    if (SET && SET.current && !SET.current.fxRings) return; // cùng cổng vòng hiệu ứng với sân cộng hưởng
+    chanChars.forEach(function (ch) {
+      var spr = chanGlyphSprite(ch.size), j;
+      // vệt mực tung tóe mỏng chạy sau đường bay (sống 0,26 giây — như phá)
+      if (ch.trail.length > 1) {
+        ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (j = 1; j < ch.trail.length; j++) {
+          var a0 = ch.trail[j - 1], a1 = ch.trail[j];
+          var ageK = 1 - a1.t / 0.26; if (ageK <= 0) continue;
+          ctx.strokeStyle = 'rgba(20,26,33,' + (0.34 * ageK) + ')';
+          ctx.lineWidth = Math.max(0.6, ch.size * 0.15 * ageK);
+          ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+          if (j % 3 === 0) {
+            ctx.fillStyle = 'rgba(20,26,33,' + (0.5 * ageK) + ')';
+            ctx.beginPath(); ctx.arc(a1.x + (phaRand(ch.seed, j) - 0.5) * 13, a1.y + (phaRand(ch.seed, j + 50) - 0.5) * 13, 0.8 + phaRand(ch.seed, j + 90) * 1.3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+      if (ch.state === 'fly') {
+        var p = Math.min(1, ch.t / ch.dur);
+        var sc = 0.82 + 0.30 * p; // vừa bay vừa lớn dần nhẹ (như phá)
+        ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(sc, sc); ctx.translate(-ch.x, -ch.y);
+        drawChanGlyphFull(ch.x, ch.y, ch.size, Math.min(1, ch.t / 0.05), Math.sin(ch.seed * 3 + ch.t * 7) * 0.06, spr);
+        ctx.restore();
+      } else if (ch.state === 'swell') {
+        // PHÌNH NHANH + rung chấn nhẹ: thân chữ căng lên 1,12 -> 1,78 lần trong 0,11 giây
+        var sk = Math.min(1, ch.st / CHAN_SWELL_DUR);
+        var ssc = 1.12 + 0.66 * (1 - Math.pow(1 - sk, 2));
+        var jx = (phaRand(ch.seed, Math.floor(ch.st * 90)) - 0.5) * 3.2, jy = (phaRand(ch.seed, Math.floor(ch.st * 90) + 31) - 0.5) * 2.2;
+        ctx.save(); ctx.translate(ch.x + jx, ch.y + jy); ctx.scale(ssc, ssc); ctx.translate(-ch.x, -ch.y);
+        drawChanGlyphFull(ch.x, ch.y, ch.size, 1, Math.sin(ch.seed * 5 + ch.st * 40) * 0.03, spr);
+        ctx.restore();
+      } else {
+        // NỔ: vòng xung chấn mực elip (nén 0,42 như vòng sân chấn) lan ra + tàn chữ tan cực nhanh + hạt mực tỏa tròn
+        var bk = Math.min(1, ch.bt / CHAN_BOOM_DUR);
+        var ringA = Math.max(0, 1 - bk);
+        if (ch.ringR > 1) {
+          ctx.save();
+          ctx.beginPath(); ctx.ellipse(ch.x, ch.y, ch.ringR, ch.ringR * 0.42, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(16,20,26,' + (0.62 * ringA) + ')'; ctx.lineWidth = Math.max(1.2, 5.2 * (1 - bk) + 1); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(ch.x, ch.y, Math.max(1, ch.ringR * 0.86), Math.max(1, ch.ringR * 0.86 * 0.42), 0, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(190,250,244,' + (0.55 * ringA) + ')'; ctx.lineWidth = Math.max(1, 2.6 * (1 - bk) + 0.6); ctx.stroke();
+          ctx.restore();
+        }
+        if (ch.bt < 0.14) { // tàn thân chữ: còn thấy chữ căng hết cỡ trong chớp nổ đầu rồi tan hẳn vào vòng
+          var ga = 1 - ch.bt / 0.14;
+          ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(1.78 + ch.bt * 1.4, 1.78 + ch.bt * 1.4); ctx.translate(-ch.x, -ch.y);
+          drawChanGlyphFull(ch.x, ch.y, ch.size, ga * 0.9, 0, spr);
+          ctx.restore();
+        }
+        ch.drops.forEach(function (dr) {
+          var da = 1 - dr.t / dr.life; if (da <= 0) return;
+          ctx.fillStyle = 'rgba(18,23,30,' + (0.85 * da) + ')';
+          ctx.beginPath(); ctx.arc(dr.x, dr.y, dr.r * da + 0.3, 0, Math.PI * 2); ctx.fill();
+        });
+      }
+    });
+  }
+  /* --- KỸ THUẬT MỰC DÙNG CHUNG cho chữ Định/Phong (cùng công thức
+     chất liệu với sprite chữ phá/chấn ở trên: mép phình nhiều lượt
+     tô lệch, sợi khô source-atop, ăn khô mép destination-out, hạt
+     mực văng quanh; seedOff tách vân mực riêng cho từng chữ) --- */
+  function inkGlyphSpriteFor(glyph, size, seedOff, cache) {
+    if (cache[size]) return cache[size];
+    var spr = null;
+    try {
+      var pad = Math.ceil(size * 0.45);
+      var cv = document.createElement('canvas');
+      cv.width = size + pad * 2; cv.height = size + pad * 2;
+      var c = cv.getContext('2d');
+      var cx = cv.width / 2, cy = cv.height / 2 + size * 0.03;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif';
+      c.fillStyle = 'rgba(16,20,26,0.95)';
+      var offs = [[0, 0], [0.8, 0], [-0.8, 0], [0, 0.8], [0, -0.8], [0.4, 0.4], [-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4]];
+      for (var o = 0; o < offs.length; o++) c.fillText(glyph, cx + offs[o][0], cy + offs[o][1]);
+      c.fillStyle = 'rgba(30,36,44,0.9)'; c.fillText(glyph, cx, cy);
+      c.globalCompositeOperation = 'source-atop';
+      c.strokeStyle = 'rgba(235,242,244,0.20)'; c.lineCap = 'round';
+      for (var f = 0; f < 9; f++) {
+        var fx0 = cx + (phaRand(size + seedOff, f) - 0.5) * size * 0.72, fy0 = cy + (phaRand(size + seedOff, f + 30) - 0.5) * size * 0.72;
+        c.lineWidth = 0.8 + phaRand(size + seedOff, f + 60) * 1.1;
+        c.beginPath(); c.moveTo(fx0, fy0); c.lineTo(fx0 + (phaRand(size + seedOff, f + 90) - 0.3) * size * 0.3, fy0 + (phaRand(size + seedOff, f + 120) - 0.5) * size * 0.16); c.stroke();
+      }
+      c.globalCompositeOperation = 'destination-out';
+      var dots = Math.round(size * 1.5);
+      for (var d = 0; d < dots; d++) {
+        c.globalAlpha = 0.25 + phaRand(size + seedOff, d + 200) * 0.4;
+        c.beginPath(); c.arc(cx + (phaRand(size + seedOff, d + 300) - 0.5) * size * 1.02, cy + (phaRand(size + seedOff, d + 400) - 0.5) * size * 1.02, 0.5 + phaRand(size + seedOff, d + 500) * 1.3, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = 'rgba(16,20,26,0.75)';
+      for (var s = 0; s < 12; s++) {
+        var sa = phaRand(size + seedOff, s + 600) * Math.PI * 2, sr = size * (0.52 + phaRand(size + seedOff, s + 700) * 0.3);
+        c.beginPath(); c.arc(cx + Math.cos(sa) * sr, cy + Math.sin(sa) * sr * 0.9, 0.6 + phaRand(size + seedOff, s + 800) * 1.5, 0, Math.PI * 2); c.fill();
+      }
+      spr = cv;
+    } catch (e) { spr = null; }
+    cache[size] = spr;
+    return spr;
+  }
+  function drawInkGlyphFull(x, y, size, alpha, rot, spr, glyph) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    var R = size * 0.95, grd = null;
+    try { grd = ctx.createRadialGradient(0, 0, 1, 0, 0, R); } catch (e) { grd = null; }
+    if (grd) { grd.addColorStop(0, 'rgba(255,255,255,0.30)'); grd.addColorStop(0.55, 'rgba(190,250,244,0.13)'); grd.addColorStop(1, 'rgba(190,250,244,0)'); ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); }
+    if (spr) ctx.drawImage(spr, -spr.width / 2, -spr.height / 2);
+    else { ctx.font = '700 ' + size + 'px "Noto Serif CJK SC","Songti SC","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(16,20,26,0.95)'; ctx.fillText(glyph, 0, size * 0.03); }
+    ctx.restore();
+  }
+  /* --- CHỮ "ĐỊNH" THƯ PHÁP BAY của Định Âm (lệnh Bui 03:50 ngày
+     2026-11-06, cùng đợt với chữ Chấn) ---
+     Khi người chơi tung Định Âm qua castResonanceFx, một chữ 定 nảy
+     tại hai tay người tung (cùng điểm ấn quang), bay về phía mục
+     tiêu rồi LƠ LỬNG ngay trên đầu mục tiêu; tới nơi, chữ GIÁNG
+     XUỐNG rất nhanh (0,13 giây, gia tốc nén) và ĐÓNG DẤU lên mục
+     tiêu: thân chữ co ép nhẹ như con dấu nện xuống (ép dọc, bè
+     ngang trong 0,12 giây), một VÒNG ÁP MỰC elip bẹt ép lan quanh
+     chân mục tiêu, hạt mực bị ép văng ngang sát đất; dấu giữ rồi
+     tan trong tổng 0,5 giây. Khoảnh khắc đóng dấu = đúng khung hiệu
+     lực trói của chiêu. Không có mục tiêu: bay theo hướng mặt ~2,4 ô
+     rồi đóng dấu ở cuối đường (như phá/chấn). Thuần trình diễn —
+     không đổi số, nhịp trói, hồi chiêu, cơ chế. Chất mực và tông vô
+     sắc như ba chữ còn lại; cỡ theo bậc hưởng 37/44/51/58px; cổng
+     kép fxOn() + fxRings. Đếm kiểm chứng:
+     __VSLC_FX_COUNT.dinhChar (khi sinh) và .dinhBurst (khi đóng dấu). */
+  var dinhChars = [];
+  var DINH_GLYPH = '定';
+  var dinhSprites = {};
+  var DINH_DROP_DUR = 0.13;  // nhịp giáng từ điểm lơ lửng xuống mục tiêu
+  var DINH_STAMP_DUR = 0.5;  // tổng nhịp dấu ép + tan
+  function dinhCharSize(tier) { return phaCharSize(tier); }
+  function dinhGlyphSprite(size) { return inkGlyphSpriteFor(DINH_GLYPH, size, 9000, dinhSprites); }
+  function spawnDinhChar(x0, y0, x1, y1, tier) {
+    if (!fxOn()) return null;
+    if (SET && SET.current && !SET.current.fxRings) return null; // cùng cổng đường sóng/sân/ấn quang
+    tier = Math.max(1, Math.min(4, tier || 1));
+    var hx = x1, hy = y1 - 46; // điểm lơ lửng ngay trên đầu mục tiêu
+    var dist = Math.hypot(hx - x0, hy - y0);
+    var ch = {
+      x0: x0, y0: y0, x1: x1, y1: y1, hx: hx, hy: hy, x: x0, y: y0, t: 0,
+      dur: Math.min(0.38, Math.max(0.18, dist / 480)),
+      tier: tier, size: dinhCharSize(tier), seed: 1 + Math.random() * 9,
+      state: 'fly', dropT: 0, st: 0, ringR: 0, ringMax: 0, trail: [], drops: []
+    };
+    dinhChars.push(ch);
+    if (dinhChars.length > 5) dinhChars.shift();
+    FXC.dinhChar = (FXC.dinhChar || 0) + 1;
+    return ch;
+  }
+  function spawnDinhCharFromCast(gx, gy, tier, opts) {
+    var hx = px + 16, hy = py - 4; // hai tay người tung — cùng điểm ấn quang
+    if (opts && opts.target) { spawnDinhChar(hx, hy, gx, gy, tier); return; }
+    // không mục tiêu: bay theo hướng mặt ~2,4 ô như phá/chấn
+    var vx = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
+    var vy = facing === 'up' ? -1 : facing === 'down' ? 1 : 0;
+    spawnDinhChar(hx, hy, hx + vx * 78, hy + vy * 78, tier);
+  }
+  function dinhCharPos(ch) {
+    var p = Math.min(1, ch.t / ch.dur);
+    return { x: ch.x0 + (ch.hx - ch.x0) * p, y: ch.y0 + (ch.hy - ch.y0) * p - Math.sin(p * Math.PI) * 6, p: p };
+  }
+  function stampDinhChar(ch) {
+    ch.state = 'stamp'; ch.st = 0; ch.x = ch.x1; ch.y = ch.y1;
+    ch.ringMax = Math.round(ch.size * (1.15 + ch.tier * 0.1));
+    ch.ringR = 0;
+    var n = 8 + ch.tier * 2;
+    for (var i = 0; i < n; i++) {
+      var a = phaRand(ch.seed, i + 11) * Math.PI * 2, sp = 26 + phaRand(ch.seed, i + 51) * (30 + ch.tier * 7);
+      ch.drops.push({ x: ch.x1, y: ch.y1 + 12, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.22 - 4, t: 0, life: 0.3 + phaRand(ch.seed, i + 91) * 0.2, r: 0.9 + phaRand(ch.seed, i + 131) * (1.3 + ch.tier * 0.3) });
+    }
+    FXC.dinhBurst = (FXC.dinhBurst || 0) + 1;
+  }
+  function updateDinhChars(dt) {
+    for (var i = dinhChars.length - 1; i >= 0; i--) {
+      var ch = dinhChars[i], j;
+      for (j = ch.trail.length - 1; j >= 0; j--) { ch.trail[j].t += dt; if (ch.trail[j].t > 0.26) ch.trail.splice(j, 1); }
+      if (ch.state === 'fly') {
+        ch.t += dt;
+        var pos = dinhCharPos(ch);
+        ch.x = pos.x; ch.y = pos.y;
+        ch.trail.push({ x: pos.x, y: pos.y, t: 0 });
+        if (ch.trail.length > 16) ch.trail.shift();
+        if (ch.t >= ch.dur) { ch.state = 'drop'; ch.dropT = 0; ch.x = ch.hx; ch.y = ch.hy; }
+      } else if (ch.state === 'drop') {
+        ch.dropT += dt;
+        var dk = Math.min(1, ch.dropT / DINH_DROP_DUR);
+        ch.x = ch.x1; ch.y = ch.hy + (ch.y1 - ch.hy) * dk * dk; // gia tốc nén xuống
+        if (dk >= 1) stampDinhChar(ch);
+      } else {
+        ch.st += dt;
+        var rp = Math.min(1, ch.st / 0.3);
+        ch.ringR = ch.ringMax * (1 - Math.pow(1 - rp, 3));
+        for (j = 0; j < ch.drops.length; j++) { var dr = ch.drops[j]; dr.t += dt; dr.x += dr.vx * dt; dr.y += dr.vy * dt; dr.vy += 40 * dt; }
+        if (ch.st >= DINH_STAMP_DUR) dinhChars.splice(i, 1);
+      }
+    }
+  }
+  function drawDinhChars() {
+    if (SET && SET.current && !SET.current.fxRings) return; // cùng cổng vòng hiệu ứng với sân cộng hưởng
+    dinhChars.forEach(function (ch) {
+      var spr = dinhGlyphSprite(ch.size), j;
+      // vệt mực tung tóe mỏng chạy sau đường bay (sống 0,26 giây — như phá/chấn)
+      if (ch.trail.length > 1) {
+        ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (j = 1; j < ch.trail.length; j++) {
+          var a0 = ch.trail[j - 1], a1 = ch.trail[j];
+          var ageK = 1 - a1.t / 0.26; if (ageK <= 0) continue;
+          ctx.strokeStyle = 'rgba(20,26,33,' + (0.34 * ageK) + ')';
+          ctx.lineWidth = Math.max(0.6, ch.size * 0.15 * ageK);
+          ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+          if (j % 3 === 0) {
+            ctx.fillStyle = 'rgba(20,26,33,' + (0.5 * ageK) + ')';
+            ctx.beginPath(); ctx.arc(a1.x + (phaRand(ch.seed, j) - 0.5) * 13, a1.y + (phaRand(ch.seed, j + 50) - 0.5) * 13, 0.8 + phaRand(ch.seed, j + 90) * 1.3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+      if (ch.state === 'fly') {
+        var p = Math.min(1, ch.t / ch.dur);
+        var sc = 0.82 + 0.30 * p;
+        ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(sc, sc); ctx.translate(-ch.x, -ch.y);
+        drawInkGlyphFull(ch.x, ch.y, ch.size, Math.min(1, ch.t / 0.05), Math.sin(ch.seed * 3 + ch.t * 7) * 0.06, spr, DINH_GLYPH);
+        ctx.restore();
+      } else if (ch.state === 'drop') {
+        // GIÁNG XUỐNG: chữ rơi thẳng, hơi căng ra theo tốc độ rơi
+        var dk2 = Math.min(1, ch.dropT / DINH_DROP_DUR);
+        ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(1.12, 1.12 + 0.07 * dk2); ctx.translate(-ch.x, -ch.y);
+        drawInkGlyphFull(ch.x, ch.y, ch.size, 1, 0, spr, DINH_GLYPH);
+        ctx.restore();
+      } else {
+        // ĐÓNG DẤU: vòng áp mực bẹt ép lan quanh chân + thân chữ co ép như con dấu rồi tan
+        var bk = Math.min(1, ch.st / DINH_STAMP_DUR);
+        if (ch.ringR > 1) {
+          ctx.save();
+          ctx.beginPath(); ctx.ellipse(ch.x, ch.y + 14, ch.ringR, ch.ringR * 0.30, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(16,20,26,' + (0.6 * (1 - bk)) + ')'; ctx.lineWidth = Math.max(1.1, 4.4 * (1 - bk) + 0.8); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(ch.x, ch.y + 14, Math.max(1, ch.ringR * 0.8), Math.max(1, ch.ringR * 0.8 * 0.30), 0, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(190,250,244,' + (0.5 * (1 - bk)) + ')'; ctx.lineWidth = Math.max(0.9, 2.2 * (1 - bk) + 0.5); ctx.stroke();
+          ctx.restore();
+        }
+        var press = ch.st < 0.12 ? ch.st / 0.12 : 1; // nhịp nện: ép dọc + bè ngang trong 0,12 giây đầu
+        var ga = ch.st > 0.3 ? Math.max(0, 1 - (ch.st - 0.3) / 0.2) : 1;
+        ctx.save(); ctx.translate(ch.x, ch.y);
+        ctx.scale(1.12 + 0.10 * press, 1.12 - 0.16 * press);
+        ctx.translate(-ch.x, -ch.y);
+        drawInkGlyphFull(ch.x, ch.y, ch.size, ga, 0, spr, DINH_GLYPH);
+        ctx.restore();
+        ch.drops.forEach(function (dr) {
+          var da = 1 - dr.t / dr.life; if (da <= 0) return;
+          ctx.fillStyle = 'rgba(18,23,30,' + (0.85 * da) + ')';
+          ctx.beginPath(); ctx.arc(dr.x, dr.y, dr.r * da + 0.3, 0, Math.PI * 2); ctx.fill();
+        });
+      }
+    });
+  }
+  /* --- CHỮ "PHONG" THƯ PHÁP BAY của Phong Âm (lệnh Bui 03:50 ngày
+     2026-11-06, cùng đợt với chữ Chấn/Định) ---
+     Khi người chơi tung Phong Âm qua castResonanceFx, một chữ 封 nảy
+     tại hai tay người tung, bay về mục tiêu; tới nơi, một KHUNG
+     PHONG ẤN mực hình vuông khép lại quanh mục tiêu: bốn cạnh mực
+     từ ngoài trượt vào trong 0,22 giây và KHÓA GÓC (bốn góc nêm
+     sáng thoáng qua), rồi chữ 封 ĐÓNG vào giữa khung (căng 1,35 lần
+     ép về 1,0), giữ ấn 0,28 giây; sau đó cả khung lẫn chữ VỠ thành
+     mảnh ấn: bốn cạnh tách đôi trượt ra, thân chữ nứt bốn mảnh như
+     phá, hạt mực văng, tan hết trong 0,42 giây. Khoảnh khắc khóa
+     khung = đúng khung hiệu lực phong của chiêu. Không có mục tiêu:
+     bay theo hướng mặt ~2,4 ô rồi khóa khung ở cuối đường. Thuần
+     trình diễn — không đổi số, nhịp phong, hồi chiêu, cơ chế. Chất
+     mực và tông vô sắc như ba chữ còn lại; cỡ chữ và bề khung theo
+     bậc hưởng; cổng kép fxOn() + fxRings. Đếm kiểm chứng:
+     __VSLC_FX_COUNT.phongChar (khi sinh) và .phongBurst (khi khóa khung). */
+  var phongChars = [];
+  var PHONG_GLYPH = '封';
+  var phongSprites = {};
+  var PHONG_FRAME_DUR = 0.22; // nhịp bốn cạnh trượt vào khóa góc
+  var PHONG_SEAL_DUR = 0.28;  // nhịp chữ đóng vào giữa + giữ ấn
+  var PHONG_BREAK_DUR = 0.42; // nhịp khung + chữ vỡ thành mảnh ấn
+  function phongCharSize(tier) { return phaCharSize(tier); }
+  function phongGlyphSprite(size) { return inkGlyphSpriteFor(PHONG_GLYPH, size, 13000, phongSprites); }
+  function spawnPhongChar(x0, y0, x1, y1, tier) {
+    if (!fxOn()) return null;
+    if (SET && SET.current && !SET.current.fxRings) return null; // cùng cổng đường sóng/sân/ấn quang
+    tier = Math.max(1, Math.min(4, tier || 1));
+    var dist = Math.hypot(x1 - x0, y1 - y0);
+    var ch = {
+      x0: x0, y0: y0, x1: x1, y1: y1, x: x0, y: y0, t: 0,
+      dur: Math.min(0.38, Math.max(0.18, dist / 480)),
+      tier: tier, size: phongCharSize(tier), seed: 1 + Math.random() * 9,
+      state: 'fly', ft: 0, st: 0, bt: 0,
+      frameHalf: Math.round(phongCharSize(tier) * 0.8 + 14 + tier * 2), // khung ôm trọn thân mục tiêu
+      trail: [], drops: []
+    };
+    phongChars.push(ch);
+    if (phongChars.length > 5) phongChars.shift();
+    FXC.phongChar = (FXC.phongChar || 0) + 1;
+    return ch;
+  }
+  function spawnPhongCharFromCast(gx, gy, tier, opts) {
+    var hx = px + 16, hy = py - 4; // hai tay người tung — cùng điểm ấn quang
+    if (opts && opts.target) { spawnPhongChar(hx, hy, gx, gy, tier); return; }
+    // không mục tiêu: bay theo hướng mặt ~2,4 ô như ba chữ còn lại
+    var vx = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
+    var vy = facing === 'up' ? -1 : facing === 'down' ? 1 : 0;
+    spawnPhongChar(hx, hy, hx + vx * 78, hy + vy * 78, tier);
+  }
+  function phongCharPos(ch) {
+    var p = Math.min(1, ch.t / ch.dur);
+    return { x: ch.x0 + (ch.x1 - ch.x0) * p, y: ch.y0 + (ch.y1 - ch.y0) * p - Math.sin(p * Math.PI) * 11, p: p };
+  }
+  function lockPhongFrame(ch) {
+    ch.state = 'seal'; ch.st = 0; ch.x = ch.x1; ch.y = ch.y1;
+    FXC.phongBurst = (FXC.phongBurst || 0) + 1; // khoảnh khắc khóa khung = khung hiệu lực phong
+  }
+  function breakPhongFrame(ch) {
+    ch.state = 'break'; ch.bt = 0;
+    var n = 10 + ch.tier * 3;
+    for (var i = 0; i < n; i++) {
+      var a = phaRand(ch.seed, i + 17) * Math.PI * 2, sp = 30 + phaRand(ch.seed, i + 57) * (46 + ch.tier * 9);
+      ch.drops.push({ x: ch.x1, y: ch.y1 - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 10, t: 0, life: 0.32 + phaRand(ch.seed, i + 97) * 0.22, r: 0.9 + phaRand(ch.seed, i + 137) * (1.4 + ch.tier * 0.35) });
+    }
+  }
+  function updatePhongChars(dt) {
+    for (var i = phongChars.length - 1; i >= 0; i--) {
+      var ch = phongChars[i], j;
+      for (j = ch.trail.length - 1; j >= 0; j--) { ch.trail[j].t += dt; if (ch.trail[j].t > 0.26) ch.trail.splice(j, 1); }
+      if (ch.state === 'fly') {
+        ch.t += dt;
+        var pos = phongCharPos(ch);
+        ch.x = pos.x; ch.y = pos.y;
+        ch.trail.push({ x: pos.x, y: pos.y, t: 0 });
+        if (ch.trail.length > 16) ch.trail.shift();
+        if (ch.t >= ch.dur) { ch.state = 'frame'; ch.ft = 0; ch.x = ch.x1; ch.y = ch.y1; }
+      } else if (ch.state === 'frame') {
+        ch.ft += dt;
+        if (ch.ft >= PHONG_FRAME_DUR) lockPhongFrame(ch);
+      } else if (ch.state === 'seal') {
+        ch.st += dt;
+        if (ch.st >= PHONG_SEAL_DUR) breakPhongFrame(ch);
+      } else {
+        ch.bt += dt;
+        for (j = 0; j < ch.drops.length; j++) { var dr = ch.drops[j]; dr.t += dt; dr.x += dr.vx * dt; dr.y += dr.vy * dt; dr.vy += 60 * dt; }
+        if (ch.bt >= PHONG_BREAK_DUR) phongChars.splice(i, 1);
+      }
+    }
+  }
+  function drawPhongFrameEdges(cx, cy, half, off, alpha, splitK) {
+    // bốn cạnh mực của khung phong ấn; off = độ trượt vào còn lại, splitK = độ tách đôi khi vỡ
+    ctx.save(); ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(16,20,26,' + (0.88 * alpha) + ')'; ctx.lineWidth = 3.4;
+    var sp = (splitK || 0) * 16, so = (splitK || 0) * 9;
+    // cạnh trên + cạnh dưới: tách đôi theo chiều ngang khi vỡ
+    ctx.beginPath();
+    ctx.moveTo(cx - half, cy - half - off - so); ctx.lineTo(cx - sp, cy - half - off - so);
+    ctx.moveTo(cx + sp, cy - half - off - so); ctx.lineTo(cx + half, cy - half - off - so);
+    ctx.moveTo(cx - half, cy + half + off + so); ctx.lineTo(cx - sp, cy + half + off + so);
+    ctx.moveTo(cx + sp, cy + half + off + so); ctx.lineTo(cx + half, cy + half + off + so);
+    // cạnh trái + cạnh phải: tách đôi theo chiều dọc khi vỡ
+    ctx.moveTo(cx - half - off - so, cy - half); ctx.lineTo(cx - half - off - so, cy - sp);
+    ctx.moveTo(cx - half - off - so, cy + sp); ctx.lineTo(cx - half - off - so, cy + half);
+    ctx.moveTo(cx + half + off + so, cy - half); ctx.lineTo(cx + half + off + so, cy - sp);
+    ctx.moveTo(cx + half + off + so, cy + sp); ctx.lineTo(cx + half + off + so, cy + half);
+    ctx.stroke();
+    // lõi sáng mảnh giữa nét mực — ngôn ngữ vô sắc như đường sóng
+    ctx.strokeStyle = 'rgba(190,250,244,' + (0.35 * alpha) + ')'; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(cx - half, cy - half - off - so); ctx.lineTo(cx + half, cy - half - off - so);
+    ctx.moveTo(cx - half, cy + half + off + so); ctx.lineTo(cx + half, cy + half + off + so);
+    ctx.moveTo(cx - half - off - so, cy - half); ctx.lineTo(cx - half - off - so, cy + half);
+    ctx.moveTo(cx + half + off + so, cy - half); ctx.lineTo(cx + half + off + so, cy + half);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawPhongCornerLocks(cx, cy, half, alpha) {
+    // bốn nêm góc khóa khung: ngoặc mực đậm ở bốn góc + điểm sáng lúc khóa
+    ctx.save();
+    ctx.strokeStyle = 'rgba(16,20,26,' + (0.95 * alpha) + ')'; ctx.lineWidth = 4.2; ctx.lineCap = 'round';
+    var L = 10;
+    ctx.beginPath();
+    ctx.moveTo(cx - half - 3, cy - half + L - 3); ctx.lineTo(cx - half - 3, cy - half - 3); ctx.lineTo(cx - half + L - 3, cy - half - 3);
+    ctx.moveTo(cx + half - L + 3, cy - half - 3); ctx.lineTo(cx + half + 3, cy - half - 3); ctx.lineTo(cx + half + 3, cy - half + L - 3);
+    ctx.moveTo(cx + half + 3, cy + half - L + 3); ctx.lineTo(cx + half + 3, cy + half + 3); ctx.lineTo(cx + half - L + 3, cy + half + 3);
+    ctx.moveTo(cx - half + L - 3, cy + half + 3); ctx.lineTo(cx - half - 3, cy + half + 3); ctx.lineTo(cx - half - 3, cy + half - L + 3);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.85 * alpha) + ')';
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (sg) {
+      ctx.beginPath(); ctx.arc(cx + sg[0] * (half + 3) - sg[0] * 3, cy + sg[1] * (half + 3) - sg[1] * 3, 2.2, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  }
+  function drawPhongChars() {
+    if (SET && SET.current && !SET.current.fxRings) return; // cùng cổng vòng hiệu ứng với sân cộng hưởng
+    phongChars.forEach(function (ch) {
+      var spr = phongGlyphSprite(ch.size), j;
+      // vệt mực tung tóe mỏng chạy sau đường bay (sống 0,26 giây — như ba chữ còn lại)
+      if (ch.trail.length > 1) {
+        ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (j = 1; j < ch.trail.length; j++) {
+          var a0 = ch.trail[j - 1], a1 = ch.trail[j];
+          var ageK = 1 - a1.t / 0.26; if (ageK <= 0) continue;
+          ctx.strokeStyle = 'rgba(20,26,33,' + (0.34 * ageK) + ')';
+          ctx.lineWidth = Math.max(0.6, ch.size * 0.15 * ageK);
+          ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke();
+          if (j % 3 === 0) {
+            ctx.fillStyle = 'rgba(20,26,33,' + (0.5 * ageK) + ')';
+            ctx.beginPath(); ctx.arc(a1.x + (phaRand(ch.seed, j) - 0.5) * 13, a1.y + (phaRand(ch.seed, j + 50) - 0.5) * 13, 0.8 + phaRand(ch.seed, j + 90) * 1.3, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+      var cx = ch.x1, cy = ch.y1 - 6; // tâm khung quanh thân mục tiêu
+      if (ch.state === 'fly') {
+        var p = Math.min(1, ch.t / ch.dur);
+        var sc = 0.82 + 0.30 * p;
+        ctx.save(); ctx.translate(ch.x, ch.y); ctx.scale(sc, sc); ctx.translate(-ch.x, -ch.y);
+        drawInkGlyphFull(ch.x, ch.y, ch.size, Math.min(1, ch.t / 0.05), Math.sin(ch.seed * 3 + ch.t * 7) * 0.06, spr, PHONG_GLYPH);
+        ctx.restore();
+      } else if (ch.state === 'frame') {
+        // KHUNG KHÉP LẠI: bốn cạnh từ ngoài trượt vào, góc khóa hiện dần ở cuối nhịp
+        var fk = Math.min(1, ch.ft / PHONG_FRAME_DUR);
+        var off = (1 - (1 - Math.pow(1 - fk, 2))) * 30;
+        drawPhongFrameEdges(cx, cy, ch.frameHalf, off, 0.55 + 0.45 * fk, 0);
+        if (fk > 0.7) drawPhongCornerLocks(cx, cy, ch.frameHalf, (fk - 0.7) / 0.3);
+      } else if (ch.state === 'seal') {
+        // KHUNG ĐÃ KHÓA + chữ 封 đóng vào giữa (căng 1,35 ép về 1,0 trong 0,1 giây đầu)
+        drawPhongFrameEdges(cx, cy, ch.frameHalf, 0, 1, 0);
+        drawPhongCornerLocks(cx, cy, ch.frameHalf, ch.st < 0.15 ? 1 - ch.st / 0.15 : 0.35);
+        var gk = Math.min(1, ch.st / 0.1);
+        var gsc = 1.35 - 0.35 * (1 - Math.pow(1 - gk, 2));
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(gsc, gsc); ctx.translate(-cx, -cy);
+        drawInkGlyphFull(cx, cy, ch.size, Math.min(1, ch.st / 0.06), 0, spr, PHONG_GLYPH);
+        ctx.restore();
+      } else {
+        // VỠ ẤN: cạnh tách đôi trượt ra + thân chữ nứt bốn mảnh + hạt mực — tất cả tan trong 0,42 giây
+        var bk = Math.min(1, ch.bt / PHONG_BREAK_DUR), fade = Math.max(0, 1 - bk);
+        drawPhongFrameEdges(cx, cy, ch.frameHalf, bk * 6, fade, bk);
+        drawPhongCornerLocks(cx, cy, ch.frameHalf, fade * 0.5);
+        if (spr && spr.width) {
+          var hw = spr.width / 2, hh = spr.height / 2;
+          var quads = [[0, 0, -1, -1], [hw, 0, 1, -1], [0, hh, -1, 1], [hw, hh, 1, 1]];
+          var sep = bk * (10 + ch.tier * 3);
+          ctx.save(); ctx.globalAlpha = fade;
+          for (var q = 0; q < 4; q++) {
+            var relx = quads[q][0] + hw / 2 - hw, rely = quads[q][1] + hh / 2 - hh;
+            ctx.save();
+            ctx.translate(cx + relx + quads[q][2] * sep, cy + rely + quads[q][3] * sep * 0.7);
+            ctx.rotate(quads[q][2] * bk * 0.38);
+            ctx.drawImage(spr, quads[q][0], quads[q][1], hw, hh, -hw / 2, -hh / 2, hw, hh);
+            ctx.restore();
+          }
+          ctx.restore();
+        } else {
+          drawInkGlyphFull(cx, cy, ch.size, fade, bk * 0.2, null, PHONG_GLYPH);
+        }
+        ch.drops.forEach(function (dr) {
+          var da = 1 - dr.t / dr.life; if (da <= 0) return;
+          ctx.fillStyle = 'rgba(18,23,30,' + (0.85 * da) + ')';
+          ctx.beginPath(); ctx.arc(dr.x, dr.y, dr.r * da + 0.3, 0, Math.PI * 2); ctx.fill();
+        });
+      }
+    });
   }
   /* --- Nghi thức lên tầng dùng chung (thiết kế 6.3) --- */
   function presentTechTierUp(techId, tier) {
@@ -9459,8 +10414,8 @@
     opts = opts || {}; var def = TECH_FX_DEFS[techId]; if (!def) return false;
     var sx = px + 16, sy = py + 10, tier = opts.tier || 1;
     if (def.body === 'sword') startSwordBody('tram', tNow, null);
-    else if (def.body === 'mot') startResBody(true);
-    else startResBody(false);
+    else if (def.body === 'mot') startResBodyLive(true, { col: def.col, tier: tier }); // đợt bắt ấn 2026-11-05: ấn nhanh thấy trọn + ấn quang màu hệ của bộ
+    else startResBodyLive(false, { col: def.col, tier: tier }); // đợt bắt ấn 2026-11-05: kết ấn thấy trọn + ấn quang màu hệ của bộ
     FXC['tech_' + techId] = (FXC['tech_' + techId] || 0) + 1;
     if (def.pattern === 'sword') { spawnTechProj(techImg(def.cell, def.img), sx, sy, tx, ty - 8, 0.34, 74 + tier * 8, { col: def.col, spin: 0.4 }); spawnStarBurst(tx, ty, 6 + tier * 2, def.col, '255,255,255'); }
     else if (def.pattern === 'bolt') { for (var b = 0; b < 3; b++) spawnTechProj(techImg(def.cell, def.img), tx + (b - 1) * 22, ty - 130, tx + (b - 1) * 22, ty - 10, 0.3, 54, { col: def.col, delay: b * 0.09 }); spawnStarBurst(tx, ty, 8, def.col, '255,255,255'); }
@@ -9655,15 +10610,19 @@
     if (!opts.noWave) spawnResWave(pc.x, pc.y, gx, gy - 14, 1, tier);
     spawnResField(gx, gy, { skill: skill, silenceBefore: opts.silenceBefore, target: opts.target || null });
     var f = opts.baseFreq || 420;
-    if (skill === 'pha') sfxPha(f, tier);
-    else if (skill === 'chan') sfxChan(f);
-    else if (skill === 'dinh') sfxResDinh(f);
-    else if (skill === 'phong') sfxResPhong(f);
+    if (skill === 'pha') { sfxPha(f, tier); spawnPhaCharFromCast(gx, gy, tier, opts); } // chữ 破 thư pháp bay (lệnh Bui 00:36 2026-11-06)
+    else if (skill === 'chan') { sfxChan(f); spawnChanCharFromCast(gx, gy, tier, opts); } // chữ 震 thư pháp bay (lệnh Bui 03:48 2026-11-06)
+    else if (skill === 'dinh') { sfxResDinh(f); spawnDinhCharFromCast(gx, gy, tier, opts); } // chữ 定 thư pháp bay (lệnh Bui 03:50 2026-11-06)
+    else if (skill === 'phong') { sfxResPhong(f); spawnPhongCharFromCast(gx, gy, tier, opts); } // chữ 封 thư pháp bay (lệnh Bui 03:50 2026-11-06)
     return tier;
   }
   function updateResFx(dt) {
     for (var i = resFields.length - 1; i >= 0; i--) { resFields[i].t += dt; if (resFields[i].t >= resFields[i].dur) resFields.splice(i, 1); }
     for (var j = resWaves.length - 1; j >= 0; j--) { resWaves[j].t += dt; if (resWaves[j].t >= (resWaves[j].life || resWaves[j].dur)) resWaves.splice(j, 1); }
+    updatePhaChars(dt); // chữ 破 thư pháp bay của Phá Âm (lệnh Bui 00:36 2026-11-06)
+    updateChanChars(dt); // chữ 震 thư pháp bay của Chấn Âm (lệnh Bui 03:48 2026-11-06)
+    updateDinhChars(dt); // chữ 定 thư pháp bay của Định Âm (lệnh Bui 03:50 2026-11-06)
+    updatePhongChars(dt); // chữ 封 thư pháp bay của Phong Âm (lệnh Bui 03:50 2026-11-06)
   }
   function drawResWaves() {
     if (SET && SET.current && !SET.current.fxRings) return;
@@ -10586,7 +11545,7 @@
     var silenceBefore = state.silence; // nấc trình diễn tính theo Tĩnh Âm TRƯỚC khi ra đòn (3.3)
     var r = L.castWord(state, skill);
     if (!r.ok) { toast(r.reason); return; }
-    startResBody(false); // bộ PHÁP: khung phóng quyết (cột 6) khóa tại thời điểm áp hiệu ứng dưới đây
+    startResBodyLive(false, { tier: resTierFor(silenceBefore) }); // đợt bắt ấn 2026-11-05 (lệnh Bui 07:26): THAY hợp đồng cũ "khung phóng quyết khóa tại thời điểm áp hiệu ứng" — thân nay chạy bộ SEAL thấy trọn chuỗi kết ấn từ khoảnh khắc bấm, ấn quang nảy đúng khung phóng quyết; hiệu ứng/sát thương của chiêu vẫn áp tại tNow như cũ, không đổi một con số nào
     var wf = WORD_FLOAT[skill];
     var baseF = resBaseFreqForMonster(m); // âm gốc của mục tiêu cho nốt khóa sóng (3.6)
     if (skill === 'pha') {
@@ -11975,6 +12934,7 @@
     var before = state.silence;
     var r = L.castWord(state, 'pha');
     if (!r.ok) { toast(r.reason); return; }
+    startResBodyLive(false, { tier: resTierFor(before) }); // đợt bắt ấn 2026-11-05: ra chiêu tự do ngoài trận trước đây THÂN ĐỨNG YÊN — nay có kết ấn + ấn quang như trong trận
     castResonanceFx('pha', px + 16, py + 30, { silenceBefore: before, baseFreq: 170, noWave: true }); // ngoài trận: sân nở tại chân người, âm gốc vật liệu đặc 170 Hz
     addFloat(px + 16, py - 20, 'PHÁ!', '255,120,90');
     // cọc gỗ trong tầm 2 ô thì chịu đòn
@@ -12014,6 +12974,7 @@
     var beforeC = state.silence;
     var r = L.castWord(state, 'chan');
     if (!r.ok) { toast(r.reason); return; }
+    startResBodyLive(false, { tier: resTierFor(beforeC) }); // đợt bắt ấn 2026-11-05: thân hết đứng yên khi ra chiêu tự do
     castResonanceFx('chan', px + 16, py + 30, { silenceBefore: beforeC, baseFreq: 220, noWave: true });
     addFloat(px + 16, py - 20, 'CHẤN!', '150,200,255');
     shakeT = Math.max(shakeT, 0.35); // rung nhẹ — chỉ hiệu ứng trình diễn
@@ -12034,6 +12995,7 @@
     var r = L.castSword(state);
     if (!r.ok) { toast(r.reason); return; }
     sfxSword();
+    startSwordBody('tram', tNow, null); // đợt vũ khí 2026-11-05: vung kiếm tự do ngoài trận (đòn Trảm mặc định của castSword không đối số) trước đây thân đứng yên
     addFloat(px + 16, py - 20, 'KIẾM!', '190,235,200');
     var cx = Math.floor((px + 16) / TILE), cy = Math.floor((py + 16) / TILE);
     var def = L.activeMap();
@@ -12421,6 +13383,7 @@
     streaks = streaks.filter(function (st) { if (st.delay > 0) { st.delay -= dtW; return true; } st.t += dtW; return st.t < st.dur; });
     bossFx = bossFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; });
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
+    updateSealFx(dtW); // ấn quang bắt ấn: hẹn giờ nảy đúng khung phóng quyết của đoạn thân kết ấn (đợt 2026-11-05)
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
     updateResPassive(dt); // nghe thụ động Vạn Âm (mục 6): chỉ ngoài trận, đứng yên, Tĩnh Âm >= 85
     updateAmbScenery(dtW); // đợt cảnh vật map boss: hạt môi trường theo bản đồ (tôn trọng dừng hình như mọi hạt)
@@ -14285,6 +15248,7 @@
     var backByFacing = { down: [0, -1], up: [0, 1], left: [1, 0], right: [-1, 0] }[facing] || [0, 1];
     partyBotsLive.forEach(function (b, bi) {
       if (b.cdT > 0) b.cdT -= dt;
+      if (b.atkAnimT > 0) b.atkAnimT = Math.max(0, b.atkAnimT - dt); // đợt vũ khí 2026-11-05: nhịp khung vung kiếm của bot (figAtkFrame đọc)
       if (b.healCdT > 0) b.healCdT -= dt;
       b.movingNow = false;
       if (b.state === 'down') return;
@@ -14308,6 +15272,7 @@
         else if (b.cdT <= 0) {
           b.cdT = b.cdMs / 1000;
           b.dir = Math.abs(mcx - (b.x + 16)) >= Math.abs(mcy - (b.y + 16)) ? (mcx > b.x + 16 ? 'right' : 'left') : (mcy > b.y + 16 ? 'down' : 'up');
+          b.atkAnimT = 0.35; // đợt vũ khí 2026-11-05: bot vung kiếm thật tại khoảnh khắc đòn rơi (cùng nhịp 0,35 của figure/quái)
           applyHitToMonster(m, b.power, { kind: 'sword' });
         }
         return;
@@ -15748,6 +16713,29 @@
     cycle: function () { return arcCycle ? { t: +arcCycle.t.toFixed(2), dir: arcCycle.dir, frozen: arcCycle.frozen, period: arcCycle.period } : null; },
     startSwordBody: startSwordBody, startResBody: startResBody,
     spawnNineSwords: spawnNineSwords
+  };
+
+  /* Cầu kiểm chứng đợt ĐỘNG TÁC VŨ KHÍ + BẮT ẤN (2026-11-05, chỉ đọc
+     + gọi hàm trình diễn): bộ đoạn thân, đoạn thân đang chạy, ấn quang
+     đã nảy/đang chạy, và khung vung kiếm của figure người. */
+  window.VSLC_ACTIONS = {
+    atkSets: function () { return ATK_SETS; },
+    bodySegs: function () { return bodySegs.map(function (s) { return { sheet: s.sheet, cols: s.cols.slice(), start: s.start, total: s.total, row: s.row }; }); },
+    startSwordBody: startSwordBody, startResBody: startResBody, startResBodyLive: startResBodyLive,
+    sealPreMs: sealPreMs,
+    sealPending: function () { return pendingSeal ? { at: pendingSeal.at, col: pendingSeal.col, tier: pendingSeal.tier, fast: pendingSeal.fast } : null; },
+    sealActive: function () { return sealFx.length; },
+    spawnSealFx: spawnSealFx,
+    spawnPhaChar: spawnPhaChar, castResonanceFx: castResonanceFx, phaCharSize: phaCharSize,
+    phaChars: function () { return phaChars.map(function (c) { return { x: Math.round(c.x), y: Math.round(c.y), x1: Math.round(c.x1), y1: Math.round(c.y1), t: +c.t.toFixed(3), dur: +c.dur.toFixed(3), state: c.state, tier: c.tier, size: c.size, drops: c.drops.length }; }); },
+    spawnChanChar: spawnChanChar, chanCharSize: chanCharSize,
+    chanChars: function () { return chanChars.map(function (c) { return { x: Math.round(c.x), y: Math.round(c.y), x1: Math.round(c.x1), y1: Math.round(c.y1), t: +c.t.toFixed(3), dur: +c.dur.toFixed(3), state: c.state, tier: c.tier, size: c.size, drops: c.drops.length, ringR: Math.round(c.ringR), ringMax: c.ringMax }; }); },
+    spawnDinhChar: spawnDinhChar, dinhCharSize: dinhCharSize,
+    dinhChars: function () { return dinhChars.map(function (c) { return { x: Math.round(c.x), y: Math.round(c.y), x1: Math.round(c.x1), y1: Math.round(c.y1), t: +c.t.toFixed(3), dur: +c.dur.toFixed(3), state: c.state, tier: c.tier, size: c.size, drops: c.drops.length, ringR: Math.round(c.ringR), ringMax: c.ringMax }; }); },
+    spawnPhongChar: spawnPhongChar, phongCharSize: phongCharSize,
+    phongChars: function () { return phongChars.map(function (c) { return { x: Math.round(c.x), y: Math.round(c.y), x1: Math.round(c.x1), y1: Math.round(c.y1), t: +c.t.toFixed(3), dur: +c.dur.toFixed(3), state: c.state, tier: c.tier, size: c.size, drops: c.drops.length, frame: c.frameHalf }; }); },
+    figAtkFrame: figAtkFrame,
+    figAtkSheet: function () { return FIG_ATK_SHEET; }
   };
 
   /* Cầu kiểm chứng chuỗi đánh đêm (gói phụ 8, chỉ đọc). */
