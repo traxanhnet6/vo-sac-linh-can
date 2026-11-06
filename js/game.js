@@ -851,6 +851,7 @@
     atkFigs = []; atkFx = null; atkPanelPending = false; atkPanelShown = false; hideAtkPanel(); // hình diễn đánh đêm + tranh phân cảnh (gói phụ 8)
     kdFig = null; // hình diễn yêu thú giữ dược chương 11 (boss-fx #21+#22) cũng là trạng thái phiên
     pillars = []; streaks = []; bossFx = []; // cột sáng + vệt kiếm quang + hiệu ứng boss là trạng thái phiên (gói phụ 10)
+    thuPhapFx = []; thuPhapCd = {}; thuPhapCastT = 0; thuPhapChipsOpen = false; // SP-04: trạng thái thư pháp là trạng thái phiên
     resFields = []; resWaves = []; resPassiveT = 9; // sân cộng hưởng + sóng khóa + nhịp nghe thụ động cũng là trạng thái phiên (bước 2 Vạn Âm)
     comboN = 0; comboT = 0; hitStopT = 0; hurtT = 0; playerHurtT = 0; ghostHp = -1; ghostPctShown = -1;
     bossPillar = null; encStance = false; zoneDwell = 0;
@@ -2617,6 +2618,7 @@
     pillars.forEach(drawPillar);
     drawStreaks();
     drawBossFx(); // lớp hiệu ứng riêng của đòn boss (nứt đất / tàn ảnh / kiếm dựng / gợn nước / điểm tụ) — đặt ngay sau drawStreaks như bản gốc đợt boss
+    drawThuPhapFx(); // SP-04: lớp hiệu ứng thư pháp (bút/chữ/bàn cờ/thẻ trúc) — sau lớp boss, trước lớp phủ ngày đêm như mọi hiệu ứng
     drawArcFx(); arcDrawEyes(); arcDrawCycle(); drawTechFx(); arcDrawWave2();
     // ARCIV ch.15 (điểm yếu F.6 đã khai, nay bổ sung): vòng nhiễu xám quanh
     // NHÂN VẬT khi cộng hưởng bị khóa bởi trạng thái cảnh.
@@ -4841,6 +4843,9 @@
     // khi thăm), ô 09 + điểm ghép dải Kim Đan sau q16_linh_ngo. Chỉ
     // toast/lựa chọn, không thêm dòng thoại người nói mới.
     if (npc.id === 'truong_lao_tong' && arcIvElderExtras()) return;
+    // SP-04: Trần Chính Đạo ở Tĩnh Quan Lâu tặng mảnh đầu Thư Pháp Chân
+    // Kinh đúng một lần (chỉ toast, không thoại — xem thuPhapThienCoExtras).
+    if (npc.id === 'tran_chinh_dao' && state.map === 'thien_co_lau' && thuPhapThienCoExtras()) return;
     var pool = (state.flags.voiced ? ST.IDLE_AFTER : ST.IDLE_BEFORE)[npc.id] || ST.IDLE_AFTER[npc.id] || ST.IDLE_BEFORE[npc.id];
     if (pool) { say(pool.map(function (ln) { return { who: ln.who === 'hero' ? 'hero' : npc.id, mode: ln.mode, text: ln.text }; })); return; }
     // Chốt chặn cuối: NPC chưa có thoại riêng vẫn phải đáp lại — ấn E mà im
@@ -5510,7 +5515,7 @@
     refreshHUD(); saveNow();
   }
   function arcIvBcBossFragment(realmId) {
-    var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau', bc_tran_tam_sau: 'boss:bc_tran_tam_sau' }[realmId];
+    var src = { bc_kiemtrung: 'boss:bc_kiemtrung', bc_thuyliem: 'boss:bc_thuyliem', bc_kiemtrung_sau: 'boss:bc_kiemtrung_sau', bc_tran_tam_sau: 'boss:bc_tran_tam_sau', bc_tapha: 'boss:bc_tapha' }[realmId];
     if (src) arcIvBossFragmentToast(src);
   }
   // Kỳ ngộ (A.3): chỉ nối bộ đếm + tập bộ; cảnh kỳ ngộ để đợt sau.
@@ -7477,6 +7482,26 @@
     refreshHUD(); saveNow();
   }
 
+  /* ---------- SP-04: Thiên Cơ Các tặng mảnh đầu Thư Pháp (một lần) ----------
+     Neo nguồn của bộ Thư Pháp Chân Kinh (docs/nho-tu-set-design.md mục
+     5): Trần Chính Đạo trong Tĩnh Quan Lâu tặng mảnh 1/5 + lời chỉ đường
+     qua toast — KHÔNG thêm dòng thoại (khóa lồng tiếng), KHÔNG giá,
+     KHÔNG cổng truyện (vào được lầu là do cổng sẵn có q10_loi_moi của
+     bản đồ). Hook ở talkTo trả true đúng lần tặng; các lần sau chạy
+     nguyên như cũ. */
+  function thuPhapThienCoExtras() {
+    if (!state || !L.nguHanhAddFragment || !state.flags) return false;
+    if (state.flags.thuPhapThienCoGift) return false;
+    if (L.techniqueOf(state, 'thu_phap_chan_kinh')) return false;
+    var r = L.nguHanhAddFragment(state, 'thu_phap_chan_kinh');
+    if (!r || !r.ok) return false;
+    state.flags.thuPhapThienCoGift = true;
+    sfxQuest();
+    toast('Trần Chính Đạo lặng lẽ đặt vào tay ngươi một mảnh thẻ trúc khắc chữ: "Thư Pháp Chân Kinh — bí pháp của kẻ lấy chữ làm lời. Mảnh đầu này, Thiên Cơ Các tặng ngươi. Bốn mảnh còn lại ở Tàn Tích dưới tháp, do Thạch Tượng Thủ Vệ canh giữ; đủ năm mảnh thì tới tàng kinh các ở đại điện Thanh Vân Tông mà ghép." (' + r.count + '/' + r.needed + ' mảnh)', 7600);
+    refreshHUD(); saveNow();
+    return true;
+  }
+
   /* ---------- Trưởng lão / tàng kinh: dạy ô 19 + ô 09 + ghép bộ ---------- */
   function arcIvElderExtras() {
     if (!state || !L.arcIvTryTeachTuDien) return false;
@@ -8713,20 +8738,27 @@
     for (i = enc.pendingHits.length - 1; i >= 0; i--) {
       if (tNow >= enc.pendingHits[i].at) {
         ph = enc.pendingHits.splice(i, 1)[0];
-        applyHitToMonster(m, ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 });
-        if (!enc || m.state !== 'alive') return;
+        // SP-04: mục chờ có thể mang quái đích riêng (ph.mon) cho thức
+        // diện đánh nhiều mục tiêu; không có thì giữ nguyên đích enc.mon
+        // như mọi đòn chờ từ trước tới nay.
+        var phTgt = ph.mon || m;
+        if (phTgt.state === 'alive') applyHitToMonster(phTgt, ph.power, { kind: ph.kind, move: ph.move, hitIdx: ph.hitIdx || 0 });
+        if (!enc) return;
       }
     }
     var pcx = px + 16, pcy = py + 16, mcx = m.x + 16, mcy = m.y + 16;
     var dist = Math.hypot(mcx - pcx, mcy - pcy);
     if (m.holdT > 0) { m.holdT = Math.max(0, m.holdT - dt); if (m.holdT <= 0) state.flags.lenDinhHold = 0; }
     if (m.sealT > 0) { m.sealT = Math.max(0, m.sealT - dt); state.flags.lenPhongSeal = m.sealT > 0 ? Math.ceil(m.sealT / m.atkInterval) : 0; }
+    // SP-04 Mặc Trúc: vùng trúc làm chậm — chỉ sửa tốc độ đuổi ở nhánh
+    // monStep ngay dưới, không chặn đòn, không giảm sát thương.
+    if (m.slowT > 0) m.slowT = Math.max(0, m.slowT - dt);
     var frozen = m.holdT > 0 || m.sealT > 0;
     // Boss tổ đội: đồng hồ mẫu (Trận Văn Phá / Phong Ấn Hai Điểm) chạy
     // trên đồng hồ trận tích lũy của chính boss; đang hold/stun thì boss
     // đứng yên tại trận tâm, không đuổi theo người chơi.
     if (m.partyBoss) { updatePartyBoss(m, dt); if (!enc) return; }
-    if (dist > 40 && !(m.partyBoss && m.partyBoss.phase !== 'fight')) monStep(m, pcx, pcy, m.speed, dt, true);
+    if (dist > 40 && !(m.partyBoss && m.partyBoss.phase !== 'fight')) monStep(m, pcx, pcy, m.speed * (m.slowT > 0 ? 1 - (m.slowPct || 0) / 100 : 1), dt, true);
     else if (!frozen) {
       // Đứng áp sát đánh: tắt vận tốc lái để nhịp áp sát không trượt dư sang nhịp đứng.
       m.vx = 0; m.vy = 0;
@@ -12030,6 +12062,770 @@
     }
     refreshHUD(); saveNow();
   }
+  /* ================= SP-04 Thư Pháp Chân Kinh: tung thức + hiệu ứng =================
+     Đường tung của bộ đặc biệt SP-04 (docs/nho-tu-set-design.md): resolver
+     thuần L.castThuPhap tính số, lớp này giữ hồi chiêu theo đồng hồ trận,
+     lên lịch đòn con qua enc.pendingHits (mục chờ mang quái đích riêng cho
+     thức diện), áp khống chế (trói qua holdT như Định Âm; chậm qua
+     slowT/slowPct chỉ sửa tốc độ đuổi) và dựng trình diễn canvas riêng
+     (thuPhapFx — vật thể vẽ thuần, TUYỆT ĐỐI không mang số gameplay).
+     Phạm vi đợt này: chỉ vòng chạm trán enc (quái/boss dã ngoại + bí
+     cảnh); các hệ trận kịch bản (daiFight/arcFig/hhtFight/tlFight) chưa
+     nối. Thân tung dùng bộ PHÁP pháp quyết sẵn có; bút lông vẽ ở lớp
+     hiệu ứng tại tay người chơi trong cửa sổ tung — không sheet mới. */
+  var thuPhapFx = [];
+  var thuPhapCd = {};        // formId -> tNow (ms) được tung lại
+  var thuPhapCastT = 0;      // cửa sổ tung còn lại (giây) để vẽ bút tại tay
+  var thuPhapCastDir = { x: 1, y: 0 };
+  var THU_PHAP_RANGE_TILES = 4.5;   // [ĐỀ XUẤT] tầm khóa mục tiêu của thức đơn/trung tâm địch
+  var THU_PHAP_RADIUS = 2.6 * TILE; // [ĐỀ XUẤT] bán kính thức diện quanh tâm
+  var THU_PHAP_DUR = { mac_truc: 2.2, hoa_dia: 2.4, thien_thu: 2.6, vi_ky: 2.8, chu_phe: 2.2, hao_nhien: 2.3, tam_tinh: 2.9 }; // vòng 2: thời lượng TRÌNH DIỄN bám nhịp pha video gốc (chỉ lớp vẽ, không đụng số)
+  function thuPhapTargets(cx, cy, main, area) {
+    var out = [main];
+    if (area) mons.forEach(function (o) {
+      if (o !== main && o.state === 'alive' && Math.hypot(o.x + 16 - cx, o.y + 16 - cy) <= THU_PHAP_RADIUS) out.push(o);
+    });
+    return out;
+  }
+  function applyThuPhapControl(t, control) {
+    if (!control) return;
+    if (control.type === 'root') {
+      var sec = t.rank === 'boss' ? (control.bossSec || control.sec) : control.sec;
+      t.holdT = Math.max(t.holdT || 0, sec);
+    } else if (control.type === 'slow') {
+      t.slowT = Math.max(t.slowT || 0, control.sec); t.slowPct = control.pct;
+    }
+  }
+  function encThuPhapCast(formId) {
+    if (!enc || !enc.mon || enc.mon.state !== 'alive') return;
+    var m = enc.mon;
+    var r = L.castThuPhap(state, formId);
+    if (!r.ok) { toast(r.reason); return; }
+    if (thuPhapCd[formId] && tNow < thuPhapCd[formId]) { toast(r.formName + ' còn đang hồi chiêu.'); return; }
+    var selfCenter = formId === 'hao_nhien';
+    if (!selfCenter && !encTargetInRange(THU_PHAP_RANGE_TILES)) { toast('Quái còn xa — thư pháp chưa khóa tới được.'); return; }
+    faceMonster(m);
+    thuPhapCd[formId] = tNow + r.cd * 1000;
+    var gain = L.techniqueGain(state, L.THU_PHAP_ID, 2); // luật khung: +2 điểm mỗi lần tung trong trận
+    if (gain.tierUps && gain.tierUps.length) presentTechTierUp(L.THU_PHAP_ID, gain.tier);
+    startResBody(false); // thân pháp quyết bộ PHÁP như encCastWord
+    var pcx = px + 16, pcy = py + 16;
+    thuPhapCastDir = { x: (m.x + 16 - pcx), y: (m.y + 16 - pcy) };
+    var dl = Math.hypot(thuPhapCastDir.x, thuPhapCastDir.y) || 1;
+    thuPhapCastDir.x /= dl; thuPhapCastDir.y /= dl;
+    thuPhapCastT = 0.55;
+    sfxPage(); // tiếng giấy/bút mở chiêu — sfx tổng hợp sẵn có, không tệp mới
+    if (formId === 'vi_ky') sfxChimeSmall(); else if (formId === 'chu_phe') sfxSealBreak(180); else if (formId === 'tam_tinh') sfxBell();
+    // Nhịp tại điểm phát (chuẩn đã khóa): vòng chấn động + hạt sáng từ chân người tung.
+    if (!SET || SET.current.fxRings) rings.push({ x: pcx, y: pcy + 10, r: 6, a: 0.9 });
+    spawnParts(pcx, pcy, 10, '215,228,255', 26, false);
+    var cx = selfCenter ? pcx : m.x + 16, cy = selfCenter ? pcy : m.y + 16;
+    thuPhapFx.push({ form: formId, x: cx, y: cy, sx: pcx, sy: pcy, mon: m, t: 0, dur: THU_PHAP_DUR[formId] || 1.6, seed: Math.random() * 10, slammed: false });
+    var targets = thuPhapTargets(cx, cy, m, r.role === 'dien' || r.role === 'khong');
+    if (r.control) targets.forEach(function (t) { applyThuPhapControl(t, r.control); });
+    targets.forEach(function (t, ti) {
+      r.hits.forEach(function (pw, i) {
+        enc.pendingHits.push({ at: tNow + 260 + i * 150 + ti * 40, mon: t, power: pw, kind: 'thu_phap', move: formId, hitIdx: i });
+      });
+    });
+    if (r.silenceGain > 0) { // [ĐỀ XUẤT] Thiên Thư hồi Tĩnh Âm — cộng khi chiêu đã khóa trúng mục tiêu
+      state.silence = Math.min(L.SILENCE_MAX, (state.silence || 0) + r.silenceGain);
+      addFloat(pcx, py - 16, '+' + r.silenceGain + ' Tĩnh Âm', '150,230,190');
+    }
+    addFloat(cx, cy - 36, r.formName, '240,225,170');
+    refreshHUD(); saveNow();
+  }
+  /* ----- Vẽ hiệu ứng thư pháp (canvas thuần, theo khung hình video mẫu) ----- */
+  function tpGlyph(ch, x, y, size, col, a, rot) {
+    ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot);
+    ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.font = '700 ' + size + 'px "Noto Serif CJK SC", "Noto Serif", serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = col; ctx.shadowBlur = size * 0.35;
+    ctx.fillStyle = col; ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  }
+  function tpStroke(x1, y1, x2, y2, w, col, a) {
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+  }
+  function tpCurve(x1, y1, cx, cy, x2, y2, w, col, a, prog) {
+    // Vệt cong vẽ dần theo prog (0..1): lấy mẫu điểm trên đường cong bậc hai.
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath();
+    var steps = Math.max(2, Math.floor(16 * prog));
+    for (var i = 0; i <= steps; i++) {
+      var u = (i / 16) * prog, iu = 1 - u;
+      var X = iu * iu * x1 + 2 * iu * u * cx + u * u * x2, Y = iu * iu * y1 + 2 * iu * u * cy + u * u * y2;
+      if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  function tpBrush(x, y, ang, scale, tipCol) {
+    // Bút lông vẽ ở lớp hiệu ứng: cán nâu + vòng kim + ngòi mực nhọn.
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(scale, scale);
+    ctx.fillStyle = '#7a4b26'; ctx.fillRect(-2.2, -26, 4.4, 20);
+    ctx.fillStyle = '#c9a44c'; ctx.fillRect(-2.6, -7, 5.2, 3.4);
+    ctx.fillStyle = tipCol || '#14161c';
+    ctx.beginPath(); ctx.moveTo(-2.6, -4); ctx.quadraticCurveTo(0, 6, 0, 10); ctx.quadraticCurveTo(0, 6, 2.6, -4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  /* ----- Vòng 2 "làm như bản gốc": hàm chất liệu mực thư pháp -----
+     Chuẩn đối chiếu: khung gốc trích ở previews/nhotu-ref/ — hiệu ứng
+     gốc LỚN (choáng 30–65% khung), nét bút đầu đậm đuôi nhạt khô mực,
+     hạt mực văng, quầng sáng mềm sau vật thể chính. Mọi hàm dưới đây
+     thuần trình diễn, dùng hạt giống xác định theo fx.seed để khung
+     hình ổn định giữa các khung hình liên tiếp. */
+  function tpRand(seed, i) {
+    var v = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  }
+  function tpGlow(x, y, rx, ry, col, a) {
+    // Quầng sáng mềm (đĩa gradient xuyên tâm, nén elip theo ry).
+    ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx);
+    ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function tpInk(x1, y1, cx, cy, x2, y2, w0, w1, col, a, prog, dry) {
+    // Vệt bút thuôn: thân vệt là đa giác lấy mẫu trên đường cong bậc
+    // hai, bề rộng nội suy w0→w1 (đầu đậm đuôi nhạt); prog vẽ dần.
+    if (prog <= 0) return;
+    var N = 16, pts = [], i, u, iu;
+    for (i = 0; i <= N; i++) {
+      u = (i / N) * prog; iu = 1 - u;
+      pts.push({
+        x: iu * iu * x1 + 2 * iu * u * cx + u * u * x2,
+        y: iu * iu * y1 + 2 * iu * u * cy + u * u * y2,
+        w: (w0 + (w1 - w0) * u) * (0.82 + 0.18 * Math.sin(u * Math.PI))
+      });
+    }
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.fillStyle = col; ctx.beginPath();
+    for (i = 0; i <= N; i++) {
+      var p = pts[i], q = pts[Math.min(N, i + 1)], pv = pts[Math.max(0, i - 1)];
+      var dx = q.x - pv.x, dy = q.y - pv.y, dl = Math.hypot(dx, dy) || 1;
+      var nx = -dy / dl * p.w / 2, ny = dx / dl * p.w / 2;
+      if (i === 0) ctx.moveTo(p.x + nx, p.y + ny); else ctx.lineTo(p.x + nx, p.y + ny);
+    }
+    for (i = N; i >= 0; i--) {
+      var p2 = pts[i], q2 = pts[Math.min(N, i + 1)], pv2 = pts[Math.max(0, i - 1)];
+      var dx2 = q2.x - pv2.x, dy2 = q2.y - pv2.y, dl2 = Math.hypot(dx2, dy2) || 1;
+      ctx.lineTo(p2.x + dy2 / dl2 * p2.w / 2, p2.y - dx2 / dl2 * p2.w / 2);
+    }
+    ctx.closePath(); ctx.fill();
+    // Đầu vệt tròn mềm + vệt khô: hai sọc sáng mảnh chạy dọc thân vệt.
+    ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, w0 * 0.42, 0, Math.PI * 2); ctx.fill();
+    if (dry) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.20)'; ctx.lineWidth = Math.max(1, w0 * 0.14); ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (i = 0; i <= N; i += 2) { var p3 = pts[i]; if (i === 0) ctx.moveTo(p3.x, p3.y - p3.w * 0.18); else ctx.lineTo(p3.x, p3.y - p3.w * 0.18); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function tpSpecks(cx, cy, n, seed, rx, ry, col, a, t, rise) {
+    // Hạt mực/tia sáng văng xác định theo hạt giống, trôi nhẹ theo t.
+    ctx.save(); ctx.fillStyle = col;
+    for (var i = 0; i < n; i++) {
+      var px = cx + (tpRand(seed, i * 2 + 1) - 0.5) * 2 * rx;
+      var py = cy + (tpRand(seed, i * 2 + 2) - 0.5) * 2 * ry - (rise ? (t * rise * (0.4 + tpRand(seed, i + 40))) % (ry * 1.6) : 0);
+      var r = 0.8 + tpRand(seed, i + 80) * 1.9;
+      ctx.globalAlpha = Math.max(0, Math.min(1, a * (0.35 + tpRand(seed, i + 120) * 0.65)));
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function tpVText(str, x, y, size, col, a, gap) {
+    // Cột chữ dọc kiểu thư pháp bên vật thể chính (như khung gốc).
+    for (var i = 0; i < str.length; i++) tpGlyph(str[i], x, y + i * (size + (gap || 3)), size, col, a, 0);
+  }
+  function tpSeal(x, y, s, ch, a) {
+    ctx.save(); ctx.translate(x, y); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.fillStyle = 'rgba(196,32,38,0.92)';
+    ctx.beginPath(); ctx.roundRect(-s / 2, -s / 2, s, s, 2.5); ctx.fill();
+    ctx.font = '700 ' + (s * 0.72) + 'px "Noto Serif CJK SC", "Noto Serif", serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,244,238,0.96)'; ctx.fillText(ch, 0, 1);
+    ctx.restore();
+  }
+  function tpPeak(x, baseY, w, h, seed, a) {
+    // Đỉnh núi mực: sườn răng cưa xác định, thân là gradient loang từ
+    // đậm ở đỉnh xuống sương ở chân (đúng chất khung gốc Hoạ Địa),
+    // một vệt sáng dọc sườn trái + sương trắng ôm chân núi.
+    var grad = ctx.createLinearGradient(0, baseY - h, 0, baseY);
+    grad.addColorStop(0, 'rgba(26,34,48,0.97)');
+    grad.addColorStop(0.45, 'rgba(74,90,114,0.82)');
+    grad.addColorStop(0.8, 'rgba(148,164,188,0.38)');
+    grad.addColorStop(1, 'rgba(190,202,220,0.05)');
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.fillStyle = grad; ctx.beginPath();
+    ctx.moveTo(x - w / 2, baseY);
+    var steps = 6, i;
+    for (i = 1; i <= steps; i++) {
+      var fx2 = -w / 2 + (w / 2) * (i / steps);
+      var fy2 = baseY - h * (i / steps) + (tpRand(seed, i) - 0.5) * h * 0.13;
+      ctx.lineTo(x + fx2, fy2);
+    }
+    ctx.lineTo(x + w * 0.06, baseY - h * 0.97);
+    for (i = steps; i >= 1; i--) {
+      var gx2 = w * 0.06 + (w * 0.44) * (1 - i / steps);
+      var gy2 = baseY - h * (i / steps) + (tpRand(seed, i + 30) - 0.5) * h * 0.13;
+      ctx.lineTo(x + gx2, gy2);
+    }
+    ctx.lineTo(x + w / 2, baseY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(226,236,248,0.55)'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - w * 0.16, baseY - h * 0.34);
+    ctx.quadraticCurveTo(x - w * 0.05, baseY - h * 0.62, x + w * 0.01, baseY - h * 0.9); ctx.stroke();
+    ctx.restore();
+    tpGlow(x, baseY - 2, w * 0.72, 13, 'rgba(225,235,248,0.75)', a * 0.5);
+  }
+  function tpBamboo(x, baseY, h, lean, seed, a, dark) {
+    // Một thân trúc mực: đốt rõ, thân thuôn, chùm lá là các vệt mực
+    // thuôn cong ở nửa trên; tông loang sáng như tranh thủy mặc gốc.
+    var topX = x + lean * h;
+    ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    var seg = 5;
+    for (var s = 0; s < seg; s++) {
+      var u0 = s / seg, u1 = (s + 1) / seg;
+      var bx0 = x + lean * h * u0, by0 = baseY - h * u0, bx1 = x + lean * h * u1, by1 = baseY - h * u1;
+      var wdt = 5.4 - u0 * 2.2;
+      ctx.strokeStyle = dark ? 'rgba(30,46,38,0.95)' : 'rgba(96,124,104,0.9)';
+      ctx.lineWidth = wdt; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(bx0, by0); ctx.lineTo(bx1, by1); ctx.stroke();
+      ctx.strokeStyle = 'rgba(226,238,226,0.5)'; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(bx0 - wdt * 0.22, by0); ctx.lineTo(bx1 - wdt * 0.22, by1); ctx.stroke();
+      ctx.fillStyle = dark ? 'rgba(18,30,24,0.95)' : 'rgba(70,96,80,0.95)';
+      ctx.beginPath(); ctx.ellipse(bx1, by1, wdt * 0.62, 1.7, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    var leaves = 6;
+    for (var lf = 0; lf < leaves; lf++) {
+      var lu = 0.55 + tpRand(seed, lf + 7) * 0.45;
+      var lx = x + lean * h * lu, ly = baseY - h * lu;
+      var side = tpRand(seed, lf + 21) > 0.42 ? 1 : -1;
+      var len = 17 + tpRand(seed, lf + 33) * 13;
+      var droop = 5 + tpRand(seed, lf + 47) * 8;
+      tpInk(lx, ly, lx + side * len * 0.6, ly - droop - 3, lx + side * len, ly + droop * 0.4,
+        3.6, 0.5, dark ? 'rgba(24,40,30,0.92)' : 'rgba(52,84,62,0.9)', a * 0.95, 1, false);
+    }
+    ctx.restore();
+  }
+  function tpBigBrush(x, y, ang, scale, handleCol) {
+    // Bút khổng lồ (như khung gốc Chu Phê): cán dài đỏ, vòng vàng, ngòi lớn.
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(scale, scale);
+    ctx.fillStyle = handleCol || '#a4232a';
+    ctx.beginPath(); ctx.roundRect(-3.4, -46, 6.8, 34, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,214,130,0.9)'; ctx.fillRect(-3.4, -46, 2.2, 34);
+    ctx.fillStyle = '#c9a44c'; ctx.fillRect(-4.2, -13, 8.4, 4.6);
+    ctx.fillStyle = '#15171d';
+    ctx.beginPath(); ctx.moveTo(-4.2, -9); ctx.quadraticCurveTo(-1, 4, 0, 13); ctx.quadraticCurveTo(1, 4, 4.2, -9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(238,44,50,0.85)';
+    ctx.beginPath(); ctx.moveTo(-1.6, 6); ctx.quadraticCurveTo(0, 10, 0, 13); ctx.quadraticCurveTo(0, 10, 1.6, 6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  function drawThuPhapFx() {
+    thuPhapFx.forEach(function (fx) { drawThuPhapForm(fx); });
+    // Bút tại tay người chơi trong cửa sổ tung: chuyển động viết/khoanh.
+    if (thuPhapCastT > 0 && state) {
+      var hx = px + 16 + thuPhapCastDir.x * 15, hy = py + 14 + thuPhapCastDir.y * 10;
+      var wob = Math.sin(tNow / 38) * 3;
+      tpBrush(hx + thuPhapCastDir.y * wob, hy - thuPhapCastDir.x * wob, Math.atan2(thuPhapCastDir.y, thuPhapCastDir.x) + Math.PI / 2 + Math.sin(tNow / 55) * 0.25, 1.3, '#14161c');
+    }
+  }
+  function drawThuPhapForm(fx) {
+    var t = fx.t, x = fx.x, y = fx.y, sd = fx.seed;
+    var fade = (fx.dur - t < 0.32 ? Math.max(0, (fx.dur - t) / 0.32) : 1) * Math.min(1, t / 0.09 + 0.25);
+    ctx.save(); ctx.globalAlpha = fade;
+    if (fx.form === 'mac_truc') {
+      // VÒNG 2: RỪNG trúc thủy mặc nhiều lớp mọc giữa người tung và địch
+      // (khung gốc: khóm ~3 lần chiều cao nhân vật, tông loang sáng, lá
+      // mực đậm), rồi lá phát sáng bay cong nối tiếp vào từng địch.
+      var wx = fx.sx + (x - fx.sx) * 0.42, wy = fx.sy + (y - fx.sy) * 0.42;
+      var dxn = x - fx.sx, dyn = y - fx.sy, dl2 = Math.hypot(dxn, dyn) || 1;
+      var nx = -dyn / dl2, ny = dxn / dl2;
+      var baseY = wy + 16;
+      tpGlow(wx, baseY - 60, 105, 95, 'rgba(150,210,170,0.5)', 0.30);
+      ctx.fillStyle = 'rgba(20,28,26,0.30)';
+      ctx.beginPath(); ctx.ellipse(wx, baseY + 3, 88, 13, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(120,128,124,0.85)';
+      [[-52, 9, 13], [-18, 11, 9], [26, 10, 15], [58, 8, 10]].forEach(function (rk) {
+        ctx.beginPath(); ctx.ellipse(wx + rk[0], baseY + rk[1] * 0.3, rk[2], rk[2] * 0.45, 0, Math.PI, Math.PI * 2); ctx.fill();
+      });
+      var grove = [
+        { o: -56, h: 148, lean: -0.10, dk: 0 }, { o: -34, h: 178, lean: -0.05, dk: 0 },
+        { o: -12, h: 158, lean: 0.02, dk: 0 }, { o: 10, h: 186, lean: 0.05, dk: 0 },
+        { o: 32, h: 166, lean: 0.09, dk: 0 }, { o: 54, h: 142, lean: 0.13, dk: 0 },
+        { o: -44, h: 128, lean: -0.07, dk: 1 }, { o: 0, h: 138, lean: 0.0, dk: 1 },
+        { o: 44, h: 124, lean: 0.08, dk: 1 }
+      ];
+      grove.forEach(function (st, i) {
+        var grow = Math.max(0, Math.min(1, (t - i * 0.05) / 0.5));
+        if (grow <= 0) return;
+        var ease = 1 - Math.pow(1 - grow, 3);
+        tpBamboo(wx + nx * st.o, baseY + ny * st.o * 0.25, st.h * ease, st.lean, sd + i * 3.7, 1, !!st.dk);
+      });
+      tpSpecks(wx, baseY - 80, 14, sd + 5, 80, 70, 'rgba(30,44,36,1)', 0.5, t, 7);
+      for (var k = 0; k < 5; k++) {
+        var fp = Math.max(0, Math.min(1, (t - 0.8 - k * 0.17) / 0.5));
+        if (fp <= 0 || fp >= 1) continue;
+        var sx3 = wx + (k - 2) * 14, sy3 = baseY - 118 - (k % 3) * 14;
+        var iu3 = 1 - fp;
+        var hx2 = iu3 * iu3 * sx3 + 2 * iu3 * fp * ((sx3 + x) / 2) + fp * fp * x;
+        var hy2 = iu3 * iu3 * sy3 + 2 * iu3 * fp * (Math.min(sy3, y) - 92) + fp * fp * (y - 8);
+        tpInk(sx3, sy3, (sx3 + x) / 2, Math.min(sy3, y) - 92, x, y - 8, 3.2, 0.8, 'rgba(178,238,255,0.75)', 0.8, Math.min(1, fp * 1.25), false);
+        ctx.save(); ctx.translate(hx2, hy2); ctx.rotate(fp * 5 + k * 1.7);
+        ctx.shadowColor = 'rgba(160,240,255,0.95)'; ctx.shadowBlur = 9;
+        ctx.fillStyle = 'rgba(24,38,34,0.95)';
+        ctx.beginPath(); ctx.ellipse(0, 0, 8.5, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(190,245,255,0.85)';
+        ctx.beginPath(); ctx.ellipse(-1.5, -0.8, 4.4, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    } else if (fx.form === 'hoa_dia') {
+      // VÒNG 2: vòng mực KHỔNG LỒ (khung gốc ~26% bề ngang khung) viền
+      // đậm lõi rửa sáng; 4 đỉnh mực cao 2–3 lần nhân vật mọc trong
+      // vòng với sương ôm chân; cột chữ dọc + con dấu đỏ bên phải.
+      var gy = y + 14, R = 104, sweep = Math.max(0, Math.min(1, t / 0.55));
+      var wash = Math.max(0, Math.min(1, (t - 0.25) / 0.5));
+      ctx.save();
+      var wg = ctx.createRadialGradient(x, gy, 6, x, gy, R);
+      wg.addColorStop(0, 'rgba(228,238,250,' + (0.34 * wash) + ')');
+      wg.addColorStop(0.75, 'rgba(190,205,228,' + (0.16 * wash) + ')');
+      wg.addColorStop(1, 'rgba(190,205,228,0)');
+      ctx.fillStyle = wg;
+      ctx.beginPath(); ctx.ellipse(x, gy, R, R * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(170,190,215,0.35)'; ctx.lineWidth = 13;
+      ctx.beginPath(); ctx.ellipse(x, gy, R, R * 0.42, 0, -Math.PI / 2, -Math.PI / 2 + sweep * Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(14,17,24,0.92)'; ctx.lineWidth = 6.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.ellipse(x, gy, R, R * 0.42, 0, -Math.PI / 2, -Math.PI / 2 + sweep * Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(240,246,255,0.5)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(x, gy, R - 5, (R - 5) * 0.42, 0, -Math.PI / 2, -Math.PI / 2 + sweep * Math.PI * 2); ctx.stroke();
+      if (sweep < 1) {
+        var ba = -Math.PI / 2 + sweep * Math.PI * 2;
+        tpBigBrush(x + Math.cos(ba) * R, gy + Math.sin(ba) * R * 0.42 - 40, 0.35, 2.9, '#7a4b26');
+      }
+      var rise = Math.max(0, Math.min(1, (t - 0.55) / 0.55));
+      if (rise > 0) {
+        var re = 1 - Math.pow(1 - rise, 3);
+        var pk = [[-56, 62, 148], [-14, 74, 196], [30, 58, 132], [64, 44, 96]];
+        pk.forEach(function (p, pi) {
+          tpPeak(x + p[0], gy + 4, p[1], p[2] * re, sd + pi * 7.3, 1);
+        });
+        ctx.save(); ctx.strokeStyle = 'rgba(235,244,255,0.4)'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+        for (var wv = 0; wv < 2; wv++) {
+          var wa = t * (0.9 + wv * 0.4) + wv * 2.4;
+          ctx.beginPath();
+          ctx.ellipse(x, gy - 34 - wv * 22, 44 - wv * 8, 15 - wv * 3, 0, wa, wa + Math.PI * 1.25);
+          ctx.stroke();
+        }
+        ctx.restore();
+        var vt = Math.max(0, Math.min(1, (t - 0.8) / 0.4));
+        tpVText('畫地為牢', x + R + 18, gy - 118, 17, 'rgba(22,28,38,1)', vt * 0.92);
+        if (t > 1.25) tpSeal(x + R + 18, gy - 118 + 4 * 20 + 14, 19, '牢', Math.min(1, (t - 1.25) / 0.3));
+      }
+      if (t > 1.8) {
+        var cr = Math.min(1, (t - 1.8) / 0.25);
+        ctx.save(); ctx.strokeStyle = 'rgba(16,20,28,' + (0.85 * cr) + ')'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x - 18, gy - 96); ctx.lineTo(x - 8, gy - 64); ctx.lineTo(x - 15, gy - 34); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + 28, gy - 74); ctx.lineTo(x + 21, gy - 48); ctx.stroke();
+        ctx.restore();
+        tpSpecks(x, gy - 60, 12, sd + 9, 80, 55, 'rgba(24,30,40,1)', 0.55 * cr, t, 0);
+      }
+    } else if (fx.form === 'thien_thu') {
+      // VÒNG 2: sách trời LỚN bìa lam sẫm giáng xuống, mở ra chiếu CỘT
+      // SÁNG xuống trận chữ vàng đường kính lớn trên đất (khung gốc:
+      // trận ~27% bề ngang khung, chữ vàng dày đặc xoay quanh tâm).
+      var gy2 = y + 14;
+      var ringIn = Math.max(0, Math.min(1, t / 0.45));
+      tpGlow(x, gy2, 135, 58, 'rgba(255,205,110,0.55)', 0.4 * ringIn);
+      ctx.save(); ctx.strokeStyle = 'rgba(255,205,100,' + (0.8 * ringIn) + ')'; ctx.lineWidth = 3;
+      ctx.shadowColor = 'rgba(255,200,100,0.85)'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.ellipse(x, gy2, 118, 49, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.ellipse(x, gy2, 96, 39, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      var glyphs = ['書', '天', '文', '誠', '明', '德', '正', '心', '道', '經', '仁', '義'];
+      for (var g = 0; g < 12; g++) {
+        var ga = t * 0.55 + g * Math.PI / 6;
+        tpGlyph(glyphs[g], x + Math.cos(ga) * 107, gy2 + Math.sin(ga) * 44, 17, 'rgba(255,216,130,1)', ringIn * 0.95, Math.sin(ga) * 0.35);
+      }
+      for (var g2 = 0; g2 < 6; g2++) {
+        var ga2 = -t * 0.8 + g2 * Math.PI / 3;
+        tpGlyph(glyphs[(g2 * 2 + 1) % 12], x + Math.cos(ga2) * 62, gy2 + Math.sin(ga2) * 25, 14, 'rgba(255,230,170,1)', ringIn * 0.8, 0);
+      }
+      var bookY = y - 196 + (1 - Math.pow(1 - Math.min(1, t / 0.5), 3)) * 22;
+      var beam = Math.max(0, Math.min(1, (t - 0.5) / 0.35));
+      if (beam > 0) {
+        ctx.save();
+        var bg2 = ctx.createLinearGradient(0, bookY + 58, 0, gy2);
+        bg2.addColorStop(0, 'rgba(255,240,200,' + (0.78 * beam) + ')');
+        bg2.addColorStop(1, 'rgba(255,220,140,' + (0.24 * beam) + ')');
+        ctx.fillStyle = bg2;
+        ctx.beginPath();
+        ctx.moveTo(x - 27, bookY + 56); ctx.lineTo(x + 27, bookY + 56);
+        ctx.lineTo(x + 84, gy2 + 4); ctx.lineTo(x - 84, gy2 + 4);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,252,238,' + (0.68 * beam) + ')';
+        ctx.beginPath();
+        ctx.moveTo(x - 13, bookY + 56); ctx.lineTo(x + 13, bookY + 56);
+        ctx.lineTo(x + 42, gy2 + 2); ctx.lineTo(x - 42, gy2 + 2);
+        ctx.closePath(); ctx.fill();
+        // Vệt sáng chạy lên trong cột (chuyển động sống).
+        for (var bs = 0; bs < 3; bs++) {
+          var bsy = bookY + 60 + ((t * 150 + bs * 80) % Math.max(60, gy2 - bookY - 64));
+          ctx.fillStyle = 'rgba(255,255,246,' + (0.55 * beam) + ')';
+          ctx.fillRect(x - 15 + bs * 13, bsy, 4, 26);
+        }
+        ctx.restore();
+        for (var ry = 0; ry < 6; ry++) {
+          var ra = t * 1.4 + ry * Math.PI / 3;
+          tpStroke(x, gy2, x + Math.cos(ra) * 88, gy2 + Math.sin(ra) * 36, 1.6, 'rgba(255,236,180,1)', beam * 0.5);
+        }
+      }
+      ctx.save(); ctx.translate(x, bookY);
+      ctx.shadowColor = 'rgba(255,214,120,0.95)'; ctx.shadowBlur = 22;
+      ctx.fillStyle = 'rgba(24,38,86,0.98)';
+      ctx.beginPath(); ctx.roundRect(-52, -66, 104, 132, 5); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(216,178,92,0.95)'; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.roundRect(-52, -66, 104, 132, 5); ctx.stroke();
+      ctx.strokeStyle = 'rgba(216,178,92,0.55)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.roundRect(-45, -59, 90, 118, 4); ctx.stroke();
+      var openP = Math.max(0, Math.min(1, (t - 0.45) / 0.4));
+      if (openP > 0) {
+        ctx.fillStyle = 'rgba(250,246,228,0.98)';
+        ctx.fillRect(-46, -58, 44 * openP, 116); ctx.fillRect(2, -58, 44 * openP, 116);
+        ctx.fillStyle = 'rgba(255,232,170,' + (0.65 * openP) + ')';
+        ctx.fillRect(-46, -58, 44 * openP, 116); ctx.fillRect(2, -58, 44 * openP, 116);
+        ctx.strokeStyle = 'rgba(96,104,128,0.65)'; ctx.lineWidth = 1;
+        for (var ln = 0; ln < 6; ln++) {
+          ctx.beginPath(); ctx.moveTo(-40, -40 + ln * 17); ctx.lineTo(-40 + 32 * openP, -40 + ln * 17); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(8, -40 + ln * 17); ctx.lineTo(8 + 32 * openP, -40 + ln * 17); ctx.stroke();
+        }
+      } else {
+        ctx.fillStyle = 'rgba(238,240,246,0.96)'; ctx.fillRect(-13, -48, 26, 62);
+        tpVText('天書', 0, -38, 17, 'rgba(28,36,80,1)', 0.95, 2);
+      }
+      ctx.restore();
+      tpVText('天書降世', x + 86, bookY - 52, 15, 'rgba(240,246,255,1)', Math.max(0, Math.min(1, (t - 0.35) / 0.4)) * 0.9);
+      for (var pg = 0; pg < 6; pg++) {
+        var pp = Math.max(0, Math.min(1, (t - 0.6 - pg * 0.2) / 0.7));
+        if (pp <= 0 || pp >= 1) continue;
+        var pa = pg * 2.3 + pp * 3.8, pr = (1 - pp) * 66;
+        var pgx = x + Math.cos(pa) * pr, pgy = bookY + 62 + pp * (gy2 - bookY - 52);
+        ctx.save(); ctx.translate(pgx, pgy); ctx.rotate(pa + pp * 2.4);
+        ctx.shadowColor = 'rgba(255,220,150,0.8)'; ctx.shadowBlur = 7;
+        ctx.fillStyle = 'rgba(248,250,255,0.97)'; ctx.fillRect(-10, -13, 20, 26);
+        ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(200,170,90,0.9)'; ctx.lineWidth = 1.4; ctx.strokeRect(-10, -13, 20, 26);
+        ctx.fillStyle = 'rgba(60,70,100,0.8)'; ctx.font = '700 13px "Noto Serif CJK SC", serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyphs[pg % 12], 0, 1);
+        ctx.restore();
+      }
+      var upG = ['文', '明', '德', '道'];
+      for (var ug = 0; ug < 4; ug++) {
+        var up = ((t * 0.32 + ug * 0.27) % 1);
+        tpGlyph(upG[ug], x - 44 + ug * 29 + Math.sin(t * 2 + ug * 2) * 5, gy2 - 12 - up * 108, 15, 'rgba(255,224,150,1)', beam * Math.sin(up * Math.PI) * 0.9, 0);
+      }
+    } else if (fx.form === 'vi_ky') {
+      // VÒNG 2: bàn cờ KHỔNG LỒ (khung gốc ~39% bề ngang, ~65% chiều
+      // cao khung) viền cyan kép phát sáng; tâm là đĩa trận vàng trắng
+      // rực với vòng quỹ đạo; quân cờ lớn bay vào nối tuyến; địch bị
+      // xoắn trói + chữ Định trên đầu.
+      var CS = 40, SQ = 0.8, half = CS * 4;
+      var inP = Math.max(0, Math.min(1, t / 0.45)), sc = 0.93 + 0.07 * (1 - Math.pow(1 - inP, 3));
+      tpGlow(x, y, 215, 165, 'rgba(110,225,255,0.5)', 0.26 * inP);
+      ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.translate(-x, -y);
+      ctx.strokeStyle = 'rgba(120,235,255,' + (0.9 * inP) + ')'; ctx.lineWidth = 1.6;
+      ctx.shadowColor = 'rgba(110,225,255,0.9)'; ctx.shadowBlur = 7;
+      for (var gl = 0; gl <= 8; gl++) {
+        ctx.beginPath(); ctx.moveTo(x - half, y - half * SQ + gl * CS * SQ); ctx.lineTo(x + half, y - half * SQ + gl * CS * SQ); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - half + gl * CS, y - half * SQ); ctx.lineTo(x - half + gl * CS, y + half * SQ); ctx.stroke();
+      }
+      ctx.lineWidth = 3.4; ctx.shadowBlur = 13;
+      ctx.strokeRect(x - half, y - half * SQ, half * 2, half * SQ * 2);
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(x - half - 7, y - half * SQ - 7, half * 2 + 14, half * SQ * 2 + 14);
+      ctx.restore();
+      tpGlow(x, y, 84, 84, 'rgba(255,240,200,0.85)', 0.55 * inP);
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(255,248,220,' + (0.30 * inP) + ')';
+      ctx.beginPath(); ctx.arc(0, 0, 63, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,208,100,0.95)'; ctx.lineWidth = 2.6;
+      ctx.shadowColor = 'rgba(255,205,100,0.9)'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(0, 0, 63, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI * 2); ctx.stroke();
+      ctx.shadowBlur = 0;
+      for (var tk = 0; tk < 8; tk++) {
+        var ta = tk * Math.PI / 4 + t * 0.4;
+        ctx.beginPath(); ctx.moveTo(Math.cos(ta) * 45, Math.sin(ta) * 45); ctx.lineTo(Math.cos(ta) * 63, Math.sin(ta) * 63); ctx.stroke();
+      }
+      ctx.rotate(t * 0.55);
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.ellipse(0, 0, 82, 26, 0.5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, 82, 26, 0.5 + Math.PI / 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      tpGlyph('定', x, y - 4, 30, 'rgba(255,240,200,1)', inP * (0.55 + 0.3 * Math.sin(t * 3)), 0);
+      var stonePts = [[-3, -2], [2, -3], [3, 1], [-2, 2], [0, -1], [1, 3], [-3, 1], [2, -1], [-1, -3], [3, 3]];
+      var landed = [];
+      ctx.save(); ctx.strokeStyle = 'rgba(170,242,255,0.6)'; ctx.lineWidth = 2;
+      stonePts.forEach(function (sp2, si) {
+        var pp2 = Math.max(0, Math.min(1, (t - 0.4 - si * 0.1) / 0.4));
+        if (pp2 <= 0) return;
+        var txp = x + sp2[0] * CS, typ = y + sp2[1] * CS * SQ;
+        var sxp = x + (sp2[0] >= 0 ? half + 44 : -half - 44), syp = y - 96 - si * 7;
+        var e2 = 1 - Math.pow(1 - pp2, 2);
+        var cxp = sxp + (txp - sxp) * e2, cyp = syp + (typ - syp) * e2 - Math.sin(pp2 * Math.PI) * 22;
+        if (pp2 >= 1) landed.push([cxp, cyp]);
+        ctx.fillStyle = si % 2 ? 'rgba(240,244,250,0.98)' : 'rgba(13,15,21,0.98)';
+        ctx.shadowColor = si % 2 ? 'rgba(210,235,255,0.95)' : 'rgba(130,170,255,0.8)'; ctx.shadowBlur = 9;
+        ctx.beginPath(); ctx.arc(cxp, cyp, 9, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+        if (si % 2 === 0) { ctx.strokeStyle = 'rgba(160,200,255,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cxp, cyp, 9, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(170,242,255,0.6)'; ctx.lineWidth = 2; }
+      });
+      ctx.beginPath();
+      landed.forEach(function (lp, li) { if (li === 0) ctx.moveTo(lp[0], lp[1]); else ctx.lineTo(lp[0], lp[1]); });
+      ctx.stroke(); ctx.restore();
+      tpSpecks(x, y, 16, sd + 3, 165, 120, 'rgba(190,240,255,1)', 0.75 * inP, t, 5);
+      if (fx.mon && fx.mon.state === 'alive' && t < 2.3) {
+        var mx = fx.mon.x + 16, my = fx.mon.y + 16;
+        ctx.save(); ctx.strokeStyle = 'rgba(190,245,255,0.9)'; ctx.lineWidth = 2.6;
+        for (var sr = 0; sr < 3; sr++) {
+          ctx.beginPath();
+          ctx.ellipse(mx, my + 8 - sr * 11, 17 - sr * 2, 6.5, 0, t * 5 + sr * 2.1, t * 5 + sr * 2.1 + Math.PI * 1.45);
+          ctx.stroke();
+        }
+        ctx.restore();
+        tpGlyph('定', mx, my - 40, 24, 'rgba(195,246,255,1)', 0.95, Math.sin(t * 6) * 0.06);
+      }
+    } else if (fx.form === 'chu_phe') {
+      // VÒNG 2: CUỘN CHIẾU LỚN giăng trên cao với cột chữ dày đặc; bút
+      // ĐỎ KHỔNG LỒ khoanh tên trên chiếu rồi quét vòng đỏ lớn trói
+      // địch (khung gốc: vòng đỏ ~20% chiều cao khung, phát sáng lõi
+      // trắng), kèm vệt chém đỏ thuôn + hạt mực đỏ văng.
+      var edY = y - 158, un = Math.max(0, Math.min(1, t / 0.4));
+      ctx.save(); ctx.translate(x + 34, edY);
+      ctx.shadowColor = 'rgba(255,230,180,0.7)'; ctx.shadowBlur = 12;
+      ctx.fillStyle = 'rgba(240,233,208,0.98)';
+      ctx.fillRect(-102 * un, -62, 204 * un, 124);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#8a5a2a';
+      ctx.fillRect(-102 * un - 4, -66, 5, 132); ctx.fillRect(102 * un - 1, -66, 5, 132);
+      ctx.fillStyle = 'rgba(201,164,76,0.9)';
+      ctx.fillRect(-102 * un - 4, -66, 5, 8); ctx.fillRect(-102 * un - 4, 58, 5, 8);
+      ctx.fillRect(102 * un - 1, -66, 5, 8); ctx.fillRect(102 * un - 1, 58, 5, 8);
+      if (un > 0.55) {
+        var cols = '硯池波瀾不驚雲卷雲舒自有清芬墨香四溢文章千古事得失寸心知是非成敗轉頭空青山依舊在幾度夕陽紅臨江仙子笑春風筆下走龍蛇驚才絕艷世無雙';
+        ctx.fillStyle = 'rgba(38,40,48,0.78)';
+        ctx.font = '10px "Noto Serif CJK SC", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (var ci = 0; ci < 9; ci++) for (var cj = 0; cj < 8; cj++) {
+          ctx.fillText(cols[(ci * 8 + cj) % cols.length], 84 - ci * 21, -44 + cj * 12.5);
+        }
+      }
+      var nameC = Math.max(0, Math.min(1, (t - 0.4) / 0.3));
+      if (nameC > 0) {
+        ctx.strokeStyle = 'rgba(226,36,44,0.95)'; ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(255,60,60,0.8)'; ctx.shadowBlur = 7;
+        ctx.beginPath(); ctx.ellipse(42, -20, 13, 30, 0, -Math.PI / 2, -Math.PI / 2 + nameC * Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      ctx.restore();
+      var sweep2 = Math.max(0, Math.min(1, (t - 0.55) / 0.5));
+      if (sweep2 > 0) {
+        ctx.save(); ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(255,64,54,0.9)'; ctx.shadowBlur = 15;
+        ctx.strokeStyle = 'rgba(255,70,58,0.4)'; ctx.lineWidth = 15;
+        ctx.beginPath(); ctx.ellipse(x, y - 4, 54, 80, 0, -Math.PI / 2, -Math.PI / 2 + sweep2 * Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(233,38,46,0.97)'; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.ellipse(x, y - 4, 54, 80, 0, -Math.PI / 2, -Math.PI / 2 + sweep2 * Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,238,232,0.95)'; ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.ellipse(x, y - 4, 54, 80, 0, -Math.PI / 2, -Math.PI / 2 + sweep2 * Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        var ba2 = -Math.PI / 2 + sweep2 * Math.PI * 2;
+        var bx3 = x + Math.cos(ba2) * 54, by3 = y - 4 + Math.sin(ba2) * 80;
+        if (sweep2 < 1) tpBigBrush(bx3 + 34, by3 - 44, 0.72, 3.6);
+        tpSpecks(bx3, by3, 5, sd + 21, 12, 12, 'rgba(255,90,80,1)', 0.8, t, 0);
+      }
+      if (sweep2 >= 1 && t < 1.35) {
+        var pu = 1 + Math.sin((t - 1.05) * 22) * 0.02;
+        ctx.save(); ctx.strokeStyle = 'rgba(255,120,110,' + (0.5 * (1.35 - t)) + ')'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(x, y - 4, 54 * pu + 8, 80 * pu + 8, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
+      var slashP = Math.max(0, Math.min(1, (t - 1.12) / 0.18));
+      if (slashP > 0) {
+        tpInk(x + 38, y - 92, x + 6, y - 26, x - 32, y + 48, 17, 2.5, 'rgba(228,34,42,0.95)', 1, slashP, false);
+        tpInk(x + 38, y - 92, x + 6, y - 26, x - 32, y + 48, 5, 1, 'rgba(255,240,235,0.95)', 0.95, slashP, false);
+        tpSpecks(x, y - 20, 12, sd + 31, 42, 58, 'rgba(255,70,60,1)', slashP * 0.85, t, 0);
+      }
+      if (t > 1.3) {
+        var bind = Math.min(1, (t - 1.3) / 0.25);
+        ctx.save(); ctx.strokeStyle = 'rgba(238,52,60,' + (0.92 * bind) + ')'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(x, y + 10, 21, 9.5, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(x, y - 18, 18.5, 8.5, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        tpGlyph('罪', x, y - 52, 30, 'rgba(255,116,106,1)', bind * 0.95, 0);
+        tpSeal(x + 40, y - 88, 21, '罪', bind);
+      }
+    } else if (fx.form === 'hao_nhien') {
+      // VÒNG 2: chữ CHÍNH mực KHÔ KHỔNG LỒ (khung gốc ~35% chiều cao
+      // khung) đen đậm trên đĩa sáng vàng, hai vòng sáng bao quanh,
+      // hạt mực đen + tia vàng văng; nứt rồi vỡ thành vệt bút lớn.
+      var gx = fx.sx + thuPhapCastDir.x * 44, gy = fx.sy - 34 + thuPhapCastDir.y * 10;
+      var grow = Math.max(0, Math.min(1, t / 0.28));
+      var ge = 1 - Math.pow(1 - grow, 3);
+      var breathe = 1 + Math.sin(t * 2.6) * 0.014;
+      if (t < 1.18) {
+        tpGlow(gx, gy, 128, 128, 'rgba(255,222,140,0.8)', 0.62 * ge);
+        tpGlow(gx, gy, 66, 66, 'rgba(255,246,214,0.95)', 0.75 * ge);
+        ctx.save(); ctx.translate(gx, gy);
+        ctx.strokeStyle = 'rgba(255,226,150,' + (0.9 * ge) + ')'; ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(255,208,110,0.95)'; ctx.shadowBlur = 15;
+        ctx.beginPath(); ctx.arc(0, 0, 99 * ge * breathe, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0; ctx.lineWidth = 1.4;
+        ctx.strokeStyle = 'rgba(255,240,200,' + (0.6 * ge) + ')';
+        ctx.beginPath(); ctx.arc(0, 0, 114 * ge, t * 0.35, t * 0.35 + Math.PI * 1.55); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 114 * ge, t * 0.35 + Math.PI, t * 0.35 + Math.PI * 1.55); ctx.stroke();
+        ctx.restore();
+        tpGlyph('正', gx, gy, 208 * ge * breathe, 'rgba(255,214,120,1)', ge * 0.75, 0);
+        // Khô mực: 4 lượt lệch 1,3px làm gồ mép nét + lượt chính đậm.
+        [[-1.3, 0], [1.3, 0], [0, -1.3], [0, 1.3]].forEach(function (of) {
+          tpGlyph('正', gx + of[0], gy + of[1], 202 * ge * breathe, 'rgba(16,18,24,1)', ge * 0.30, 0);
+        });
+        tpGlyph('正', gx, gy, 202 * ge * breathe, 'rgba(16,18,24,1)', ge * 0.97, 0);
+        tpGlyph('正', gx + 2, gy - 2, 202 * ge * breathe, 'rgba(255,248,224,1)', ge * 0.15, 0);
+        // Sợi khô: vệt sáng mảnh chạy dọc các nét ngang/dọc chính.
+        tpInk(gx - 58, gy - 66, gx, gy - 70, gx + 56, gy - 63, 3.2, 1.2, 'rgba(255,250,230,0.9)', ge * 0.35, 1, false);
+        tpInk(gx - 52, gy + 60, gx, gy + 64, gx + 58, gy + 58, 3.6, 1.4, 'rgba(255,250,230,0.9)', ge * 0.32, 1, false);
+        tpInk(gx - 6, gy - 52, gx - 2, gy, gx - 8, gy + 52, 3, 1.2, 'rgba(255,250,230,0.9)', ge * 0.3, 1, false);
+        tpSpecks(gx, gy, 18, sd + 7, 92, 92, 'rgba(20,22,28,1)', 0.65 * ge, t, 4);
+        tpSpecks(gx, gy, 10, sd + 17, 105, 105, 'rgba(255,220,150,1)', 0.8 * ge, t, 6);
+        if (t > 0.95) {
+          var crk = Math.min(1, (t - 0.95) / 0.2);
+          ctx.save(); ctx.strokeStyle = 'rgba(24,26,34,' + (0.9 * crk) + ')'; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(gx - 52, gy - 62); ctx.lineTo(gx - 26, gy - 24); ctx.lineTo(gx - 40, gy + 18); ctx.lineTo(gx - 22, gy + 56); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(gx + 48, gy - 44); ctx.lineTo(gx + 22, gy - 8); ctx.lineTo(gx + 34, gy + 30); ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        var sp3 = Math.max(0, Math.min(1, (t - 1.18) / 0.62));
+        var baseA = Math.atan2(thuPhapCastDir.y, thuPhapCastDir.x);
+        for (var sk = 0; sk < 7; sk++) {
+          var sa = baseA + (sk - 3) * 0.34;
+          var d1 = 118 * (1 - Math.pow(1 - sp3, 2));
+          var ex = gx + Math.cos(sa) * d1, ey = gy + Math.sin(sa) * d1 * 0.72 + sp3 * sp3 * 16;
+          tpInk(gx, gy, gx + Math.cos(sa) * d1 * 0.45, gy + Math.sin(sa) * d1 * 0.3 - 20, ex, ey,
+            10 - sk % 3 * 2, 1.2, sk % 3 === 0 ? 'rgba(198,32,40,0.9)' : 'rgba(20,22,30,0.94)', (1 - sp3 * 0.55), Math.min(1, sp3 * 1.7), true);
+        }
+        var frags = ['一', '丨', '丶'];
+        for (var fg2 = 0; fg2 < 3; fg2++) {
+          var fa = baseA + (fg2 - 1) * 0.7, fd = 96 * sp3;
+          tpGlyph(frags[fg2], gx + Math.cos(fa) * fd, gy + Math.sin(fa) * fd * 0.7 - sp3 * 10, 21, 'rgba(22,24,32,1)', (1 - sp3) * 0.95, sp3 * (fg2 - 1) * 0.8);
+        }
+        tpSpecks(gx, gy, 16, sd + 27, 60 + sp3 * 70, 60 + sp3 * 50, 'rgba(255,216,140,1)', 0.8 * (1 - sp3 * 0.5), t, 0);
+      }
+    } else if (fx.form === 'tam_tinh') {
+      // VÒNG 2: cuộn TRÚC GIẢN LỚN (khung gốc ~23% bề ngang khung)
+      // thẻ xanh nhạt phát sáng tự tỉnh, cực quang cột chữ xanh bốc
+      // lên sau cuộn (một cột điểm vàng/đỏ như gốc), chữ bay nối tiếp
+      // vào địch, chữ TỈNH lớn nện xuống kết chiêu.
+      var scx = fx.sx + thuPhapCastDir.x * 56, scy = fx.sy - 4;
+      var unroll = Math.max(0, Math.min(1, t / 0.5));
+      var ue = 1 - Math.pow(1 - unroll, 3);
+      tpGlow(scx, scy, 140, 86, 'rgba(130,255,185,0.55)', 0.4 * ue);
+      var colWords = [['長', '沙', '群', '島'], ['是', '越', '南', '的'], ['心', '身', '自', '省']];
+      for (var cw = 0; cw < 3; cw++) {
+        for (var cg2 = 0; cg2 < 4; cg2++) {
+          var uph = ((t * 30 + cg2 * 26 + cw * 13) % 96);
+          var ca = Math.max(0, 0.9 - uph / 110) * ue;
+          var ccol = (cw === 1 && cg2 >= 1 && cg2 <= 2) ? 'rgba(255,120,90,1)' : (cw === 1 ? 'rgba(255,214,130,1)' : 'rgba(140,255,185,1)');
+          tpGlyph(colWords[cw][cg2], scx - 52 + cw * 52, scy - 52 - uph, 29, ccol, ca, Math.sin(t * 1.6 + cg2 + cw * 2) * 0.05);
+        }
+      }
+      ctx.save(); ctx.translate(scx, scy);
+      var SW = 216 * ue, SH = 106;
+      ctx.fillStyle = 'rgba(96,64,30,0.95)';
+      ctx.beginPath(); ctx.roundRect(-SW / 2 - 7, -SH / 2 - 5, 9, SH + 10, 4); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(SW / 2 - 2, -SH / 2 - 5, 9, SH + 10, 4); ctx.fill();
+      var slips = 13;
+      for (var sl = 0; sl < slips; sl++) {
+        if ((sl + 0.5) / slips > ue + 0.04) break;
+        var sx4 = -SW / 2 + sl * (SW / slips);
+        var wob2 = Math.sin(sl * 1.35 + t * 1.8) * 1.6;
+        var grd = ctx.createLinearGradient(sx4, -SH / 2, sx4, SH / 2);
+        grd.addColorStop(0, 'rgba(233,242,230,0.98)');
+        grd.addColorStop(0.5, 'rgba(203,222,205,0.98)');
+        grd.addColorStop(1, 'rgba(178,202,182,0.98)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(sx4 + 0.7, -SH / 2 + wob2, SW / slips - 1.4, SH);
+        ctx.fillStyle = 'rgba(90,120,96,0.5)';
+        ctx.fillRect(sx4 + 0.7, -SH / 2 + wob2, 1.1, SH);
+        if (sl % 2 === 0) tpGlyph('省心身文詩書禮樂仁義智信'.charAt((sl * 3) % 12), sx4 + SW / slips / 2, wob2 - 14, 12, 'rgba(38,84,58,1)', 0.55, 0);
+      }
+      ctx.fillStyle = 'rgba(70,96,74,0.85)';
+      ctx.fillRect(-SW / 2, -SH / 6, SW, 2.2); ctx.fillRect(-SW / 2, SH / 6, SW, 2.2);
+      ctx.restore();
+      var flyGlyphs = ['文', '詩', '書', '禮'];
+      for (var fg = 0; fg < 4; fg++) {
+        var fp2 = Math.max(0, Math.min(1, (t - 0.7 - fg * 0.22) / 0.55));
+        if (fp2 <= 0) continue;
+        var iu = 1 - fp2;
+        var fx2 = iu * iu * scx + 2 * iu * fp2 * ((scx + x) / 2) + fp2 * fp2 * x;
+        var fy2 = iu * iu * (scy - 20) + 2 * iu * fp2 * (Math.min(scy, y) - 108) + fp2 * fp2 * (y - 16);
+        tpInk(scx, scy - 20, (scx + x) / 2, Math.min(scy, y) - 108, x, y - 16, 2.2, 0.6, 'rgba(150,255,195,0.6)', 0.65, fp2, false);
+        tpGlyph(flyGlyphs[fg], fx2, fy2, 27, 'rgba(160,255,198,1)', fp2 >= 1 ? Math.max(0, 1 - (t - 1.25 - fg * 0.22) * 3.2) : 1, Math.sin(fp2 * 5 + fg) * 0.16);
+      }
+      var slam = Math.max(0, Math.min(1, (t - 2.0) / 0.2));
+      if (slam > 0) {
+        var sScale = 1.55 - slam * 0.55;
+        tpGlow(x, y - 30, 74, 74, 'rgba(150,255,195,0.7)', 0.55 * slam);
+        tpGlyph('省', x, y - 46 - (1 - slam) * 34, 88 * sScale, 'rgba(178,255,208,1)', 1, 0);
+        tpGlyph('省', x, y - 46 - (1 - slam) * 34, 88 * sScale, 'rgba(24,60,40,1)', 0.35, 0);
+        if (slam >= 1 && !fx.slammed) {
+          fx.slammed = true;
+          if (!SET || SET.current.fxRings) rings.push({ x: x, y: y + 12, r: 10, a: 0.95 });
+          shakeWorld(0.16);
+          tpSpecks(x, y - 10, 16, sd + 41, 66, 40, 'rgba(160,255,200,1)', 0.9, t, 0);
+        }
+      }
+    }
+    ctx.restore();
+  }
+  /* ----- Nút BÍ PHÁP độc lập (ngoài cụm #skillbar đã khóa) + chip chọn thức ----- */
+  var thuPhapChipsOpen = false, thuPhapUiLast = 0;
+  function toggleThuPhapChips() {
+    thuPhapChipsOpen = !thuPhapChipsOpen;
+    var box = $('biphap-chips');
+    if (!box) return;
+    if (!thuPhapChipsOpen) { box.style.display = 'none'; return; }
+    var forms = L.thuPhapForms(state);
+    if (!forms.length) { thuPhapChipsOpen = false; return; }
+    box.innerHTML = forms.map(function (f) {
+      return '<button class="biphap-chip" data-form="' + f.form + '">' + f.name + '</button>';
+    }).join('');
+    box.style.display = 'flex';
+  }
+  function thuPhapUiTick() {
+    if (tNow - thuPhapUiLast < 150) return;
+    thuPhapUiLast = tNow;
+    var btn = $('btn-biphap'); if (!btn) return;
+    var show = !!(enc && state && L.thuPhapForms && L.thuPhapForms(state).length);
+    btn.style.display = show ? '' : 'none';
+    if (!show && thuPhapChipsOpen) { thuPhapChipsOpen = false; var bx = $('biphap-chips'); if (bx) bx.style.display = 'none'; }
+    if (thuPhapChipsOpen) {
+      var chips = document.querySelectorAll('.biphap-chip');
+      for (var i = 0; i < chips.length; i++) {
+        var fid = chips[i].getAttribute('data-form');
+        var remain = thuPhapCd[fid] ? Math.max(0, Math.ceil((thuPhapCd[fid] - tNow) / 1000)) : 0;
+        chips[i].classList.toggle('cd', remain > 0);
+        var base = (L.thuPhapFormDef(fid) || {}).name || fid;
+        chips[i].textContent = remain > 0 ? base + ' · ' + remain + 's' : base;
+      }
+    }
+  }
+
   function applyHitToMonster(m, power, opts) {
     opts = opts || {};
     if (!enc || m.state !== 'alive') return;
@@ -13822,6 +14618,9 @@
     pillars = pillars.filter(function (pl) { pl.t += dtW; return pl.t < pl.dur; });
     streaks = streaks.filter(function (st) { if (st.delay > 0) { st.delay -= dtW; return true; } st.t += dtW; return st.t < st.dur; });
     bossFx = bossFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; });
+    thuPhapFx = thuPhapFx.filter(function (fx) { fx.t += dtW; return fx.t < fx.dur; }); // SP-04: hiệu ứng thư pháp đi theo dtW như mọi lớp trình diễn
+    if (thuPhapCastT > 0) thuPhapCastT = Math.max(0, thuPhapCastT - dt);
+    thuPhapUiTick();
     updateResFx(dtW); // sân cộng hưởng + sóng khóa đi theo dtW: tôn trọng dừng hình GF-03
     updateSealFx(dtW); // ấn quang bắt ấn: hẹn giờ nảy đúng khung phóng quyết của đoạn thân kết ấn (đợt 2026-11-05)
     updateArcFx(dtW); updateTechFx(dtW); arcUpdateCycle(dtW);
@@ -14676,6 +15475,7 @@
     else if (k === '5') castPhong();
     else if (k === 'b') doBreakthrough();
     else if (k === 'r') quickEatFood(); // nút Đồ Ăn (đợt 2026-11-04): ăn nhanh món hợp nhất trong túi
+    else if (k === 'g') { if (enc) toggleThuPhapChips(); } // SP-04 [ĐỀ XUẤT]: phím G mở cột thức Thư Pháp (B đã là phím đột phá)
     else if (k === 'i') { var bp2 = $('bag-panel'); if (bp2 && !bp2.classList.contains('hidden')) closeBag(); else openBag(); }
   });
   document.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; if (e.key === '3') tlSwordHeld = false; });
@@ -15061,6 +15861,23 @@
   onTap($('sk-med'), function () { sfxUi(); medLatch = !medLatch; refreshHUD(); });
   onTap($('sk-break'), function () { doBreakthrough(); });
   onTap($('sk-food'), function () { quickEatFood(); }); // nút Đồ Ăn ở vòng cung trong (đợt đồ ăn 2026-11-04; nối qua onTap như mọi nút cụm chiến đấu theo đợt cảm ứng)
+  // SP-04: nút BÍ PHÁP độc lập NGOÀI cụm #skillbar (không class .sk) + chip thức.
+  onTap($('btn-biphap'), function () { toggleThuPhapChips(); });
+  (function () {
+    var box = $('biphap-chips'); if (!box) return;
+    var lastTap = 0;
+    function pick(e) {
+      var el = e.target;
+      while (el && el !== box && !el.getAttribute('data-form')) el = el.parentNode;
+      if (!el || el === box) return;
+      var f = el.getAttribute('data-form'); if (!f) return;
+      var now = Date.now(); if (now - lastTap < 400) return; lastTap = now;
+      thuPhapChipsOpen = false; box.style.display = 'none';
+      encThuPhapCast(f);
+    }
+    box.addEventListener('pointerdown', pick);
+    box.addEventListener('click', pick);
+  })();
   onTap($('sk-interact'), function () { sfxUi(); interact(); });
   // Mục G: nút ĐÁNH ở tâm vòng cung — gọi đúng castSword (đường đánh
   // thường duy nhất của game: kiếm quyết vật lý, tự rẽ nhánh chạm trán /

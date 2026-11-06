@@ -2579,6 +2579,7 @@
     bi_tich_hon_don_phap_luan: { name: 'Bí Tịch Hỗn Độn Pháp Luân (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'hon_don_phap_luan' },
     bi_tich_thanh_hoa_lien_tran: { name: 'Bí Tịch Thanh Hoa Liên Trận Kinh (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'thanh_hoa_lien_tran' },
     bi_tich_tu_da_anh_kiem: { name: 'Bí Tịch Tử Dạ Ảnh Kiếm Quyết (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'tu_da_anh_kiem' },
+    bi_tich_thu_phap_chan_kinh: { name: 'Bí Tịch Thư Pháp Chân Kinh (Tàn Thiên)', type: 'bi_tich', stack: true, glyph: 'Tịch', teaches: 'thu_phap_chan_kinh' },
     song_ngu_ngoc_boi: { name: 'Song Ngư Ngọc Bội', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Ngọc', unlockKey: 'song_ngu' },
     thien_co_ngoc_gian: { name: 'Thiên Cơ Ngọc Giản', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Giản', unlockKey: 'thien_co_gian' },
     thanh_phong_chan_kinh: { name: 'Thanh Phong Chân Kinh', type: 'nhiem_vu', stack: false, storySlot: true, glyph: 'Kinh', unlockKey: 'thanh_phong' },
@@ -4287,6 +4288,30 @@
       ],
       ultimate: { totalPct: 240, steps: 5 },
       effect: 'Kiếm quyết liên kích: tứ thức tổng 230 khi nối cả chuỗi, tuyệt kỹ năm bước tổng 240; hồi chiêu theo nhịp kiếm quyết khi cài' }),
+    /* SP-04 Thư Pháp Chân Kinh (đợt Nho Tu 2026-11-05, thiết kế ở
+       docs/nho-tu-set-design.md): bộ thư pháp từ video Bui gửi — bút
+       lông, thẻ trúc, bàn cờ. Bảy THỨC mở theo tầng (mỗi thức mang
+       trường form riêng; resolver castThuPhap đọc moves theo form),
+       tổng mỗi thức lấy đúng hồ sơ vai tại bậc mở (Khống 75/110/150,
+       Diện 115/200, Đơn 180/220), mọi đòn con <= 60. Hai khóa luật của
+       đợt: (a) KHÔNG cơ chế phòng ngự — Mặc Trúc là vùng làm chậm,
+       Hạo Nhiên Thuẫn là đòn Diện mà chữ khiên chỉ là trình diễn rồi
+       vỡ thành đòn (ô 27 vẫn là bộ phòng ngự duy nhất); (b) khoản
+       "+30 Linh Lực" của video đổi thành hồi Tĩnh Âm +12 ở Thiên Thư
+       kèm hồi chiêu 15s — cả hai đều [ĐỀ XUẤT] chờ Bui. */
+    thu_phap_chan_kinh: nguHanhDef({ name: 'Thư Pháp Chân Kinh', element: 'van', band: 'kim_dan', rarity: 'hiem', profile: null, role: 'thu_phap',
+      source: 'Mảnh đầu do Trần Chính Đạo ở Thiên Cơ Các (Tĩnh Quan Lâu) tặng một lần; mảnh còn lại từ Thạch Tượng Thủ Vệ ở Tàn Tích dưới tháp (bc_tapha); ghép tại tàng kinh các',
+      fragments: 5, fragmentSource: 'boss:bc_tapha',
+      moves: [
+        { form: 'mac_truc', name: 'Mặc Trúc Bình Phong', tier: 1, sheetRow: 4, role: 'khong', totalPct: 75, cd: 3, hits: [15, 15, 15, 15, 15], control: { type: 'slow', pct: 20, sec: 2 } },
+        { form: 'hoa_dia', name: 'Hoạ Địa Vi Lao', tier: 2, sheetRow: 5, role: 'khong', totalPct: 110, cd: 6, hits: [22, 22, 22, 22, 22], control: { type: 'root', sec: 1.5, bossSec: 0.75 } },
+        { form: 'thien_thu', name: 'Thiên Thư Giáng Thế', tier: 2, sheetRow: 5, role: 'dien', totalPct: 115, cd: 15, hits: [23, 23, 23, 23, 23], silenceGain: 12 },
+        { form: 'vi_ky', name: 'Thiên Địa Vi Kỳ', tier: 3, sheetRow: 6, role: 'khong', totalPct: 150, cd: 10, hits: [25, 25, 25, 25, 25, 25], control: { type: 'root', sec: 1.5, bossSec: 0.75 } },
+        { form: 'chu_phe', name: 'Chu Phê Định Tội', tier: 3, sheetRow: 6, role: 'don', totalPct: 180, cd: 9, hits: [60, 60, 60] },
+        { form: 'hao_nhien', name: 'Hạo Nhiên Thuẫn', tier: 4, sheetRow: 7, role: 'dien', totalPct: 200, cd: 22, hits: [40, 40, 40, 40, 40] },
+        { form: 'tam_tinh', name: 'Trúc Giản Tam Tỉnh', tier: 4, sheetRow: 7, role: 'don', totalPct: 220, cd: 20, hits: [40, 40, 40, 40, 60] }
+      ],
+      effect: 'Thư pháp bảy thức: khống/diện/đơn theo hồ sơ khóa; tường trúc là vùng làm chậm và chữ khiên của Hạo Nhiên Thuẫn chỉ là trình diễn vỡ thành đòn — bộ này KHÔNG có bất kỳ cơ chế khiên/giảm thương nào (ô 27 là bộ phòng ngự duy nhất của danh mục)' }),
     // SP-03 Kinh Lan: KHÔNG phải công pháp (khung chuẩn mục B.3) —
     // chỉ đăng ký để ánh xạ như luyen_hon/ngu_kiem: không tiers,
     // không mục trong state.techniques, không đường lấy ở bản đồ bí
@@ -4321,6 +4346,42 @@
     var ups = [];
     while (techniqueTierUpReady(state, id)) { t.tier += 1; ups.push(t.tier); }
     return { ok: true, xp: t.xp, tier: t.tier, tierUps: ups };
+  }
+  /* ===== SP-04 Thư Pháp Chân Kinh: resolver tung thức trong trận =====
+     Đường tung DUY NHẤT của dòng ngu_hanh tới nay (bản đồ tích hợp mục
+     6.2 ghi def.moves chưa từng có resolver; báo cáo giai đoạn 2 mục
+     3.1 định khuôn: resolver đọc def.moves theo tầng hiện tại và điểm
+     +2 mỗi lần tung do lớp trận gọi techniqueGain như encCastSword).
+     castThuPhap THUẦN như castSword: chỉ kiểm đã học + tầng đủ và tính
+     uy lực từng đòn con từ swordPower — hồi chiêu theo đồng hồ thật do
+     lớp engine giữ (đúng như hồi chiêu kiếm không nằm trong logic).
+     Không tốn Tĩnh Âm; Thiên Thư TRẢ Tĩnh Âm (silenceGain, [ĐỀ XUẤT])
+     cũng do lớp engine cộng khi đòn rơi trúng, resolver chỉ khai số. */
+  var THU_PHAP_ID = 'thu_phap_chan_kinh';
+  function thuPhapFormDef(formId) {
+    var def = TECHNIQUE_DEFS[THU_PHAP_ID];
+    if (!def || !def.moves) return null;
+    for (var i = 0; i < def.moves.length; i++) if (def.moves[i].form === formId) return def.moves[i];
+    return null;
+  }
+  // Các thức đã mở ở tầng hiện tại của bộ (rỗng nếu chưa học).
+  function thuPhapForms(state) {
+    var t = techniqueOf(state, THU_PHAP_ID);
+    if (!t) return [];
+    var def = TECHNIQUE_DEFS[THU_PHAP_ID];
+    return (def.moves || []).filter(function (m) { return t.tier >= m.tier; });
+  }
+  function castThuPhap(state, formId) {
+    var t = techniqueOf(state, THU_PHAP_ID);
+    if (!t) return { ok: false, reason: 'Chưa học Thư Pháp Chân Kinh.' };
+    var form = thuPhapFormDef(formId);
+    if (!form) return { ok: false, reason: 'Thức thư pháp không tồn tại.' };
+    if (t.tier < form.tier) return { ok: false, reason: 'Thư Pháp Chân Kinh mới tầng ' + t.tier + ' — chưa lĩnh ngộ được ' + form.name + '.' };
+    var pw = swordPower(state);
+    var hits = (form.hits || []).map(function (pct) { return Math.max(1, Math.round(pw * pct / 100)); });
+    return { ok: true, form: form.form, formName: form.name, role: form.role, tier: form.tier,
+      totalPct: form.totalPct, cd: form.cd, hits: hits,
+      control: form.control || null, silenceGain: form.silenceGain || 0, power: hits.reduce(function (a, b) { return a + b; }, 0) };
   }
   // Di trú lớp công pháp (congphap-prep mục 2.3): suy từ unlocked, giữ
   // bất biến hai lớp không lệch — unlocked có khóa khi và chỉ khi
@@ -6406,7 +6467,11 @@
     'boss:ho_tran_kiem_linh': ['thai_bach_kim_kiem'],
     'boss:bc_tran_tam_sau': ['thai_bach_kim_kiem'],
     'boss:bc_kiemtrung': ['han_bang_bao_lien', 'loi_quang_than_kiem'],
-    'boss:bc_thuyliem': ['thuong_hai_cuong_dao', 'thanh_hoa_lien_tran']
+    'boss:bc_thuyliem': ['thuong_hai_cuong_dao', 'thanh_hoa_lien_tran'],
+    /* SP-04 (đợt Nho Tu 2026-11-05): Thạch Tượng Thủ Vệ của Tàn Tích
+       dưới tháp giữ mảnh Thư Pháp Chân Kinh — nguồn mảnh duy nhất của
+       bộ ngoài mảnh đầu Thiên Cơ Các tặng (xem docs/nho-tu-set-design.md). */
+    'boss:bc_tapha': ['thu_phap_chan_kinh']
   };
   function arcIvFragmentEligible(state, setId, sourceId) {
     var def = TECHNIQUE_DEFS[setId];
@@ -6485,6 +6550,7 @@
     QUESTS: QUESTS, questById: questById, nextQuest: nextQuest,
     newCharacter: newCharacter, meditateTick: meditateTick, meditateRate: meditateRate, tryBreakthrough: tryBreakthrough,
     swordPower: swordPower, castSword: castSword, SWORD_MOVES: SWORD_MOVES, swordMoveById: swordMoveById,
+    THU_PHAP_ID: THU_PHAP_ID, thuPhapFormDef: thuPhapFormDef, thuPhapForms: thuPhapForms, castThuPhap: castThuPhap,
     equippedWeaponId: equippedWeaponId, weaponBonus: weaponBonus,
     TECHNIQUE_DEFS: TECHNIQUE_DEFS, techniqueOf: techniqueOf, techniqueTier: techniqueTier,
     techniqueTierUpReady: techniqueTierUpReady, techniqueGain: techniqueGain, ensureTechniques: ensureTechniques,

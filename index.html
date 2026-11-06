@@ -172,6 +172,13 @@
       <button class="sk sk-attack" id="sk-attack" type="button"><span class="sk-key">J</span><span class="sk-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3.6 19.6c4.6 1.3 9.8.1 13.3-3.2" stroke="#7fe8e0" stroke-width="2.1"/><path d="M5.2 15.4c3.4.7 7-.3 9.6-2.6" stroke="#7fe8e0" stroke-width="1.7" opacity="0.75"/><g stroke="#ffd94e" stroke-width="2.4"><path d="M19.2 2.6L10.6 11.2"/><path d="M19.2 2.6l.9 3.9-3.4-1z"/><path d="M8.2 9.8l4.2 4.2M10.9 13.1l-1.2 3.9M6.4 15.2l1.9 1.9"/></g></svg></span><span class="sk-name">ĐÁNH</span></button>
     </div>
 
+    <!-- SP-04 (đợt Nho Tu 2026-11-05): nút BÍ PHÁP của bộ Thư Pháp Chân
+         Kinh — phần tử ĐỘC LẬP ngoài cụm #skillbar đã khóa, KHÔNG mang
+         class .sk; chỉ hiện trong trận khi đã học ít nhất một thức.
+         Chip chọn thức dựng động bởi game.js (thuPhapUiTick/toggle). -->
+    <div id="biphap-chips" style="display:none"></div>
+    <button id="btn-biphap" type="button" style="display:none">BÍ PHÁP<span class="bp-key">G</span></button>
+
     <div id="settings-panel" class="hidden" role="dialog" aria-label="Cài đặt">
       <div class="set-head">
         <span class="set-title">Cài đặt</span>
