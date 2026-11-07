@@ -5950,7 +5950,55 @@
     { zoneId: 'zone_song_bac', species: 'giang_thu', x: 64, y: 44 },
     { zoneId: 'zone_song_bac', species: 'giang_tu_ha_yeu', x: 58, y: 51, requiresQuest: 'q26_done' },
     { zoneId: 'zone_song_bac', species: 'truong_nha_giang_thu', x: 84, y: 51, requiresQuest: 'q27_done' },
-    { zoneId: 'zone_bc_bendo_sau', species: 'mo_kiem_tan_hon', x: 33, y: 6, requiresQuest: 'q36_done' }
+    { zoneId: 'zone_bc_bendo_sau', species: 'mo_kiem_tan_hon', x: 33, y: 6, requiresQuest: 'q36_done' },
+    /* ĐỢT THÊM BÃI QUÁI DÃ NGOẠI (lệnh của Bui 19:56 ngày 2026-11-06:
+       "Thêm các bãi quái để tăng tu vi đạo hạnh"): 13 ổ mới ở các bản đồ
+       dã ngoại đang thưa, CHỈ dùng loài ĐÃ CÓ trong MONSTER_DEFS (không
+       loài mới, không hình mới), sức loài nằm trong dải của bản đồ theo
+       cổng mở + tiền lệ ổ sẵn có trong chính bản đồ đó (bảng dải khóa ở
+       test §99b). Mọi ổ đã qua kiểm: ô neo đi được + flood-fill tới
+       được từ điểm vào bản đồ + zoneAtTile tại neo trả đúng vùng của ổ
+       + không đè NPC/vật thể/cổng/điểm hạ cánh/điểm tài nguyên/ổ boss
+       (test §99). Kinh tế KHÔNG đổi: tu vi mỗi mạng vẫn qua
+       grantReward profile:kill:normal/elite chảy vào cùng hồ trần mềm
+       ngày (grind.pools) — thêm CHỖ săn, không tăng tổng ngày. */
+    // Đường mòn: thêm bãi lợn giáp ở bãi cỏ tây nam + bãi lang đầu đàn ở
+    // trảng giữa (trước đây phía tây nam không có bãi nào; loài đầu đàn
+    // 300/11 lần đầu có ổ, đúng dải Luyện Khí như Thiết Giáp Trư).
+    { zoneId: 'zone_duong_mon_rung', species: 'thiet_giap_tru', x: 12, y: 55 },
+    { zoneId: 'zone_duong_mon_rung', species: 'lang_dau_dan', x: 30, y: 44 },
+    // Sau núi tông môn: thêm rắn độc vũ ở bãi giữa đông (loài thứ tư
+    // của bãi). Vị trí đã dời BA lần trong lần rà soát của chính đợt,
+    // cả ba điểm dời đều do kiểm §99 bắt: (104,19) chỉ cách dấu chân
+    // vườn dược (104,17) hai ô — cụm tương tác chương 8 (linh chi
+    // 100,14 / vườn dược 104,17 / hai cổng bí cảnh 97..100,16) phải
+    // giữ trống như thiết kế gốc; (90,28) nằm trong hõm vách không
+    // tới được từ điểm vào; (117,5) tới được nhưng chỉ có 11 ô đi lại
+    // quanh neo. (102,24): bãi chính 291 ô đi lại, cách vật thể tương
+    // tác gần nhất 7 ô, cách ổ Phong Ưng 10 ô, cách nút Linh Chi 6 ô.
+    { zoneId: 'zone_tong_sau_nui', species: 'doc_vu_xa', x: 102, y: 24 },
+    // Hồi Phong: thêm oán binh (quái thường dải Trúc Cơ 160/14) ở bãi cỏ
+    // nam và lang đầu đàn ở cao nguyên bắc (vùng bắc trước chỉ có 1 ổ).
+    { zoneId: 'zone_hb_rung', species: 'oan_binh', x: 16, y: 42 },
+    { zoneId: 'zone_hb_bac', species: 'lang_dau_dan', x: 50, y: 8 },
+    // Thập Vạn Đại Sơn: vành Luyện Khí thêm lang đầu đàn ở trảng đông;
+    // vành Trúc Cơ thêm ổ oán binh thứ hai ở phía đông; vành Kim Đan
+    // thêm tàn hồn kiếm ý ở bãi nam đông.
+    { zoneId: 'zone_tvds_luyenkhi', species: 'lang_dau_dan', x: 70, y: 12 },
+    { zoneId: 'zone_tvds_trucco', species: 'oan_binh', x: 88, y: 15 },
+    { zoneId: 'zone_tvds_kimdan', species: 'tan_hon_kiem_y_sau', x: 88, y: 21 },
+    // Vành Nguyên Anh: sườn tây thêm huyền băng lang (trước chỉ 1 ổ);
+    // bồn Vân An — vùng đã đăng ký từ đợt bản đồ nhưng CHƯA TỪNG có ổ —
+    // nay có thạch tượng cổ.
+    { zoneId: 'zone_tvds_nguyenanh_tay', species: 'huyen_bang_lang', x: 8, y: 17 },
+    { zoneId: 'zone_tvds_van_an', species: 'thach_tuong_co', x: 97, y: 14 },
+    // Vành Hóa Thần: cao nguyên phía tây thêm kim điêu (trước chỉ 1 ổ).
+    { zoneId: 'zone_tvds_hoathan', species: 'kim_dieu', x: 20, y: 8 },
+    // Sông Bạc thượng nguồn: bãi bồi bờ nam vũng sâu thêm giang thú
+    // (vùng vũng trước chỉ có boss chu kỳ); thung thượng thêm hồn nước
+    // (vùng thung trước không có ổ nào).
+    { zoneId: 'zone_song_bac_vung', species: 'giang_thu', x: 80, y: 67 },
+    { zoneId: 'zone_song_bac_thung', species: 'hon_nuoc', x: 79, y: 14 }
 /* LƯU Ý: thủy tặc (song_tac) và lính đào đất (linh_dao_dat) là loài
    NGƯỜI — không sinh qua ổ quái (không có sheet quái người); chúng vào
    thế giới qua trận arcFig lặp tại điểm tương tác (bến phụ / miệng
